@@ -42,7 +42,7 @@ export default function CurrentStatusSection() {
           />
         </div>
         <p style={{ fontSize: 12, color: 'var(--tds-gray-400)', margin: 0 }}>
-          물가상승률(한국 평균 2~3%) 이상 입력 권장 — 명목 금액을 그대로 입력해도 구매력 하락이 자동 반영됩니다
+          매년 물가가 오르는 만큼은 포함해 주세요. 보통 최소 2~3% 이상 권장해요.
         </p>
       </div>
     </SectionCard>
