@@ -51,9 +51,9 @@ export default function RightPanel() {
           valueColor="var(--tds-blue-500)"
         />
         <StatCard
-          label="연간 순저축액"
+          label="올해 기준 여유자금"
           value={formatEok(result.annualNetSavings)}
-          sub="세후 소득 기준"
+          sub="현재 입력 기준 · 해마다 달라짐"
           valueColor={savingsColor}
         />
       </div>

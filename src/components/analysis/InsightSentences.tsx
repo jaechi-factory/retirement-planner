@@ -27,11 +27,11 @@ export default function InsightSentences({ result, inputs, verdict }: Props) {
 
   if (annualNetSavings > 0) {
     insights.push(
-      `세후 소득 기준으로 매년 약 ${formatEok(annualNetSavings)}씩 순저축이 쌓이고 있어요.`
+      `현재 입력 기준으로 올해 약 ${formatEok(annualNetSavings)}의 여유자금이 생겨요. 소득·지출·부채에 따라 해마다 달라질 수 있어요.`
     );
   } else if (annualNetSavings < 0) {
     insights.push(
-      `현재 소비가 세후 소득을 초과하고 있어요. 지출을 조정해보세요.`
+      `현재 입력 기준으로 소비가 세후 소득을 초과하고 있어요. 지출을 조정해보세요.`
     );
   }
 
