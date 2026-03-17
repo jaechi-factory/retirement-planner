@@ -95,7 +95,8 @@ function runCalculation(inputs: PlannerInputs): CalculationResult {
   const requiredMonthlyAtRetirement =
     goal.targetMonthly * Math.pow(1 + inflationDecimal, yearsToRetirement);
 
-  const annualNetSavings = status.annualIncome - status.annualExpense - totalAnnualRepayment;
+  // 시뮬레이션과 일치하도록 자녀 지출도 포함
+  const annualNetSavings = status.annualIncome - status.annualExpense - totalAnnualRepayment - annualChildExpense;
 
   const possibleMonthly = findMaxSustainableMonthly(inputs);
   const yearlySnapshots = simulate(inputs, possibleMonthly);

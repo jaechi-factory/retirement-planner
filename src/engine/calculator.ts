@@ -1,48 +1,37 @@
 import type { PlannerInputs } from '../types/inputs';
 import type { YearlySnapshot } from '../types/calculation';
-import { calcWeightedReturn, calcDebtAnnualPayment } from './assetWeighting';
+import { calcWeightedReturn, calcDebtAnnualPayment, calcRemainingDebt } from './assetWeighting';
 
 /**
- * 연간 시뮬레이션 실행
- * @param inputs - 전체 입력값
- * @param testMonthlyInCurrentValue - 테스트할 월 생활비 (만원, 현재가치 기준)
- * @returns 연도별 스냅샷 배열
+ * 연간 시뮬레이션 실행 (Method B: 총자산/총부채 분리 추적)
+ *
+ * - 투자수익은 총자산(gross assets)에 적용
+ * - 부채 상환액은 총자산에서 차감
+ * - 스냅샷의 totalAsset = 총자산 - 잔여부채 (순자산)
  */
 export function simulate(
   inputs: PlannerInputs,
   testMonthlyInCurrentValue: number
 ): YearlySnapshot[] {
   const { goal, status, assets, debts, children } = inputs;
-  const {
-    retirementAge,
-    lifeExpectancy,
-    inflationRate,
-  } = goal;
-  const {
-    currentAge,
-    annualIncome,
-    incomeGrowthRate,
-    annualExpense,
-  } = status;
+  const { retirementAge, lifeExpectancy, inflationRate } = goal;
+  const { currentAge, annualIncome, incomeGrowthRate, annualExpense } = status;
 
   const inflationDecimal = inflationRate / 100;
   const incomeGrowthDecimal = incomeGrowthRate / 100;
   const weightedReturnDecimal = calcWeightedReturn(assets) / 100;
 
-  // 자녀 연지출 (현재, 은퇴 전)
   const annualChildExpense = children.hasChildren
     ? children.count * children.monthlyPerChild * 12
     : 0;
 
-  // 은퇴 시점 목표 월생활비 (명목가치)
   const yearsToRetirement = Math.max(0, retirementAge - currentAge);
   const retirementMonthlyNominal =
     testMonthlyInCurrentValue * Math.pow(1 + inflationDecimal, yearsToRetirement);
 
-  // 순자산을 초기 자산으로 사용
+  // Method B: 총자산(gross)으로 시작, 부채 잔액 별도 추적
   const totalAssetNow = Object.values(assets).reduce((s, a) => s + a.amount, 0);
-  const totalDebtNow = Object.values(debts).reduce((s, d) => s + d.balance, 0);
-  let currentAsset = totalAssetNow - totalDebtNow;
+  let currentGrossAsset = totalAssetNow;
 
   const snapshots: YearlySnapshot[] = [];
 
@@ -51,48 +40,50 @@ export function simulate(
     const isRetired = age >= retirementAge;
 
     if (age > currentAge) {
-      // 자녀 지출 (독립 전까지)
       const childExpenseThisYear =
         children.hasChildren && age <= children.independenceAge
           ? annualChildExpense
           : 0;
 
-      // 부채 상환: 각 부채 항목의 연도별 상환액 합산
+      // 부채 전액 상환액(원금+이자) — 총자산에서 차감
       const debtRepaymentThisYear = Object.values(debts).reduce((sum, debtItem) => {
         return sum + calcDebtAnnualPayment(debtItem, yearsFromNow);
       }, 0);
 
       if (!isRetired) {
-        // ── 은퇴 전 ──
         const thisYearIncome =
           annualIncome * Math.pow(1 + incomeGrowthDecimal, yearsFromNow - 1);
-        const thisYearExpense = annualExpense; // 현재 소비는 고정 (물가 반영 안 함, PRD 명세)
+        const thisYearExpense = annualExpense;
 
-        currentAsset =
-          currentAsset * (1 + weightedReturnDecimal) +
+        currentGrossAsset =
+          currentGrossAsset * (1 + weightedReturnDecimal) +
           thisYearIncome -
           thisYearExpense -
           debtRepaymentThisYear -
           childExpenseThisYear;
       } else {
-        // ── 은퇴 후 ──
         const yearsAfterRetirement = age - retirementAge;
         const thisYearExpense =
           retirementMonthlyNominal *
           12 *
           Math.pow(1 + inflationDecimal, yearsAfterRetirement);
 
-        currentAsset =
-          currentAsset * (1 + weightedReturnDecimal) -
+        currentGrossAsset =
+          currentGrossAsset * (1 + weightedReturnDecimal) -
           thisYearExpense -
           debtRepaymentThisYear -
           childExpenseThisYear;
       }
     }
 
+    // 잔여 부채 계산 → 순자산 = 총자산 - 잔여부채
+    const remainingDebt = Object.values(debts).reduce((sum, debtItem) => {
+      return sum + calcRemainingDebt(debtItem, yearsFromNow);
+    }, 0);
+
     snapshots.push({
       age,
-      totalAsset: currentAsset,
+      totalAsset: currentGrossAsset - remainingDebt,
       isRetired,
     });
   }
@@ -100,8 +91,8 @@ export function simulate(
   return snapshots;
 }
 
-/** 기대수명 시점에서 자산이 남아있는지 확인 */
+/** 전 구간에서 한 번도 자산이 0 미만이 되지 않아야 지속 가능 */
 export function isSustainable(snapshots: YearlySnapshot[]): boolean {
   if (snapshots.length === 0) return false;
-  return snapshots[snapshots.length - 1].totalAsset >= 0;
+  return snapshots.every(s => s.totalAsset >= 0);
 }

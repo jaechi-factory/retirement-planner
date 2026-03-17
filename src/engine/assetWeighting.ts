@@ -58,6 +58,36 @@ export function calcDebtAnnualPayment(debt: DebtItem, yearsElapsed = 0): number 
   }
 }
 
+/**
+ * 경과 연수 이후 남은 부채 잔액 계산
+ * Method B: 총자산/총부채 분리 추적을 위해 사용
+ */
+export function calcRemainingDebt(debt: DebtItem, yearsElapsed: number): number {
+  if (debt.balance <= 0 || debt.repaymentYears <= 0) return 0;
+  if (yearsElapsed >= debt.repaymentYears) return 0;
+
+  const r = debt.interestRate / 100;
+
+  switch (debt.repaymentType) {
+    case 'equal_payment': {
+      const rm = r / 12;
+      const n = debt.repaymentYears * 12;
+      const m = yearsElapsed * 12;
+      if (rm === 0) return debt.balance * (1 - yearsElapsed / debt.repaymentYears);
+      const factor = Math.pow(1 + rm, n);
+      const elapsed = Math.pow(1 + rm, m);
+      return debt.balance * (factor - elapsed) / (factor - 1);
+    }
+    case 'equal_principal': {
+      return debt.balance * (1 - yearsElapsed / debt.repaymentYears);
+    }
+    case 'interest_only': {
+      // 이자만 납부 기간 중에는 원금 그대로 유지
+      return debt.balance;
+    }
+  }
+}
+
 /** 연간 총부채 상환액 (yearsElapsed: 경과 연수) */
 export function calcTotalAnnualRepayment(debts: DebtAllocation, yearsElapsed = 0): number {
   return Object.values(debts).reduce((sum, item) => {

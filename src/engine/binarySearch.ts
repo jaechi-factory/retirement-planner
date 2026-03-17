@@ -1,35 +1,35 @@
 import type { PlannerInputs } from '../types/inputs';
 import { simulate, isSustainable } from './calculator';
-import {
-  BINARY_SEARCH_MAX,
-  BINARY_SEARCH_PRECISION,
-  BINARY_SEARCH_MAX_ITER,
-} from '../utils/constants';
+import { BINARY_SEARCH_PRECISION, BINARY_SEARCH_MAX_ITER } from '../utils/constants';
 
 /**
  * 이진탐색으로 기대수명까지 자산이 버티는 최대 월 생활비를 찾는다.
+ * 상한은 동적으로 결정 — 하드코딩된 상한으로 결과가 잘리는 문제 없음.
  * @returns 현재가치 기준 가능한 최대 월 생활비 (만원)
  */
 export function findMaxSustainableMonthly(inputs: PlannerInputs): number {
-  let low = 0;
-  let high = BINARY_SEARCH_MAX;
-  let iterations = 0;
-
   // 월 0만원도 안 되면 0 반환
-  const zeroSnapshots = simulate(inputs, 0);
-  if (!isSustainable(zeroSnapshots)) return 0;
+  if (!isSustainable(simulate(inputs, 0))) return 0;
+
+  // 상한을 동적으로 탐색: 1,000에서 시작해 2배씩 올리며 불가능한 구간 찾기
+  let high = 1000;
+  while (isSustainable(simulate(inputs, high))) {
+    high *= 2;
+    if (high > 1_000_000) { high = 1_000_000; break; } // 100억/월 상한 (안전장치)
+  }
+
+  let low = 0;
+  let iterations = 0;
 
   while (high - low > BINARY_SEARCH_PRECISION && iterations < BINARY_SEARCH_MAX_ITER) {
     const mid = (low + high) / 2;
-    const snapshots = simulate(inputs, mid);
-
-    if (isSustainable(snapshots)) {
-      low = mid;   // mid로도 버팀 → 더 높은 값 탐색
+    if (isSustainable(simulate(inputs, mid))) {
+      low = mid;
     } else {
-      high = mid;  // mid에서 자산 고갈 → 더 낮은 값 탐색
+      high = mid;
     }
     iterations++;
   }
 
-  return Math.floor(low); // 만원 단위로 내림
+  return Math.floor(low);
 }
