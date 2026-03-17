@@ -28,17 +28,22 @@ export default function CurrentStatusSection() {
         value={status.incomeGrowthRate}
         onChange={(v) => setStatus({ incomeGrowthRate: v })}
       />
-      <div style={{ display: 'grid', gridTemplateColumns: '3fr 2fr', gap: 8 }}>
-        <NumberInput
-          label="연 소비"
-          value={status.annualExpense}
-          onChange={(v) => setStatus({ annualExpense: v })}
-        />
-        <RateInput
-          label="지출 증가율 (연)"
-          value={status.expenseGrowthRate}
-          onChange={(v) => setStatus({ expenseGrowthRate: v })}
-        />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '3fr 2fr', gap: 8 }}>
+          <NumberInput
+            label="연 소비"
+            value={status.annualExpense}
+            onChange={(v) => setStatus({ annualExpense: v })}
+          />
+          <RateInput
+            label="지출 증가율 (연)"
+            value={status.expenseGrowthRate}
+            onChange={(v) => setStatus({ expenseGrowthRate: v })}
+          />
+        </div>
+        <p style={{ fontSize: 12, color: 'var(--tds-gray-400)', margin: 0 }}>
+          물가상승률(한국 평균 2~3%) 이상 입력 권장 — 명목 금액을 그대로 입력해도 구매력 하락이 자동 반영됩니다
+        </p>
       </div>
     </SectionCard>
   );
