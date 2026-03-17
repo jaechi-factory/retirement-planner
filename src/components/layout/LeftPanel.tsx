@@ -3,6 +3,7 @@ import CurrentStatusSection from '../input/CurrentStatusSection';
 import AssetSection from '../input/AssetSection';
 import DebtSection from '../input/DebtSection';
 import ChildrenSection from '../input/ChildrenSection';
+import PensionSection from '../input/PensionSection';
 
 export default function LeftPanel() {
   return (
@@ -21,6 +22,7 @@ export default function LeftPanel() {
       <AssetSection />
       <DebtSection />
       <ChildrenSection />
+      <PensionSection />
       <div style={{ height: 40 }} />
     </div>
   );

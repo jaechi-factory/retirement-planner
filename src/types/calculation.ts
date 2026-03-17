@@ -21,6 +21,10 @@ export interface CalculationResult {
   // 시뮬레이션 데이터
   yearlySnapshots: YearlySnapshot[];
 
+  // 연금
+  totalMonthlyPensionTodayValue: number;  // 연금 월 합계 (현재가치, 만원)
+  pensionCoverageRate: number;            // 연금 커버율 (0~1)
+
   // 유효성
   isValid: boolean;
   errorMessage?: string | null;

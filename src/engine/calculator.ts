@@ -1,19 +1,21 @@
 import type { PlannerInputs } from '../types/inputs';
 import type { YearlySnapshot } from '../types/calculation';
 import { calcWeightedReturn, calcDebtAnnualPayment, calcRemainingDebt } from './assetWeighting';
+import { getAnnualPensionIncomeForAge } from './pensionEstimation';
 
 /**
  * 연간 시뮬레이션 실행 (Method B: 총자산/총부채 분리 추적)
  *
  * - 투자수익은 총자산(gross assets)에 적용
  * - 부채 상환액은 총자산에서 차감
+ * - 연금 수입은 총자산에 가산 (은퇴 전후 모두 해당 나이에 개시되면 반영)
  * - 스냅샷의 totalAsset = 총자산 - 잔여부채 (순자산)
  */
 export function simulate(
   inputs: PlannerInputs,
   testMonthlyInCurrentValue: number
 ): YearlySnapshot[] {
-  const { goal, status, assets, debts, children } = inputs;
+  const { goal, status, assets, debts, children, pension } = inputs;
   const { retirementAge, lifeExpectancy, inflationRate } = goal;
   const { currentAge, annualIncome, incomeGrowthRate, annualExpense, expenseGrowthRate } = status;
 
@@ -47,21 +49,30 @@ export function simulate(
           : 0;
 
       // 부채 전액 상환액(원금+이자) — 총자산에서 차감
-      // yearsFromNow - 1: 납입액은 연초 기준 (yearsFromNow는 연말 기준이라 1 빼야 함)
       const debtRepaymentThisYear = Object.values(debts).reduce((sum, debtItem) => {
         return sum + calcDebtAnnualPayment(debtItem, yearsFromNow - 1);
       }, 0);
 
+      // 연금 수입 (해당 나이에 수령이 개시된 경우 반영)
+      const pensionIncomeThisYear = getAnnualPensionIncomeForAge(
+        pension,
+        currentAge,
+        age,
+        inflationRate,
+        annualIncome,
+        retirementAge,
+      );
+
       if (!isRetired) {
         const thisYearIncome =
           annualIncome * Math.pow(1 + incomeGrowthDecimal, yearsFromNow - 1);
-        // 은퇴 전 지출도 매년 expenseGrowthRate만큼 증가 (기본값: 물가상승률)
         const thisYearExpense =
           annualExpense * Math.pow(1 + expenseGrowthDecimal, yearsFromNow - 1);
 
         currentGrossAsset =
           currentGrossAsset * (1 + weightedReturnDecimal) +
-          thisYearIncome -
+          thisYearIncome +
+          pensionIncomeThisYear -
           thisYearExpense -
           debtRepaymentThisYear -
           childExpenseThisYear;
@@ -73,7 +84,8 @@ export function simulate(
           Math.pow(1 + inflationDecimal, yearsAfterRetirement);
 
         currentGrossAsset =
-          currentGrossAsset * (1 + weightedReturnDecimal) -
+          currentGrossAsset * (1 + weightedReturnDecimal) +
+          pensionIncomeThisYear -
           thisYearExpense -
           debtRepaymentThisYear -
           childExpenseThisYear;

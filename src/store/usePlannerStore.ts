@@ -1,11 +1,43 @@
 import { create } from 'zustand';
 import type { PlannerInputs, AssetAllocation, DebtAllocation } from '../types/inputs';
+import type { PensionInputs } from '../types/pension';
 import type { CalculationResult, Verdict } from '../types/calculation';
 import { DEFAULT_INFLATION_RATE, DEFAULT_INCOME_GROWTH_RATE, DEFAULT_EXPENSE_GROWTH_RATE, DEFAULT_ASSET_RETURNS } from '../utils/constants';
 import { calcTotalAsset, calcTotalDebt, calcWeightedReturn, calcTotalAnnualRepayment } from '../engine/assetWeighting';
 import { simulate } from '../engine/calculator';
 import { findMaxSustainableMonthly } from '../engine/binarySearch';
 import { judgeVerdict } from '../engine/verdictEngine';
+import { getTotalMonthlyPensionTodayValue } from '../engine/pensionEstimation';
+
+const defaultPension: PensionInputs = {
+  publicPension: {
+    enabled: true,
+    mode: 'auto',
+    startAge: 65,
+    manualMonthlyTodayValue: 0,
+  },
+  retirementPension: {
+    enabled: true,
+    mode: 'auto',
+    startAge: 60,          // 실제 개시나이는 max(55, retirementAge)로 동적 계산
+    payoutYears: 20,
+    currentBalance: 0,
+    accumulationReturnRate: 3.5,
+    payoutReturnRate: 2.0,
+    manualMonthlyTodayValue: 0,
+  },
+  privatePension: {
+    enabled: false,
+    mode: 'auto',
+    startAge: 60,          // 실제 개시나이는 max(55, retirementAge)로 동적 계산
+    payoutYears: 20,
+    currentBalance: 0,
+    monthlyContribution: 0,
+    accumulationReturnRate: 3.5,
+    payoutReturnRate: 2.0,
+    manualMonthlyTodayValue: 0,
+  },
+};
 
 const defaultInputs: PlannerInputs = {
   goal: {
@@ -41,12 +73,12 @@ const defaultInputs: PlannerInputs = {
     monthlyPerChild: 0,
     independenceAge: 0,
   },
+  pension: defaultPension,
 };
 
 function runCalculation(inputs: PlannerInputs): CalculationResult {
-  const { goal, status, assets, debts, children } = inputs;
+  const { goal, status, assets, debts, children, pension } = inputs;
 
-  // 필수 항목이 하나라도 0이면 계산하지 않음
   const requiredFieldsMissing =
     status.currentAge <= 0 ||
     goal.retirementAge <= 0 ||
@@ -66,6 +98,8 @@ function runCalculation(inputs: PlannerInputs): CalculationResult {
       weightedReturn: 0, annualNetSavings: 0,
       annualChildExpense: 0, requiredMonthlyAtRetirement: 0,
       liquidRatio: earlyLiquidRatio,
+      totalMonthlyPensionTodayValue: 0,
+      pensionCoverageRate: 0,
       possibleMonthly: 0, yearlySnapshots: [],
       isValid: false,
       errorMessage: null,
@@ -83,6 +117,8 @@ function runCalculation(inputs: PlannerInputs): CalculationResult {
       weightedReturn: 0, annualNetSavings: 0,
       annualChildExpense: 0, requiredMonthlyAtRetirement: 0,
       liquidRatio: earlyLiquidRatio,
+      totalMonthlyPensionTodayValue: 0,
+      pensionCoverageRate: 0,
       possibleMonthly: 0, yearlySnapshots: [],
       isValid: false,
       errorMessage: '은퇴 나이는 현재 나이보다, 기대수명은 은퇴 나이보다 커야 해요.',
@@ -93,11 +129,9 @@ function runCalculation(inputs: PlannerInputs): CalculationResult {
   const totalDebt = calcTotalDebt(debts);
   const netWorth = totalAsset - totalDebt;
   const weightedReturn = calcWeightedReturn(assets);
-  // 유동자산 비율: realEstate 제외 (현금화 불가 비유동자산)
   const liquidAsset = totalAsset - assets.realEstate.amount;
   const liquidRatio = totalAsset > 0 ? liquidAsset / totalAsset : 1;
   const totalAnnualRepayment = calcTotalAnnualRepayment(debts);
-  // 자녀 연지출: 표시용 (hasChildren이면 항상 보여줌)
   const annualChildExpense = children.hasChildren
     ? children.count * children.monthlyPerChild * 12
     : 0;
@@ -107,12 +141,22 @@ function runCalculation(inputs: PlannerInputs): CalculationResult {
   const requiredMonthlyAtRetirement =
     goal.targetMonthly * Math.pow(1 + inflationDecimal, yearsToRetirement);
 
-  // 순저축 계산: 자녀가 이미 독립했으면 자녀비 차감 안 함 (시뮬레이션과 동일 조건)
   const childExpenseForSavings =
     children.hasChildren && status.currentAge <= children.independenceAge
       ? annualChildExpense
       : 0;
   const annualNetSavings = status.annualIncome - status.annualExpense - totalAnnualRepayment - childExpenseForSavings;
+
+  // 연금 합계 및 커버율
+  const totalMonthlyPensionTodayValue = getTotalMonthlyPensionTodayValue(
+    pension,
+    status.currentAge,
+    goal.retirementAge,
+    status.annualIncome,
+  );
+  const pensionCoverageRate = goal.targetMonthly > 0
+    ? totalMonthlyPensionTodayValue / goal.targetMonthly
+    : 0;
 
   const possibleMonthly = findMaxSustainableMonthly(inputs);
   const yearlySnapshots = simulate(inputs, possibleMonthly);
@@ -126,6 +170,8 @@ function runCalculation(inputs: PlannerInputs): CalculationResult {
     annualChildExpense,
     requiredMonthlyAtRetirement,
     liquidRatio,
+    totalMonthlyPensionTodayValue,
+    pensionCoverageRate,
     possibleMonthly,
     yearlySnapshots,
     isValid: true,
@@ -141,6 +187,7 @@ interface PlannerStore {
   setAsset: (key: keyof AssetAllocation, partial: Partial<AssetAllocation[keyof AssetAllocation]>) => void;
   setDebt: (key: keyof DebtAllocation, partial: Partial<DebtAllocation[keyof DebtAllocation]>) => void;
   setChildren: (partial: Partial<PlannerInputs['children']>) => void;
+  setPension: (partial: Partial<PensionInputs>) => void;
 }
 
 const computeState = (inputs: PlannerInputs): Pick<PlannerStore, 'inputs' | 'result' | 'verdict'> => {
@@ -178,6 +225,13 @@ export const usePlannerStore = create<PlannerStore>((set, get) => ({
   },
   setChildren: (partial) => {
     const inputs: PlannerInputs = { ...get().inputs, children: { ...get().inputs.children, ...partial } };
+    set(computeState(inputs));
+  },
+  setPension: (partial) => {
+    const inputs: PlannerInputs = {
+      ...get().inputs,
+      pension: { ...get().inputs.pension, ...partial },
+    };
     set(computeState(inputs));
   },
 }));

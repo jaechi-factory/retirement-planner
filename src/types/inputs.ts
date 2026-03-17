@@ -50,10 +50,13 @@ export interface ChildrenInfo {
   independenceAge: number;     // 자녀 독립 시 사용자 나이
 }
 
+import type { PensionInputs } from './pension';
+
 export interface PlannerInputs {
   goal: RetirementGoal;
   status: CurrentStatus;
   assets: AssetAllocation;
   debts: DebtAllocation;
   children: ChildrenInfo;
+  pension: PensionInputs;
 }
