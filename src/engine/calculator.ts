@@ -46,8 +46,9 @@ export function simulate(
           : 0;
 
       // 부채 전액 상환액(원금+이자) — 총자산에서 차감
+      // yearsFromNow - 1: 납입액은 연초 기준 (yearsFromNow는 연말 기준이라 1 빼야 함)
       const debtRepaymentThisYear = Object.values(debts).reduce((sum, debtItem) => {
-        return sum + calcDebtAnnualPayment(debtItem, yearsFromNow);
+        return sum + calcDebtAnnualPayment(debtItem, yearsFromNow - 1);
       }, 0);
 
       if (!isRetired) {
