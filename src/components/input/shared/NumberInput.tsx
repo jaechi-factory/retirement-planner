@@ -11,7 +11,7 @@ interface Props {
 }
 
 export default function NumberInput({
-  label, value, onChange, unit = '만원', min = 0, max, hint,
+  label, value, onChange, unit = '만원', max, hint,
 }: Props) {
   const [focused, setFocused] = useState(false);
   // 타이핑 중간 상태를 로컬에서 관리 — 외부 value와 분리

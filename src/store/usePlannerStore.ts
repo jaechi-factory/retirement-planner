@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import type { PlannerInputs, AssetAllocation, DebtAllocation } from '../types/inputs';
 import type { CalculationResult, Verdict } from '../types/calculation';
 import { DEFAULT_INFLATION_RATE, DEFAULT_INCOME_GROWTH_RATE, DEFAULT_ASSET_RETURNS } from '../utils/constants';
-import { calcTotalAsset, calcTotalDebt, calcWeightedReturn, calcTotalAnnualRepayment, calcDebtAnnualPayment } from '../engine/assetWeighting';
+import { calcTotalAsset, calcTotalDebt, calcWeightedReturn, calcTotalAnnualRepayment } from '../engine/assetWeighting';
 import { simulate } from '../engine/calculator';
 import { findMaxSustainableMonthly } from '../engine/binarySearch';
 import { judgeVerdict } from '../engine/verdictEngine';
