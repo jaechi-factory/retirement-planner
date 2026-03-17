@@ -13,6 +13,7 @@ export interface CalculationResult {
   annualNetSavings: number;    // 연간 순저축액 (만원)
   annualChildExpense: number;  // 자녀 연지출 (만원)
   requiredMonthlyAtRetirement: number; // 은퇴시점 필요 월생활비 (만원)
+  liquidRatio: number;         // 유동자산 비율 (realEstate 제외, 0~1)
 
   // 역산 결과
   possibleMonthly: number;     // 가능한 월 생활비 (만원, 현재가치)

@@ -15,10 +15,11 @@ export function simulate(
 ): YearlySnapshot[] {
   const { goal, status, assets, debts, children } = inputs;
   const { retirementAge, lifeExpectancy, inflationRate } = goal;
-  const { currentAge, annualIncome, incomeGrowthRate, annualExpense } = status;
+  const { currentAge, annualIncome, incomeGrowthRate, annualExpense, expenseGrowthRate } = status;
 
   const inflationDecimal = inflationRate / 100;
   const incomeGrowthDecimal = incomeGrowthRate / 100;
+  const expenseGrowthDecimal = expenseGrowthRate / 100;
   const weightedReturnDecimal = calcWeightedReturn(assets) / 100;
 
   const annualChildExpense = children.hasChildren
@@ -54,7 +55,9 @@ export function simulate(
       if (!isRetired) {
         const thisYearIncome =
           annualIncome * Math.pow(1 + incomeGrowthDecimal, yearsFromNow - 1);
-        const thisYearExpense = annualExpense;
+        // 은퇴 전 지출도 매년 expenseGrowthRate만큼 증가 (기본값: 물가상승률)
+        const thisYearExpense =
+          annualExpense * Math.pow(1 + expenseGrowthDecimal, yearsFromNow - 1);
 
         currentGrossAsset =
           currentGrossAsset * (1 + weightedReturnDecimal) +

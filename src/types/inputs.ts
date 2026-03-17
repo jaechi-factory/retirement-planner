@@ -10,6 +10,7 @@ export interface CurrentStatus {
   annualIncome: number;        // 연수입 (만원)
   incomeGrowthRate: number;    // 수입증가율 (%)
   annualExpense: number;       // 연소비 (만원)
+  expenseGrowthRate: number;   // 은퇴 전 지출 증가율 (%)
 }
 
 export interface AssetItem {

@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import type { PlannerInputs, AssetAllocation, DebtAllocation } from '../types/inputs';
 import type { CalculationResult, Verdict } from '../types/calculation';
-import { DEFAULT_INFLATION_RATE, DEFAULT_INCOME_GROWTH_RATE, DEFAULT_ASSET_RETURNS } from '../utils/constants';
+import { DEFAULT_INFLATION_RATE, DEFAULT_INCOME_GROWTH_RATE, DEFAULT_EXPENSE_GROWTH_RATE, DEFAULT_ASSET_RETURNS } from '../utils/constants';
 import { calcTotalAsset, calcTotalDebt, calcWeightedReturn, calcTotalAnnualRepayment } from '../engine/assetWeighting';
 import { simulate } from '../engine/calculator';
 import { findMaxSustainableMonthly } from '../engine/binarySearch';
@@ -19,6 +19,7 @@ const defaultInputs: PlannerInputs = {
     annualIncome: 0,
     incomeGrowthRate: DEFAULT_INCOME_GROWTH_RATE,
     annualExpense: 0,
+    expenseGrowthRate: DEFAULT_EXPENSE_GROWTH_RATE,
   },
   assets: {
     cash:       { amount: 0, expectedReturn: DEFAULT_ASSET_RETURNS.cash },
@@ -52,16 +53,22 @@ function runCalculation(inputs: PlannerInputs): CalculationResult {
     goal.lifeExpectancy <= 0 ||
     goal.targetMonthly <= 0;
 
+  const earlyTotalAsset = calcTotalAsset(assets);
+  const earlyLiquidRatio = earlyTotalAsset > 0
+    ? (earlyTotalAsset - assets.realEstate.amount) / earlyTotalAsset
+    : 1;
+
   if (requiredFieldsMissing) {
     return {
-      totalAsset: calcTotalAsset(assets),
+      totalAsset: earlyTotalAsset,
       totalDebt: calcTotalDebt(debts),
-      netWorth: calcTotalAsset(assets) - calcTotalDebt(debts),
+      netWorth: earlyTotalAsset - calcTotalDebt(debts),
       weightedReturn: 0, annualNetSavings: 0,
       annualChildExpense: 0, requiredMonthlyAtRetirement: 0,
+      liquidRatio: earlyLiquidRatio,
       possibleMonthly: 0, yearlySnapshots: [],
       isValid: false,
-      errorMessage: null,  // 에러가 아니라 단순히 입력 중
+      errorMessage: null,
     };
   }
 
@@ -70,11 +77,12 @@ function runCalculation(inputs: PlannerInputs): CalculationResult {
     goal.lifeExpectancy <= goal.retirementAge
   ) {
     return {
-      totalAsset: calcTotalAsset(assets),
+      totalAsset: earlyTotalAsset,
       totalDebt: calcTotalDebt(debts),
-      netWorth: calcTotalAsset(assets) - calcTotalDebt(debts),
+      netWorth: earlyTotalAsset - calcTotalDebt(debts),
       weightedReturn: 0, annualNetSavings: 0,
       annualChildExpense: 0, requiredMonthlyAtRetirement: 0,
+      liquidRatio: earlyLiquidRatio,
       possibleMonthly: 0, yearlySnapshots: [],
       isValid: false,
       errorMessage: '은퇴 나이는 현재 나이보다, 기대수명은 은퇴 나이보다 커야 해요.',
@@ -85,7 +93,11 @@ function runCalculation(inputs: PlannerInputs): CalculationResult {
   const totalDebt = calcTotalDebt(debts);
   const netWorth = totalAsset - totalDebt;
   const weightedReturn = calcWeightedReturn(assets);
+  // 유동자산 비율: realEstate 제외 (현금화 불가 비유동자산)
+  const liquidAsset = totalAsset - assets.realEstate.amount;
+  const liquidRatio = totalAsset > 0 ? liquidAsset / totalAsset : 1;
   const totalAnnualRepayment = calcTotalAnnualRepayment(debts);
+  // 자녀 연지출: 표시용 (hasChildren이면 항상 보여줌)
   const annualChildExpense = children.hasChildren
     ? children.count * children.monthlyPerChild * 12
     : 0;
@@ -95,8 +107,12 @@ function runCalculation(inputs: PlannerInputs): CalculationResult {
   const requiredMonthlyAtRetirement =
     goal.targetMonthly * Math.pow(1 + inflationDecimal, yearsToRetirement);
 
-  // 시뮬레이션과 일치하도록 자녀 지출도 포함
-  const annualNetSavings = status.annualIncome - status.annualExpense - totalAnnualRepayment - annualChildExpense;
+  // 순저축 계산: 자녀가 이미 독립했으면 자녀비 차감 안 함 (시뮬레이션과 동일 조건)
+  const childExpenseForSavings =
+    children.hasChildren && status.currentAge <= children.independenceAge
+      ? annualChildExpense
+      : 0;
+  const annualNetSavings = status.annualIncome - status.annualExpense - totalAnnualRepayment - childExpenseForSavings;
 
   const possibleMonthly = findMaxSustainableMonthly(inputs);
   const yearlySnapshots = simulate(inputs, possibleMonthly);
@@ -109,6 +125,7 @@ function runCalculation(inputs: PlannerInputs): CalculationResult {
     annualNetSavings,
     annualChildExpense,
     requiredMonthlyAtRetirement,
+    liquidRatio,
     possibleMonthly,
     yearlySnapshots,
     isValid: true,

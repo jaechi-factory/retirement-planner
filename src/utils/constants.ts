@@ -1,5 +1,6 @@
 export const DEFAULT_INFLATION_RATE = 2.5;
 export const DEFAULT_INCOME_GROWTH_RATE = 2.0;
+export const DEFAULT_EXPENSE_GROWTH_RATE = 2.5; // 기본값: 물가상승률과 동일
 
 export const DEFAULT_ASSET_RETURNS = {
   cash: 2.0,

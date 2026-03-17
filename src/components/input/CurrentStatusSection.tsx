@@ -27,11 +27,18 @@ export default function CurrentStatusSection() {
         value={status.incomeGrowthRate}
         onChange={(v) => setStatus({ incomeGrowthRate: v })}
       />
-      <NumberInput
-        label="연 소비"
-        value={status.annualExpense}
-        onChange={(v) => setStatus({ annualExpense: v })}
-      />
+      <div style={{ display: 'grid', gridTemplateColumns: '3fr 2fr', gap: 8 }}>
+        <NumberInput
+          label="연 소비"
+          value={status.annualExpense}
+          onChange={(v) => setStatus({ annualExpense: v })}
+        />
+        <RateInput
+          label="지출 증가율 (연)"
+          value={status.expenseGrowthRate}
+          onChange={(v) => setStatus({ expenseGrowthRate: v })}
+        />
+      </div>
     </SectionCard>
   );
 }
