@@ -42,7 +42,7 @@ export default function CurrentStatusSection() {
           />
         </div>
         <p style={{ fontSize: 12, color: 'var(--tds-gray-400)', margin: 0 }}>
-          매년 물가가 오르는 만큼은 포함해 주세요. 보통 최소 2~3% 이상 권장해요.
+          같은 수준의 소비를 원한다면 최소 물가 상승률 이상 입력해주세요. 물가는 매년 3% 이상 올라요.
         </p>
       </div>
     </SectionCard>
