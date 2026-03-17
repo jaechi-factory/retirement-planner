@@ -202,7 +202,18 @@ export const usePlannerStore = create<PlannerStore>((set, get) => ({
   ...computeState(defaultInputs),
 
   setGoal: (partial) => {
-    const inputs: PlannerInputs = { ...get().inputs, goal: { ...get().inputs.goal, ...partial } };
+    const current = get().inputs;
+    let newPension = current.pension;
+    // 은퇴 나이가 바뀌면 퇴직/개인연금 개시 나이를 max(55, retirementAge)로 자동 갱신
+    if (partial.retirementAge !== undefined && partial.retirementAge > 0) {
+      const newStartAge = Math.max(55, partial.retirementAge);
+      newPension = {
+        ...newPension,
+        retirementPension: { ...newPension.retirementPension, startAge: newStartAge },
+        privatePension: { ...newPension.privatePension, startAge: newStartAge },
+      };
+    }
+    const inputs: PlannerInputs = { ...current, goal: { ...current.goal, ...partial }, pension: newPension };
     set(computeState(inputs));
   },
   setStatus: (partial) => {

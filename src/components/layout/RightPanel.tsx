@@ -3,7 +3,7 @@ import StatCard from '../analysis/StatCard';
 import AssetProjectionChart from '../analysis/AssetProjectionChart';
 import InsightSentences from '../analysis/InsightSentences';
 import { formatEok, formatPercent } from '../../utils/format';
-import { getPensionBreakdown } from '../../engine/pensionEstimation';
+import { getPensionBreakdown, getPensionTimeline } from '../../engine/pensionEstimation';
 
 export default function RightPanel() {
   const { inputs, result, verdict } = usePlannerStore();
@@ -22,6 +22,14 @@ export default function RightPanel() {
     inputs.status.annualIncome,
   );
   const coveragePct = Math.round(result.pensionCoverageRate * 100);
+
+  const timeline = getPensionTimeline(
+    inputs.pension,
+    inputs.status.currentAge,
+    inputs.goal.retirementAge,
+    inputs.status.annualIncome,
+    inputs.goal.targetMonthly,
+  );
 
   return (
     <div
@@ -99,7 +107,7 @@ export default function RightPanel() {
               월 {result.totalMonthlyPensionTodayValue.toLocaleString('ko-KR')}만원
             </div>
             <div style={{ fontSize: 11, color: 'var(--tds-gray-400)', marginTop: 2 }}>
-              국민 + 퇴직 + 개인연금 합산 · 현재가치
+              연금 합산 · 현재가치 기준
             </div>
           </div>
           <div
@@ -116,15 +124,22 @@ export default function RightPanel() {
           </div>
         </div>
 
+        <div style={{ fontSize: 11, color: 'var(--tds-gray-400)', marginBottom: 10 }}>
+          목표 생활비 중 연금이 커버하는 비중이에요
+        </div>
+
         {/* 항목별 분해 */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 12 }}>
           {[
-            { label: '국민연금', value: pensionBreakdown.publicMonthly, enabled: inputs.pension.publicPension.enabled },
-            { label: '퇴직연금', value: pensionBreakdown.retirementMonthly, enabled: inputs.pension.retirementPension.enabled },
-            { label: '개인연금', value: pensionBreakdown.privateMonthly, enabled: inputs.pension.privatePension.enabled },
-          ].map(({ label, value, enabled }) => (
+            { label: '국민연금', value: pensionBreakdown.publicMonthly, enabled: inputs.pension.publicPension.enabled, startAge: inputs.pension.publicPension.startAge },
+            { label: '퇴직연금', value: pensionBreakdown.retirementMonthly, enabled: inputs.pension.retirementPension.enabled, startAge: inputs.pension.retirementPension.startAge },
+            { label: '개인연금', value: pensionBreakdown.privateMonthly, enabled: inputs.pension.privatePension.enabled, startAge: inputs.pension.privatePension.startAge },
+          ].map(({ label, value, enabled, startAge }) => (
             <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: 12, color: 'var(--tds-gray-500)' }}>{label}</span>
+              <span style={{ fontSize: 12, color: 'var(--tds-gray-500)' }}>
+                {label}
+                {enabled && <span style={{ fontSize: 10, color: 'var(--tds-gray-300)', marginLeft: 4 }}>({startAge}세~)</span>}
+              </span>
               <span style={{ fontSize: 13, fontWeight: 600, color: enabled ? 'var(--tds-gray-900)' : 'var(--tds-gray-300)' }}>
                 {enabled ? `월 ${value.toLocaleString('ko-KR')}만원` : '미반영'}
               </span>
@@ -132,10 +147,80 @@ export default function RightPanel() {
           ))}
         </div>
 
-        <p style={{ fontSize: 11, color: 'var(--tds-gray-300)', margin: '10px 0 0' }}>
-          평균 가정 기반 추정치 · 입력한 값이 있으면 해당 값 우선 적용
+        <p style={{ fontSize: 11, color: 'var(--tds-gray-300)', margin: '0 0 0' }}>
+          평균 가정 기반 추정치 · 직접 입력값이 있으면 우선 적용
         </p>
       </div>
+
+      {/* 연금 개시 타임라인 */}
+      {timeline.length > 0 && (
+        <div
+          style={{
+            background: 'var(--tds-white)',
+            borderRadius: 16,
+            padding: '20px 16px',
+            boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+            marginBottom: 12,
+          }}
+        >
+          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--tds-gray-900)', marginBottom: 4 }}>
+            연금 개시 타임라인
+          </div>
+          <div style={{ fontSize: 11, color: 'var(--tds-gray-400)', marginBottom: 14 }}>
+            연금이 시작되면 부족한 생활비를 일부 메워줘요
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+            {timeline.map((ev, i) => {
+              const beforePct = Math.round(ev.coverageRateBefore * 100);
+              const afterPct = Math.round(ev.coverageRateAfter * 100);
+              const isLast = i === timeline.length - 1;
+
+              return (
+                <div key={`${ev.age}-${ev.pensionType}`} style={{ display: 'flex', gap: 12 }}>
+                  {/* 타임라인 라인 */}
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: 20, flexShrink: 0 }}>
+                    <div style={{
+                      width: 10, height: 10, borderRadius: '50%', marginTop: 3,
+                      background: 'var(--tds-blue-500)', flexShrink: 0,
+                    }} />
+                    {!isLast && (
+                      <div style={{ width: 2, flex: 1, background: 'var(--tds-gray-100)', minHeight: 20, marginTop: 2 }} />
+                    )}
+                  </div>
+
+                  {/* 내용 */}
+                  <div style={{ paddingBottom: isLast ? 0 : 16, flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--tds-gray-900)' }}>
+                        {ev.age}세
+                      </span>
+                      <span style={{
+                        fontSize: 10, fontWeight: 600, padding: '1px 7px', borderRadius: 20,
+                        background: 'var(--tds-blue-50)', color: 'var(--tds-blue-500)',
+                      }}>
+                        {ev.pensionType}
+                      </span>
+                    </div>
+                    <div style={{ fontSize: 12, color: 'var(--tds-gray-700)', marginTop: 2 }}>
+                      +월 {ev.monthlyTodayValue.toLocaleString('ko-KR')}만원 시작
+                    </div>
+                    <div style={{ fontSize: 11, color: 'var(--tds-gray-400)', marginTop: 1 }}>
+                      목표 커버율 {beforePct}%
+                      <span style={{ color: 'var(--tds-blue-500)', fontWeight: 700 }}> → {afterPct}%</span>
+                      {afterPct > beforePct && (
+                        <span style={{ color: 'var(--tds-green-500)', marginLeft: 4 }}>
+                          (+{afterPct - beforePct}%p)
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* 차트 */}
       <div

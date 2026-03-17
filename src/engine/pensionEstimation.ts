@@ -1,19 +1,15 @@
 import type { PensionInputs, RetirementPensionInput, PrivatePensionInput } from '../types/pension';
 
 // ─── 내부 상수 ────────────────────────────────────────────────────────────────
-const DEFAULT_NET_TO_GROSS_RATIO = 0.78;          // 세후→세전 역산 비율
-const ASSUMED_CAREER_START_AGE = 25;              // 국민연금 가입 시작 나이 가정
-const NPS_MIN_MONTHLY = 40;                       // 기준소득월액 하한 (만원 = 40만원)
-const NPS_MAX_MONTHLY = 637;                      // 기준소득월액 상한 (만원 = 637만원)
-const NPS_BASE_REPLACEMENT_RATE_40Y = 0.43;       // 40년 가입 시 소득대체율
-const RETIREMENT_CONTRIBUTION_RATE = 1 / 12;     // 퇴직연금 연 적립률 (연봉의 1/12)
+const DEFAULT_NET_TO_GROSS_RATIO = 0.78;
+const ASSUMED_CAREER_START_AGE = 25;
+const NPS_MIN_MONTHLY = 40;    // 40만원 (하한)
+const NPS_MAX_MONTHLY = 637;   // 637만원 (상한)
+const NPS_BASE_REPLACEMENT_RATE_40Y = 0.43;
+const RETIREMENT_CONTRIBUTION_RATE = 1 / 12;
 
 // ─── 유틸리티 ─────────────────────────────────────────────────────────────────
 
-/**
- * 미래가치 계산 (만원)
- * FV = PV*(1+r)^n + annualContrib * ((1+r)^n - 1) / r
- */
 function futureValue(pv: number, annualContrib: number, annualRatePercent: number, years: number): number {
   if (years <= 0) return pv;
   const r = annualRatePercent / 100;
@@ -22,10 +18,6 @@ function futureValue(pv: number, annualContrib: number, annualRatePercent: numbe
   return pv * factor + annualContrib * (factor - 1) / r;
 }
 
-/**
- * 연금화 — 적립금에서 월 수령액 계산 (만원)
- * PMT = PV * m / (1 - (1+m)^-n)
- */
 export function annuitize(totalBalance: number, annualPayoutRatePercent: number, payoutYears: number): number {
   if (totalBalance <= 0 || payoutYears <= 0) return 0;
   const m = annualPayoutRatePercent / 100 / 12;
@@ -36,10 +28,6 @@ export function annuitize(totalBalance: number, annualPayoutRatePercent: number,
 
 // ─── 추정 함수 ────────────────────────────────────────────────────────────────
 
-/**
- * 국민연금 월 수령액 자동 추정 (현재가치, 만원)
- * - 세후 소득 → 세전 역산 → 기준소득월액 클램프 → 가입기간 비례 소득대체율
- */
 export function estimatePublicPension(
   annualNetIncome: number,
   _currentAge: number,
@@ -54,11 +42,6 @@ export function estimatePublicPension(
   return Math.round(pensionableMonthly * replacementRate);
 }
 
-/**
- * 퇴직연금 월 수령액 자동 추정 (현재가치, 만원)
- * - 세전 연봉 / 12 를 연간 기여금으로 가정
- * - currentBalance 가 있으면 정확도 상승
- */
 export function estimateRetirementPension(
   p: RetirementPensionInput,
   annualNetIncome: number,
@@ -69,16 +52,11 @@ export function estimateRetirementPension(
   const annualContrib = grossAnnualIncome * RETIREMENT_CONTRIBUTION_RATE;
   const yearsToRetirement = Math.max(retirementAge - currentAge, 0);
   const balanceAtRetirement = futureValue(p.currentBalance, annualContrib, p.accumulationReturnRate, yearsToRetirement);
-  // 은퇴 후 연금 개시 전까지 추가 운용
   const yearsToStart = Math.max(p.startAge - retirementAge, 0);
   const balanceAtStart = balanceAtRetirement * Math.pow(1 + p.accumulationReturnRate / 100, yearsToStart);
   return Math.round(annuitize(balanceAtStart, p.payoutReturnRate, p.payoutYears));
 }
 
-/**
- * 개인연금 월 수령액 추정 (현재가치, 만원)
- * - 적립금 + 월납입액 → 개시 시점 적립금 → 연금화
- */
 export function estimatePrivatePension(
   p: PrivatePensionInput,
   currentAge: number,
@@ -89,9 +67,80 @@ export function estimatePrivatePension(
   return Math.round(annuitize(balance, p.payoutReturnRate, p.payoutYears));
 }
 
+// ─── 메타 데이터 (근거·범위) ──────────────────────────────────────────────────
+
+/** 국민연금 자동 추정 + 범위 + 근거 */
+export interface PublicPensionEstimate {
+  base: number;
+  conservative: number;   // base * 0.8
+  optimistic: number;     // base * 1.2
+  confidenceLevel: 'low' | 'medium' | 'high';
+  assumptions: string[];
+  pensionableMonthly: number;
+  contributionYears: number;
+}
+
+export function estimatePublicPensionWithMeta(
+  annualNetIncome: number,
+  retirementAge: number,
+): PublicPensionEstimate {
+  const grossAnnualIncome = annualNetIncome / DEFAULT_NET_TO_GROSS_RATIO;
+  const grossMonthlyIncome = grossAnnualIncome / 12;
+  const pensionableMonthly = Math.min(Math.max(grossMonthlyIncome, NPS_MIN_MONTHLY), NPS_MAX_MONTHLY);
+  const contributionEndAge = Math.min(60, retirementAge);
+  const contributionYears = Math.min(Math.max(contributionEndAge - ASSUMED_CAREER_START_AGE, 10), 40);
+  const replacementRate = NPS_BASE_REPLACEMENT_RATE_40Y * (contributionYears / 40);
+  const base = Math.round(pensionableMonthly * replacementRate);
+  const conservative = Math.round(base * 0.8);
+  const optimistic = Math.round(base * 1.2);
+
+  const assumptions: string[] = [
+    `세후 소득을 세전으로 역산했어요 (역산 비율 ${Math.round(DEFAULT_NET_TO_GROSS_RATIO * 100)}%)`,
+    `국민연금 가입 시작 나이를 ${ASSUMED_CAREER_START_AGE}세로 가정했어요`,
+    `예상 가입기간 ${contributionYears}년 (${ASSUMED_CAREER_START_AGE}세~${contributionEndAge}세)`,
+    `기준소득월액 ${pensionableMonthly.toLocaleString('ko-KR')}만원 적용 (상한 ${NPS_MAX_MONTHLY}만원)`,
+    `소득대체율 ${Math.round(replacementRate * 100)}% (40년 기준 43%에서 가입기간 비례 적용)`,
+  ];
+
+  return { base, conservative, optimistic, confidenceLevel: 'low', assumptions, pensionableMonthly, contributionYears };
+}
+
+/** 퇴직연금 자동 추정 근거 */
+export interface RetirementPensionMeta {
+  assumptions: string[];
+  annualContrib: number;
+  balanceAtRetirement: number;
+  balanceAtStart: number;
+}
+
+export function getRetirementPensionMeta(
+  p: RetirementPensionInput,
+  annualNetIncome: number,
+  currentAge: number,
+  retirementAge: number,
+): RetirementPensionMeta {
+  const grossAnnualIncome = annualNetIncome / DEFAULT_NET_TO_GROSS_RATIO;
+  const annualContrib = grossAnnualIncome * RETIREMENT_CONTRIBUTION_RATE;
+  const yearsToRetirement = Math.max(retirementAge - currentAge, 0);
+  const balanceAtRetirement = futureValue(p.currentBalance, annualContrib, p.accumulationReturnRate, yearsToRetirement);
+  const yearsToStart = Math.max(p.startAge - retirementAge, 0);
+  const balanceAtStart = balanceAtRetirement * Math.pow(1 + p.accumulationReturnRate / 100, yearsToStart);
+
+  const assumptions: string[] = [
+    `연봉의 1/12 (연 ${Math.round(annualContrib).toLocaleString('ko-KR')}만원)가 매년 적립된다고 가정했어요`,
+    p.currentBalance > 0
+      ? `현재 적립금 ${p.currentBalance.toLocaleString('ko-KR')}만원을 반영했어요`
+      : '현재 적립금을 입력하면 더 정확해져요',
+    `은퇴 시점 예상 적립금 약 ${Math.round(balanceAtRetirement).toLocaleString('ko-KR')}만원`,
+    `개시 시점(${p.startAge}세) 예상 적립금 약 ${Math.round(balanceAtStart).toLocaleString('ko-KR')}만원`,
+    `수령 기간 ${p.payoutYears}년 · 수령 수익률 ${p.payoutReturnRate}% 가정`,
+  ];
+
+  return { assumptions, annualContrib, balanceAtRetirement, balanceAtStart };
+}
+
 // ─── 공통 헬퍼 ───────────────────────────────────────────────────────────────
 
-/** 국민연금 최종 월액 (auto/manual 반영) */
 function resolvePublicMonthly(
   pension: PensionInputs,
   annualNetIncome: number,
@@ -104,7 +153,6 @@ function resolvePublicMonthly(
   return estimatePublicPension(annualNetIncome, currentAge, retirementAge);
 }
 
-/** 퇴직연금 최종 월액 */
 function resolveRetirementMonthly(
   pension: PensionInputs,
   annualNetIncome: number,
@@ -117,7 +165,6 @@ function resolveRetirementMonthly(
   return estimateRetirementPension(p, annualNetIncome, currentAge, retirementAge);
 }
 
-/** 개인연금 최종 월액 */
 function resolvePrivateMonthly(
   pension: PensionInputs,
   currentAge: number,
@@ -130,11 +177,6 @@ function resolvePrivateMonthly(
 
 // ─── 시뮬레이션 통합 ──────────────────────────────────────────────────────────
 
-/**
- * 특정 나이에 받는 연금 연간 수입 (명목가치, 만원)
- * - 국민연금: inflation-indexed (현재가치에서 물가상승률로 성장)
- * - 퇴직/개인연금: not-indexed (개시 시점 명목가치로 고정)
- */
 export function getAnnualPensionIncomeForAge(
   pension: PensionInputs,
   currentAge: number,
@@ -146,7 +188,6 @@ export function getAnnualPensionIncomeForAge(
   const inflation = inflationRate / 100;
   let total = 0;
 
-  // 국민연금 (inflation-indexed: 수령기간 동안 물가 반영 증가)
   const pub = pension.publicPension;
   if (pub.enabled && targetAge >= pub.startAge) {
     const monthlyToday = resolvePublicMonthly(pension, annualNetIncome, currentAge, retirementAge);
@@ -154,7 +195,6 @@ export function getAnnualPensionIncomeForAge(
     total += nominalMonthly * 12;
   }
 
-  // 퇴직연금 (not-indexed: 개시 시점 명목가치 고정)
   const ret = pension.retirementPension;
   const retEndAge = ret.startAge + ret.payoutYears;
   if (ret.enabled && targetAge >= ret.startAge && targetAge < retEndAge) {
@@ -163,7 +203,6 @@ export function getAnnualPensionIncomeForAge(
     total += nominalMonthly * 12;
   }
 
-  // 개인연금 (not-indexed: 개시 시점 명목가치 고정)
   const priv = pension.privatePension;
   const privEndAge = priv.startAge + priv.payoutYears;
   if (priv.enabled && targetAge >= priv.startAge && targetAge < privEndAge) {
@@ -175,9 +214,6 @@ export function getAnnualPensionIncomeForAge(
   return total;
 }
 
-/**
- * 연금 월 수령액 합계 (현재가치, 만원) — 결과 표시용
- */
 export function getTotalMonthlyPensionTodayValue(
   pension: PensionInputs,
   currentAge: number,
@@ -191,9 +227,6 @@ export function getTotalMonthlyPensionTodayValue(
   );
 }
 
-/**
- * 각 연금 월액을 개별로 반환 — UI 표시용
- */
 export function getPensionBreakdown(
   pension: PensionInputs,
   currentAge: number,
@@ -205,4 +238,58 @@ export function getPensionBreakdown(
     retirementMonthly: resolveRetirementMonthly(pension, annualNetIncome, currentAge, retirementAge),
     privateMonthly: resolvePrivateMonthly(pension, currentAge),
   };
+}
+
+// ─── 타임라인 ─────────────────────────────────────────────────────────────────
+
+export interface PensionEvent {
+  age: number;
+  pensionType: '국민연금' | '퇴직연금' | '개인연금';
+  monthlyTodayValue: number;
+  coverageRateBefore: number;  // 이 연금 시작 직전까지의 누적 커버율 (0~1)
+  coverageRateAfter: number;   // 이 연금 포함 이후의 누적 커버율 (0~1)
+}
+
+/**
+ * 연금 개시 이벤트를 나이 순으로 반환 — 결과 패널 타임라인용
+ */
+export function getPensionTimeline(
+  pension: PensionInputs,
+  currentAge: number,
+  retirementAge: number,
+  annualNetIncome: number,
+  targetMonthly: number,
+): PensionEvent[] {
+  if (targetMonthly <= 0) return [];
+
+  const events: Omit<PensionEvent, 'coverageRateBefore' | 'coverageRateAfter'>[] = [];
+
+  const pub = pension.publicPension;
+  if (pub.enabled) {
+    const m = resolvePublicMonthly(pension, annualNetIncome, currentAge, retirementAge);
+    if (m > 0) events.push({ age: pub.startAge, pensionType: '국민연금', monthlyTodayValue: m });
+  }
+
+  const ret = pension.retirementPension;
+  if (ret.enabled) {
+    const m = resolveRetirementMonthly(pension, annualNetIncome, currentAge, retirementAge);
+    if (m > 0) events.push({ age: ret.startAge, pensionType: '퇴직연금', monthlyTodayValue: m });
+  }
+
+  const priv = pension.privatePension;
+  if (priv.enabled) {
+    const m = resolvePrivateMonthly(pension, currentAge);
+    if (m > 0) events.push({ age: priv.startAge, pensionType: '개인연금', monthlyTodayValue: m });
+  }
+
+  events.sort((a, b) => a.age - b.age);
+
+  // 누적 커버율 계산
+  let cumulativeMonthly = 0;
+  return events.map(ev => {
+    const before = cumulativeMonthly / targetMonthly;
+    cumulativeMonthly += ev.monthlyTodayValue;
+    const after = cumulativeMonthly / targetMonthly;
+    return { ...ev, coverageRateBefore: before, coverageRateAfter: after };
+  });
 }
