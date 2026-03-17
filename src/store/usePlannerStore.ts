@@ -1,0 +1,165 @@
+import { create } from 'zustand';
+import type { PlannerInputs, AssetAllocation, DebtAllocation } from '../types/inputs';
+import type { CalculationResult, Verdict } from '../types/calculation';
+import { DEFAULT_INFLATION_RATE, DEFAULT_INCOME_GROWTH_RATE, DEFAULT_ASSET_RETURNS } from '../utils/constants';
+import { calcTotalAsset, calcTotalDebt, calcWeightedReturn, calcTotalAnnualRepayment, calcDebtAnnualPayment } from '../engine/assetWeighting';
+import { simulate } from '../engine/calculator';
+import { findMaxSustainableMonthly } from '../engine/binarySearch';
+import { judgeVerdict } from '../engine/verdictEngine';
+
+const defaultInputs: PlannerInputs = {
+  goal: {
+    retirementAge: 0,
+    lifeExpectancy: 0,
+    targetMonthly: 0,
+    inflationRate: DEFAULT_INFLATION_RATE,
+  },
+  status: {
+    currentAge: 0,
+    annualIncome: 0,
+    incomeGrowthRate: DEFAULT_INCOME_GROWTH_RATE,
+    annualExpense: 0,
+  },
+  assets: {
+    cash:       { amount: 0, expectedReturn: DEFAULT_ASSET_RETURNS.cash },
+    deposit:    { amount: 0, expectedReturn: DEFAULT_ASSET_RETURNS.deposit },
+    stock_kr:   { amount: 0, expectedReturn: DEFAULT_ASSET_RETURNS.stock_kr },
+    stock_us:   { amount: 0, expectedReturn: DEFAULT_ASSET_RETURNS.stock_us },
+    bond:       { amount: 0, expectedReturn: DEFAULT_ASSET_RETURNS.bond },
+    crypto:     { amount: 0, expectedReturn: DEFAULT_ASSET_RETURNS.crypto },
+    realEstate: { amount: 0, expectedReturn: DEFAULT_ASSET_RETURNS.realEstate },
+  },
+  debts: {
+    mortgage:   { balance: 0, interestRate: 0, repaymentType: 'equal_payment', repaymentYears: 0 },
+    creditLoan: { balance: 0, interestRate: 0, repaymentType: 'equal_payment', repaymentYears: 0 },
+    otherLoan:  { balance: 0, interestRate: 0, repaymentType: 'equal_payment', repaymentYears: 0 },
+  },
+  children: {
+    hasChildren: false,
+    count: 0,
+    monthlyPerChild: 0,
+    independenceAge: 0,
+  },
+};
+
+function runCalculation(inputs: PlannerInputs): CalculationResult {
+  const { goal, status, assets, debts, children } = inputs;
+
+  // 필수 항목이 하나라도 0이면 계산하지 않음
+  const requiredFieldsMissing =
+    status.currentAge <= 0 ||
+    goal.retirementAge <= 0 ||
+    goal.lifeExpectancy <= 0 ||
+    goal.targetMonthly <= 0;
+
+  if (requiredFieldsMissing) {
+    return {
+      totalAsset: calcTotalAsset(assets),
+      totalDebt: calcTotalDebt(debts),
+      netWorth: calcTotalAsset(assets) - calcTotalDebt(debts),
+      weightedReturn: 0, annualNetSavings: 0,
+      annualChildExpense: 0, requiredMonthlyAtRetirement: 0,
+      possibleMonthly: 0, yearlySnapshots: [],
+      isValid: false,
+      errorMessage: null,  // 에러가 아니라 단순히 입력 중
+    };
+  }
+
+  if (
+    goal.retirementAge <= status.currentAge ||
+    goal.lifeExpectancy <= goal.retirementAge
+  ) {
+    return {
+      totalAsset: calcTotalAsset(assets),
+      totalDebt: calcTotalDebt(debts),
+      netWorth: calcTotalAsset(assets) - calcTotalDebt(debts),
+      weightedReturn: 0, annualNetSavings: 0,
+      annualChildExpense: 0, requiredMonthlyAtRetirement: 0,
+      possibleMonthly: 0, yearlySnapshots: [],
+      isValid: false,
+      errorMessage: '은퇴 나이는 현재 나이보다, 기대수명은 은퇴 나이보다 커야 해요.',
+    };
+  }
+
+  const totalAsset = calcTotalAsset(assets);
+  const totalDebt = calcTotalDebt(debts);
+  const netWorth = totalAsset - totalDebt;
+  const weightedReturn = calcWeightedReturn(assets);
+  const totalAnnualRepayment = calcTotalAnnualRepayment(debts);
+  const annualChildExpense = children.hasChildren
+    ? children.count * children.monthlyPerChild * 12
+    : 0;
+
+  const yearsToRetirement = goal.retirementAge - status.currentAge;
+  const inflationDecimal = goal.inflationRate / 100;
+  const requiredMonthlyAtRetirement =
+    goal.targetMonthly * Math.pow(1 + inflationDecimal, yearsToRetirement);
+
+  const annualNetSavings = status.annualIncome - status.annualExpense - totalAnnualRepayment;
+
+  const possibleMonthly = findMaxSustainableMonthly(inputs);
+  const yearlySnapshots = simulate(inputs, possibleMonthly);
+
+  return {
+    totalAsset,
+    totalDebt,
+    netWorth,
+    weightedReturn,
+    annualNetSavings,
+    annualChildExpense,
+    requiredMonthlyAtRetirement,
+    possibleMonthly,
+    yearlySnapshots,
+    isValid: true,
+  };
+}
+
+interface PlannerStore {
+  inputs: PlannerInputs;
+  result: CalculationResult;
+  verdict: Verdict | null;
+  setGoal: (partial: Partial<PlannerInputs['goal']>) => void;
+  setStatus: (partial: Partial<PlannerInputs['status']>) => void;
+  setAsset: (key: keyof AssetAllocation, partial: Partial<AssetAllocation[keyof AssetAllocation]>) => void;
+  setDebt: (key: keyof DebtAllocation, partial: Partial<DebtAllocation[keyof DebtAllocation]>) => void;
+  setChildren: (partial: Partial<PlannerInputs['children']>) => void;
+}
+
+const computeState = (inputs: PlannerInputs): Pick<PlannerStore, 'inputs' | 'result' | 'verdict'> => {
+  const result = runCalculation(inputs);
+  const verdict = result.isValid
+    ? judgeVerdict(inputs.goal.targetMonthly, result.possibleMonthly)
+    : null;
+  return { inputs, result, verdict };
+};
+
+export const usePlannerStore = create<PlannerStore>((set, get) => ({
+  ...computeState(defaultInputs),
+
+  setGoal: (partial) => {
+    const inputs: PlannerInputs = { ...get().inputs, goal: { ...get().inputs.goal, ...partial } };
+    set(computeState(inputs));
+  },
+  setStatus: (partial) => {
+    const inputs: PlannerInputs = { ...get().inputs, status: { ...get().inputs.status, ...partial } };
+    set(computeState(inputs));
+  },
+  setAsset: (key, partial) => {
+    const inputs: PlannerInputs = {
+      ...get().inputs,
+      assets: { ...get().inputs.assets, [key]: { ...get().inputs.assets[key], ...partial } },
+    };
+    set(computeState(inputs));
+  },
+  setDebt: (key, partial) => {
+    const inputs: PlannerInputs = {
+      ...get().inputs,
+      debts: { ...get().inputs.debts, [key]: { ...get().inputs.debts[key], ...partial } },
+    };
+    set(computeState(inputs));
+  },
+  setChildren: (partial) => {
+    const inputs: PlannerInputs = { ...get().inputs, children: { ...get().inputs.children, ...partial } };
+    set(computeState(inputs));
+  },
+}));
