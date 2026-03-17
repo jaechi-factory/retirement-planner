@@ -18,9 +18,10 @@ export default function CurrentStatusSection() {
         max={inputs.goal.retirementAge - 1}
       />
       <NumberInput
-        label="연 수입"
+        label="세후 연소득"
         value={status.annualIncome}
         onChange={(v) => setStatus({ annualIncome: v })}
+        hint="세금·4대보험 공제 후 실수령액 기준 (보너스 포함 시 합산)"
       />
       <RateInput
         label="수입 증가율 (연)"

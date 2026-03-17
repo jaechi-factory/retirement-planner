@@ -27,11 +27,11 @@ export default function InsightSentences({ result, inputs, verdict }: Props) {
 
   if (annualNetSavings > 0) {
     insights.push(
-      `매년 약 ${formatEok(annualNetSavings)}씩 순저축이 쌓이고 있어요.`
+      `세후 소득 기준으로 매년 약 ${formatEok(annualNetSavings)}씩 순저축이 쌓이고 있어요.`
     );
   } else if (annualNetSavings < 0) {
     insights.push(
-      `현재 소비가 수입을 초과하고 있어요. 지출을 조정해보세요.`
+      `현재 소비가 세후 소득을 초과하고 있어요. 지출을 조정해보세요.`
     );
   }
 

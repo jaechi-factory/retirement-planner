@@ -7,8 +7,8 @@ export interface RetirementGoal {
 
 export interface CurrentStatus {
   currentAge: number;          // 현재나이
-  annualIncome: number;        // 연수입 (만원)
-  incomeGrowthRate: number;    // 수입증가율 (%)
+  annualIncome: number;        // 세후 연소득 (만원, 실수령 기준 — 소득세·4대보험 공제 후)
+  incomeGrowthRate: number;    // 수입 증가율 (%)
   annualExpense: number;       // 연소비 (만원)
   expenseGrowthRate: number;   // 은퇴 전 지출 증가율 (%)
 }

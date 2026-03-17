@@ -53,6 +53,7 @@ export default function RightPanel() {
         <StatCard
           label="연간 순저축액"
           value={formatEok(result.annualNetSavings)}
+          sub="세후 소득 기준"
           valueColor={savingsColor}
         />
       </div>
