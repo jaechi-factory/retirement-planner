@@ -18,7 +18,7 @@ export function judgeVerdict(
       bgColor: 'var(--tds-green-50)',
       gap,
     };
-  } else if (ratio >= 0.9) {
+  } else if (gap >= 0) {
     return {
       level: 'good',
       label: '거의 맞췄어요',
