@@ -14,32 +14,32 @@ export function judgeVerdict(
     return {
       level: 'great',
       label: '잘하고 있어요',
-      color: '#00B493',
-      bgColor: '#E8FAF6',
+      color: 'var(--tds-green-500)',
+      bgColor: 'var(--tds-green-50)',
       gap,
     };
   } else if (ratio >= 0.9) {
     return {
       level: 'good',
       label: '거의 맞췄어요',
-      color: '#3182F6',
-      bgColor: '#EBF3FE',
+      color: 'var(--tds-blue-500)',
+      bgColor: 'var(--tds-blue-50)',
       gap,
     };
   } else if (ratio >= 0.75) {
     return {
       level: 'low',
       label: '조금 부족해요',
-      color: '#FF6B00',
-      bgColor: '#FFF3E8',
+      color: 'var(--tds-orange-500)',
+      bgColor: 'var(--tds-orange-50)',
       gap,
     };
   } else {
     return {
       level: 'critical',
       label: '많이 부족해요',
-      color: '#F04452',
-      bgColor: '#FEF0F1',
+      color: 'var(--tds-red-500)',
+      bgColor: 'var(--tds-red-50)',
       gap,
     };
   }
