@@ -15,7 +15,7 @@ export function findMaxSustainableMonthly(inputs: PlannerInputs): number {
   let high = 1000;
   while (isSustainable(simulate(inputs, high))) {
     high *= 2;
-    if (high > 1_000_000) { high = 1_000_000; break; } // 100억/월 상한 (안전장치)
+    if (high > 1_000_000_000) { high = 1_000_000_000; break; } // 안전장치: 월 100억 이상은 사실상 무제한
   }
 
   let low = 0;

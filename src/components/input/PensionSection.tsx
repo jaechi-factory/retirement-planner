@@ -2,11 +2,13 @@ import { useState } from 'react';
 import { usePlannerStore } from '../../store/usePlannerStore';
 import NumberInput from './shared/NumberInput';
 import RateInput from './shared/RateInput';
+import type { PrivatePensionProduct } from '../../types/pension';
 import {
   estimatePublicPensionWithMeta,
   getRetirementPensionMeta,
   estimateRetirementPension,
   estimatePrivatePension,
+  estimatePrivatePensionProducts,
 } from '../../engine/pensionEstimation';
 
 // ─── 공통 스타일 ─────────────────────────────────────────────────────────────
@@ -69,6 +71,18 @@ function AutoBadge() {
   );
 }
 
+// 상한 적용 배지
+function CappedBadge() {
+  return (
+    <span style={{
+      display: 'inline-block', fontSize: 10, fontWeight: 600, padding: '2px 7px',
+      borderRadius: 20, background: 'var(--tds-orange-50, #FFF4EC)', color: 'var(--tds-orange-500)',
+    }}>
+      상한 적용됨
+    </span>
+  );
+}
+
 // 직접 입력 배지
 function ManualBadge() {
   return (
@@ -90,7 +104,7 @@ function PublicPensionCard() {
   const { publicPension } = inputs.pension;
   const { status, goal } = inputs;
 
-  const meta = estimatePublicPensionWithMeta(status.annualIncome, goal.retirementAge);
+  const meta = estimatePublicPensionWithMeta(status.annualIncome, status.currentAge, goal.retirementAge);
   const isAuto = publicPension.mode === 'auto';
   const displayValue = isAuto
     ? meta.base
@@ -115,24 +129,54 @@ function PublicPensionCard() {
       {/* 메인 수치 */}
       {isAuto ? (
         <>
-          {/* 범위 표시 */}
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, margin: '4px 0 2px' }}>
-            <span style={{ fontSize: 22, fontWeight: 800, color: 'var(--tds-blue-500)' }}>
-              월 {meta.base.toLocaleString('ko-KR')}만원
-            </span>
-          </div>
-          <div style={{
-            display: 'flex', gap: 6, alignItems: 'center', margin: '4px 0 6px',
-            fontSize: 11, color: 'var(--tds-gray-400)',
-          }}>
-            <span>보수적 {meta.conservative.toLocaleString('ko-KR')}만원</span>
-            <span style={{ color: 'var(--tds-gray-200)' }}>|</span>
-            <span style={{ fontWeight: 600, color: 'var(--tds-blue-500)' }}>기준 {meta.base.toLocaleString('ko-KR')}만원</span>
-            <span style={{ color: 'var(--tds-gray-200)' }}>|</span>
-            <span>낙관적 {meta.optimistic.toLocaleString('ko-KR')}만원</span>
-          </div>
+          {meta.cappedByIncomeCeiling ? (
+            /* 소득 상한 도달 시: 단일 수치 */
+            <div style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              padding: '10px 12px', borderRadius: 8, margin: '6px 0 8px',
+              background: 'var(--tds-blue-50)',
+            }}>
+              <div>
+                <span style={{ fontSize: 20, fontWeight: 800, color: 'var(--tds-blue-500)' }}>
+                  월 {meta.base.toLocaleString('ko-KR')}만원
+                </span>
+                <div style={{ fontSize: 10, color: 'var(--tds-blue-400)', marginTop: 2 }}>
+                  소득 상한({meta.pensionableMonthly.toLocaleString('ko-KR')}만원) 기준
+                </div>
+              </div>
+              <CappedBadge />
+            </div>
+          ) : (
+            /* 소득 상한 미도달 시: 보수적/중립적/낙관적 범위 */
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4, margin: '6px 0 8px' }}>
+              {[
+                { label: '보수적', value: meta.conservative, isMain: false },
+                { label: '중립적', value: meta.base, isMain: true },
+                { label: '낙관적', value: meta.optimistic, isMain: false },
+              ].map(({ label, value, isMain }) => (
+                <div key={label} style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  padding: '6px 10px', borderRadius: 8,
+                  background: isMain ? 'var(--tds-blue-50)' : 'transparent',
+                }}>
+                  <span style={{
+                    fontSize: 12, fontWeight: isMain ? 700 : 500,
+                    color: isMain ? 'var(--tds-blue-500)' : 'var(--tds-gray-400)',
+                  }}>
+                    {label}
+                  </span>
+                  <span style={{
+                    fontSize: isMain ? 18 : 14, fontWeight: isMain ? 800 : 600,
+                    color: isMain ? 'var(--tds-blue-500)' : 'var(--tds-gray-500)',
+                  }}>
+                    월 {value.toLocaleString('ko-KR')}만원
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
           <div style={{ fontSize: 11, color: 'var(--tds-gray-400)' }}>
-            현재가치 기준 · {publicPension.startAge}세부터 수령 · 실제값은 편차가 클 수 있어요
+            {publicPension.startAge}세부터 수령 · 실제값은 편차가 클 수 있어요
           </div>
         </>
       ) : (
@@ -141,7 +185,7 @@ function PublicPensionCard() {
             월 {displayValue.toLocaleString('ko-KR')}만원
           </div>
           <div style={{ fontSize: 11, color: 'var(--tds-gray-400)' }}>
-            직접 입력값 기준 · {publicPension.startAge}세부터 수령
+            {publicPension.startAge}세부터 수령
           </div>
         </>
       )}
@@ -177,11 +221,11 @@ function PublicPensionCard() {
       <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
         {isAuto && (
           <TextBtn onClick={() => setShowBasis(v => !v)}>
-            {showBasis ? '추정 근거 접기 ▴' : '자동 추정 근거 보기 ▾'}
+            {showBasis ? '접기 ▴' : '왜 이렇게 계산됐나요? ▾'}
           </TextBtn>
         )}
         <TextBtn onClick={() => setShowDetail(v => !v)}>
-          {showDetail ? '접기 ▴' : '설정 더보기 ▾'}
+          {showDetail ? '접기 ▴' : '더 정확하게 계산하기 ▾'}
         </TextBtn>
       </div>
 
@@ -201,6 +245,7 @@ function PublicPensionCard() {
             </div>
           ))}
           <div style={{ fontSize: 10, color: 'var(--tds-gray-400)', marginTop: 6 }}>
+            * 연소득은 세후 입력값을 세전 기준으로 역산해 추정해요<br />
             정확한 수령액은 국민연금공단 홈페이지에서 조회 가능해요
           </div>
         </div>
@@ -227,7 +272,7 @@ function PublicPensionCard() {
             />
             {!isAuto && (
               <NumberInput
-                label="예상 월수령액 (현재가치)"
+                label="예상 월수령액"
                 value={publicPension.manualMonthlyTodayValue}
                 onChange={v => setPension({ publicPension: { ...publicPension, manualMonthlyTodayValue: v } })}
                 unit="만원"
@@ -277,7 +322,7 @@ function RetirementPensionCard() {
         월 {displayValue.toLocaleString('ko-KR')}만원
       </div>
       <div style={{ fontSize: 11, color: 'var(--tds-gray-400)' }}>
-        현재가치 기준 · {startAge}세부터 {retirementPension.payoutYears}년간
+        {startAge}세부터 {retirementPension.payoutYears}년간 수령
         {!hasBalance && isAuto && ' · 적립금 입력 시 더 정확해져요'}
       </div>
 
@@ -307,11 +352,11 @@ function RetirementPensionCard() {
       <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
         {isAuto && (
           <TextBtn onClick={() => setShowBasis(v => !v)}>
-            {showBasis ? '추정 근거 접기 ▴' : '자동 추정 근거 보기 ▾'}
+            {showBasis ? '접기 ▴' : '왜 이렇게 계산됐나요? ▾'}
           </TextBtn>
         )}
         <TextBtn onClick={() => setShowDetail(v => !v)}>
-          {showDetail ? '접기 ▴' : '설정 더보기 ▾'}
+          {showDetail ? '접기 ▴' : '더 정확하게 계산하기 ▾'}
         </TextBtn>
       </div>
 
@@ -383,7 +428,7 @@ function RetirementPensionCard() {
               />
               {!isAuto && (
                 <NumberInput
-                  label="예상 월수령액 (현재가치)"
+                  label="예상 월수령액"
                   value={retirementPension.manualMonthlyTodayValue}
                   onChange={v => setPension({ retirementPension: { ...retirementPension, manualMonthlyTodayValue: v } })}
                   unit="만원"
@@ -397,125 +442,365 @@ function RetirementPensionCard() {
   );
 }
 
+// ─── 개인연금 상품 카드 (상세 모드) ──────────────────────────────────────────
+
+function PrivatePensionProductCard({
+  product,
+  onUpdate,
+  onDelete,
+}: {
+  product: PrivatePensionProduct;
+  onUpdate: (updated: PrivatePensionProduct) => void;
+  onDelete: () => void;
+}) {
+  const [showAdvanced, setShowAdvanced] = useState(false);
+
+  const set = (fields: Partial<PrivatePensionProduct>) => onUpdate({ ...product, ...fields });
+  const setRate = (v: number) => onUpdate({
+    ...product,
+    expectedReturnRate: v,
+    accumulationReturnRate: v,
+    payoutReturnRate: v,
+  });
+
+  return (
+    <div style={{
+      border: '1.5px solid var(--tds-gray-100)',
+      borderRadius: 10,
+      padding: '12px 14px',
+      background: 'var(--tds-white)',
+    }}>
+      {/* 상품 헤더 */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+        <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--tds-gray-900)' }}>{product.label}</span>
+        <button
+          onClick={onDelete}
+          style={{
+            fontSize: 11, color: 'var(--tds-gray-400)', background: 'none',
+            border: '1px solid var(--tds-gray-200)', borderRadius: 6, cursor: 'pointer', padding: '2px 8px',
+          }}
+        >
+          삭제
+        </button>
+      </div>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <Row>
+          <NumberInput
+            label="현재 적립금"
+            value={product.currentBalance}
+            onChange={v => set({ currentBalance: v })}
+            unit="만원"
+            hint="모르면 0"
+          />
+          <NumberInput
+            label="월 납입액"
+            value={product.monthlyContribution}
+            onChange={v => set({ monthlyContribution: v })}
+            unit="만원"
+          />
+        </Row>
+        <Row>
+          <NumberInput
+            label="수령 시작 나이"
+            value={product.startAge}
+            onChange={v => set({ startAge: v })}
+            unit="세"
+          />
+          <NumberInput
+            label="수령 기간"
+            value={product.payoutYears}
+            onChange={v => set({ payoutYears: v })}
+            unit="년"
+          />
+        </Row>
+        <RateInput
+          label="예상 수익률"
+          value={product.expectedReturnRate}
+          onChange={setRate}
+          hint="모르면 기본값 그대로"
+        />
+
+        <TextBtn onClick={() => setShowAdvanced(v => !v)}>
+          {showAdvanced ? '고급 설정 접기 ▴' : '고급 설정 보기 ▾'}
+        </TextBtn>
+
+        {showAdvanced && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div style={{ fontSize: 11, color: 'var(--tds-gray-400)' }}>
+              더 자세히 계산하고 싶을 때만 따로 설정해 주세요.
+            </div>
+            <Row>
+              <RateInput
+                label="모으는 동안 수익률"
+                value={product.accumulationReturnRate}
+                onChange={v => set({ accumulationReturnRate: v })}
+              />
+              <RateInput
+                label="받는 동안 수익률"
+                value={product.payoutReturnRate}
+                onChange={v => set({ payoutReturnRate: v })}
+              />
+            </Row>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ─── 개인연금 카드 ────────────────────────────────────────────────────────────
+
+const PRODUCT_LABELS = ['IRP', '연금저축펀드', '연금보험', '기타'] as const;
+
+function makeProduct(label: string, base: { startAge: number; payoutYears: number; expectedReturnRate: number; accumulationReturnRate: number; payoutReturnRate: number }): PrivatePensionProduct {
+  return {
+    id: `${Date.now()}-${Math.random()}`,
+    label,
+    currentBalance: 0,
+    monthlyContribution: 0,
+    startAge: base.startAge,
+    payoutYears: base.payoutYears,
+    expectedReturnRate: base.expectedReturnRate,
+    accumulationReturnRate: base.accumulationReturnRate,
+    payoutReturnRate: base.payoutReturnRate,
+  };
+}
 
 function PrivatePensionCard() {
   const { inputs, setPension } = usePlannerStore();
-  const [open, setOpen] = useState(false);
+  const [showAdvancedRate, setShowAdvancedRate] = useState(false);
   const { privatePension } = inputs.pension;
   const { status } = inputs;
 
-  const startAge = privatePension.startAge;
-  const autoValue = estimatePrivatePension(privatePension, status.currentAge);
+  const isEnabled = privatePension.enabled;
+  const isDetailMode = privatePension.detailMode;
+
+  // 표시값 계산
+  const autoValue = isDetailMode && privatePension.products.length > 0
+    ? estimatePrivatePensionProducts(privatePension.products, status.currentAge)
+    : estimatePrivatePension(privatePension, status.currentAge);
   const displayValue = privatePension.mode === 'manual' && privatePension.manualMonthlyTodayValue > 0
     ? privatePension.manualMonthlyTodayValue
     : autoValue;
 
-  const isEnabled = privatePension.enabled;
+  const upd = (fields: Partial<typeof privatePension>) =>
+    setPension({ privatePension: { ...privatePension, ...fields } });
 
-  return (
-    <div style={{ ...cardStyle, opacity: isEnabled ? 1 : 1 }}>
-      {/* 헤더 */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 8 }}>
-        <div>
-          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--tds-gray-900)' }}>개인연금</div>
-          <div style={{ fontSize: 11, color: 'var(--tds-gray-400)', marginTop: 2 }}>IRP · 연금저축펀드 · 연금보험 등</div>
+  const setBasicRate = (v: number) => upd({
+    expectedReturnRate: v,
+    accumulationReturnRate: v,
+    payoutReturnRate: v,
+  });
+
+  const enterDetailMode = () => {
+    const initialProducts = privatePension.products.length > 0
+      ? privatePension.products
+      : [makeProduct('개인연금', privatePension)];
+    upd({ detailMode: true, products: initialProducts });
+  };
+
+  const exitDetailMode = () => upd({ detailMode: false });
+
+  const addProduct = (label: string) =>
+    upd({ products: [...privatePension.products, makeProduct(label, privatePension)] });
+
+  const updateProduct = (id: string, updated: PrivatePensionProduct) =>
+    upd({ products: privatePension.products.map(p => p.id === id ? updated : p) });
+
+  const deleteProduct = (id: string) =>
+    upd({ products: privatePension.products.filter(p => p.id !== id) });
+
+  // ── 공통 헤더 (토글 포함) ─────────────────────────────────────────────────
+  const Header = (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+      <div>
+        <div style={{ fontSize: 13, fontWeight: 700, color: isEnabled ? 'var(--tds-gray-900)' : 'var(--tds-gray-400)' }}>
+          개인연금
         </div>
-        {/* 활성화 토글 */}
+        <div style={{ fontSize: 11, color: 'var(--tds-gray-400)', marginTop: 2 }}>IRP · 연금저축펀드 · 연금보험 등</div>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <span style={{ fontSize: 11, fontWeight: 600, color: isEnabled ? 'var(--tds-blue-500)' : 'var(--tds-gray-400)' }}>
+          {isEnabled ? '켜짐' : '꺼짐'}
+        </span>
         <div
-          onClick={() => setPension({ privatePension: { ...privatePension, enabled: !isEnabled } })}
+          onClick={() => upd({ enabled: !isEnabled })}
           style={{
-            width: 36, height: 20, borderRadius: 10, flexShrink: 0,
-            background: isEnabled ? 'var(--tds-blue-500)' : 'var(--tds-gray-200)',
+            width: 40, height: 22, borderRadius: 11, flexShrink: 0,
+            background: isEnabled ? 'var(--tds-blue-500)' : 'var(--tds-gray-300)',
             position: 'relative', cursor: 'pointer', transition: 'background 0.2s',
+            boxShadow: isEnabled ? '0 0 0 2px var(--tds-blue-50)' : 'none',
           }}
         >
           <div style={{
-            width: 16, height: 16, borderRadius: '50%', background: 'white',
+            width: 18, height: 18, borderRadius: '50%', background: 'white',
             position: 'absolute', top: 2,
-            left: isEnabled ? 18 : 2, transition: 'left 0.2s',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+            left: isEnabled ? 20 : 2, transition: 'left 0.2s',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.25)',
           }} />
         </div>
       </div>
+    </div>
+  );
+
+  return (
+    <div style={{ ...cardStyle, background: isEnabled ? 'var(--tds-white)' : 'var(--tds-gray-50, #F7F8FA)' }}>
+      {Header}
 
       {!isEnabled ? (
-        /* 미입력 상태 — 유도 문구 */
-        <div style={{
-          padding: '10px 12px',
-          background: 'var(--tds-gray-50, #F7F8FA)',
-          borderRadius: 8,
-        }}>
-          <div style={{ fontSize: 12, color: 'var(--tds-gray-600)', fontWeight: 600, marginBottom: 4 }}>
-            연금저축 · IRP가 있다면 넣어보세요
-          </div>
-          <div style={{ fontSize: 11, color: 'var(--tds-gray-400)', lineHeight: 1.5 }}>
-            입력하면 은퇴 후 부족분 계산이 더 정확해져요.<br />
-            없거나 잘 모르면 그냥 넘어가도 괜찮아요.
-          </div>
+        // ── Off 상태 ────────────────────────────────────────────────────────
+        <div style={{ fontSize: 11, color: 'var(--tds-gray-400)', lineHeight: 1.7 }}>
+          IRP · 연금저축이 있으면 위 토글을 켜서 입력해보세요.<br />
+          없거나 모르면 그냥 넘어가도 돼요.
         </div>
-      ) : (
+
+      ) : isDetailMode ? (
+        // ── 상세 모드 (다중 상품) ─────────────────────────────────────────
         <>
+          {/* 총합 표시 + 되돌아가기 */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+            <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--tds-blue-500)' }}>
+              합계 월 {displayValue.toLocaleString('ko-KR')}만원
+            </div>
+            <button
+              onClick={exitDetailMode}
+              style={{
+                fontSize: 11, fontWeight: 600, color: 'var(--tds-gray-500)',
+                background: 'none', border: '1px solid var(--tds-gray-200)',
+                borderRadius: 6, padding: '3px 10px', cursor: 'pointer',
+              }}
+            >
+              총합 입력으로
+            </button>
+          </div>
+
+          {/* 상품 카드 목록 */}
+          {privatePension.products.length === 0 ? (
+            <div style={{ fontSize: 12, color: 'var(--tds-gray-400)', marginBottom: 12 }}>
+              아래에서 상품을 추가해 주세요.
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12 }}>
+              {privatePension.products.map(product => (
+                <PrivatePensionProductCard
+                  key={product.id}
+                  product={product}
+                  onUpdate={updated => updateProduct(product.id, updated)}
+                  onDelete={() => deleteProduct(product.id)}
+                />
+              ))}
+            </div>
+          )}
+
+          {/* 상품 추가 버튼 */}
+          <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--tds-gray-500)', marginBottom: 6 }}>
+            상품 추가
+          </div>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            {PRODUCT_LABELS.map(label => (
+              <button
+                key={label}
+                onClick={() => addProduct(label)}
+                style={{
+                  fontSize: 12, fontWeight: 600, padding: '5px 12px',
+                  border: '1.5px solid var(--tds-gray-200)', borderRadius: 20,
+                  background: 'var(--tds-white)', color: 'var(--tds-gray-700)', cursor: 'pointer',
+                }}
+              >
+                + {label}
+              </button>
+            ))}
+          </div>
+        </>
+
+      ) : (
+        // ── 기본 모드 (총합 1개 입력) ────────────────────────────────────
+        <>
+          {/* 예상 연금액 */}
           <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--tds-blue-500)', margin: '4px 0 2px' }}>
             월 {displayValue.toLocaleString('ko-KR')}만원
           </div>
-          <div style={{ fontSize: 11, color: 'var(--tds-gray-400)' }}>
-            현재가치 기준 · {startAge}세부터 {privatePension.payoutYears}년간
+          <div style={{ fontSize: 11, color: 'var(--tds-gray-400)', marginBottom: 12 }}>
+            {privatePension.startAge}세부터 {privatePension.payoutYears}년간 수령
           </div>
 
-          <TextBtn onClick={() => setOpen(v => !v)}>
-            <span style={{ marginTop: 8, display: 'inline-block' }}>
-              {open ? '접기 ▴' : '상세 입력하기 ▾'}
-            </span>
-          </TextBtn>
+          {/* 기본 입력 필드 */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <Row>
+              <NumberInput
+                label="현재 적립금"
+                value={privatePension.currentBalance}
+                onChange={v => upd({ currentBalance: v })}
+                unit="만원"
+                hint="모르면 0"
+              />
+              <NumberInput
+                label="월 납입액"
+                value={privatePension.monthlyContribution}
+                onChange={v => upd({ monthlyContribution: v })}
+                unit="만원"
+              />
+            </Row>
+            <Row>
+              <NumberInput
+                label="수령 시작 나이"
+                value={privatePension.startAge}
+                onChange={v => upd({ startAge: v })}
+                unit="세"
+              />
+              <NumberInput
+                label="수령 기간"
+                value={privatePension.payoutYears}
+                onChange={v => upd({ payoutYears: v })}
+                unit="년"
+              />
+            </Row>
+            <RateInput
+              label="예상 수익률"
+              value={privatePension.expectedReturnRate}
+              onChange={setBasicRate}
+              hint="모르면 기본값 그대로"
+            />
+          </div>
 
-          {open && (
-            <>
-              <Divider />
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <Row>
-                  <NumberInput
-                    label="현재 적립금"
-                    value={privatePension.currentBalance}
-                    onChange={v => setPension({ privatePension: { ...privatePension, currentBalance: v } })}
-                    unit="만원"
-                  />
-                  <NumberInput
-                    label="월 납입액"
-                    value={privatePension.monthlyContribution}
-                    onChange={v => setPension({ privatePension: { ...privatePension, monthlyContribution: v } })}
-                    unit="만원"
-                  />
-                </Row>
-                <Row>
-                  <NumberInput
-                    label="수령 시작 나이"
-                    value={startAge}
-                    onChange={v => setPension({ privatePension: { ...privatePension, startAge: v } })}
-                    unit="세"
-                  />
-                  <NumberInput
-                    label="수령 기간"
-                    value={privatePension.payoutYears}
-                    onChange={v => setPension({ privatePension: { ...privatePension, payoutYears: v } })}
-                    unit="년"
-                  />
-                </Row>
+          {/* 고급 설정 (수익률 2개) */}
+          <div style={{ marginTop: 8 }}>
+            <TextBtn onClick={() => setShowAdvancedRate(v => !v)}>
+              {showAdvancedRate ? '고급 설정 접기 ▴' : '고급 설정 보기 ▾'}
+            </TextBtn>
+            {showAdvancedRate && (
+              <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div style={{ fontSize: 11, color: 'var(--tds-gray-400)' }}>
+                  더 자세히 계산하고 싶을 때만 따로 설정해 주세요.
+                </div>
                 <Row>
                   <RateInput
-                    label="적립 수익률"
+                    label="모으는 동안 수익률"
                     value={privatePension.accumulationReturnRate}
-                    onChange={v => setPension({ privatePension: { ...privatePension, accumulationReturnRate: v } })}
+                    onChange={v => upd({ accumulationReturnRate: v })}
                   />
                   <RateInput
-                    label="수령 수익률"
+                    label="받는 동안 수익률"
                     value={privatePension.payoutReturnRate}
-                    onChange={v => setPension({ privatePension: { ...privatePension, payoutReturnRate: v } })}
+                    onChange={v => upd({ payoutReturnRate: v })}
                   />
                 </Row>
               </div>
-            </>
-          )}
+            )}
+          </div>
+
+          {/* 상세 모드 진입 CTA */}
+          <button
+            onClick={enterDetailMode}
+            style={{
+              marginTop: 12, width: '100%', fontSize: 12, fontWeight: 600,
+              color: 'var(--tds-blue-500)', background: 'var(--tds-blue-50)',
+              border: 'none', borderRadius: 8, padding: '9px 14px', cursor: 'pointer',
+            }}
+          >
+            여러 상품으로 나눠 입력하기 →
+          </button>
         </>
       )}
     </div>

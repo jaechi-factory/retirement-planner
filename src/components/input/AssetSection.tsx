@@ -51,7 +51,7 @@ export default function AssetSection() {
             {/* 입력 */}
             <div style={{ display: 'grid', gridTemplateColumns: '3fr 2fr', gap: 8, minWidth: 0 }}>
               <NumberInput
-                label="보유 금액"
+                label="금액"
                 value={inputs.assets[key].amount}
                 onChange={(v) => setAsset(key, { amount: v })}
               />

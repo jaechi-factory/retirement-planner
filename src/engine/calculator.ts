@@ -42,19 +42,26 @@ export function simulate(
     const yearsFromNow = age - currentAge;
     const isRetired = age >= retirementAge;
 
+    let investReturn = 0;
+    let incomeThisYear = 0;
+    let pensionThisYear = 0;
+    let expenseThisYear = 0;
+    let debtRepayThisYear = 0;
+    let childExpThisYear = 0;
+
     if (age > currentAge) {
-      const childExpenseThisYear =
+      investReturn = currentGrossAsset * weightedReturnDecimal;
+
+      childExpThisYear =
         children.hasChildren && age <= children.independenceAge
-          ? annualChildExpense
+          ? annualChildExpense * Math.pow(1 + inflationDecimal, yearsFromNow - 1)
           : 0;
 
-      // 부채 전액 상환액(원금+이자) — 총자산에서 차감
-      const debtRepaymentThisYear = Object.values(debts).reduce((sum, debtItem) => {
+      debtRepayThisYear = Object.values(debts).reduce((sum, debtItem) => {
         return sum + calcDebtAnnualPayment(debtItem, yearsFromNow - 1);
       }, 0);
 
-      // 연금 수입 (해당 나이에 수령이 개시된 경우 반영)
-      const pensionIncomeThisYear = getAnnualPensionIncomeForAge(
+      pensionThisYear = getAnnualPensionIncomeForAge(
         pension,
         currentAge,
         age,
@@ -64,43 +71,43 @@ export function simulate(
       );
 
       if (!isRetired) {
-        const thisYearIncome =
-          annualIncome * Math.pow(1 + incomeGrowthDecimal, yearsFromNow - 1);
-        const thisYearExpense =
-          annualExpense * Math.pow(1 + expenseGrowthDecimal, yearsFromNow - 1);
-
-        currentGrossAsset =
-          currentGrossAsset * (1 + weightedReturnDecimal) +
-          thisYearIncome +
-          pensionIncomeThisYear -
-          thisYearExpense -
-          debtRepaymentThisYear -
-          childExpenseThisYear;
+        incomeThisYear = annualIncome * Math.pow(1 + incomeGrowthDecimal, yearsFromNow - 1);
+        expenseThisYear = annualExpense * Math.pow(1 + expenseGrowthDecimal, yearsFromNow - 1);
       } else {
         const yearsAfterRetirement = age - retirementAge;
-        const thisYearExpense =
-          retirementMonthlyNominal *
-          12 *
-          Math.pow(1 + inflationDecimal, yearsAfterRetirement);
-
-        currentGrossAsset =
-          currentGrossAsset * (1 + weightedReturnDecimal) +
-          pensionIncomeThisYear -
-          thisYearExpense -
-          debtRepaymentThisYear -
-          childExpenseThisYear;
+        expenseThisYear = retirementMonthlyNominal * 12 * Math.pow(1 + inflationDecimal, yearsAfterRetirement);
       }
+
+      currentGrossAsset =
+        currentGrossAsset * (1 + weightedReturnDecimal) +
+        incomeThisYear +
+        pensionThisYear -
+        expenseThisYear -
+        debtRepayThisYear -
+        childExpThisYear;
     }
 
-    // 잔여 부채 계산 → 순자산 = 총자산 - 잔여부채
     const remainingDebt = Object.values(debts).reduce((sum, debtItem) => {
       return sum + calcRemainingDebt(debtItem, yearsFromNow);
     }, 0);
 
+    const netAssetEnd = currentGrossAsset - remainingDebt;
+    const netCashflow = investReturn + incomeThisYear + pensionThisYear - expenseThisYear - debtRepayThisYear - childExpThisYear;
+
     snapshots.push({
       age,
-      totalAsset: currentGrossAsset - remainingDebt,
       isRetired,
+      grossAssetEnd: currentGrossAsset,
+      remainingDebtEnd: remainingDebt,
+      netAssetEnd,
+      totalAsset: netAssetEnd,
+      annualInvestmentReturn: investReturn,
+      annualIncomeThisYear: incomeThisYear,
+      annualPensionIncomeThisYear: pensionThisYear,
+      annualExpenseThisYear: expenseThisYear,
+      annualDebtRepaymentThisYear: debtRepayThisYear,
+      annualChildExpenseThisYear: childExpThisYear,
+      annualNetCashflow: netCashflow,
     });
   }
 
@@ -111,4 +118,10 @@ export function simulate(
 export function isSustainable(snapshots: YearlySnapshot[]): boolean {
   if (snapshots.length === 0) return false;
   return snapshots.every(s => s.totalAsset >= 0);
+}
+
+/** 자산이 처음 0 미만이 되는 나이 (기대수명까지 버티면 null) */
+export function findDepletionAge(snapshots: YearlySnapshot[]): number | null {
+  const snapshot = snapshots.find(s => s.totalAsset < 0);
+  return snapshot ? snapshot.age : null;
 }

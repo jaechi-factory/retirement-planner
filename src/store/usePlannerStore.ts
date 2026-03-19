@@ -4,10 +4,10 @@ import type { PensionInputs } from '../types/pension';
 import type { CalculationResult, Verdict } from '../types/calculation';
 import { DEFAULT_INFLATION_RATE, DEFAULT_INCOME_GROWTH_RATE, DEFAULT_EXPENSE_GROWTH_RATE, DEFAULT_ASSET_RETURNS } from '../utils/constants';
 import { calcTotalAsset, calcTotalDebt, calcWeightedReturn, calcTotalAnnualRepayment } from '../engine/assetWeighting';
-import { simulate } from '../engine/calculator';
+import { simulate, findDepletionAge } from '../engine/calculator';
 import { findMaxSustainableMonthly } from '../engine/binarySearch';
 import { judgeVerdict } from '../engine/verdictEngine';
-import { getTotalMonthlyPensionTodayValue } from '../engine/pensionEstimation';
+import { getTotalMonthlyPensionTodayValue, getPensionMonthlyAtRetirementStart, getNPSStartAgeByBirthYear } from '../engine/pensionEstimation';
 
 const defaultPension: PensionInputs = {
   publicPension: {
@@ -33,9 +33,12 @@ const defaultPension: PensionInputs = {
     payoutYears: 20,
     currentBalance: 0,
     monthlyContribution: 0,
+    expectedReturnRate: 3.5,   // 기본 단일 수익률
     accumulationReturnRate: 3.5,
-    payoutReturnRate: 2.0,
+    payoutReturnRate: 3.5,
     manualMonthlyTodayValue: 0,
+    detailMode: false,
+    products: [],
   },
 };
 
@@ -99,8 +102,11 @@ function runCalculation(inputs: PlannerInputs): CalculationResult {
       annualChildExpense: 0, requiredMonthlyAtRetirement: 0,
       liquidRatio: earlyLiquidRatio,
       totalMonthlyPensionTodayValue: 0,
+      monthlyPensionAtRetirementStart: 0,
       pensionCoverageRate: 0,
       possibleMonthly: 0, yearlySnapshots: [],
+      depletionAge: null,
+      targetYearlySnapshots: [],
       isValid: false,
       errorMessage: null,
     };
@@ -118,8 +124,11 @@ function runCalculation(inputs: PlannerInputs): CalculationResult {
       annualChildExpense: 0, requiredMonthlyAtRetirement: 0,
       liquidRatio: earlyLiquidRatio,
       totalMonthlyPensionTodayValue: 0,
+      monthlyPensionAtRetirementStart: 0,
       pensionCoverageRate: 0,
       possibleMonthly: 0, yearlySnapshots: [],
+      depletionAge: null,
+      targetYearlySnapshots: [],
       isValid: false,
       errorMessage: '은퇴 나이는 현재 나이보다, 기대수명은 은퇴 나이보다 커야 해요.',
     };
@@ -154,12 +163,22 @@ function runCalculation(inputs: PlannerInputs): CalculationResult {
     goal.retirementAge,
     status.annualIncome,
   );
+  const monthlyPensionAtRetirementStart = getPensionMonthlyAtRetirementStart(
+    pension,
+    status.currentAge,
+    goal.retirementAge,
+    status.annualIncome,
+  );
   const pensionCoverageRate = goal.targetMonthly > 0
     ? totalMonthlyPensionTodayValue / goal.targetMonthly
     : 0;
 
   const possibleMonthly = findMaxSustainableMonthly(inputs);
   const yearlySnapshots = simulate(inputs, possibleMonthly);
+
+  // 목표 생활비 기준 시뮬레이션으로 자산 소진 나이 계산
+  const targetSnapshots = simulate(inputs, goal.targetMonthly);
+  const depletionAge = findDepletionAge(targetSnapshots);
 
   return {
     totalAsset,
@@ -171,11 +190,49 @@ function runCalculation(inputs: PlannerInputs): CalculationResult {
     requiredMonthlyAtRetirement,
     liquidRatio,
     totalMonthlyPensionTodayValue,
+    monthlyPensionAtRetirementStart,
     pensionCoverageRate,
     possibleMonthly,
     yearlySnapshots,
+    depletionAge,
+    targetYearlySnapshots: targetSnapshots,
     isValid: true,
   };
+}
+
+const STORAGE_KEY = 'retirement-planner-inputs-v1';
+
+function loadInputsFromStorage(): PlannerInputs {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return defaultInputs;
+    const parsed = JSON.parse(raw) as PlannerInputs;
+    // defaultInputs와 깊이 병합해 누락 필드 채우기
+    return {
+      goal: { ...defaultInputs.goal, ...parsed.goal },
+      status: { ...defaultInputs.status, ...parsed.status },
+      assets: { ...defaultInputs.assets, ...parsed.assets },
+      debts: { ...defaultInputs.debts, ...parsed.debts },
+      children: { ...defaultInputs.children, ...parsed.children },
+      pension: parsed.pension
+        ? {
+            publicPension: { ...defaultInputs.pension.publicPension, ...parsed.pension.publicPension },
+            retirementPension: { ...defaultInputs.pension.retirementPension, ...parsed.pension.retirementPension },
+            privatePension: { ...defaultInputs.pension.privatePension, ...parsed.pension.privatePension },
+          }
+        : defaultInputs.pension,
+    };
+  } catch {
+    return defaultInputs;
+  }
+}
+
+function saveInputsToStorage(inputs: PlannerInputs) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(inputs));
+  } catch {
+    // 스토리지 가득 찬 경우 등 무시
+  }
 }
 
 interface PlannerStore {
@@ -188,6 +245,7 @@ interface PlannerStore {
   setDebt: (key: keyof DebtAllocation, partial: Partial<DebtAllocation[keyof DebtAllocation]>) => void;
   setChildren: (partial: Partial<PlannerInputs['children']>) => void;
   setPension: (partial: Partial<PensionInputs>) => void;
+  resetAll: () => void;
 }
 
 const computeState = (inputs: PlannerInputs): Pick<PlannerStore, 'inputs' | 'result' | 'verdict'> => {
@@ -199,7 +257,7 @@ const computeState = (inputs: PlannerInputs): Pick<PlannerStore, 'inputs' | 'res
 };
 
 export const usePlannerStore = create<PlannerStore>((set, get) => ({
-  ...computeState(defaultInputs),
+  ...computeState(loadInputsFromStorage()),
 
   setGoal: (partial) => {
     const current = get().inputs;
@@ -214,10 +272,23 @@ export const usePlannerStore = create<PlannerStore>((set, get) => ({
       };
     }
     const inputs: PlannerInputs = { ...current, goal: { ...current.goal, ...partial }, pension: newPension };
+    saveInputsToStorage(inputs);
     set(computeState(inputs));
   },
   setStatus: (partial) => {
-    const inputs: PlannerInputs = { ...get().inputs, status: { ...get().inputs.status, ...partial } };
+    const current = get().inputs;
+    let newPension = current.pension;
+    // 현재 나이가 바뀌면 국민연금 수령 시작 나이를 출생연도 기반으로 자동 설정
+    if (partial.currentAge !== undefined && partial.currentAge > 0) {
+      const birthYear = 2026 - partial.currentAge;
+      const npsStartAge = getNPSStartAgeByBirthYear(birthYear);
+      newPension = {
+        ...newPension,
+        publicPension: { ...newPension.publicPension, startAge: npsStartAge },
+      };
+    }
+    const inputs: PlannerInputs = { ...current, status: { ...current.status, ...partial }, pension: newPension };
+    saveInputsToStorage(inputs);
     set(computeState(inputs));
   },
   setAsset: (key, partial) => {
@@ -225,6 +296,7 @@ export const usePlannerStore = create<PlannerStore>((set, get) => ({
       ...get().inputs,
       assets: { ...get().inputs.assets, [key]: { ...get().inputs.assets[key], ...partial } },
     };
+    saveInputsToStorage(inputs);
     set(computeState(inputs));
   },
   setDebt: (key, partial) => {
@@ -232,10 +304,12 @@ export const usePlannerStore = create<PlannerStore>((set, get) => ({
       ...get().inputs,
       debts: { ...get().inputs.debts, [key]: { ...get().inputs.debts[key], ...partial } },
     };
+    saveInputsToStorage(inputs);
     set(computeState(inputs));
   },
   setChildren: (partial) => {
     const inputs: PlannerInputs = { ...get().inputs, children: { ...get().inputs.children, ...partial } };
+    saveInputsToStorage(inputs);
     set(computeState(inputs));
   },
   setPension: (partial) => {
@@ -243,6 +317,11 @@ export const usePlannerStore = create<PlannerStore>((set, get) => ({
       ...get().inputs,
       pension: { ...get().inputs.pension, ...partial },
     };
+    saveInputsToStorage(inputs);
     set(computeState(inputs));
+  },
+  resetAll: () => {
+    localStorage.removeItem(STORAGE_KEY);
+    set(computeState(defaultInputs));
   },
 }));

@@ -30,7 +30,6 @@ export default function RetirementGoalSection() {
         value={goal.targetMonthly}
         onChange={(v) => setGoal({ targetMonthly: v })}
         unit="만원"
-        hint="현재 가치 기준 — 은퇴 시점엔 물가를 반영해 자동 계산해요"
       />
       <RateInput
         label="물가상승률 (연)"

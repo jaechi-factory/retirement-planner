@@ -1,7 +1,19 @@
 export interface YearlySnapshot {
   age: number;
-  totalAsset: number;          // 해당 연도 말 총자산 (만원)
   isRetired: boolean;
+  grossAssetEnd: number;    // 잔고 자산: 투자자산 총합 (만원, 부채 미차감)
+  remainingDebtEnd: number; // 잔여 부채 (만원)
+  netAssetEnd: number;      // 순자산 = gross - debt (만원)
+  totalAsset: number;       // = netAssetEnd (하위호환)
+
+  // 연간 현금흐름 breakdown (currentAge 스냅샷은 전부 0)
+  annualInvestmentReturn: number;    // 투자수익 (만원)
+  annualIncomeThisYear: number;      // 근로소득 (만원)
+  annualPensionIncomeThisYear: number; // 연금수입 (만원)
+  annualExpenseThisYear: number;     // 생활비 (만원)
+  annualDebtRepaymentThisYear: number; // 부채상환 (만원)
+  annualChildExpenseThisYear: number;  // 자녀지출 (만원)
+  annualNetCashflow: number;         // 순현금흐름 (만원)
 }
 
 export interface CalculationResult {
@@ -19,11 +31,16 @@ export interface CalculationResult {
   possibleMonthly: number;     // 가능한 월 생활비 (만원, 현재가치)
 
   // 시뮬레이션 데이터
-  yearlySnapshots: YearlySnapshot[];
+  yearlySnapshots: YearlySnapshot[];        // possibleMonthly 기준 (내부 계산용)
+  targetYearlySnapshots: YearlySnapshot[];  // targetMonthly 기준 (차트 표시용)
 
   // 연금
-  totalMonthlyPensionTodayValue: number;  // 연금 월 합계 (현재가치, 만원)
-  pensionCoverageRate: number;            // 연금 커버율 (0~1)
+  totalMonthlyPensionTodayValue: number;    // 연금 월 합계 전체 (현재가치, 만원)
+  monthlyPensionAtRetirementStart: number;  // 은퇴 직후 시점 이미 개시된 연금 합계 (현재가치, 만원)
+  pensionCoverageRate: number;              // 연금 커버율 = 전체합계 / 목표생활비 (0~1)
+
+  // 자산 소진
+  depletionAge: number | null;  // 목표 생활비 기준 자산 소진 나이 (null = 기대수명까지 유지)
 
   // 유효성
   isValid: boolean;

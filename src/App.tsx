@@ -37,7 +37,7 @@ export default function App() {
             letterSpacing: '-0.3px',
           }}
         >
-          은퇴 생활비 플래너
+          내 노후는 괜찮을까?
         </span>
         <span
           style={{

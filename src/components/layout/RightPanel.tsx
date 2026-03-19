@@ -34,13 +34,42 @@ export default function RightPanel() {
   return (
     <div
       style={{
-        width: 380,
+        width: 430,
         flexShrink: 0,
         height: '100vh',
         overflowY: 'auto',
         padding: '24px 16px',
       }}
     >
+      {/* 자산 소진 경고 (목표 달성 불가 시) */}
+      {result.depletionAge !== null && (
+        <div style={{
+          background: verdict.level === 'critical' ? 'var(--tds-red-50)' : 'var(--tds-orange-50)',
+          border: `1.5px solid ${verdict.level === 'critical' ? 'var(--tds-red-200, #FFBDBD)' : 'var(--tds-orange-200, #FFDBB5)'}`,
+          borderRadius: 12,
+          padding: '14px 16px',
+          marginBottom: 12,
+          display: 'flex',
+          alignItems: 'flex-start',
+          gap: 10,
+        }}>
+          <span style={{ fontSize: 18, lineHeight: 1 }}>⚠️</span>
+          <div>
+            <div style={{
+              fontSize: 13, fontWeight: 700,
+              color: verdict.level === 'critical' ? 'var(--tds-red-500)' : 'var(--tds-orange-500)',
+              marginBottom: 3,
+            }}>
+              목표 생활비로 살면 {result.depletionAge}세에 자산이 소진돼요
+            </div>
+            <div style={{ fontSize: 11, color: 'var(--tds-gray-500)', lineHeight: 1.5 }}>
+              지금 계획대로면 기대수명 {inputs.goal.lifeExpectancy}세까지 {inputs.goal.lifeExpectancy - result.depletionAge}년이 부족해요.
+              월 목표를 낮추거나 저축을 늘려보세요.
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 자산 요약 카드 그리드 */}
       <div
         style={{
@@ -96,39 +125,72 @@ export default function RightPanel() {
           marginBottom: 12,
         }}
       >
-        <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--tds-gray-900)', marginBottom: 12 }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--tds-gray-900)', marginBottom: 14 }}>
           은퇴 후 예상 연금 수입
         </div>
 
-        {/* 합계 + 커버율 */}
-        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 12 }}>
-          <div>
-            <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--tds-blue-500)' }}>
-              월 {result.totalMonthlyPensionTodayValue.toLocaleString('ko-KR')}만원
+        {/* 3 핵심 수치 */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 12 }}>
+          {/* 은퇴 직후 */}
+          <div style={{
+            padding: '12px 12px',
+            background: 'var(--tds-gray-50, #F7F8FA)',
+            borderRadius: 10,
+          }}>
+            <div style={{ fontSize: 10, color: 'var(--tds-gray-400)', fontWeight: 600, marginBottom: 4 }}>
+              은퇴 직후
             </div>
-            <div style={{ fontSize: 11, color: 'var(--tds-gray-400)', marginTop: 2 }}>
-              연금 합산 · 현재가치 기준
+            <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--tds-gray-700)' }}>
+              월 {result.monthlyPensionAtRetirementStart.toLocaleString('ko-KR')}만원
+            </div>
+            <div style={{ fontSize: 10, color: 'var(--tds-gray-400)', marginTop: 2 }}>
+              개시된 연금 합산
             </div>
           </div>
-          <div
-            style={{
-              textAlign: 'center',
-              padding: '6px 14px',
-              borderRadius: 12,
-              background: coveragePct >= 100 ? 'var(--tds-green-50)' : coveragePct >= 50 ? 'var(--tds-blue-50)' : 'var(--tds-orange-50)',
-              color: coveragePct >= 100 ? 'var(--tds-green-500)' : coveragePct >= 50 ? 'var(--tds-blue-500)' : 'var(--tds-orange-500)',
-            }}
-          >
-            <div style={{ fontSize: 20, fontWeight: 800 }}>{coveragePct}%</div>
-            <div style={{ fontSize: 10, fontWeight: 600 }}>목표 커버율</div>
+
+          {/* 모든 연금 개시 후 */}
+          <div style={{
+            padding: '12px 12px',
+            background: 'var(--tds-blue-50)',
+            borderRadius: 10,
+          }}>
+            <div style={{ fontSize: 10, color: 'var(--tds-blue-400)', fontWeight: 600, marginBottom: 4 }}>
+              모든 연금 개시 후
+            </div>
+            <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--tds-blue-500)' }}>
+              월 {result.totalMonthlyPensionTodayValue.toLocaleString('ko-KR')}만원
+            </div>
+            <div style={{ fontSize: 10, color: 'var(--tds-blue-400)', marginTop: 2 }}>
+              전체 연금 합산
+            </div>
           </div>
         </div>
 
-        <div style={{ fontSize: 11, color: 'var(--tds-gray-400)', marginBottom: 10 }}>
-          목표 생활비 중 연금이 커버하는 비중이에요
+        {/* 커버율 */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '10px 12px',
+          borderRadius: 10,
+          background: coveragePct >= 100 ? 'var(--tds-green-50)' : coveragePct >= 50 ? 'var(--tds-blue-50)' : 'var(--tds-orange-50)',
+          marginBottom: 14,
+        }}>
+          <div style={{ fontSize: 11, color: 'var(--tds-gray-500)' }}>
+            목표 생활비 중 연금이 커버하는 비중
+          </div>
+          <div style={{
+            fontSize: 20, fontWeight: 800,
+            color: coveragePct >= 100 ? 'var(--tds-green-500)' : coveragePct >= 50 ? 'var(--tds-blue-500)' : 'var(--tds-orange-500)',
+          }}>
+            {coveragePct}%
+          </div>
         </div>
 
         {/* 항목별 분해 */}
+        <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--tds-gray-500)', marginBottom: 8 }}>
+          연금별 상세
+        </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 12 }}>
           {[
             { label: '국민연금', value: pensionBreakdown.publicMonthly, enabled: inputs.pension.publicPension.enabled, startAge: inputs.pension.publicPension.startAge },
@@ -233,8 +295,13 @@ export default function RightPanel() {
         }}
       >
         <AssetProjectionChart
-          snapshots={result.yearlySnapshots}
+          snapshots={result.targetYearlySnapshots}
           retirementAge={inputs.goal.retirementAge}
+          pensionStartAges={{
+            nps: inputs.pension.publicPension.enabled ? inputs.pension.publicPension.startAge : undefined,
+            retirement: inputs.pension.retirementPension.enabled ? inputs.pension.retirementPension.startAge : undefined,
+            private: inputs.pension.privatePension.enabled ? inputs.pension.privatePension.startAge : undefined,
+          }}
         />
       </div>
 
