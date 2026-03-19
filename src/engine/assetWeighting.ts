@@ -1,6 +1,9 @@
 import type { AssetAllocation, DebtAllocation, DebtItem } from '../types/inputs';
 
-/** 자산 금액 가중평균 기대수익률 계산 */
+const FINANCIAL_ASSET_KEYS = ['cash', 'deposit', 'stock_kr', 'stock_us', 'bond', 'crypto'] as const;
+type FinancialAssetKey = typeof FINANCIAL_ASSET_KEYS[number];
+
+/** 전체 자산 금액 가중평균 기대수익률 계산 (부동산 포함) */
 export function calcWeightedReturn(assets: AssetAllocation): number {
   const items = Object.values(assets);
   const totalAmount = items.reduce((sum, item) => sum + item.amount, 0);
@@ -10,7 +13,25 @@ export function calcWeightedReturn(assets: AssetAllocation): number {
     (sum, item) => sum + item.amount * (item.expectedReturn / 100),
     0
   );
-  return (weightedSum / totalAmount) * 100; // % 단위로 반환
+  return (weightedSum / totalAmount) * 100;
+}
+
+/** 금융자산(부동산 제외) 금액 가중평균 기대수익률 계산 */
+export function calcFinancialWeightedReturn(assets: AssetAllocation): number {
+  const items = FINANCIAL_ASSET_KEYS.map(k => assets[k as FinancialAssetKey]);
+  const totalAmount = items.reduce((sum, item) => sum + item.amount, 0);
+  if (totalAmount <= 0) return 0;
+
+  const weightedSum = items.reduce(
+    (sum, item) => sum + item.amount * (item.expectedReturn / 100),
+    0
+  );
+  return (weightedSum / totalAmount) * 100;
+}
+
+/** 금융자산 합계 (부동산 제외) */
+export function calcFinancialTotalAsset(assets: AssetAllocation): number {
+  return FINANCIAL_ASSET_KEYS.reduce((sum, k) => sum + assets[k as FinancialAssetKey].amount, 0);
 }
 
 /** 총자산 계산 */

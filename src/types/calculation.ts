@@ -1,10 +1,12 @@
 export interface YearlySnapshot {
   age: number;
   isRetired: boolean;
-  grossAssetEnd: number;    // 잔고 자산: 투자자산 총합 (만원, 부채 미차감)
-  remainingDebtEnd: number; // 잔여 부채 (만원)
-  netAssetEnd: number;      // 순자산 = gross - debt (만원)
-  totalAsset: number;       // = netAssetEnd (하위호환)
+  financialAssetEnd: number; // 금융자산 잔액 (만원, 현금/주식/예금 등 realEstate 제외)
+  housingAssetEnd: number;   // 부동산 잔액 (만원, 별도 성장)
+  grossAssetEnd: number;     // 잔고 자산 = financialAsset + housingAsset (만원, 부채 미차감)
+  remainingDebtEnd: number;  // 잔여 부채 (만원)
+  netAssetEnd: number;       // 순자산 = gross - debt (만원)
+  totalAsset: number;        // = netAssetEnd (하위호환)
 
   // 연간 현금흐름 breakdown (currentAge 스냅샷은 전부 0)
   annualInvestmentReturn: number;    // 투자수익 (만원)

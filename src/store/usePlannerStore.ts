@@ -3,7 +3,7 @@ import type { PlannerInputs, AssetAllocation, DebtAllocation } from '../types/in
 import type { PensionInputs } from '../types/pension';
 import type { CalculationResult, Verdict } from '../types/calculation';
 import { DEFAULT_INFLATION_RATE, DEFAULT_INCOME_GROWTH_RATE, DEFAULT_EXPENSE_GROWTH_RATE, DEFAULT_ASSET_RETURNS } from '../utils/constants';
-import { calcTotalAsset, calcTotalDebt, calcWeightedReturn, calcTotalAnnualRepayment } from '../engine/assetWeighting';
+import { calcTotalAsset, calcTotalDebt, calcFinancialWeightedReturn, calcTotalAnnualRepayment } from '../engine/assetWeighting';
 import { simulate, findDepletionAge } from '../engine/calculator';
 import { findMaxSustainableMonthly } from '../engine/binarySearch';
 import { judgeVerdict } from '../engine/verdictEngine';
@@ -137,7 +137,8 @@ function runCalculation(inputs: PlannerInputs): CalculationResult {
   const totalAsset = calcTotalAsset(assets);
   const totalDebt = calcTotalDebt(debts);
   const netWorth = totalAsset - totalDebt;
-  const weightedReturn = calcWeightedReturn(assets);
+  // 가중 기대수익률은 실제 복리 성장에 쓰이는 금융자산 기준으로 표시
+  const weightedReturn = calcFinancialWeightedReturn(assets);
   const liquidAsset = totalAsset - assets.realEstate.amount;
   const liquidRatio = totalAsset > 0 ? liquidAsset / totalAsset : 1;
   const totalAnnualRepayment = calcTotalAnnualRepayment(debts);

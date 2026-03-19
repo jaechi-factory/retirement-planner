@@ -1,15 +1,15 @@
 import type { PlannerInputs } from '../types/inputs';
 import type { YearlySnapshot } from '../types/calculation';
-import { calcWeightedReturn, calcDebtAnnualPayment, calcRemainingDebt } from './assetWeighting';
+import { calcFinancialWeightedReturn, calcFinancialTotalAsset, calcDebtAnnualPayment, calcRemainingDebt } from './assetWeighting';
 import { getAnnualPensionIncomeForAge } from './pensionEstimation';
 
 /**
- * 연간 시뮬레이션 실행 (Method B: 총자산/총부채 분리 추적)
+ * 연간 시뮬레이션 실행 (2버킷: 금융자산 / 부동산 분리)
  *
- * - 투자수익은 총자산(gross assets)에 적용
- * - 부채 상환액은 총자산에서 차감
- * - 연금 수입은 총자산에 가산 (은퇴 전후 모두 해당 나이에 개시되면 반영)
- * - 스냅샷의 totalAsset = 총자산 - 잔여부채 (순자산)
+ * - 금융자산: 금융자산 기대수익률로 성장, 소득/지출/연금/부채상환 모두 반영
+ * - 부동산: 별도 기대수익률로 성장, 생활비 재원으로 자동 인출하지 않음
+ * - 지속 가능성 판단: 금융자산이 0 미만이 되지 않아야 함
+ * - 순자산(netAssetEnd): 금융자산 + 부동산 - 잔여부채
  */
 export function simulate(
   inputs: PlannerInputs,
@@ -22,7 +22,11 @@ export function simulate(
   const inflationDecimal = inflationRate / 100;
   const incomeGrowthDecimal = incomeGrowthRate / 100;
   const expenseGrowthDecimal = expenseGrowthRate / 100;
-  const weightedReturnDecimal = calcWeightedReturn(assets) / 100;
+
+  // 금융자산 전용 수익률 (부동산 제외)
+  const financialReturnDecimal = calcFinancialWeightedReturn(assets) / 100;
+  // 부동산 수익률
+  const housingReturnDecimal = assets.realEstate.expectedReturn / 100;
 
   const annualChildExpense = children.hasChildren
     ? children.count * children.monthlyPerChild * 12
@@ -32,9 +36,9 @@ export function simulate(
   const retirementMonthlyNominal =
     testMonthlyInCurrentValue * Math.pow(1 + inflationDecimal, yearsToRetirement);
 
-  // Method B: 총자산(gross)으로 시작, 부채 잔액 별도 추적
-  const totalAssetNow = Object.values(assets).reduce((s, a) => s + a.amount, 0);
-  let currentGrossAsset = totalAssetNow;
+  // 2버킷 초기값
+  let currentFinancialAsset = calcFinancialTotalAsset(assets);
+  let currentHousingAsset = assets.realEstate.amount;
 
   const snapshots: YearlySnapshot[] = [];
 
@@ -50,7 +54,8 @@ export function simulate(
     let childExpThisYear = 0;
 
     if (age > currentAge) {
-      investReturn = currentGrossAsset * weightedReturnDecimal;
+      // 금융자산 투자수익 (지출 반영 전 기준)
+      investReturn = currentFinancialAsset * financialReturnDecimal;
 
       childExpThisYear =
         children.hasChildren && age <= children.independenceAge
@@ -78,26 +83,33 @@ export function simulate(
         expenseThisYear = retirementMonthlyNominal * 12 * Math.pow(1 + inflationDecimal, yearsAfterRetirement);
       }
 
-      currentGrossAsset =
-        currentGrossAsset * (1 + weightedReturnDecimal) +
+      // 금융자산 업데이트: 수익 + 소득 + 연금 - 지출 - 부채상환 - 자녀비용
+      currentFinancialAsset =
+        currentFinancialAsset * (1 + financialReturnDecimal) +
         incomeThisYear +
         pensionThisYear -
         expenseThisYear -
         debtRepayThisYear -
         childExpThisYear;
+
+      // 부동산 별도 성장 (현금흐름 미반영)
+      currentHousingAsset = currentHousingAsset * (1 + housingReturnDecimal);
     }
 
     const remainingDebt = Object.values(debts).reduce((sum, debtItem) => {
       return sum + calcRemainingDebt(debtItem, yearsFromNow);
     }, 0);
 
-    const netAssetEnd = currentGrossAsset - remainingDebt;
+    const grossAssetEnd = currentFinancialAsset + currentHousingAsset;
+    const netAssetEnd = grossAssetEnd - remainingDebt;
     const netCashflow = investReturn + incomeThisYear + pensionThisYear - expenseThisYear - debtRepayThisYear - childExpThisYear;
 
     snapshots.push({
       age,
       isRetired,
-      grossAssetEnd: currentGrossAsset,
+      financialAssetEnd: currentFinancialAsset,
+      housingAssetEnd: currentHousingAsset,
+      grossAssetEnd,
       remainingDebtEnd: remainingDebt,
       netAssetEnd,
       totalAsset: netAssetEnd,
@@ -114,14 +126,14 @@ export function simulate(
   return snapshots;
 }
 
-/** 전 구간에서 한 번도 자산이 0 미만이 되지 않아야 지속 가능 */
+/** 전 구간에서 금융자산이 0 미만이 되지 않아야 지속 가능 */
 export function isSustainable(snapshots: YearlySnapshot[]): boolean {
   if (snapshots.length === 0) return false;
-  return snapshots.every(s => s.totalAsset >= 0);
+  return snapshots.every(s => s.financialAssetEnd >= 0);
 }
 
-/** 자산이 처음 0 미만이 되는 나이 (기대수명까지 버티면 null) */
+/** 금융자산이 처음 0 미만이 되는 나이 (기대수명까지 버티면 null) */
 export function findDepletionAge(snapshots: YearlySnapshot[]): number | null {
-  const snapshot = snapshots.find(s => s.totalAsset < 0);
+  const snapshot = snapshots.find(s => s.financialAssetEnd < 0);
   return snapshot ? snapshot.age : null;
 }
