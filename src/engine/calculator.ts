@@ -126,14 +126,14 @@ export function simulate(
   return snapshots;
 }
 
-/** 전 구간에서 금융자산이 0 미만이 되지 않아야 지속 가능 */
+/** 전 구간에서 순자산(금융자산 + 부동산 - 부채)이 0 미만이 되지 않아야 지속 가능 */
 export function isSustainable(snapshots: YearlySnapshot[]): boolean {
   if (snapshots.length === 0) return false;
-  return snapshots.every(s => s.financialAssetEnd >= 0);
+  return snapshots.every(s => s.netAssetEnd >= 0);
 }
 
-/** 금융자산이 처음 0 미만이 되는 나이 (기대수명까지 버티면 null) */
+/** 순자산이 처음 0 미만이 되는 나이 (기대수명까지 버티면 null) */
 export function findDepletionAge(snapshots: YearlySnapshot[]): number | null {
-  const snapshot = snapshots.find(s => s.financialAssetEnd < 0);
+  const snapshot = snapshots.find(s => s.netAssetEnd < 0);
   return snapshot ? snapshot.age : null;
 }
