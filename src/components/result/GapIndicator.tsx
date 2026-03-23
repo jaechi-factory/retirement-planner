@@ -25,15 +25,15 @@ export default function GapIndicator({ verdict }: Props) {
       <div>
         <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color }}>
           {isShort
-            ? `목표 대비 월 ${absGap.toLocaleString('ko-KR')}만원 부족`
+            ? `목표보다 매달 ${absGap.toLocaleString('ko-KR')}만원 더 필요해요`
             : gap === 0
             ? '목표와 딱 맞아요'
-            : `목표 대비 월 ${absGap.toLocaleString('ko-KR')}만원 여유`}
+            : `목표보다 매달 ${absGap.toLocaleString('ko-KR')}만원 여유가 있어요`}
         </p>
         <p style={{ margin: '2px 0 0', fontSize: 12, color: 'var(--tds-gray-500)' }}>
           {isShort
-            ? '저축 또는 투자수익률을 높이거나 은퇴 시기를 조정해보세요'
-            : '현재 재무 구조를 잘 유지하고 있어요'}
+            ? '저축을 늘리거나, 지출을 줄이거나, 은퇴 시기를 늦추면 가까워져요'
+            : '지금 흐름대로 유지하면 충분해요'}
         </p>
       </div>
     </div>

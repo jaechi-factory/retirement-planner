@@ -116,9 +116,15 @@ export default function InsightSentences({ result, inputs, verdict }: Props) {
     );
   }
 
-  if (verdict.level === 'critical' || verdict.level === 'low') {
+  if (verdict.level === 'critical') {
     insights.push(
-      `은퇴 전까지 저축을 늘리거나, 투자수익률을 높이거나, 은퇴 시기를 늦추면 목표에 가까워질 수 있어요.`
+      `지금 당장 바꿀 수 있는 것부터 시작해보세요. ` +
+      `① 지출을 줄여 저축을 늘리기 ② 투자 수익률 높이기 ③ 은퇴 시기 늦추기 — 세 가지 중 하나만 개선해도 달라질 수 있어요.`
+    );
+  } else if (verdict.level === 'low') {
+    insights.push(
+      `조금만 조정하면 목표에 닿아요. ` +
+      `저축을 조금 늘리거나, 은퇴 시기를 1~2년 늦추는 것만으로도 충분히 가까워질 수 있어요.`
     );
   }
 

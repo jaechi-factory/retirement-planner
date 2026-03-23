@@ -31,6 +31,14 @@ export const DEBT_LABELS: Record<string, string> = {
 // ─── 상환방식: 주택담보대출 전용 옵션 ─────────────────────────────────────────
 export const MORTGAGE_REPAYMENT_TYPES = ['equal_payment', 'equal_principal', 'graduated_payment'] as const;
 
+/** 버튼 1행: 일상어 (짧게) */
+export const MORTGAGE_REPAYMENT_FRIENDLY_LABELS: Record<string, string> = {
+  equal_payment:    '매달 거의 같게',
+  equal_principal:  '처음엔 많이, 점점 적게',
+  graduated_payment: '처음엔 적게, 나중에 늘어남',
+};
+
+/** 버튼 2행: 금융 용어 */
 export const MORTGAGE_REPAYMENT_LABELS: Record<string, string> = {
   equal_payment:    '원리금균등',
   equal_principal:  '원금균등',
@@ -38,14 +46,22 @@ export const MORTGAGE_REPAYMENT_LABELS: Record<string, string> = {
 };
 
 export const MORTGAGE_REPAYMENT_DESCRIPTIONS: Record<string, string> = {
-  equal_payment:    '매달 비슷한 금액을 내는 방식',
-  equal_principal:  '초반에는 많이 내고, 시간이 갈수록 줄어드는 방식',
-  graduated_payment: '초반에는 적게 내고, 시간이 갈수록 늘어나는 방식',
+  equal_payment:    '매달 비슷한 금액을 내요. 예산 관리가 쉬워요.',
+  equal_principal:  '초반에 더 많이 내고, 갈수록 줄어들어요. 총 이자가 적어요.',
+  graduated_payment: '초반 부담이 적고, 갈수록 늘어나요. 소득이 오를 것 같을 때 유리해요.',
 };
 
 // ─── 상환방식: 신용대출·기타대출 전용 옵션 ───────────────────────────────────
 export const OTHER_REPAYMENT_TYPES = ['equal_payment', 'equal_principal', 'balloon_payment'] as const;
 
+/** 버튼 1행: 일상어 (짧게) */
+export const OTHER_REPAYMENT_FRIENDLY_LABELS: Record<string, string> = {
+  equal_payment:   '매달 거의 같게',
+  equal_principal: '처음엔 많이, 점점 적게',
+  balloon_payment: '마지막에 한 번에',
+};
+
+/** 버튼 2행: 금융 용어 */
 export const OTHER_REPAYMENT_LABELS: Record<string, string> = {
   equal_payment:   '원리금균등',
   equal_principal: '원금균등',
@@ -53,9 +69,9 @@ export const OTHER_REPAYMENT_LABELS: Record<string, string> = {
 };
 
 export const OTHER_REPAYMENT_DESCRIPTIONS: Record<string, string> = {
-  equal_payment:   '매달 비슷한 금액을 내는 방식',
-  equal_principal: '초반에는 많이 내고, 시간이 갈수록 줄어드는 방식',
-  balloon_payment: '기간 중 이자만 내고, 만기에 원금을 한 번에 갚는 방식',
+  equal_payment:   '매달 비슷한 금액을 내요. 예산 관리가 쉬워요.',
+  equal_principal: '초반에 더 많이 내고, 갈수록 줄어들어요. 총 이자가 적어요.',
+  balloon_payment: '기간 중에는 이자만 내고, 만기에 원금을 한 번에 갚아요.',
 };
 
 export const BINARY_SEARCH_MAX = 5000;      // 만원

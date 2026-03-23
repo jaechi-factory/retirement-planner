@@ -13,7 +13,7 @@ export function judgeVerdict(
   if (ratio >= 1.1) {
     return {
       level: 'great',
-      label: '잘하고 있어요',
+      label: '지금 흐름이면 목표에 가까워요',
       color: 'var(--tds-green-500)',
       bgColor: 'var(--tds-green-50)',
       gap,
@@ -21,7 +21,7 @@ export function judgeVerdict(
   } else if (gap >= 0) {
     return {
       level: 'good',
-      label: '거의 맞췄어요',
+      label: '조금만 더 보완하면 목표에 닿아요',
       color: 'var(--tds-blue-500)',
       bgColor: 'var(--tds-blue-50)',
       gap,
@@ -29,7 +29,7 @@ export function judgeVerdict(
   } else if (ratio >= 0.75) {
     return {
       level: 'low',
-      label: '조금 부족해요',
+      label: '한두 가지만 바꾸면 더 가까워져요',
       color: 'var(--tds-orange-500)',
       bgColor: 'var(--tds-orange-50)',
       gap,
@@ -37,7 +37,7 @@ export function judgeVerdict(
   } else {
     return {
       level: 'critical',
-      label: '많이 부족해요',
+      label: '먼저 우선순위를 같이 줄여볼게요',
       color: 'var(--tds-red-500)',
       bgColor: 'var(--tds-red-50)',
       gap,

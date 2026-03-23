@@ -56,7 +56,7 @@ export default function AssetSection() {
                 onChange={(v) => setAsset(key, { amount: v })}
               />
               <RateInput
-                label="기대수익률 (연)"
+                label="1년 기대 수익률"
                 value={inputs.assets[key].expectedReturn}
                 onChange={(v) => setAsset(key, { expectedReturn: v })}
               />

@@ -89,25 +89,39 @@ export default function CenterPanel() {
 
         {verdict && <GapIndicator verdict={verdict} />}
 
-        {/* 비유동 자산 비중 경고 */}
-        {result.liquidRatio < 0.5 && (
-          <div style={{
-            marginTop: 16,
-            padding: '10px 14px',
-            background: '#FFFBEB',
-            borderRadius: 10,
-            border: '1px solid #FDE68A',
-            display: 'flex',
-            gap: 8,
-            alignItems: 'flex-start',
-          }}>
-            <span style={{ fontSize: 14, flexShrink: 0 }}>⚠️</span>
-            <p style={{ fontSize: 12, color: 'var(--tds-gray-700)', margin: 0, lineHeight: 1.6 }}>
-              총자산의 <strong>{Math.round((1 - result.liquidRatio) * 100)}%</strong>가 부동산입니다.
-              부동산은 즉시 현금화가 어려워 실제 생활비 인출 가능 여부는 별도로 검토하세요.
-            </p>
-          </div>
-        )}
+        {/* 지금 바로 쓰기 쉬운 돈 카드 */}
+        {result.totalAsset > 0 && (() => {
+          const liquidAsset = Math.round(result.totalAsset * result.liquidRatio);
+          const liquidPct = Math.round(result.liquidRatio * 100);
+          const isLow = result.liquidRatio < 0.3;
+          const isMid = result.liquidRatio >= 0.3 && result.liquidRatio < 0.5;
+
+          return (
+            <div style={{
+              marginTop: 16,
+              padding: '12px 14px',
+              background: isLow ? '#FFFBEB' : isMid ? 'var(--tds-gray-50)' : 'var(--tds-gray-50)',
+              borderRadius: 10,
+              border: `1px solid ${isLow ? '#FDE68A' : 'var(--tds-gray-100)'}`,
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--tds-gray-600)' }}>
+                  지금 바로 쓰기 쉬운 돈
+                </span>
+                <span style={{ fontSize: 13, fontWeight: 800, color: isLow ? 'var(--tds-orange-500, #F07A14)' : 'var(--tds-gray-700)' }}>
+                  {liquidAsset.toLocaleString('ko-KR')}만원 ({liquidPct}%)
+                </span>
+              </div>
+              <p style={{ fontSize: 11, color: 'var(--tds-gray-500)', margin: 0, lineHeight: 1.5 }}>
+                {isLow
+                  ? '자산 대부분이 부동산이에요. 생활비로 바로 쓰기 어려울 수 있어요.'
+                  : isMid
+                  ? '자산의 절반 이상이 부동산이에요. 실제 생활비 여력은 더 적을 수 있어요.'
+                  : '대부분 현금·투자 자산이에요. 생활비로 활용하기 좋은 구조예요.'}
+              </p>
+            </div>
+          );
+        })()}
       </div>
     </div>
   );

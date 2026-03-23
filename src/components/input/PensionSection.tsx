@@ -59,14 +59,14 @@ function TextBtn({ onClick, children }: { onClick: () => void; children: React.R
   );
 }
 
-// 자동 추정 배지
+// 간편 계산 배지
 function AutoBadge() {
   return (
     <span style={{
       display: 'inline-block', fontSize: 10, fontWeight: 600, padding: '2px 8px',
       borderRadius: 20, background: 'var(--tds-blue-50)', color: 'var(--tds-blue-500)',
     }}>
-      자동 추정
+      간편 계산
     </span>
   );
 }
@@ -90,7 +90,7 @@ function ManualBadge() {
       display: 'inline-block', fontSize: 10, fontWeight: 600, padding: '2px 8px',
       borderRadius: 20, background: 'var(--tds-green-50)', color: 'var(--tds-green-500)',
     }}>
-      직접 입력 중
+      직접 입력
     </span>
   );
 }
@@ -121,7 +121,7 @@ function PublicPensionCard() {
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 8 }}>
         <div>
           <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--tds-gray-900)' }}>국민연금</div>
-          <div style={{ fontSize: 11, color: 'var(--tds-gray-400)', marginTop: 2 }}>직장 납부 국민연금에서 받는 월연금</div>
+          <div style={{ fontSize: 11, color: 'var(--tds-gray-400)', marginTop: 2 }}>지금 기준으로 예상한 국민연금이에요</div>
         </div>
         {isAuto ? <AutoBadge /> : <ManualBadge />}
       </div>
@@ -190,30 +190,32 @@ function PublicPensionCard() {
         </>
       )}
 
-      {/* 인라인 CTA (자동 추정 상태일 때) */}
+      {/* 인라인 CTA (간편 계산 상태일 때) */}
       {isAuto && (
         <div style={{
           marginTop: 8,
           padding: '8px 10px',
           background: 'var(--tds-gray-50, #F7F8FA)',
           borderRadius: 8,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
         }}>
-          <span style={{ fontSize: 11, color: 'var(--tds-gray-500)' }}>
-            공단 예상월액을 알고 있나요?
-          </span>
-          <button
-            onClick={switchToManual}
-            style={{
-              fontSize: 11, fontWeight: 700, padding: '3px 10px',
-              background: 'var(--tds-blue-500)', color: 'white',
-              border: 'none', borderRadius: 6, cursor: 'pointer',
-            }}
-          >
-            직접 입력
-          </button>
+          <p style={{ fontSize: 11, color: 'var(--tds-gray-400)', margin: '0 0 6px 0', lineHeight: 1.5 }}>
+            소득과 가입 기간을 기준으로 빠르게 추정한 값이에요. 실제값과 차이가 있을 수 있어요.
+          </p>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span style={{ fontSize: 11, color: 'var(--tds-gray-500)' }}>
+              공단 예상월액을 알고 있나요?
+            </span>
+            <button
+              onClick={switchToManual}
+              style={{
+                fontSize: 11, fontWeight: 700, padding: '3px 10px',
+                background: 'var(--tds-blue-500)', color: 'white',
+                border: 'none', borderRadius: 6, cursor: 'pointer',
+              }}
+            >
+              내가 직접 입력
+            </button>
+          </div>
         </div>
       )}
 
@@ -257,15 +259,15 @@ function PublicPensionCard() {
           <Divider />
           <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
             <button style={toggleBtnStyle(isAuto)} onClick={() => setPension({ publicPension: { ...publicPension, mode: 'auto' } })}>
-              자동 추정
+              간편 계산
             </button>
             <button style={toggleBtnStyle(!isAuto)} onClick={() => setPension({ publicPension: { ...publicPension, mode: 'manual' } })}>
-              직접 입력
+              내가 직접 입력
             </button>
           </div>
           <Row>
             <NumberInput
-              label="수령 시작 나이"
+              label="받기 시작할 나이"
               value={publicPension.startAge}
               onChange={v => setPension({ publicPension: { ...publicPension, startAge: v } })}
               unit="세"
@@ -383,24 +385,24 @@ function RetirementPensionCard() {
           <Divider />
           <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
             <button style={toggleBtnStyle(isAuto)} onClick={() => setPension({ retirementPension: { ...retirementPension, mode: 'auto' } })}>
-              자동 추정
+              간편 계산
             </button>
             <button style={toggleBtnStyle(!isAuto)} onClick={() => setPension({ retirementPension: { ...retirementPension, mode: 'manual' } })}>
-              직접 입력
+              내가 직접 입력
             </button>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             <Row>
               <NumberInput
-                label="현재 퇴직연금 적립금"
+                label="지금까지 쌓인 퇴직연금"
                 value={retirementPension.currentBalance}
                 onChange={v => setPension({ retirementPension: { ...retirementPension, currentBalance: v } })}
                 unit="만원"
                 hint="모르면 0으로 두세요"
               />
               <NumberInput
-                label="연금 개시 나이"
+                label="받기 시작할 나이"
                 value={startAge}
                 onChange={v => setPension({ retirementPension: { ...retirementPension, startAge: v } })}
                 unit="세"
@@ -409,20 +411,20 @@ function RetirementPensionCard() {
             </Row>
             <Row>
               <NumberInput
-                label="수령 기간"
+                label="몇 년 동안 받을지"
                 value={retirementPension.payoutYears}
                 onChange={v => setPension({ retirementPension: { ...retirementPension, payoutYears: v } })}
                 unit="년"
               />
               <RateInput
-                label="적립 수익률"
+                label="적립 중 수익률"
                 value={retirementPension.accumulationReturnRate}
                 onChange={v => setPension({ retirementPension: { ...retirementPension, accumulationReturnRate: v } })}
               />
             </Row>
             <Row>
               <RateInput
-                label="수령 수익률"
+                label="수령 중 수익률"
                 value={retirementPension.payoutReturnRate}
                 onChange={v => setPension({ retirementPension: { ...retirementPension, payoutReturnRate: v } })}
               />
@@ -494,7 +496,7 @@ function PrivatePensionProductCard({
             hint="모르면 0"
           />
           <NumberInput
-            label="월 납입액"
+            label="한 달에 넣는 돈"
             value={product.monthlyContribution}
             onChange={v => set({ monthlyContribution: v })}
             unit="만원"
@@ -502,20 +504,20 @@ function PrivatePensionProductCard({
         </Row>
         <Row>
           <NumberInput
-            label="수령 시작 나이"
+            label="받기 시작할 나이"
             value={product.startAge}
             onChange={v => set({ startAge: v })}
             unit="세"
           />
           <NumberInput
-            label="수령 기간"
+            label="몇 년 동안 받을지"
             value={product.payoutYears}
             onChange={v => set({ payoutYears: v })}
             unit="년"
           />
         </Row>
         <RateInput
-          label="예상 수익률"
+          label="1년 기대 수익률"
           value={product.expectedReturnRate}
           onChange={setRate}
           hint="모르면 기본값 그대로"

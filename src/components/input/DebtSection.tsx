@@ -4,24 +4,36 @@ import type { PlannerInputs, RepaymentType } from '../../types/inputs';
 import NumberInput from './shared/NumberInput';
 import RateInput from './shared/RateInput';
 import SectionCard from './shared/SectionCard';
-import { DEBT_LABELS, MORTGAGE_REPAYMENT_TYPES, MORTGAGE_REPAYMENT_LABELS, MORTGAGE_REPAYMENT_DESCRIPTIONS, OTHER_REPAYMENT_TYPES, OTHER_REPAYMENT_LABELS, OTHER_REPAYMENT_DESCRIPTIONS } from '../../utils/constants';
-import { buildMonthlyDebtSchedule, getAnnualPaymentFromSchedule } from '../../engine/debtSchedule';
+import {
+  DEBT_LABELS,
+  MORTGAGE_REPAYMENT_TYPES,
+  MORTGAGE_REPAYMENT_LABELS,
+  MORTGAGE_REPAYMENT_FRIENDLY_LABELS,
+  MORTGAGE_REPAYMENT_DESCRIPTIONS,
+  OTHER_REPAYMENT_TYPES,
+  OTHER_REPAYMENT_LABELS,
+  OTHER_REPAYMENT_FRIENDLY_LABELS,
+  OTHER_REPAYMENT_DESCRIPTIONS,
+} from '../../utils/constants';
+import { buildMonthlyDebtSchedule, summarizeDebtSchedule } from '../../engine/debtSchedule';
 
 type DebtKey = keyof PlannerInputs['debts'];
 
 const isMortgage = (key: DebtKey) => key === 'mortgage';
 
-/** 상환방식 버튼 그룹 */
+/** 상환방식 버튼 그룹 — 2행 레이아웃 (일상어 + 금융용어) */
 function RepaymentTypeSelector({
   value,
   onChange,
   types,
-  labels,
+  friendlyLabels,
+  termLabels,
 }: {
   value: RepaymentType;
   onChange: (t: RepaymentType) => void;
   types: readonly string[];
-  labels: Record<string, string>;
+  friendlyLabels: Record<string, string>;
+  termLabels: Record<string, string>;
 }) {
   return (
     <div style={{ display: 'flex', gap: 6 }}>
@@ -33,20 +45,38 @@ function RepaymentTypeSelector({
             onClick={() => onChange(type as RepaymentType)}
             style={{
               flex: 1,
-              height: 36,
+              minHeight: 48,
+              height: 'auto',
               borderRadius: 8,
               border: `1.5px solid ${isSelected ? 'var(--tds-blue-500)' : 'var(--tds-gray-100)'}`,
               background: isSelected ? 'var(--tds-blue-50)' : 'var(--tds-white)',
-              color: isSelected ? 'var(--tds-blue-500)' : 'var(--tds-gray-500)',
-              fontSize: 12,
-              fontWeight: isSelected ? 700 : 400,
               cursor: 'pointer',
               transition: 'all 0.15s',
               fontFamily: 'inherit',
-              whiteSpace: 'nowrap',
+              padding: '7px 6px',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: 2,
             }}
           >
-            {labels[type]}
+            <span style={{
+              fontSize: 11,
+              fontWeight: isSelected ? 700 : 500,
+              color: isSelected ? 'var(--tds-blue-500)' : 'var(--tds-gray-600)',
+              lineHeight: 1.3,
+              textAlign: 'center',
+              wordBreak: 'keep-all',
+            }}>
+              {friendlyLabels[type]}
+            </span>
+            <span style={{
+              fontSize: 10,
+              color: isSelected ? 'var(--tds-blue-400)' : 'var(--tds-gray-400)',
+              lineHeight: 1.2,
+            }}>
+              {termLabels[type]}
+            </span>
           </button>
         );
       })}
@@ -87,14 +117,15 @@ export default function DebtSection() {
           const mortgage = isMortgage(key);
 
           const types = mortgage ? MORTGAGE_REPAYMENT_TYPES : OTHER_REPAYMENT_TYPES;
-          const labels = mortgage ? MORTGAGE_REPAYMENT_LABELS : OTHER_REPAYMENT_LABELS;
+          const friendlyLabels = mortgage ? MORTGAGE_REPAYMENT_FRIENDLY_LABELS : OTHER_REPAYMENT_FRIENDLY_LABELS;
+          const termLabels = mortgage ? MORTGAGE_REPAYMENT_LABELS : OTHER_REPAYMENT_LABELS;
           const descriptions = mortgage ? MORTGAGE_REPAYMENT_DESCRIPTIONS : OTHER_REPAYMENT_DESCRIPTIONS;
 
-          // 연간 납입액 미리보기 (스케줄 기반, 첫 해 기준)
+          // 스케줄 기반 요약 (4개 지표)
           const schedule = hasBalance && debt.repaymentYears > 0
             ? buildMonthlyDebtSchedule(debt)
             : [];
-          const annualPayment = getAnnualPaymentFromSchedule(schedule, 0);
+          const summary = summarizeDebtSchedule(schedule);
 
           const graceVisible = mortgage && graceExpanded[key];
 
@@ -143,7 +174,8 @@ export default function DebtSection() {
                   value={debt.repaymentType}
                   onChange={(t) => setDebt(key, { repaymentType: t })}
                   types={types}
-                  labels={labels}
+                  friendlyLabels={friendlyLabels}
+                  termLabels={termLabels}
                 />
               </div>
 
@@ -180,43 +212,63 @@ export default function DebtSection() {
                     }}
                   >
                     <span>{graceVisible ? '▲' : '▼'}</span>
-                    거치기간 설정 {debt.gracePeriodYears > 0 ? `(${debt.gracePeriodYears}년)` : '(선택)'}
+                    원금은 나중부터 갚기 {debt.gracePeriodYears > 0 ? `(${debt.gracePeriodYears}년)` : '(선택)'}
                   </button>
 
                   {graceVisible && (
                     <div style={{ marginTop: 8 }}>
                       <NumberInput
-                        label="거치기간"
+                        label="원금 상환 시작까지"
                         value={debt.gracePeriodYears}
                         onChange={(v) => setDebt(key, { gracePeriodYears: v })}
                         unit="년"
                         max={10}
                       />
                       <p style={{ fontSize: 11, color: 'var(--tds-gray-400)', margin: '4px 0 0 0', lineHeight: 1.5 }}>
-                        거치기간 동안은 이자만 내고, 이후 월 상환액은 더 커질 수 있어요.
+                        지금은 이자만 내고 원금은 나중에 갚아요. 그만큼 나중 부담이 커질 수 있어요.
                       </p>
                     </div>
                   )}
                 </div>
               )}
 
-              {/* 연간 납입액 미리보기 (첫 해 기준) */}
-              {hasBalance && debt.repaymentYears > 0 && (
+              {/* 상환 미리보기 (4개 지표) */}
+              {hasBalance && debt.repaymentYears > 0 && summary.firstMonthPayment > 0 && (
                 <div style={{
                   marginTop: 4,
-                  padding: '8px 12px',
+                  padding: '10px 12px',
                   background: 'var(--tds-blue-50)',
                   borderRadius: 8,
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
                 }}>
-                  <span style={{ fontSize: 12, color: 'var(--tds-blue-500)' }}>
-                    연간 납입액 (첫해 기준)
-                  </span>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--tds-blue-500)' }}>
-                    {Math.round(annualPayment).toLocaleString('ko-KR')}만원
-                  </span>
+                  <p style={{ fontSize: 11, color: 'var(--tds-blue-400)', margin: '0 0 8px 0', fontWeight: 600 }}>
+                    상환 미리보기
+                  </p>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px 12px' }}>
+                    <div>
+                      <p style={{ fontSize: 11, color: 'var(--tds-gray-500)', margin: '0 0 1px 0' }}>첫 달 납입액</p>
+                      <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--tds-blue-500)', margin: 0 }}>
+                        {Math.round(summary.firstMonthPayment).toLocaleString('ko-KR')}만원
+                      </p>
+                    </div>
+                    <div>
+                      <p style={{ fontSize: 11, color: 'var(--tds-gray-500)', margin: '0 0 1px 0' }}>첫해 납입액</p>
+                      <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--tds-blue-500)', margin: 0 }}>
+                        {Math.round(summary.firstYearAnnualPayment).toLocaleString('ko-KR')}만원
+                      </p>
+                    </div>
+                    <div>
+                      <p style={{ fontSize: 11, color: 'var(--tds-gray-500)', margin: '0 0 1px 0' }}>가장 많이 내는 달</p>
+                      <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--tds-blue-500)', margin: 0 }}>
+                        {Math.round(summary.maxMonthPayment).toLocaleString('ko-KR')}만원
+                      </p>
+                    </div>
+                    <div>
+                      <p style={{ fontSize: 11, color: 'var(--tds-gray-500)', margin: '0 0 1px 0' }}>부담 최고 시점</p>
+                      <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--tds-blue-500)', margin: 0 }}>
+                        {Math.floor(summary.maxMonthIndex / 12) + 1}년차
+                      </p>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
