@@ -60,8 +60,8 @@ export function simulate(
     let childExpThisYear = 0;
 
     if (age > currentAge) {
-      // 금융자산 투자수익 (지출 반영 전 기준)
-      investReturn = currentFinancialAsset * financialReturnDecimal;
+      // 금융자산 투자수익 — 잔액이 양수일 때만 발생 (음수 잔액에 수익률 적용 방지)
+      investReturn = Math.max(0, currentFinancialAsset) * financialReturnDecimal;
 
       childExpThisYear =
         children.hasChildren && age <= children.independenceAge
@@ -90,7 +90,8 @@ export function simulate(
 
       // 금융자산 업데이트: 수익 + 소득 + 연금 - 지출 - 부채상환 - 자녀비용
       currentFinancialAsset =
-        currentFinancialAsset * (1 + financialReturnDecimal) +
+        currentFinancialAsset +
+        investReturn +
         incomeThisYear +
         pensionThisYear -
         expenseThisYear -
