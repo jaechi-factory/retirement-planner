@@ -25,7 +25,7 @@ export default function CurrentStatusSection() {
   const showCashflow = status.annualIncome > 0 && status.annualExpense > 0;
 
   return (
-    <SectionCard title="현재 상태">
+    <SectionCard title="현재 상태" subtitle="지금 기준 생활 수준을 미래에도 유지할 수 있는지 봐요">
       <NumberInput
         label="현재 나이"
         value={status.currentAge}
@@ -38,7 +38,7 @@ export default function CurrentStatusSection() {
         label="세후 연소득"
         value={status.annualIncome}
         onChange={(v) => setStatus({ annualIncome: v })}
-        hint="세금·4대보험 공제 후 실수령액 기준 (보너스 포함 시 합산)"
+        hint="세금·4대보험 공제 후 실수령액 (보너스 포함 시 합산)"
       />
       <RateInput
         label="연봉 증가율"
@@ -60,7 +60,7 @@ export default function CurrentStatusSection() {
           />
         </div>
         <p style={{ fontSize: 12, color: 'var(--tds-gray-400)', margin: 0 }}>
-          같은 수준의 소비를 원한다면 최소 물가 상승률 이상 입력해주세요. 물가는 매년 3% 이상 올라요.
+          같은 생활 수준을 유지하려면 물가 상승률(약 3%) 이상을 입력해요.
         </p>
       </div>
 

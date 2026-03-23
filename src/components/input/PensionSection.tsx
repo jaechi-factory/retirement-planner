@@ -88,7 +88,7 @@ function ManualBadge() {
   return (
     <span style={{
       display: 'inline-block', fontSize: 12, fontWeight: 600, padding: '2px 8px',
-      borderRadius: 20, background: 'var(--tds-green-50)', color: 'var(--tds-green-500)',
+      borderRadius: 20, background: 'var(--tds-gray-100)', color: 'var(--tds-gray-600)',
     }}>
       직접 입력
     </span>
@@ -489,7 +489,7 @@ function PrivatePensionProductCard({
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         <Row>
           <NumberInput
-            label="현재 적립금"
+            label="지금까지 모은 돈"
             value={product.currentBalance}
             onChange={v => set({ currentBalance: v })}
             unit="만원"
@@ -731,14 +731,14 @@ function PrivatePensionCard() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             <Row>
               <NumberInput
-                label="현재 적립금"
+                label="지금까지 모은 돈"
                 value={privatePension.currentBalance}
                 onChange={v => upd({ currentBalance: v })}
                 unit="만원"
                 hint="모르면 0"
               />
               <NumberInput
-                label="월 납입액"
+                label="한 달에 넣는 돈"
                 value={privatePension.monthlyContribution}
                 onChange={v => upd({ monthlyContribution: v })}
                 unit="만원"
@@ -746,20 +746,20 @@ function PrivatePensionCard() {
             </Row>
             <Row>
               <NumberInput
-                label="수령 시작 나이"
+                label="받기 시작할 나이"
                 value={privatePension.startAge}
                 onChange={v => upd({ startAge: v })}
                 unit="세"
               />
               <NumberInput
-                label="수령 기간"
+                label="몇 년 동안 받을지"
                 value={privatePension.payoutYears}
                 onChange={v => upd({ payoutYears: v })}
                 unit="년"
               />
             </Row>
             <RateInput
-              label="예상 수익률"
+              label="1년 기대 수익률"
               value={privatePension.expectedReturnRate}
               onChange={setBasicRate}
               hint="모르면 기본값 그대로"
@@ -812,6 +812,11 @@ function PrivatePensionCard() {
 // ─── 섹션 전체 ────────────────────────────────────────────────────────────────
 
 export default function PensionSection() {
+  const { inputs, result } = usePlannerStore();
+  const totalPension = result.totalMonthlyPensionTodayValue ?? 0;
+  const targetMonthly = inputs.goal.targetMonthly;
+  const coveragePct = targetMonthly > 0 ? Math.round((totalPension / targetMonthly) * 100) : 0;
+
   return (
     <div
       style={{
@@ -819,18 +824,20 @@ export default function PensionSection() {
         borderRadius: 16,
         padding: '20px 20px 24px',
         marginBottom: 12,
-        boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+        border: '1px solid var(--tds-gray-100)',
       }}
     >
-      <h3 style={{ margin: '0 0 4px 0', fontSize: 15, fontWeight: 700, color: 'var(--tds-gray-900)' }}>
-        은퇴 후 연금 수입
-      </h3>
-      <p style={{ fontSize: 12, color: 'var(--tds-gray-400)', margin: '0 0 6px' }}>
-        모르는 값은 평균 가정으로 추정해요 · 아는 값만 넣으면 더 정확해져요
-      </p>
-      <p style={{ fontSize: 12, color: 'var(--tds-gray-400)', margin: '0 0 14px' }}>
-        금액은 지금 돈 가치 기준으로 입력해 주세요. 미래 시점 금액은 물가를 반영해 자동 계산해요.
-      </p>
+      <div style={{ marginBottom: 16 }}>
+        <h3 style={{ margin: '0 0 3px 0', fontSize: 15, fontWeight: 700, color: 'var(--tds-gray-900)' }}>
+          연금
+        </h3>
+        <p style={{ margin: '0 0 4px', fontSize: 12, color: 'var(--tds-gray-400)' }}>
+          은퇴 후 생활비를 얼마나 메워줄지 계산해요
+        </p>
+        <p style={{ margin: 0, fontSize: 12, color: 'var(--tds-gray-500)' }}>
+          금액은 지금 돈 가치 기준으로 입력해 주세요.
+        </p>
+      </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         <PublicPensionCard />
@@ -838,12 +845,34 @@ export default function PensionSection() {
         <PrivatePensionCard />
       </div>
 
+      {/* 하단 결과 요약 */}
+      {totalPension > 0 && (
+        <div style={{
+          marginTop: 14, padding: '12px 14px',
+          background: 'var(--tds-blue-50)', borderRadius: 10,
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        }}>
+          <div>
+            <div style={{ fontSize: 12, color: 'var(--tds-blue-400)', marginBottom: 2 }}>
+              추정값 · 지금 기준
+            </div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--tds-blue-500)' }}>
+              월 {totalPension.toLocaleString('ko-KR')}만원 보탬이 돼요
+            </div>
+          </div>
+          {coveragePct > 0 && (
+            <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--tds-blue-500)' }}>
+              {coveragePct}%
+            </div>
+          )}
+        </div>
+      )}
+
       <div style={{
-        marginTop: 14, padding: '10px 12px',
-        background: 'var(--tds-gray-50, #F7F8FA)', borderRadius: 8,
+        marginTop: 10,
         fontSize: 12, color: 'var(--tds-gray-400)', lineHeight: 1.6,
       }}>
-        ⚠️ 정확한 수령액이 아니라 평균 가정 기반 추정치예요. 실제 수령액은 가입기간·적립금·수령 시점 등에 따라 달라질 수 있어요.
+        평균 가정 기반 추정치 · 실제 수령액은 가입 기간·적립금에 따라 달라져요
       </div>
     </div>
   );

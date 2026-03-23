@@ -6,9 +6,11 @@ import SectionCard from './shared/SectionCard';
 import {
   DEBT_LABELS,
   MORTGAGE_REPAYMENT_TYPES,
+  MORTGAGE_REPAYMENT_FRIENDLY_LABELS,
   MORTGAGE_REPAYMENT_LABELS,
   MORTGAGE_REPAYMENT_DESCRIPTIONS,
   OTHER_REPAYMENT_TYPES,
+  OTHER_REPAYMENT_FRIENDLY_LABELS,
   OTHER_REPAYMENT_LABELS,
   OTHER_REPAYMENT_DESCRIPTIONS,
 } from '../../utils/constants';
@@ -23,11 +25,13 @@ function RepaymentTypeSelector({
   value,
   onChange,
   types,
+  friendlyLabels,
   termLabels,
 }: {
   value: RepaymentType;
   onChange: (t: RepaymentType) => void;
   types: readonly string[];
+  friendlyLabels: Record<string, string>;
   termLabels: Record<string, string>;
 }) {
   return (
@@ -40,20 +44,33 @@ function RepaymentTypeSelector({
             onClick={() => onChange(type as RepaymentType)}
             style={{
               flex: 1,
-              height: 36,
+              padding: '7px 4px',
               borderRadius: 8,
               border: `1.5px solid ${isSelected ? 'var(--tds-blue-500)' : 'var(--tds-gray-100)'}`,
               background: isSelected ? 'var(--tds-blue-50)' : 'var(--tds-white)',
-              color: isSelected ? 'var(--tds-blue-500)' : 'var(--tds-gray-500)',
-              fontSize: 12,
-              fontWeight: isSelected ? 700 : 400,
               cursor: 'pointer',
               transition: 'all 0.15s',
               fontFamily: 'inherit',
-              whiteSpace: 'nowrap',
+              textAlign: 'center',
             }}
           >
-            {termLabels[type]}
+            <div style={{
+              fontSize: 12,
+              fontWeight: isSelected ? 700 : 500,
+              color: isSelected ? 'var(--tds-blue-500)' : 'var(--tds-gray-700)',
+              lineHeight: 1.3,
+              whiteSpace: 'pre-wrap',
+            }}>
+              {friendlyLabels[type]}
+            </div>
+            <div style={{
+              fontSize: 11,
+              fontWeight: 400,
+              color: isSelected ? 'var(--tds-blue-400)' : 'var(--tds-gray-400)',
+              marginTop: 2,
+            }}>
+              {termLabels[type]}
+            </div>
           </button>
         );
       })}
@@ -67,7 +84,7 @@ export default function DebtSection() {
   const rows: DebtKey[] = ['mortgage', 'creditLoan', 'otherLoan'];
 
   return (
-    <SectionCard title="부채 구성">
+    <SectionCard title="부채 구성" subtitle="갚아야 할 돈이 생활비에 얼마나 영향을 주는지 반영해요">
       {result.totalDebt > 0 && (
         <div
           style={{
@@ -93,6 +110,7 @@ export default function DebtSection() {
           const isMort = isMortgage(key);
 
           const types = isMort ? MORTGAGE_REPAYMENT_TYPES : OTHER_REPAYMENT_TYPES;
+          const friendlyLabels = isMort ? MORTGAGE_REPAYMENT_FRIENDLY_LABELS : OTHER_REPAYMENT_FRIENDLY_LABELS;
           const termLabels = isMort ? MORTGAGE_REPAYMENT_LABELS : OTHER_REPAYMENT_LABELS;
           const descriptions = isMort ? MORTGAGE_REPAYMENT_DESCRIPTIONS : OTHER_REPAYMENT_DESCRIPTIONS;
           const selectedDescription = descriptions[debt.repaymentType];
@@ -148,6 +166,7 @@ export default function DebtSection() {
                   value={debt.repaymentType}
                   onChange={(t) => setDebt(key, { repaymentType: t })}
                   types={types}
+                  friendlyLabels={friendlyLabels}
                   termLabels={termLabels}
                 />
               </div>
@@ -188,13 +207,13 @@ export default function DebtSection() {
                   </div>
                   <div style={{ padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 6 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: 12, color: 'var(--tds-gray-500)' }}>첫 달 납입액</span>
+                      <span style={{ fontSize: 12, color: 'var(--tds-gray-500)' }}>첫 달에 갚을 돈</span>
                       <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--tds-gray-700)' }}>
                         −{Math.round(summary.firstMonthPayment).toLocaleString('ko-KR')}만원
                       </span>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: 12, color: 'var(--tds-gray-500)' }}>첫해 납입액</span>
+                      <span style={{ fontSize: 12, color: 'var(--tds-gray-500)' }}>첫해에 갚을 돈</span>
                       <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--tds-gray-500)' }}>
                         −{Math.round(summary.firstYearAnnualPayment).toLocaleString('ko-KR')}만원
                       </span>
@@ -202,7 +221,7 @@ export default function DebtSection() {
                     <div style={{ height: 1, background: 'var(--tds-gray-100)', margin: '2px 0' }} />
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--tds-gray-700)' }}>
-                        최대 납입액
+                        가장 많이 갚는 달
                       </span>
                       <span style={{ fontSize: 16, fontWeight: 800, color: 'var(--tds-red-500, #F04452)' }}>
                         −{Math.round(summary.maxMonthPayment).toLocaleString('ko-KR')}만원
@@ -214,7 +233,7 @@ export default function DebtSection() {
                       background: 'var(--tds-gray-50)',
                       borderRadius: 6,
                     }}>
-                      {Math.floor(summary.maxMonthIndex / 12) + 1}년차에 납입 부담이 가장 높아요.
+                      {Math.floor(summary.maxMonthIndex / 12) + 1}년차에 부담이 가장 커요.
                     </div>
                   </div>
                 </div>

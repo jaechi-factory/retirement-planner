@@ -15,20 +15,20 @@ export default function AssetSection() {
   const { inputs, setAsset, result } = usePlannerStore();
 
   return (
-    <SectionCard title="자산 구성">
+    <SectionCard title="자산 구성" subtitle="지금 모아둔 돈이 얼마나 버텨주는지 계산해요">
       {result.totalAsset > 0 && (
         <div
           style={{
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            background: 'var(--tds-blue-50)',
+            background: 'var(--tds-gray-50)',
             borderRadius: 10,
             padding: '10px 14px',
           }}
         >
-          <span style={{ fontSize: 13, color: 'var(--tds-blue-500)', fontWeight: 600 }}>총자산</span>
-          <span style={{ fontSize: 15, fontWeight: 800, color: 'var(--tds-blue-500)' }}>
+          <span style={{ fontSize: 13, color: 'var(--tds-gray-600)', fontWeight: 600 }}>총자산</span>
+          <span style={{ fontSize: 15, fontWeight: 800, color: 'var(--tds-gray-900)' }}>
             {result.totalAsset.toLocaleString('ko-KR')}만원
           </span>
         </div>

@@ -126,65 +126,52 @@ export default function RightPanel() {
           marginBottom: 12,
         }}
       >
-        <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--tds-gray-900)', marginBottom: 14 }}>
-          은퇴 후 예상 연금 수입
+        <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--tds-gray-900)', marginBottom: 4 }}>
+          연금이 생활비를 메워주는 비율
+        </div>
+        <div style={{ fontSize: 12, color: 'var(--tds-gray-400)', marginBottom: 14 }}>
+          추정값 · 지금 기준
         </div>
 
-        {/* 3 핵심 수치 */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 12 }}>
-          {/* 은퇴 직후 */}
-          <div style={{
-            padding: '12px 12px',
-            background: 'var(--tds-gray-50, #F7F8FA)',
-            borderRadius: 10,
-          }}>
-            <div style={{ fontSize: 12, color: 'var(--tds-gray-400)', fontWeight: 600, marginBottom: 4 }}>
-              은퇴 직후
-            </div>
-            <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--tds-gray-700)' }}>
-              월 {result.monthlyPensionAtRetirementStart.toLocaleString('ko-KR')}만원
-            </div>
-            <div style={{ fontSize: 12, color: 'var(--tds-gray-400)', marginTop: 2 }}>
-              개시된 연금 합산
-            </div>
-          </div>
-
-          {/* 모든 연금 개시 후 */}
-          <div style={{
-            padding: '12px 12px',
-            background: 'var(--tds-blue-50)',
-            borderRadius: 10,
-          }}>
-            <div style={{ fontSize: 12, color: 'var(--tds-blue-400)', fontWeight: 600, marginBottom: 4 }}>
-              모든 연금 개시 후
-            </div>
-            <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--tds-blue-500)' }}>
-              월 {result.totalMonthlyPensionTodayValue.toLocaleString('ko-KR')}만원
-            </div>
-            <div style={{ fontSize: 12, color: 'var(--tds-blue-400)', marginTop: 2 }}>
-              전체 연금 합산
-            </div>
-          </div>
-        </div>
-
-        {/* 커버율 */}
+        {/* 커버율 — 대표 숫자 */}
         <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '10px 12px',
-          borderRadius: 10,
+          padding: '16px 16px',
+          borderRadius: 12,
           background: coveragePct >= 50 ? 'var(--tds-blue-50)' : 'var(--tds-orange-50)',
-          marginBottom: 14,
+          marginBottom: 12,
         }}>
-          <div style={{ fontSize: 12, color: 'var(--tds-gray-500)' }}>
-            목표 생활비 중 연금이 커버하는 비중
-          </div>
           <div style={{
-            fontSize: 20, fontWeight: 800,
+            fontSize: 36, fontWeight: 800, letterSpacing: '-1px',
             color: coveragePct >= 50 ? 'var(--tds-blue-500)' : 'var(--tds-orange-500)',
+            marginBottom: 4,
           }}>
             {coveragePct}%
+          </div>
+          <div style={{ fontSize: 13, color: 'var(--tds-gray-600)' }}>
+            생활비 목표의 {coveragePct}%를 메워줘요
+          </div>
+          <div style={{ fontSize: 12, color: 'var(--tds-gray-400)', marginTop: 2 }}>
+            전체 연금 합산 월 {result.totalMonthlyPensionTodayValue.toLocaleString('ko-KR')}만원
+          </div>
+        </div>
+
+        {/* 은퇴 직후 / 모든 연금 개시 후 — 보조 */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 14 }}>
+          <div style={{ padding: '10px 12px', background: 'var(--tds-gray-50)', borderRadius: 10 }}>
+            <div style={{ fontSize: 11, color: 'var(--tds-gray-400)', fontWeight: 600, marginBottom: 4 }}>
+              은퇴 직후
+            </div>
+            <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--tds-gray-700)' }}>
+              월 {result.monthlyPensionAtRetirementStart.toLocaleString('ko-KR')}만원
+            </div>
+          </div>
+          <div style={{ padding: '10px 12px', background: 'var(--tds-gray-50)', borderRadius: 10 }}>
+            <div style={{ fontSize: 11, color: 'var(--tds-gray-400)', fontWeight: 600, marginBottom: 4 }}>
+              모든 연금 개시 후
+            </div>
+            <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--tds-gray-700)' }}>
+              월 {result.totalMonthlyPensionTodayValue.toLocaleString('ko-KR')}만원
+            </div>
           </div>
         </div>
 
@@ -210,7 +197,7 @@ export default function RightPanel() {
           ))}
         </div>
 
-        <p style={{ fontSize: 12, color: 'var(--tds-gray-300)', margin: '0 0 0' }}>
+        <p style={{ fontSize: 12, color: 'var(--tds-gray-300)', margin: 0 }}>
           평균 가정 기반 추정치 · 직접 입력값이 있으면 우선 적용
         </p>
       </div>
