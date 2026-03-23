@@ -21,65 +21,73 @@ type DebtKey = keyof PlannerInputs['debts'];
 
 const isMortgage = (key: DebtKey) => key === 'mortgage';
 
-/** 상환방식 버튼 그룹 — 2행 레이아웃 (일상어 + 금융용어) */
+/** 상환방식 버튼 그룹 — 버튼(금융용어) + 아래 친숙어 설명 */
 function RepaymentTypeSelector({
   value,
   onChange,
   types,
-  friendlyLabels,
   termLabels,
+  friendlyLabels,
 }: {
   value: RepaymentType;
   onChange: (t: RepaymentType) => void;
   types: readonly string[];
-  friendlyLabels: Record<string, string>;
   termLabels: Record<string, string>;
+  friendlyLabels: Record<string, string>;
 }) {
   return (
-    <div style={{ display: 'flex', gap: 6 }}>
-      {types.map((type) => {
-        const isSelected = value === type;
-        return (
-          <button
-            key={type}
-            onClick={() => onChange(type as RepaymentType)}
-            style={{
-              flex: 1,
-              minHeight: 48,
-              height: 'auto',
-              borderRadius: 8,
-              border: `1.5px solid ${isSelected ? 'var(--tds-blue-500)' : 'var(--tds-gray-100)'}`,
-              background: isSelected ? 'var(--tds-blue-50)' : 'var(--tds-white)',
-              cursor: 'pointer',
-              transition: 'all 0.15s',
-              fontFamily: 'inherit',
-              padding: '7px 6px',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: 2,
-            }}
-          >
-            <span style={{
-              fontSize: 11,
-              fontWeight: isSelected ? 700 : 500,
-              color: isSelected ? 'var(--tds-blue-500)' : 'var(--tds-gray-600)',
-              lineHeight: 1.3,
-              textAlign: 'center',
-              wordBreak: 'keep-all',
-            }}>
-              {friendlyLabels[type]}
-            </span>
-            <span style={{
-              fontSize: 10,
-              color: isSelected ? 'var(--tds-blue-400)' : 'var(--tds-gray-400)',
-              lineHeight: 1.2,
-            }}>
+    <div>
+      {/* 버튼 행 */}
+      <div style={{ display: 'flex', gap: 6 }}>
+        {types.map((type) => {
+          const isSelected = value === type;
+          return (
+            <button
+              key={type}
+              onClick={() => onChange(type as RepaymentType)}
+              style={{
+                flex: 1,
+                height: 36,
+                borderRadius: 8,
+                border: `1.5px solid ${isSelected ? 'var(--tds-blue-500)' : 'var(--tds-gray-100)'}`,
+                background: isSelected ? 'var(--tds-blue-50)' : 'var(--tds-white)',
+                color: isSelected ? 'var(--tds-blue-500)' : 'var(--tds-gray-500)',
+                fontSize: 12,
+                fontWeight: isSelected ? 700 : 400,
+                cursor: 'pointer',
+                transition: 'all 0.15s',
+                fontFamily: 'inherit',
+                whiteSpace: 'nowrap',
+              }}
+            >
               {termLabels[type]}
-            </span>
-          </button>
-        );
-      })}
+            </button>
+          );
+        })}
+      </div>
+      {/* 친숙어 설명 행 */}
+      <div style={{ display: 'flex', gap: 6, marginTop: 5 }}>
+        {types.map((type) => {
+          const isSelected = value === type;
+          return (
+            <p
+              key={type}
+              style={{
+                flex: 1,
+                margin: 0,
+                fontSize: 10,
+                textAlign: 'center',
+                lineHeight: 1.4,
+                color: isSelected ? 'var(--tds-blue-400)' : 'var(--tds-gray-400)',
+                fontWeight: isSelected ? 600 : 400,
+                wordBreak: 'keep-all',
+              }}
+            >
+              {friendlyLabels[type]}
+            </p>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -117,8 +125,8 @@ export default function DebtSection() {
           const mortgage = isMortgage(key);
 
           const types = mortgage ? MORTGAGE_REPAYMENT_TYPES : OTHER_REPAYMENT_TYPES;
-          const friendlyLabels = mortgage ? MORTGAGE_REPAYMENT_FRIENDLY_LABELS : OTHER_REPAYMENT_FRIENDLY_LABELS;
           const termLabels = mortgage ? MORTGAGE_REPAYMENT_LABELS : OTHER_REPAYMENT_LABELS;
+          const friendlyLabels = mortgage ? MORTGAGE_REPAYMENT_FRIENDLY_LABELS : OTHER_REPAYMENT_FRIENDLY_LABELS;
           const descriptions = mortgage ? MORTGAGE_REPAYMENT_DESCRIPTIONS : OTHER_REPAYMENT_DESCRIPTIONS;
 
           // 스케줄 기반 요약 (4개 지표)
