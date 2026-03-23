@@ -21,73 +21,45 @@ type DebtKey = keyof PlannerInputs['debts'];
 
 const isMortgage = (key: DebtKey) => key === 'mortgage';
 
-/** 상환방식 버튼 그룹 — 버튼(금융용어) + 아래 친숙어 설명 */
+/** 상환방식 버튼 그룹 */
 function RepaymentTypeSelector({
   value,
   onChange,
   types,
   termLabels,
-  friendlyLabels,
 }: {
   value: RepaymentType;
   onChange: (t: RepaymentType) => void;
   types: readonly string[];
   termLabels: Record<string, string>;
-  friendlyLabels: Record<string, string>;
 }) {
   return (
-    <div>
-      {/* 버튼 행 */}
-      <div style={{ display: 'flex', gap: 6 }}>
-        {types.map((type) => {
-          const isSelected = value === type;
-          return (
-            <button
-              key={type}
-              onClick={() => onChange(type as RepaymentType)}
-              style={{
-                flex: 1,
-                height: 36,
-                borderRadius: 8,
-                border: `1.5px solid ${isSelected ? 'var(--tds-blue-500)' : 'var(--tds-gray-100)'}`,
-                background: isSelected ? 'var(--tds-blue-50)' : 'var(--tds-white)',
-                color: isSelected ? 'var(--tds-blue-500)' : 'var(--tds-gray-500)',
-                fontSize: 12,
-                fontWeight: isSelected ? 700 : 400,
-                cursor: 'pointer',
-                transition: 'all 0.15s',
-                fontFamily: 'inherit',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {termLabels[type]}
-            </button>
-          );
-        })}
-      </div>
-      {/* 친숙어 설명 행 */}
-      <div style={{ display: 'flex', gap: 6, marginTop: 5 }}>
-        {types.map((type) => {
-          const isSelected = value === type;
-          return (
-            <p
-              key={type}
-              style={{
-                flex: 1,
-                margin: 0,
-                fontSize: 10,
-                textAlign: 'center',
-                lineHeight: 1.4,
-                color: isSelected ? 'var(--tds-blue-400)' : 'var(--tds-gray-400)',
-                fontWeight: isSelected ? 600 : 400,
-                wordBreak: 'keep-all',
-              }}
-            >
-              {friendlyLabels[type]}
-            </p>
-          );
-        })}
-      </div>
+    <div style={{ display: 'flex', gap: 6 }}>
+      {types.map((type) => {
+        const isSelected = value === type;
+        return (
+          <button
+            key={type}
+            onClick={() => onChange(type as RepaymentType)}
+            style={{
+              flex: 1,
+              height: 36,
+              borderRadius: 8,
+              border: `1.5px solid ${isSelected ? 'var(--tds-blue-500)' : 'var(--tds-gray-100)'}`,
+              background: isSelected ? 'var(--tds-blue-50)' : 'var(--tds-white)',
+              color: isSelected ? 'var(--tds-blue-500)' : 'var(--tds-gray-500)',
+              fontSize: 12,
+              fontWeight: isSelected ? 700 : 400,
+              cursor: 'pointer',
+              transition: 'all 0.15s',
+              fontFamily: 'inherit',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {termLabels[type]}
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -128,6 +100,8 @@ export default function DebtSection() {
           const termLabels = mortgage ? MORTGAGE_REPAYMENT_LABELS : OTHER_REPAYMENT_LABELS;
           const friendlyLabels = mortgage ? MORTGAGE_REPAYMENT_FRIENDLY_LABELS : OTHER_REPAYMENT_FRIENDLY_LABELS;
           const descriptions = mortgage ? MORTGAGE_REPAYMENT_DESCRIPTIONS : OTHER_REPAYMENT_DESCRIPTIONS;
+          const selectedFriendly = friendlyLabels[debt.repaymentType];
+          const selectedDescription = descriptions[debt.repaymentType];
 
           // 스케줄 기반 요약 (4개 지표)
           const schedule = hasBalance && debt.repaymentYears > 0
@@ -182,23 +156,25 @@ export default function DebtSection() {
                   value={debt.repaymentType}
                   onChange={(t) => setDebt(key, { repaymentType: t })}
                   types={types}
-                  friendlyLabels={friendlyLabels}
                   termLabels={termLabels}
                 />
               </div>
 
-              {/* 인라인 설명 */}
-              {descriptions[debt.repaymentType] && (
-                <p style={{
-                  fontSize: 11,
-                  color: debt.repaymentType === 'graduated_payment'
-                    ? 'var(--tds-orange-500, #F07A14)'
-                    : 'var(--tds-gray-400)',
-                  margin: '4px 0 8px 0',
-                  lineHeight: 1.5,
+              {/* 선택된 상환방식 설명 callout */}
+              {selectedDescription && (
+                <div style={{
+                  marginBottom: 8,
+                  padding: '8px 12px',
+                  background: 'var(--tds-gray-50)',
+                  borderRadius: 8,
+                  borderLeft: '3px solid var(--tds-gray-200)',
                 }}>
-                  {descriptions[debt.repaymentType]}
-                </p>
+                  <p style={{ margin: 0, fontSize: 11, color: 'var(--tds-gray-500)', lineHeight: 1.5 }}>
+                    <span style={{ fontWeight: 600, color: 'var(--tds-gray-600)' }}>{selectedFriendly}</span>
+                    {' · '}
+                    {selectedDescription}
+                  </p>
+                </div>
               )}
 
               {/* 거치기간 (주담대 전용, balloon_payment 제외) */}
