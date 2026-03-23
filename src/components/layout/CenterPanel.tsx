@@ -100,9 +100,9 @@ export default function CenterPanel() {
             <div style={{
               marginTop: 16,
               padding: '12px 14px',
-              background: isLow ? '#FFFBEB' : isMid ? 'var(--tds-gray-50)' : 'var(--tds-gray-50)',
+              background: 'var(--tds-gray-50)',
               borderRadius: 10,
-              border: `1px solid ${isLow ? '#FDE68A' : 'var(--tds-gray-100)'}`,
+              border: '1px solid var(--tds-gray-100)',
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
                 <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--tds-gray-600)' }}>
@@ -112,7 +112,7 @@ export default function CenterPanel() {
                   {liquidAsset.toLocaleString('ko-KR')}만원 ({liquidPct}%)
                 </span>
               </div>
-              <p style={{ fontSize: 11, color: 'var(--tds-gray-500)', margin: 0, lineHeight: 1.5 }}>
+              <p style={{ fontSize: 12, color: 'var(--tds-gray-500)', margin: 0, lineHeight: 1.5 }}>
                 {isLow
                   ? '자산 대부분이 부동산이에요. 생활비로 바로 쓰기 어려울 수 있어요.'
                   : isMid

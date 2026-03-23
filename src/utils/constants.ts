@@ -46,9 +46,9 @@ export const MORTGAGE_REPAYMENT_LABELS: Record<string, string> = {
 };
 
 export const MORTGAGE_REPAYMENT_DESCRIPTIONS: Record<string, string> = {
-  equal_payment:    '매달 비슷한 금액을 내요. 예산 관리가 쉬워요.',
-  equal_principal:  '초반에 더 많이 내고, 갈수록 줄어들어요. 총 이자가 적어요.',
-  graduated_payment: '초반 부담이 적고, 갈수록 늘어나요. 소득이 오를 것 같을 때 유리해요.',
+  equal_payment:    '첫 달부터 마지막 달까지 내는 금액이 거의 같아요. 생활비 계획 짜기 편해요.',
+  equal_principal:  '매달 갚는 원금이 일정해서 갈수록 납입액이 줄어요. 대신 초반 부담이 좀 더 커요.',
+  graduated_payment: '초반엔 부담이 적고 매년 조금씩 늘어나요. 앞으로 소득이 오를 것 같을 때 잘 맞아요.',
 };
 
 // ─── 상환방식: 신용대출·기타대출 전용 옵션 ───────────────────────────────────
@@ -69,9 +69,9 @@ export const OTHER_REPAYMENT_LABELS: Record<string, string> = {
 };
 
 export const OTHER_REPAYMENT_DESCRIPTIONS: Record<string, string> = {
-  equal_payment:   '매달 비슷한 금액을 내요. 예산 관리가 쉬워요.',
-  equal_principal: '초반에 더 많이 내고, 갈수록 줄어들어요. 총 이자가 적어요.',
-  balloon_payment: '기간 중에는 이자만 내고, 만기에 원금을 한 번에 갚아요.',
+  equal_payment:   '첫 달부터 마지막 달까지 내는 금액이 거의 같아요. 생활비 계획 짜기 편해요.',
+  equal_principal: '매달 갚는 원금이 일정해서 갈수록 납입액이 줄어요. 대신 초반 부담이 좀 더 커요.',
+  balloon_payment: '대출 기간 동안 이자만 내다가 만기에 원금을 한 번에 갚아요.',
 };
 
 export const BINARY_SEARCH_MAX = 5000;      // 만원

@@ -142,9 +142,9 @@ export default function AssetProjectionChart({
       <div style={{ marginBottom: 10 }}>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 4 }}>
           <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--tds-gray-700)' }}>나이별 자산 추이</span>
-          <span style={{ fontSize: 11, color: 'var(--tds-gray-400)' }}>목표 생활비 기준</span>
+          <span style={{ fontSize: 12, color: 'var(--tds-gray-400)' }}>목표 생활비 기준</span>
         </div>
-        <div style={{ fontSize: 11, color: 'var(--tds-gray-400)', marginBottom: 8, lineHeight: 1.5 }}>
+        <div style={{ fontSize: 12, color: 'var(--tds-gray-400)', marginBottom: 8, lineHeight: 1.5 }}>
           소득·연금·생활비·대출을 반영한 뒤 남는 자산 잔고예요
         </div>
 
@@ -165,13 +165,13 @@ export default function AssetProjectionChart({
           <CartesianGrid strokeDasharray="3 3" stroke="var(--tds-gray-100)" />
           <XAxis
             dataKey="age"
-            tick={{ fontSize: 11, fill: 'var(--tds-gray-500)' }}
+            tick={{ fontSize: 12, fill: 'var(--tds-gray-500)' }}
             tickLine={false}
             axisLine={false}
-            label={{ value: '나이', position: 'insideBottomRight', offset: -4, fontSize: 11 }}
+            label={{ value: '나이', position: 'insideBottomRight', offset: -4, fontSize: 12 }}
           />
           <YAxis
-            tick={{ fontSize: 11, fill: 'var(--tds-gray-500)' }}
+            tick={{ fontSize: 12, fill: 'var(--tds-gray-500)' }}
             tickLine={false}
             axisLine={false}
             tickFormatter={(v) => `${v.toFixed(0)}억`}
@@ -185,7 +185,7 @@ export default function AssetProjectionChart({
             x={retirementAge}
             stroke="var(--tds-blue-400)"
             strokeDasharray="4 3"
-            label={{ value: '은퇴', position: 'top', fontSize: 10, fill: 'var(--tds-blue-500)' }}
+            label={{ value: '은퇴', position: 'top', fontSize: 12, fill: 'var(--tds-blue-500)' }}
           />
 
           {pensionEvents.map((ev) => (
@@ -195,7 +195,7 @@ export default function AssetProjectionChart({
               stroke={ev.color}
               strokeDasharray="3 3"
               strokeOpacity={0.7}
-              label={{ value: ev.label, position: 'top', fontSize: 9, fill: ev.color }}
+              label={{ value: ev.label, position: 'top', fontSize: 11, fill: ev.color }}
             />
           ))}
 
@@ -204,7 +204,7 @@ export default function AssetProjectionChart({
               x={depletionAge}
               stroke="#EF4444"
               strokeWidth={2}
-              label={{ value: '소진', position: 'top', fontSize: 10, fill: '#EF4444' }}
+              label={{ value: '소진', position: 'top', fontSize: 12, fill: '#EF4444' }}
             />
           )}
 
@@ -220,7 +220,7 @@ export default function AssetProjectionChart({
       </ResponsiveContainer>
 
       {yMin < 0 && (
-        <div style={{ fontSize: 10, color: '#EF4444', marginTop: 4, textAlign: 'right' }}>
+        <div style={{ fontSize: 12, color: '#EF4444', marginTop: 4, textAlign: 'right' }}>
           ⚠ 0 아래 구간: 자산이 부족한 시기예요
         </div>
       )}
@@ -233,7 +233,7 @@ function EventBadge({ label, value, color }: { label: string; value: string; col
     <div style={{
       display: 'flex', alignItems: 'center', gap: 4,
       background: 'var(--tds-gray-50)', borderRadius: 6,
-      padding: '3px 8px', fontSize: 11,
+      padding: '3px 8px', fontSize: 12,
     }}>
       <span style={{ fontWeight: 700, color }}>{label}</span>
       <span style={{ color: 'var(--tds-gray-600)' }}>{value}</span>

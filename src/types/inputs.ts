@@ -39,7 +39,6 @@ export interface DebtItem {
   interestRate: number;         // 이자율 (연 %)
   repaymentType: RepaymentType; // 상환 방식
   repaymentYears: number;       // 남은 상환기간 (년)
-  gracePeriodYears: number;     // 거치기간 (년), 0이면 거치 없음
 }
 
 export interface DebtAllocation {

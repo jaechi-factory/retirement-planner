@@ -49,7 +49,7 @@ function TextBtn({ onClick, children }: { onClick: () => void; children: React.R
     <button
       onClick={onClick}
       style={{
-        fontSize: 11, color: 'var(--tds-gray-400)',
+        fontSize: 12, color: 'var(--tds-gray-400)',
         background: 'none', border: 'none', cursor: 'pointer',
         padding: 0, textDecoration: 'underline',
       }}
@@ -63,7 +63,7 @@ function TextBtn({ onClick, children }: { onClick: () => void; children: React.R
 function AutoBadge() {
   return (
     <span style={{
-      display: 'inline-block', fontSize: 10, fontWeight: 600, padding: '2px 8px',
+      display: 'inline-block', fontSize: 12, fontWeight: 600, padding: '2px 8px',
       borderRadius: 20, background: 'var(--tds-blue-50)', color: 'var(--tds-blue-500)',
     }}>
       간편 계산
@@ -75,7 +75,7 @@ function AutoBadge() {
 function CappedBadge() {
   return (
     <span style={{
-      display: 'inline-block', fontSize: 10, fontWeight: 600, padding: '2px 7px',
+      display: 'inline-block', fontSize: 12, fontWeight: 600, padding: '2px 7px',
       borderRadius: 20, background: 'var(--tds-orange-50, #FFF4EC)', color: 'var(--tds-orange-500)',
     }}>
       상한 적용됨
@@ -87,7 +87,7 @@ function CappedBadge() {
 function ManualBadge() {
   return (
     <span style={{
-      display: 'inline-block', fontSize: 10, fontWeight: 600, padding: '2px 8px',
+      display: 'inline-block', fontSize: 12, fontWeight: 600, padding: '2px 8px',
       borderRadius: 20, background: 'var(--tds-green-50)', color: 'var(--tds-green-500)',
     }}>
       직접 입력
@@ -121,7 +121,7 @@ function PublicPensionCard() {
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 8 }}>
         <div>
           <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--tds-gray-900)' }}>국민연금</div>
-          <div style={{ fontSize: 11, color: 'var(--tds-gray-400)', marginTop: 2 }}>지금 기준으로 예상한 국민연금이에요</div>
+          <div style={{ fontSize: 12, color: 'var(--tds-gray-400)', marginTop: 2 }}>지금 기준으로 예상한 국민연금이에요</div>
         </div>
         {isAuto ? <AutoBadge /> : <ManualBadge />}
       </div>
@@ -140,7 +140,7 @@ function PublicPensionCard() {
                 <span style={{ fontSize: 20, fontWeight: 800, color: 'var(--tds-blue-500)' }}>
                   월 {meta.base.toLocaleString('ko-KR')}만원
                 </span>
-                <div style={{ fontSize: 10, color: 'var(--tds-blue-400)', marginTop: 2 }}>
+                <div style={{ fontSize: 12, color: 'var(--tds-blue-400)', marginTop: 2 }}>
                   소득 상한({meta.pensionableMonthly.toLocaleString('ko-KR')}만원) 기준
                 </div>
               </div>
@@ -175,16 +175,16 @@ function PublicPensionCard() {
               ))}
             </div>
           )}
-          <div style={{ fontSize: 11, color: 'var(--tds-gray-400)' }}>
+          <div style={{ fontSize: 12, color: 'var(--tds-gray-400)' }}>
             {publicPension.startAge}세부터 수령 · 실제값은 편차가 클 수 있어요
           </div>
         </>
       ) : (
         <>
-          <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--tds-green-500)', margin: '4px 0 2px' }}>
+          <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--tds-gray-900)', margin: '4px 0 2px' }}>
             월 {displayValue.toLocaleString('ko-KR')}만원
           </div>
-          <div style={{ fontSize: 11, color: 'var(--tds-gray-400)' }}>
+          <div style={{ fontSize: 12, color: 'var(--tds-gray-400)' }}>
             {publicPension.startAge}세부터 수령
           </div>
         </>
@@ -198,17 +198,17 @@ function PublicPensionCard() {
           background: 'var(--tds-gray-50, #F7F8FA)',
           borderRadius: 8,
         }}>
-          <p style={{ fontSize: 11, color: 'var(--tds-gray-400)', margin: '0 0 6px 0', lineHeight: 1.5 }}>
+          <p style={{ fontSize: 12, color: 'var(--tds-gray-400)', margin: '0 0 6px 0', lineHeight: 1.5 }}>
             소득과 가입 기간을 기준으로 빠르게 추정한 값이에요. 실제값과 차이가 있을 수 있어요.
           </p>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: 11, color: 'var(--tds-gray-500)' }}>
+            <span style={{ fontSize: 12, color: 'var(--tds-gray-500)' }}>
               공단 예상월액을 알고 있나요?
             </span>
             <button
               onClick={switchToManual}
               style={{
-                fontSize: 11, fontWeight: 700, padding: '3px 10px',
+                fontSize: 12, fontWeight: 700, padding: '3px 10px',
                 background: 'var(--tds-blue-500)', color: 'white',
                 border: 'none', borderRadius: 6, cursor: 'pointer',
               }}
@@ -238,15 +238,15 @@ function PublicPensionCard() {
           background: 'var(--tds-gray-50, #F7F8FA)',
           borderRadius: 8,
         }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--tds-gray-600)', marginBottom: 6 }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--tds-gray-600)', marginBottom: 6 }}>
             이렇게 추정했어요
           </div>
           {meta.assumptions.map((a, i) => (
-            <div key={i} style={{ fontSize: 11, color: 'var(--tds-gray-500)', marginBottom: 3, lineHeight: 1.5 }}>
+            <div key={i} style={{ fontSize: 12, color: 'var(--tds-gray-500)', marginBottom: 3, lineHeight: 1.5 }}>
               · {a}
             </div>
           ))}
-          <div style={{ fontSize: 10, color: 'var(--tds-gray-400)', marginTop: 6 }}>
+          <div style={{ fontSize: 12, color: 'var(--tds-gray-400)', marginTop: 6 }}>
             * 연소득은 세후 입력값을 세전 기준으로 역산해 추정해요<br />
             정확한 수령액은 국민연금공단 홈페이지에서 조회 가능해요
           </div>
@@ -274,11 +274,11 @@ function PublicPensionCard() {
             />
             {!isAuto && (
               <NumberInput
-                label="예상 월수령액"
+                label="예상 월수령액 (지금 기준)"
                 value={publicPension.manualMonthlyTodayValue}
                 onChange={v => setPension({ publicPension: { ...publicPension, manualMonthlyTodayValue: v } })}
                 unit="만원"
-                hint="국민연금공단 조회값 입력"
+                hint="국민연금공단 조회값 — 지금 돈 기준으로 입력"
               />
             )}
           </Row>
@@ -315,15 +315,15 @@ function RetirementPensionCard() {
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 8 }}>
         <div>
           <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--tds-gray-900)' }}>퇴직연금</div>
-          <div style={{ fontSize: 11, color: 'var(--tds-gray-400)', marginTop: 2 }}>회사가 적립한 은퇴자금을 나눠 받는 돈</div>
+          <div style={{ fontSize: 12, color: 'var(--tds-gray-400)', marginTop: 2 }}>회사가 적립한 은퇴자금을 나눠 받는 돈</div>
         </div>
         {isAuto ? <AutoBadge /> : <ManualBadge />}
       </div>
 
-      <div style={{ fontSize: 22, fontWeight: 800, color: isAuto ? 'var(--tds-blue-500)' : 'var(--tds-green-500)', margin: '4px 0 2px' }}>
+      <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--tds-blue-500)', margin: '4px 0 2px' }}>
         월 {displayValue.toLocaleString('ko-KR')}만원
       </div>
-      <div style={{ fontSize: 11, color: 'var(--tds-gray-400)' }}>
+      <div style={{ fontSize: 12, color: 'var(--tds-gray-400)' }}>
         {startAge}세부터 {retirementPension.payoutYears}년간 수령
         {!hasBalance && isAuto && ' · 적립금 입력 시 더 정확해져요'}
       </div>
@@ -335,13 +335,13 @@ function RetirementPensionCard() {
           background: 'var(--tds-gray-50, #F7F8FA)', borderRadius: 8,
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         }}>
-          <span style={{ fontSize: 11, color: 'var(--tds-gray-500)' }}>
+          <span style={{ fontSize: 12, color: 'var(--tds-gray-500)' }}>
             퇴직연금 적립금을 알고 있나요?
           </span>
           <button
             onClick={() => setShowDetail(true)}
             style={{
-              fontSize: 11, fontWeight: 700, padding: '3px 10px',
+              fontSize: 12, fontWeight: 700, padding: '3px 10px',
               background: 'var(--tds-blue-500)', color: 'white',
               border: 'none', borderRadius: 6, cursor: 'pointer',
             }}
@@ -368,11 +368,11 @@ function RetirementPensionCard() {
           marginTop: 10, padding: '10px 12px',
           background: 'var(--tds-gray-50, #F7F8FA)', borderRadius: 8,
         }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--tds-gray-600)', marginBottom: 6 }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--tds-gray-600)', marginBottom: 6 }}>
             이렇게 추정했어요
           </div>
           {meta.assumptions.map((a, i) => (
-            <div key={i} style={{ fontSize: 11, color: 'var(--tds-gray-500)', marginBottom: 3, lineHeight: 1.5 }}>
+            <div key={i} style={{ fontSize: 12, color: 'var(--tds-gray-500)', marginBottom: 3, lineHeight: 1.5 }}>
               · {a}
             </div>
           ))}
@@ -430,7 +430,7 @@ function RetirementPensionCard() {
               />
               {!isAuto && (
                 <NumberInput
-                  label="예상 월수령액"
+                  label="예상 월수령액 (지금 기준)"
                   value={retirementPension.manualMonthlyTodayValue}
                   onChange={v => setPension({ retirementPension: { ...retirementPension, manualMonthlyTodayValue: v } })}
                   unit="만원"
@@ -478,7 +478,7 @@ function PrivatePensionProductCard({
         <button
           onClick={onDelete}
           style={{
-            fontSize: 11, color: 'var(--tds-gray-400)', background: 'none',
+            fontSize: 12, color: 'var(--tds-gray-400)', background: 'none',
             border: '1px solid var(--tds-gray-200)', borderRadius: 6, cursor: 'pointer', padding: '2px 8px',
           }}
         >
@@ -529,7 +529,7 @@ function PrivatePensionProductCard({
 
         {showAdvanced && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <div style={{ fontSize: 11, color: 'var(--tds-gray-400)' }}>
+            <div style={{ fontSize: 12, color: 'var(--tds-gray-400)' }}>
               더 자세히 계산하고 싶을 때만 따로 설정해 주세요.
             </div>
             <Row>
@@ -620,10 +620,10 @@ function PrivatePensionCard() {
         <div style={{ fontSize: 13, fontWeight: 700, color: isEnabled ? 'var(--tds-gray-900)' : 'var(--tds-gray-400)' }}>
           개인연금
         </div>
-        <div style={{ fontSize: 11, color: 'var(--tds-gray-400)', marginTop: 2 }}>IRP · 연금저축펀드 · 연금보험 등</div>
+        <div style={{ fontSize: 12, color: 'var(--tds-gray-400)', marginTop: 2 }}>IRP · 연금저축펀드 · 연금보험 등</div>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <span style={{ fontSize: 11, fontWeight: 600, color: isEnabled ? 'var(--tds-blue-500)' : 'var(--tds-gray-400)' }}>
+        <span style={{ fontSize: 12, fontWeight: 600, color: isEnabled ? 'var(--tds-blue-500)' : 'var(--tds-gray-400)' }}>
           {isEnabled ? '켜짐' : '꺼짐'}
         </span>
         <div
@@ -652,7 +652,7 @@ function PrivatePensionCard() {
 
       {!isEnabled ? (
         // ── Off 상태 ────────────────────────────────────────────────────────
-        <div style={{ fontSize: 11, color: 'var(--tds-gray-400)', lineHeight: 1.7 }}>
+        <div style={{ fontSize: 12, color: 'var(--tds-gray-400)', lineHeight: 1.7 }}>
           IRP · 연금저축이 있으면 위 토글을 켜서 입력해보세요.<br />
           없거나 모르면 그냥 넘어가도 돼요.
         </div>
@@ -668,7 +668,7 @@ function PrivatePensionCard() {
             <button
               onClick={exitDetailMode}
               style={{
-                fontSize: 11, fontWeight: 600, color: 'var(--tds-gray-500)',
+                fontSize: 12, fontWeight: 600, color: 'var(--tds-gray-500)',
                 background: 'none', border: '1px solid var(--tds-gray-200)',
                 borderRadius: 6, padding: '3px 10px', cursor: 'pointer',
               }}
@@ -696,7 +696,7 @@ function PrivatePensionCard() {
           )}
 
           {/* 상품 추가 버튼 */}
-          <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--tds-gray-500)', marginBottom: 6 }}>
+          <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--tds-gray-500)', marginBottom: 6 }}>
             상품 추가
           </div>
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
@@ -723,7 +723,7 @@ function PrivatePensionCard() {
           <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--tds-blue-500)', margin: '4px 0 2px' }}>
             월 {displayValue.toLocaleString('ko-KR')}만원
           </div>
-          <div style={{ fontSize: 11, color: 'var(--tds-gray-400)', marginBottom: 12 }}>
+          <div style={{ fontSize: 12, color: 'var(--tds-gray-400)', marginBottom: 12 }}>
             {privatePension.startAge}세부터 {privatePension.payoutYears}년간 수령
           </div>
 
@@ -773,7 +773,7 @@ function PrivatePensionCard() {
             </TextBtn>
             {showAdvancedRate && (
               <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <div style={{ fontSize: 11, color: 'var(--tds-gray-400)' }}>
+                <div style={{ fontSize: 12, color: 'var(--tds-gray-400)' }}>
                   더 자세히 계산하고 싶을 때만 따로 설정해 주세요.
                 </div>
                 <Row>
@@ -825,8 +825,11 @@ export default function PensionSection() {
       <h3 style={{ margin: '0 0 4px 0', fontSize: 15, fontWeight: 700, color: 'var(--tds-gray-900)' }}>
         은퇴 후 연금 수입
       </h3>
-      <p style={{ fontSize: 12, color: 'var(--tds-gray-400)', margin: '0 0 14px' }}>
+      <p style={{ fontSize: 12, color: 'var(--tds-gray-400)', margin: '0 0 6px' }}>
         모르는 값은 평균 가정으로 추정해요 · 아는 값만 넣으면 더 정확해져요
+      </p>
+      <p style={{ fontSize: 12, color: 'var(--tds-gray-400)', margin: '0 0 14px' }}>
+        금액은 지금 돈 가치 기준으로 입력해 주세요. 미래 시점 금액은 물가를 반영해 자동 계산해요.
       </p>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -838,7 +841,7 @@ export default function PensionSection() {
       <div style={{
         marginTop: 14, padding: '10px 12px',
         background: 'var(--tds-gray-50, #F7F8FA)', borderRadius: 8,
-        fontSize: 11, color: 'var(--tds-gray-400)', lineHeight: 1.6,
+        fontSize: 12, color: 'var(--tds-gray-400)', lineHeight: 1.6,
       }}>
         ⚠️ 정확한 수령액이 아니라 평균 가정 기반 추정치예요. 실제 수령액은 가입기간·적립금·수령 시점 등에 따라 달라질 수 있어요.
       </div>

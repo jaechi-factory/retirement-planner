@@ -80,48 +80,28 @@ function calcGraduatedFirstMonthPayment(
 /**
  * 대출 1건의 전체 월별 상환 스케줄을 생성한다.
  *
- * - gracePeriodYears > 0이면 거치기간 동안 이자만 납부 (원금 상환 0).
- * - balloon_payment에서는 gracePeriodYears를 무시하고 항상 이자만 → 마지막 달 원금 일시 상환.
  * - 잔액·기간 중 하나라도 0이면 빈 배열 반환.
  */
 export function buildMonthlyDebtSchedule(debt: DebtItem): MonthlyDebtRow[] {
-  const { balance, interestRate, repaymentType, repaymentYears, gracePeriodYears } = debt;
+  const { balance, interestRate, repaymentType, repaymentYears } = debt;
 
   if (balance <= 0 || repaymentYears <= 0) return [];
 
   const r = interestRate / 100 / 12;  // 월 이자율
   const totalMonths = Math.round(repaymentYears * 12);
-  const graceMonths = repaymentType === 'balloon_payment'
-    ? 0
-    : Math.round((gracePeriodYears ?? 0) * 12);
-  const amortizingMonths = totalMonths - graceMonths;
 
   const rows: MonthlyDebtRow[] = [];
   let remaining = balance;
 
-  // ── 거치기간: 이자만 납부 ───────────────────────────────────────────────
-  for (let m = 0; m < graceMonths; m++) {
-    const interest = remaining * r;
-    rows.push({
-      monthIndex: m,
-      payment: interest,
-      principal: 0,
-      interest,
-      remainingBalance: remaining,
-    });
-  }
-
-  if (amortizingMonths <= 0) return rows;
-
   // ── 원리금균등 (equal_payment) ─────────────────────────────────────────
   if (repaymentType === 'equal_payment') {
-    const monthlyPayment = calcEqualPaymentMonthly(remaining, r, amortizingMonths);
-    for (let m = 0; m < amortizingMonths; m++) {
+    const monthlyPayment = calcEqualPaymentMonthly(remaining, r, totalMonths);
+    for (let m = 0; m < totalMonths; m++) {
       const interest = remaining * r;
       const principal = Math.min(monthlyPayment - interest, remaining);
       remaining = Math.max(remaining - principal, 0);
       rows.push({
-        monthIndex: graceMonths + m,
+        monthIndex: m,
         payment: interest + principal,
         principal,
         interest,
@@ -133,13 +113,13 @@ export function buildMonthlyDebtSchedule(debt: DebtItem): MonthlyDebtRow[] {
 
   // ── 원금균등 (equal_principal) ─────────────────────────────────────────
   if (repaymentType === 'equal_principal') {
-    const monthlyPrincipal = remaining / amortizingMonths;
-    for (let m = 0; m < amortizingMonths; m++) {
+    const monthlyPrincipal = remaining / totalMonths;
+    for (let m = 0; m < totalMonths; m++) {
       const interest = remaining * r;
       const principal = Math.min(monthlyPrincipal, remaining);
       remaining = Math.max(remaining - principal, 0);
       rows.push({
-        monthIndex: graceMonths + m,
+        monthIndex: m,
         payment: interest + principal,
         principal,
         interest,
@@ -152,19 +132,19 @@ export function buildMonthlyDebtSchedule(debt: DebtItem): MonthlyDebtRow[] {
   // ── 체증식 (graduated_payment) ─────────────────────────────────────────
   if (repaymentType === 'graduated_payment') {
     const g = GRADUATED_DEFAULT_ANNUAL_RATE;
-    const M0 = calcGraduatedFirstMonthPayment(remaining, r, amortizingMonths, g);
-    for (let m = 0; m < amortizingMonths; m++) {
+    const M0 = calcGraduatedFirstMonthPayment(remaining, r, totalMonths, g);
+    for (let m = 0; m < totalMonths; m++) {
       const yearIndex = Math.floor(m / 12); // 0-based 연도
       const yearlyPayment = M0 * Math.pow(1 + g, yearIndex);
       const interest = remaining * r;
       // 마지막 달: 잔액 전액 상환으로 반올림 오차 제거
-      const isLast = m === amortizingMonths - 1;
+      const isLast = m === totalMonths - 1;
       const principal = isLast
         ? remaining
         : Math.min(yearlyPayment - interest, remaining);
       remaining = Math.max(remaining - principal, 0);
       rows.push({
-        monthIndex: graceMonths + m,
+        monthIndex: m,
         payment: interest + principal,
         principal,
         interest,
@@ -175,7 +155,7 @@ export function buildMonthlyDebtSchedule(debt: DebtItem): MonthlyDebtRow[] {
   }
 
   // ── 만기일시상환 (balloon_payment) ────────────────────────────────────
-  // balloon_payment: gracePeriodYears 무시, 기간 내 이자만 → 마지막 달 원금 일시
+  // 기간 내 이자만 → 마지막 달 원금 일시
   for (let m = 0; m < totalMonths; m++) {
     const interest = remaining * r;
     const isLast = m === totalMonths - 1;

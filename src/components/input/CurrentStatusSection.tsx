@@ -76,7 +76,7 @@ export default function CurrentStatusSection() {
           <div style={{
             background: 'var(--tds-gray-50, #F7F8FA)',
             padding: '8px 12px',
-            fontSize: 11,
+            fontSize: 12,
             fontWeight: 700,
             color: 'var(--tds-gray-500)',
             letterSpacing: 0.2,
@@ -105,7 +105,7 @@ export default function CurrentStatusSection() {
               </span>
               <span style={{
                 fontSize: 16, fontWeight: 800,
-                color: monthlySurplus >= 0 ? 'var(--tds-green-500)' : 'var(--tds-red-500)',
+                color: monthlySurplus >= 0 ? 'var(--tds-gray-900)' : 'var(--tds-red-500)',
               }}>
                 {monthlySurplus >= 0 ? '+' : ''}{monthlySurplus.toLocaleString('ko-KR')}만원
               </span>
@@ -113,7 +113,7 @@ export default function CurrentStatusSection() {
 
             {/* 설명 */}
             <div style={{
-              fontSize: 11, color: 'var(--tds-gray-400)', lineHeight: 1.5,
+              fontSize: 12, color: 'var(--tds-gray-400)', lineHeight: 1.5,
               padding: '6px 8px',
               background: monthlySurplus > 0 ? 'var(--tds-blue-50)' : 'var(--tds-orange-50)',
               borderRadius: 6,

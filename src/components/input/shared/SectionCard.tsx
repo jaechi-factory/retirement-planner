@@ -12,7 +12,7 @@ export default function SectionCard({ title, children }: Props) {
         borderRadius: 16,
         padding: '20px 20px 24px',
         marginBottom: 12,
-        boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+        border: '1px solid var(--tds-gray-100)',
       }}
     >
       <h3

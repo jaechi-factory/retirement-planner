@@ -13,13 +13,14 @@ export default function RightPanel() {
   const netWorthColor =
     result.netWorth < 0 ? 'var(--tds-red-500)' : 'var(--tds-gray-900)';
   const savingsColor =
-    result.annualNetSavings < 0 ? 'var(--tds-red-500)' : 'var(--tds-green-500)';
+    result.annualNetSavings < 0 ? 'var(--tds-red-500)' : 'var(--tds-gray-900)';
 
   const pensionBreakdown = getPensionBreakdown(
     inputs.pension,
     inputs.status.currentAge,
     inputs.goal.retirementAge,
     inputs.status.annualIncome,
+    inputs.goal.inflationRate,
   );
   const coveragePct = Math.round(result.pensionCoverageRate * 100);
 
@@ -29,6 +30,7 @@ export default function RightPanel() {
     inputs.goal.retirementAge,
     inputs.status.annualIncome,
     inputs.goal.targetMonthly,
+    inputs.goal.inflationRate,
   );
 
   return (
@@ -62,7 +64,7 @@ export default function RightPanel() {
             }}>
               목표 생활비로 살면 {result.depletionAge}세에 자산이 소진돼요
             </div>
-            <div style={{ fontSize: 11, color: 'var(--tds-gray-500)', lineHeight: 1.5 }}>
+            <div style={{ fontSize: 12, color: 'var(--tds-gray-500)', lineHeight: 1.5 }}>
               지금 계획대로면 기대수명 {inputs.goal.lifeExpectancy}세까지 {inputs.goal.lifeExpectancy - result.depletionAge}년이 부족해요.
               월 목표를 낮추거나 저축을 늘려보세요.
             </div>
@@ -94,7 +96,6 @@ export default function RightPanel() {
           label="전체 기대수익률"
           value={formatPercent(result.weightedReturn)}
           sub="가중평균"
-          valueColor="var(--tds-blue-500)"
         />
         <StatCard
           label="올해 기준 여유자금"
@@ -121,7 +122,7 @@ export default function RightPanel() {
           background: 'var(--tds-white)',
           borderRadius: 16,
           padding: '20px 16px',
-          boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+          border: '1px solid var(--tds-gray-100)',
           marginBottom: 12,
         }}
       >
@@ -137,13 +138,13 @@ export default function RightPanel() {
             background: 'var(--tds-gray-50, #F7F8FA)',
             borderRadius: 10,
           }}>
-            <div style={{ fontSize: 10, color: 'var(--tds-gray-400)', fontWeight: 600, marginBottom: 4 }}>
+            <div style={{ fontSize: 12, color: 'var(--tds-gray-400)', fontWeight: 600, marginBottom: 4 }}>
               은퇴 직후
             </div>
             <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--tds-gray-700)' }}>
               월 {result.monthlyPensionAtRetirementStart.toLocaleString('ko-KR')}만원
             </div>
-            <div style={{ fontSize: 10, color: 'var(--tds-gray-400)', marginTop: 2 }}>
+            <div style={{ fontSize: 12, color: 'var(--tds-gray-400)', marginTop: 2 }}>
               개시된 연금 합산
             </div>
           </div>
@@ -154,13 +155,13 @@ export default function RightPanel() {
             background: 'var(--tds-blue-50)',
             borderRadius: 10,
           }}>
-            <div style={{ fontSize: 10, color: 'var(--tds-blue-400)', fontWeight: 600, marginBottom: 4 }}>
+            <div style={{ fontSize: 12, color: 'var(--tds-blue-400)', fontWeight: 600, marginBottom: 4 }}>
               모든 연금 개시 후
             </div>
             <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--tds-blue-500)' }}>
               월 {result.totalMonthlyPensionTodayValue.toLocaleString('ko-KR')}만원
             </div>
-            <div style={{ fontSize: 10, color: 'var(--tds-blue-400)', marginTop: 2 }}>
+            <div style={{ fontSize: 12, color: 'var(--tds-blue-400)', marginTop: 2 }}>
               전체 연금 합산
             </div>
           </div>
@@ -173,22 +174,22 @@ export default function RightPanel() {
           justifyContent: 'space-between',
           padding: '10px 12px',
           borderRadius: 10,
-          background: coveragePct >= 100 ? 'var(--tds-green-50)' : coveragePct >= 50 ? 'var(--tds-blue-50)' : 'var(--tds-orange-50)',
+          background: coveragePct >= 50 ? 'var(--tds-blue-50)' : 'var(--tds-orange-50)',
           marginBottom: 14,
         }}>
-          <div style={{ fontSize: 11, color: 'var(--tds-gray-500)' }}>
+          <div style={{ fontSize: 12, color: 'var(--tds-gray-500)' }}>
             목표 생활비 중 연금이 커버하는 비중
           </div>
           <div style={{
             fontSize: 20, fontWeight: 800,
-            color: coveragePct >= 100 ? 'var(--tds-green-500)' : coveragePct >= 50 ? 'var(--tds-blue-500)' : 'var(--tds-orange-500)',
+            color: coveragePct >= 50 ? 'var(--tds-blue-500)' : 'var(--tds-orange-500)',
           }}>
             {coveragePct}%
           </div>
         </div>
 
         {/* 항목별 분해 */}
-        <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--tds-gray-500)', marginBottom: 8 }}>
+        <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--tds-gray-500)', marginBottom: 8 }}>
           연금별 상세
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 12 }}>
@@ -200,7 +201,7 @@ export default function RightPanel() {
             <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ fontSize: 12, color: 'var(--tds-gray-500)' }}>
                 {label}
-                {enabled && <span style={{ fontSize: 10, color: 'var(--tds-gray-300)', marginLeft: 4 }}>({startAge}세~)</span>}
+                {enabled && <span style={{ fontSize: 12, color: 'var(--tds-gray-300)', marginLeft: 4 }}>({startAge}세~)</span>}
               </span>
               <span style={{ fontSize: 13, fontWeight: 600, color: enabled ? 'var(--tds-gray-900)' : 'var(--tds-gray-300)' }}>
                 {enabled ? `월 ${value.toLocaleString('ko-KR')}만원` : '미반영'}
@@ -209,7 +210,7 @@ export default function RightPanel() {
           ))}
         </div>
 
-        <p style={{ fontSize: 11, color: 'var(--tds-gray-300)', margin: '0 0 0' }}>
+        <p style={{ fontSize: 12, color: 'var(--tds-gray-300)', margin: '0 0 0' }}>
           평균 가정 기반 추정치 · 직접 입력값이 있으면 우선 적용
         </p>
       </div>
@@ -221,14 +222,14 @@ export default function RightPanel() {
             background: 'var(--tds-white)',
             borderRadius: 16,
             padding: '20px 16px',
-            boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+            border: '1px solid var(--tds-gray-100)',
             marginBottom: 12,
           }}
         >
           <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--tds-gray-900)', marginBottom: 4 }}>
             연금 개시 타임라인
           </div>
-          <div style={{ fontSize: 11, color: 'var(--tds-gray-400)', marginBottom: 14 }}>
+          <div style={{ fontSize: 12, color: 'var(--tds-gray-400)', marginBottom: 14 }}>
             연금이 시작되면 부족한 생활비를 일부 메워줘요
           </div>
 
@@ -258,7 +259,7 @@ export default function RightPanel() {
                         {ev.age}세
                       </span>
                       <span style={{
-                        fontSize: 10, fontWeight: 600, padding: '1px 7px', borderRadius: 20,
+                        fontSize: 12, fontWeight: 600, padding: '1px 7px', borderRadius: 20,
                         background: 'var(--tds-blue-50)', color: 'var(--tds-blue-500)',
                       }}>
                         {ev.pensionType}
@@ -267,11 +268,11 @@ export default function RightPanel() {
                     <div style={{ fontSize: 12, color: 'var(--tds-gray-700)', marginTop: 2 }}>
                       +월 {ev.monthlyTodayValue.toLocaleString('ko-KR')}만원 시작
                     </div>
-                    <div style={{ fontSize: 11, color: 'var(--tds-gray-400)', marginTop: 1 }}>
+                    <div style={{ fontSize: 12, color: 'var(--tds-gray-400)', marginTop: 1 }}>
                       목표 커버율 {beforePct}%
                       <span style={{ color: 'var(--tds-blue-500)', fontWeight: 700 }}> → {afterPct}%</span>
                       {afterPct > beforePct && (
-                        <span style={{ color: 'var(--tds-green-500)', marginLeft: 4 }}>
+                        <span style={{ color: 'var(--tds-blue-500)', marginLeft: 4 }}>
                           (+{afterPct - beforePct}%p)
                         </span>
                       )}
@@ -290,7 +291,7 @@ export default function RightPanel() {
           background: 'var(--tds-white)',
           borderRadius: 16,
           padding: '20px 16px',
-          boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+          border: '1px solid var(--tds-gray-100)',
           marginBottom: 12,
         }}
       >
@@ -311,7 +312,7 @@ export default function RightPanel() {
           background: 'var(--tds-white)',
           borderRadius: 16,
           padding: '20px 16px',
-          boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+          border: '1px solid var(--tds-gray-100)',
         }}
       >
         <InsightSentences result={result} inputs={inputs} verdict={verdict} />

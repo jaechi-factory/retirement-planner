@@ -66,9 +66,9 @@ const defaultInputs: PlannerInputs = {
     realEstate: { amount: 0, expectedReturn: DEFAULT_ASSET_RETURNS.realEstate },
   },
   debts: {
-    mortgage:   { balance: 0, interestRate: 0, repaymentType: 'equal_payment', repaymentYears: 0, gracePeriodYears: 0 },
-    creditLoan: { balance: 0, interestRate: 0, repaymentType: 'equal_payment', repaymentYears: 0, gracePeriodYears: 0 },
-    otherLoan:  { balance: 0, interestRate: 0, repaymentType: 'equal_payment', repaymentYears: 0, gracePeriodYears: 0 },
+    mortgage:   { balance: 0, interestRate: 0, repaymentType: 'equal_payment', repaymentYears: 0 },
+    creditLoan: { balance: 0, interestRate: 0, repaymentType: 'equal_payment', repaymentYears: 0 },
+    otherLoan:  { balance: 0, interestRate: 0, repaymentType: 'equal_payment', repaymentYears: 0 },
   },
   children: {
     hasChildren: false,
@@ -161,12 +161,14 @@ function runCalculation(inputs: PlannerInputs): CalculationResult {
     status.currentAge,
     goal.retirementAge,
     status.annualIncome,
+    goal.inflationRate,
   );
   const monthlyPensionAtRetirementStart = getPensionMonthlyAtRetirementStart(
     pension,
     status.currentAge,
     goal.retirementAge,
     status.annualIncome,
+    goal.inflationRate,
   );
   const pensionCoverageRate = goal.targetMonthly > 0
     ? totalMonthlyPensionTodayValue / goal.targetMonthly
@@ -208,7 +210,6 @@ const STORAGE_KEY = 'retirement-planner-inputs-v1';
  *
  * 변경 사항:
  * - repaymentType 'interest_only' → mortgage: 'equal_payment', 기타: 'balloon_payment'
- * - gracePeriodYears 필드 없으면 0으로 채움
  */
 function migrateDebtItem(
   raw: Record<string, unknown>,
@@ -218,11 +219,8 @@ function migrateDebtItem(
   if (repaymentType === 'interest_only') {
     repaymentType = isMortgage ? 'equal_payment' : 'balloon_payment';
   }
-  return {
-    ...raw,
-    repaymentType,
-    gracePeriodYears: typeof raw.gracePeriodYears === 'number' ? raw.gracePeriodYears : 0,
-  };
+  const { gracePeriodYears: _removed, ...rest } = raw as Record<string, unknown> & { gracePeriodYears?: unknown };
+  return { ...rest, repaymentType };
 }
 
 function loadInputsFromStorage(): PlannerInputs {

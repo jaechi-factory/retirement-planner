@@ -14,8 +14,8 @@ export function judgeVerdict(
     return {
       level: 'great',
       label: '지금 흐름이면 목표에 가까워요',
-      color: 'var(--tds-green-500)',
-      bgColor: 'var(--tds-green-50)',
+      color: 'var(--tds-blue-500)',
+      bgColor: 'var(--tds-blue-50)',
       gap,
     };
   } else if (gap >= 0) {

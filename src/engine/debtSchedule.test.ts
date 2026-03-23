@@ -13,7 +13,6 @@ const base = (overrides: Partial<DebtItem>): DebtItem => ({
   interestRate: 4.0,     // 연 4%
   repaymentType: 'equal_payment',
   repaymentYears: 30,
-  gracePeriodYears: 0,
   ...overrides,
 });
 
@@ -137,65 +136,10 @@ describe('balloon_payment — 만기일시상환', () => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-describe('gracePeriodYears — 거치기간', () => {
-  const schedule = buildMonthlyDebtSchedule(base({
-    repaymentType: 'equal_payment',
-    repaymentYears: 30,
-    gracePeriodYears: 2,
-  }));
-
-  it('스케줄 총 개월 수 = 상환기간 × 12', () => {
-    expect(schedule).toHaveLength(30 * 12);
-  });
-
-  it('거치기간(24개월) 동안 principal === 0', () => {
-    schedule.slice(0, 24).forEach(r => {
-      expect(r.principal).toBe(0);
-    });
-  });
-
-  it('거치 종료 후(25번째 달~) principal > 0', () => {
-    schedule.slice(24).forEach(r => {
-      expect(r.principal).toBeGreaterThan(0);
-    });
-  });
-
-  it('거치기간 중 remainingBalance가 변하지 않음 (원금 상환 없으므로)', () => {
-    const graceRows = schedule.slice(0, 24);
-    graceRows.forEach(r => {
-      expect(r.remainingBalance).toBeCloseTo(30000, 0);
-    });
-  });
-
-  it('마지막 달 remainingBalance ≈ 0', () => {
-    expect(Math.abs(schedule[schedule.length - 1].remainingBalance)).toBeLessThan(0.1);
-  });
-});
-
-// ─────────────────────────────────────────────────────────────────────────────
-describe('balloon_payment — gracePeriodYears 무시', () => {
-  const withGrace = buildMonthlyDebtSchedule(base({
-    repaymentType: 'balloon_payment',
-    repaymentYears: 10,
-    gracePeriodYears: 3,   // balloon_payment는 이 값 무시해야 함
-  }));
-  const withoutGrace = buildMonthlyDebtSchedule(base({
-    repaymentType: 'balloon_payment',
-    repaymentYears: 10,
-    gracePeriodYears: 0,
-  }));
-
-  it('gracePeriodYears를 무시하므로 두 스케줄이 동일', () => {
-    expect(withGrace).toEqual(withoutGrace);
-  });
-});
-
-// ─────────────────────────────────────────────────────────────────────────────
 describe('집계 헬퍼', () => {
   const schedule = buildMonthlyDebtSchedule(base({
     repaymentType: 'equal_payment',
     repaymentYears: 30,
-    gracePeriodYears: 0,
   }));
 
   it('getAnnualPaymentFromSchedule: 0년차 합산 = 12달 합산', () => {
