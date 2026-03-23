@@ -3,7 +3,7 @@ import type { PlannerInputs, AssetAllocation, DebtAllocation } from '../types/in
 import type { PensionInputs } from '../types/pension';
 import type { CalculationResult, Verdict } from '../types/calculation';
 import { DEFAULT_INFLATION_RATE, DEFAULT_INCOME_GROWTH_RATE, DEFAULT_EXPENSE_GROWTH_RATE, DEFAULT_ASSET_RETURNS } from '../utils/constants';
-import { calcTotalAsset, calcTotalDebt, calcFinancialWeightedReturn, calcTotalAnnualRepayment } from '../engine/assetWeighting';
+import { calcTotalAsset, calcTotalDebt, calcFinancialWeightedReturn, calcTotalAnnualRepayment, precomputeDebtSchedules } from '../engine/assetWeighting';
 import { simulate, findDepletionAge } from '../engine/calculator';
 import { findMaxSustainableMonthly } from '../engine/binarySearch';
 import { judgeVerdict } from '../engine/verdictEngine';
@@ -19,7 +19,7 @@ const defaultPension: PensionInputs = {
   retirementPension: {
     enabled: true,
     mode: 'auto',
-    startAge: 60,          // 실제 개시나이는 max(55, retirementAge)로 동적 계산
+    startAge: 60,
     payoutYears: 20,
     currentBalance: 0,
     accumulationReturnRate: 3.5,
@@ -29,11 +29,11 @@ const defaultPension: PensionInputs = {
   privatePension: {
     enabled: false,
     mode: 'auto',
-    startAge: 60,          // 실제 개시나이는 max(55, retirementAge)로 동적 계산
+    startAge: 60,
     payoutYears: 20,
     currentBalance: 0,
     monthlyContribution: 0,
-    expectedReturnRate: 3.5,   // 기본 단일 수익률
+    expectedReturnRate: 3.5,
     accumulationReturnRate: 3.5,
     payoutReturnRate: 3.5,
     manualMonthlyTodayValue: 0,
@@ -66,9 +66,9 @@ const defaultInputs: PlannerInputs = {
     realEstate: { amount: 0, expectedReturn: DEFAULT_ASSET_RETURNS.realEstate },
   },
   debts: {
-    mortgage:   { balance: 0, interestRate: 0, repaymentType: 'equal_payment', repaymentYears: 0 },
-    creditLoan: { balance: 0, interestRate: 0, repaymentType: 'equal_payment', repaymentYears: 0 },
-    otherLoan:  { balance: 0, interestRate: 0, repaymentType: 'equal_payment', repaymentYears: 0 },
+    mortgage:   { balance: 0, interestRate: 0, repaymentType: 'equal_payment', repaymentYears: 0, gracePeriodYears: 0 },
+    creditLoan: { balance: 0, interestRate: 0, repaymentType: 'equal_payment', repaymentYears: 0, gracePeriodYears: 0 },
+    otherLoan:  { balance: 0, interestRate: 0, repaymentType: 'equal_payment', repaymentYears: 0, gracePeriodYears: 0 },
   },
   children: {
     hasChildren: false,
@@ -137,7 +137,6 @@ function runCalculation(inputs: PlannerInputs): CalculationResult {
   const totalAsset = calcTotalAsset(assets);
   const totalDebt = calcTotalDebt(debts);
   const netWorth = totalAsset - totalDebt;
-  // 가중 기대수익률은 실제 복리 성장에 쓰이는 금융자산 기준으로 표시
   const weightedReturn = calcFinancialWeightedReturn(assets);
   const liquidAsset = totalAsset - assets.realEstate.amount;
   const liquidRatio = totalAsset > 0 ? liquidAsset / totalAsset : 1;
@@ -157,7 +156,6 @@ function runCalculation(inputs: PlannerInputs): CalculationResult {
       : 0;
   const annualNetSavings = status.annualIncome - status.annualExpense - totalAnnualRepayment - childExpenseForSavings;
 
-  // 연금 합계 및 커버율
   const totalMonthlyPensionTodayValue = getTotalMonthlyPensionTodayValue(
     pension,
     status.currentAge,
@@ -174,11 +172,13 @@ function runCalculation(inputs: PlannerInputs): CalculationResult {
     ? totalMonthlyPensionTodayValue / goal.targetMonthly
     : 0;
 
-  const possibleMonthly = findMaxSustainableMonthly(inputs);
-  const yearlySnapshots = simulate(inputs, possibleMonthly);
+  // 부채 스케줄 선계산 — runCalculation 내 3번의 simulate 호출에 재사용
+  const debtSchedules = precomputeDebtSchedules(debts);
 
-  // 목표 생활비 기준 시뮬레이션으로 자산 소진 나이 계산
-  const targetSnapshots = simulate(inputs, goal.targetMonthly);
+  const possibleMonthly = findMaxSustainableMonthly(inputs);
+  const yearlySnapshots = simulate(inputs, possibleMonthly, debtSchedules);
+
+  const targetSnapshots = simulate(inputs, goal.targetMonthly, debtSchedules);
   const depletionAge = findDepletionAge(targetSnapshots);
 
   return {
@@ -203,23 +203,53 @@ function runCalculation(inputs: PlannerInputs): CalculationResult {
 
 const STORAGE_KEY = 'retirement-planner-inputs-v1';
 
+/**
+ * localStorage 저장 데이터 마이그레이션
+ *
+ * 변경 사항:
+ * - repaymentType 'interest_only' → mortgage: 'equal_payment', 기타: 'balloon_payment'
+ * - gracePeriodYears 필드 없으면 0으로 채움
+ */
+function migrateDebtItem(
+  raw: Record<string, unknown>,
+  isMortgage: boolean,
+): Record<string, unknown> {
+  let repaymentType = raw.repaymentType as string;
+  if (repaymentType === 'interest_only') {
+    repaymentType = isMortgage ? 'equal_payment' : 'balloon_payment';
+  }
+  return {
+    ...raw,
+    repaymentType,
+    gracePeriodYears: typeof raw.gracePeriodYears === 'number' ? raw.gracePeriodYears : 0,
+  };
+}
+
 function loadInputsFromStorage(): PlannerInputs {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return defaultInputs;
     const parsed = JSON.parse(raw) as PlannerInputs;
-    // defaultInputs와 깊이 병합해 누락 필드 채우기
+
+    // 부채 마이그레이션 적용
+    const rawDebts = (parsed.debts ?? {}) as unknown as Record<string, Record<string, unknown>>;
+    const migratedDebts = {
+      mortgage:   { ...defaultInputs.debts.mortgage,   ...migrateDebtItem(rawDebts.mortgage   ?? {}, true) },
+      creditLoan: { ...defaultInputs.debts.creditLoan, ...migrateDebtItem(rawDebts.creditLoan ?? {}, false) },
+      otherLoan:  { ...defaultInputs.debts.otherLoan,  ...migrateDebtItem(rawDebts.otherLoan  ?? {}, false) },
+    };
+
     return {
-      goal: { ...defaultInputs.goal, ...parsed.goal },
-      status: { ...defaultInputs.status, ...parsed.status },
-      assets: { ...defaultInputs.assets, ...parsed.assets },
-      debts: { ...defaultInputs.debts, ...parsed.debts },
+      goal:     { ...defaultInputs.goal,     ...parsed.goal },
+      status:   { ...defaultInputs.status,   ...parsed.status },
+      assets:   { ...defaultInputs.assets,   ...parsed.assets },
+      debts:    migratedDebts,
       children: { ...defaultInputs.children, ...parsed.children },
       pension: parsed.pension
         ? {
-            publicPension: { ...defaultInputs.pension.publicPension, ...parsed.pension.publicPension },
+            publicPension:     { ...defaultInputs.pension.publicPension,     ...parsed.pension.publicPension },
             retirementPension: { ...defaultInputs.pension.retirementPension, ...parsed.pension.retirementPension },
-            privatePension: { ...defaultInputs.pension.privatePension, ...parsed.pension.privatePension },
+            privatePension:    { ...defaultInputs.pension.privatePension,    ...parsed.pension.privatePension },
           }
         : defaultInputs.pension,
     };
@@ -263,7 +293,6 @@ export const usePlannerStore = create<PlannerStore>((set, get) => ({
   setGoal: (partial) => {
     const current = get().inputs;
     let newPension = current.pension;
-    // 은퇴 나이가 바뀌면 퇴직/개인연금 개시 나이를 max(55, retirementAge)로 자동 갱신
     if (partial.retirementAge !== undefined && partial.retirementAge > 0) {
       const newStartAge = Math.max(55, partial.retirementAge);
       newPension = {
@@ -279,7 +308,6 @@ export const usePlannerStore = create<PlannerStore>((set, get) => ({
   setStatus: (partial) => {
     const current = get().inputs;
     let newPension = current.pension;
-    // 현재 나이가 바뀌면 국민연금 수령 시작 나이를 출생연도 기반으로 자동 설정
     if (partial.currentAge !== undefined && partial.currentAge > 0) {
       const birthYear = 2026 - partial.currentAge;
       const npsStartAge = getNPSStartAgeByBirthYear(birthYear);

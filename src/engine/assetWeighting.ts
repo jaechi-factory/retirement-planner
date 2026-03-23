@@ -1,4 +1,6 @@
-import type { AssetAllocation, DebtAllocation, DebtItem } from '../types/inputs';
+import type { AssetAllocation, DebtAllocation } from '../types/inputs';
+import { buildMonthlyDebtSchedule, getAnnualPaymentFromSchedule, getRemainingBalanceFromSchedule } from './debtSchedule';
+import type { DebtSchedules } from './debtSchedule';
 
 const FINANCIAL_ASSET_KEYS = ['cash', 'deposit', 'stock_kr', 'stock_us', 'bond', 'crypto'] as const;
 type FinancialAssetKey = typeof FINANCIAL_ASSET_KEYS[number];
@@ -45,74 +47,58 @@ export function calcTotalDebt(debts: DebtAllocation): number {
 }
 
 /**
- * 부채 항목의 연간 납입액 계산
- * - equal_payment (원리금균등): 매월 동일한 총액 납부
- * - equal_principal (원금균등): 매년 동일한 원금 + 감소하는 이자 → 첫해 기준 반환
- * - interest_only (이자만): 이자만 납부, 만기 일시 상환
+ * 3개 대출 스케줄을 한 번에 선계산.
+ * - binarySearch 루프 바깥에서 1회 호출 후 재사용
  */
-export function calcDebtAnnualPayment(debt: DebtItem, yearsElapsed = 0): number {
-  if (debt.balance <= 0 || debt.repaymentYears <= 0) return 0;
-  if (yearsElapsed >= debt.repaymentYears) return 0;
-
-  const r = debt.interestRate / 100;
-
-  switch (debt.repaymentType) {
-    case 'equal_payment': {
-      // 원리금균등: 매월 동일 납부액 × 12
-      const rm = r / 12;
-      const n = debt.repaymentYears * 12;
-      if (rm === 0) return debt.balance / debt.repaymentYears;
-      const monthly = debt.balance * rm * Math.pow(1 + rm, n) / (Math.pow(1 + rm, n) - 1);
-      return monthly * 12;
-    }
-    case 'equal_principal': {
-      // 원금균등: 매년 동일 원금 + 남은 잔액에 대한 이자
-      const annualPrincipal = debt.balance / debt.repaymentYears;
-      const remainingBalance = debt.balance - annualPrincipal * yearsElapsed;
-      return annualPrincipal + remainingBalance * r;
-    }
-    case 'interest_only': {
-      // 이자만: 매년 이자만, 마지막 해에 원금 일시 상환
-      const isLastYear = yearsElapsed === debt.repaymentYears - 1;
-      return debt.balance * r + (isLastYear ? debt.balance : 0);
-    }
-  }
+export function precomputeDebtSchedules(debts: DebtAllocation): DebtSchedules {
+  return {
+    mortgage: buildMonthlyDebtSchedule(debts.mortgage),
+    creditLoan: buildMonthlyDebtSchedule(debts.creditLoan),
+    otherLoan: buildMonthlyDebtSchedule(debts.otherLoan),
+  };
 }
 
 /**
- * 경과 연수 이후 남은 부채 잔액 계산
- * Method B: 총자산/총부채 분리 추적을 위해 사용
+ * 스케줄 기반 연간 총 부채 납입액 (yearsElapsed: 경과 연수, 0-based)
+ * - simulate() 내부에서 각 연도에 호출됨
  */
-export function calcRemainingDebt(debt: DebtItem, yearsElapsed: number): number {
-  if (debt.balance <= 0 || debt.repaymentYears <= 0) return 0;
-  if (yearsElapsed >= debt.repaymentYears) return 0;
-
-  const r = debt.interestRate / 100;
-
-  switch (debt.repaymentType) {
-    case 'equal_payment': {
-      const rm = r / 12;
-      const n = debt.repaymentYears * 12;
-      const m = yearsElapsed * 12;
-      if (rm === 0) return debt.balance * (1 - yearsElapsed / debt.repaymentYears);
-      const factor = Math.pow(1 + rm, n);
-      const elapsed = Math.pow(1 + rm, m);
-      return debt.balance * (factor - elapsed) / (factor - 1);
-    }
-    case 'equal_principal': {
-      return debt.balance * (1 - yearsElapsed / debt.repaymentYears);
-    }
-    case 'interest_only': {
-      // 이자만 납부 기간 중에는 원금 그대로 유지
-      return debt.balance;
-    }
-  }
+export function calcTotalAnnualRepaymentFromSchedules(
+  schedules: DebtSchedules,
+  yearsElapsed: number,
+): number {
+  return (
+    getAnnualPaymentFromSchedule(schedules.mortgage, yearsElapsed) +
+    getAnnualPaymentFromSchedule(schedules.creditLoan, yearsElapsed) +
+    getAnnualPaymentFromSchedule(schedules.otherLoan, yearsElapsed)
+  );
 }
 
-/** 연간 총부채 상환액 (yearsElapsed: 경과 연수) */
-export function calcTotalAnnualRepayment(debts: DebtAllocation, yearsElapsed = 0): number {
-  return Object.values(debts).reduce((sum, item) => {
-    if (item.balance <= 0) return sum;
-    return sum + calcDebtAnnualPayment(item, yearsElapsed);
-  }, 0);
+/**
+ * 스케줄 기반 연도말 총 잔여 부채 (yearsElapsed: 경과 연수, 0-based)
+ */
+export function calcTotalRemainingDebtFromSchedules(
+  schedules: DebtSchedules,
+  yearsElapsed: number,
+): number {
+  return (
+    getRemainingBalanceFromSchedule(schedules.mortgage, yearsElapsed) +
+    getRemainingBalanceFromSchedule(schedules.creditLoan, yearsElapsed) +
+    getRemainingBalanceFromSchedule(schedules.otherLoan, yearsElapsed)
+  );
 }
+
+/**
+ * 첫 해(yearIndex=0) 기준 연간 총 부채 납입액
+ * - usePlannerStore의 annualNetSavings 계산용
+ */
+export function calcTotalAnnualRepayment(
+  debts: DebtAllocation,
+  yearsElapsed = 0,
+): number {
+  const schedules = precomputeDebtSchedules(debts);
+  return calcTotalAnnualRepaymentFromSchedules(schedules, yearsElapsed);
+}
+
+// ─── 하위 호환 export (UI 미리보기용, DebtSection에서 직접 사용) ───────────────
+export { buildMonthlyDebtSchedule } from './debtSchedule';
+export type { DebtSchedules } from './debtSchedule';

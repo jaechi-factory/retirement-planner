@@ -28,13 +28,18 @@ export interface AssetAllocation {
   realEstate: AssetItem;
 }
 
-export type RepaymentType = 'equal_payment' | 'equal_principal' | 'interest_only';
+export type RepaymentType =
+  | 'equal_payment'      // 원리금균등분할상환
+  | 'equal_principal'    // 원금균등분할상환
+  | 'graduated_payment'  // 체증식분할상환 (주담대 전용)
+  | 'balloon_payment';   // 만기일시상환 (신용·기타대출 전용)
 
 export interface DebtItem {
-  balance: number;             // 잔액 (만원)
-  interestRate: number;        // 이자율 (연 %)
+  balance: number;              // 잔액 (만원)
+  interestRate: number;         // 이자율 (연 %)
   repaymentType: RepaymentType; // 상환 방식
-  repaymentYears: number;      // 상환 기간 (년)
+  repaymentYears: number;       // 남은 상환기간 (년)
+  gracePeriodYears: number;     // 거치기간 (년), 0이면 거치 없음
 }
 
 export interface DebtAllocation {

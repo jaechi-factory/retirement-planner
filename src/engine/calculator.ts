@@ -1,6 +1,7 @@
 import type { PlannerInputs } from '../types/inputs';
 import type { YearlySnapshot } from '../types/calculation';
-import { calcFinancialWeightedReturn, calcFinancialTotalAsset, calcDebtAnnualPayment, calcRemainingDebt } from './assetWeighting';
+import type { DebtSchedules } from './debtSchedule';
+import { calcFinancialWeightedReturn, calcFinancialTotalAsset, precomputeDebtSchedules, calcTotalAnnualRepaymentFromSchedules, calcTotalRemainingDebtFromSchedules } from './assetWeighting';
 import { getAnnualPensionIncomeForAge } from './pensionEstimation';
 
 /**
@@ -8,12 +9,14 @@ import { getAnnualPensionIncomeForAge } from './pensionEstimation';
  *
  * - 금융자산: 금융자산 기대수익률로 성장, 소득/지출/연금/부채상환 모두 반영
  * - 부동산: 별도 기대수익률로 성장, 생활비 재원으로 자동 인출하지 않음
- * - 지속 가능성 판단: 금융자산이 0 미만이 되지 않아야 함
- * - 순자산(netAssetEnd): 금융자산 + 부동산 - 잔여부채
+ * - 지속 가능성 판단: 순자산(금융+부동산-부채)이 0 미만이 되지 않아야 함
+ *
+ * @param prebuiltSchedules 이진탐색 바깥에서 선계산된 스케줄 (있으면 재사용, 없으면 내부 계산)
  */
 export function simulate(
   inputs: PlannerInputs,
-  testMonthlyInCurrentValue: number
+  testMonthlyInCurrentValue: number,
+  prebuiltSchedules?: DebtSchedules,
 ): YearlySnapshot[] {
   const { goal, status, assets, debts, children, pension } = inputs;
   const { retirementAge, lifeExpectancy, inflationRate } = goal;
@@ -27,6 +30,9 @@ export function simulate(
   const financialReturnDecimal = calcFinancialWeightedReturn(assets) / 100;
   // 부동산 수익률
   const housingReturnDecimal = assets.realEstate.expectedReturn / 100;
+
+  // 부채 스케줄: 선계산본이 있으면 재사용, 없으면 여기서 생성
+  const debtSchedules = prebuiltSchedules ?? precomputeDebtSchedules(debts);
 
   const annualChildExpense = children.hasChildren
     ? children.count * children.monthlyPerChild * 12
@@ -62,9 +68,8 @@ export function simulate(
           ? annualChildExpense * Math.pow(1 + inflationDecimal, yearsFromNow - 1)
           : 0;
 
-      debtRepayThisYear = Object.values(debts).reduce((sum, debtItem) => {
-        return sum + calcDebtAnnualPayment(debtItem, yearsFromNow - 1);
-      }, 0);
+      // 스케줄 기반 연간 부채 납입액 (yearsElapsed = yearsFromNow - 1)
+      debtRepayThisYear = calcTotalAnnualRepaymentFromSchedules(debtSchedules, yearsFromNow - 1);
 
       pensionThisYear = getAnnualPensionIncomeForAge(
         pension,
@@ -96,9 +101,8 @@ export function simulate(
       currentHousingAsset = currentHousingAsset * (1 + housingReturnDecimal);
     }
 
-    const remainingDebt = Object.values(debts).reduce((sum, debtItem) => {
-      return sum + calcRemainingDebt(debtItem, yearsFromNow);
-    }, 0);
+    // 스케줄 기반 연도말 잔여 부채
+    const remainingDebt = calcTotalRemainingDebtFromSchedules(debtSchedules, yearsFromNow);
 
     const grossAssetEnd = currentFinancialAsset + currentHousingAsset;
     const netAssetEnd = grossAssetEnd - remainingDebt;
