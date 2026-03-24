@@ -103,7 +103,9 @@ export function simulate(
     }
 
     // 스케줄 기반 연도말 잔여 부채
-    const remainingDebt = calcTotalRemainingDebtFromSchedules(debtSchedules, yearsFromNow);
+    // yearsFromNow=0(현재 나이): yearIndex=-1 → 상환 시작 전 원래 잔액
+    // yearsFromNow=1: yearIndex=0 → 1년차 말 잔액, ...
+    const remainingDebt = calcTotalRemainingDebtFromSchedules(debtSchedules, yearsFromNow - 1);
 
     const grossAssetEnd = currentFinancialAsset + currentHousingAsset;
     const netAssetEnd = grossAssetEnd - remainingDebt;
@@ -132,19 +134,31 @@ export function simulate(
 }
 
 /**
- * 전 구간에서 금융자산이 0 미만이 되지 않아야 지속 가능
+ * 순자산(금융자산 + 부동산 - 부채)이 전 구간에서 0 이상이면 지속 가능.
  *
- * 2버킷 모델에서 부동산은 생활비 재원으로 자동 인출되지 않으므로,
- * 지속 가능성은 실제로 쓸 수 있는 금융자산 기준으로 판단한다.
- * 부동산이 아무리 커도 금융자산이 바닥나면 생활이 불가능하기 때문.
+ * 부동산은 최종적으로 유동화 가능한 자산이므로 possibleMonthly 역산의
+ * 지속 가능성 기준에는 포함한다.
+ * 금융자산만 부족한 경우는 findFinancialStressAge로 별도 경고.
  */
 export function isSustainable(snapshots: YearlySnapshot[]): boolean {
   if (snapshots.length === 0) return false;
-  return snapshots.every(s => s.financialAssetEnd >= 0);
+  return snapshots.every(s => s.netAssetEnd >= 0);
 }
 
 /** 순자산이 처음 0 미만이 되는 나이 (기대수명까지 버티면 null) */
 export function findDepletionAge(snapshots: YearlySnapshot[]): number | null {
   const snapshot = snapshots.find(s => s.netAssetEnd < 0);
+  return snapshot ? snapshot.age : null;
+}
+
+/**
+ * 금융자산이 처음 0 미만이 되는 나이 — 유동 자산 고갈 경보 지표.
+ *
+ * 부동산이 있어 총 순자산은 양수여도, 현금·주식 등 금융자산이
+ * 먼저 바닥나는 시점을 알려준다. 이 나이 이후에는 주택 활용(매각·연금)
+ * 전략이 필요하다는 신호로 해석한다.
+ */
+export function findFinancialStressAge(snapshots: YearlySnapshot[]): number | null {
+  const snapshot = snapshots.find(s => s.financialAssetEnd < 0);
   return snapshot ? snapshot.age : null;
 }

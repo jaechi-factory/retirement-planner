@@ -3,8 +3,8 @@ import type { PlannerInputs, AssetAllocation, DebtAllocation } from '../types/in
 import type { PensionInputs } from '../types/pension';
 import type { CalculationResult, Verdict } from '../types/calculation';
 import { DEFAULT_INFLATION_RATE, DEFAULT_INCOME_GROWTH_RATE, DEFAULT_EXPENSE_GROWTH_RATE, DEFAULT_ASSET_RETURNS } from '../utils/constants';
-import { calcTotalAsset, calcTotalDebt, calcFinancialWeightedReturn, calcTotalAnnualRepayment, precomputeDebtSchedules } from '../engine/assetWeighting';
-import { simulate, findDepletionAge } from '../engine/calculator';
+import { calcTotalAsset, calcTotalDebt, calcWeightedReturn, calcTotalAnnualRepayment, precomputeDebtSchedules } from '../engine/assetWeighting';
+import { simulate, findDepletionAge, findFinancialStressAge } from '../engine/calculator';
 import { findMaxSustainableMonthly } from '../engine/binarySearch';
 import { judgeVerdict } from '../engine/verdictEngine';
 import { getTotalMonthlyPensionTodayValue, getPensionMonthlyAtRetirementStart, getNPSStartAgeByBirthYear } from '../engine/pensionEstimation';
@@ -105,7 +105,7 @@ function runCalculation(inputs: PlannerInputs): CalculationResult {
       monthlyPensionAtRetirementStart: 0,
       pensionCoverageRate: 0,
       possibleMonthly: 0, yearlySnapshots: [],
-      depletionAge: null,
+      depletionAge: null, financialStressAge: null,
       targetYearlySnapshots: [],
       isValid: false,
       errorMessage: null,
@@ -127,7 +127,7 @@ function runCalculation(inputs: PlannerInputs): CalculationResult {
       monthlyPensionAtRetirementStart: 0,
       pensionCoverageRate: 0,
       possibleMonthly: 0, yearlySnapshots: [],
-      depletionAge: null,
+      depletionAge: null, financialStressAge: null,
       targetYearlySnapshots: [],
       isValid: false,
       errorMessage: '은퇴 나이는 현재 나이보다, 기대수명은 은퇴 나이보다 커야 해요.',
@@ -137,7 +137,7 @@ function runCalculation(inputs: PlannerInputs): CalculationResult {
   const totalAsset = calcTotalAsset(assets);
   const totalDebt = calcTotalDebt(debts);
   const netWorth = totalAsset - totalDebt;
-  const weightedReturn = calcFinancialWeightedReturn(assets);
+  const weightedReturn = calcWeightedReturn(assets);
   const liquidAsset = totalAsset - assets.realEstate.amount;
   const liquidRatio = totalAsset > 0 ? liquidAsset / totalAsset : 1;
   const totalAnnualRepayment = calcTotalAnnualRepayment(debts);
@@ -182,6 +182,7 @@ function runCalculation(inputs: PlannerInputs): CalculationResult {
 
   const targetSnapshots = simulate(inputs, goal.targetMonthly, debtSchedules);
   const depletionAge = findDepletionAge(targetSnapshots);
+  const financialStressAge = findFinancialStressAge(targetSnapshots);
 
   return {
     totalAsset,
@@ -198,6 +199,7 @@ function runCalculation(inputs: PlannerInputs): CalculationResult {
     possibleMonthly,
     yearlySnapshots,
     depletionAge,
+    financialStressAge,
     targetYearlySnapshots: targetSnapshots,
     isValid: true,
   };

@@ -42,7 +42,8 @@ export interface CalculationResult {
   pensionCoverageRate: number;              // 연금 커버율 = 전체합계 / 목표생활비 (0~1)
 
   // 자산 소진
-  depletionAge: number | null;  // 목표 생활비 기준 자산 소진 나이 (null = 기대수명까지 유지)
+  depletionAge: number | null;         // 목표 생활비 기준 순자산 소진 나이 (null = 기대수명까지 유지)
+  financialStressAge: number | null;   // 금융자산만 먼저 바닥나는 나이 (null = 기대수명까지 유지)
 
   // 유효성
   isValid: boolean;

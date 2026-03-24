@@ -43,7 +43,7 @@ export default function RightPanel() {
         padding: '24px 16px',
       }}
     >
-      {/* 자산 소진 경고 (목표 달성 불가 시) */}
+      {/* 자산 소진 경고 (목표 달성 불가 시) — 순자산(금융+부동산-부채) 기준 */}
       {result.depletionAge !== null && (
         <div style={{
           background: verdict.level === 'critical' ? 'var(--tds-red-50)' : 'var(--tds-orange-50)',
@@ -62,11 +62,39 @@ export default function RightPanel() {
               color: verdict.level === 'critical' ? 'var(--tds-red-500)' : 'var(--tds-orange-500)',
               marginBottom: 3,
             }}>
-              목표 생활비로 살면 {result.depletionAge}세에 자산이 소진돼요
+              목표 생활비로 살면 {result.depletionAge}세에 전체 자산이 소진돼요
             </div>
             <div style={{ fontSize: 12, color: 'var(--tds-gray-500)', lineHeight: 1.5 }}>
               지금 계획대로면 기대수명 {inputs.goal.lifeExpectancy}세까지 {inputs.goal.lifeExpectancy - result.depletionAge}년이 부족해요.
               월 목표를 낮추거나 저축을 늘려보세요.
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 금융자산 고갈 경보 — 부동산은 있지만 현금·투자자산 먼저 바닥 */}
+      {result.depletionAge === null && result.financialStressAge !== null && (
+        <div style={{
+          background: 'var(--tds-orange-50)',
+          border: '1.5px solid var(--tds-orange-200, #FFDBB5)',
+          borderRadius: 12,
+          padding: '14px 16px',
+          marginBottom: 12,
+          display: 'flex',
+          alignItems: 'flex-start',
+          gap: 10,
+        }}>
+          <span style={{ fontSize: 18, lineHeight: 1 }}>🏠</span>
+          <div>
+            <div style={{
+              fontSize: 13, fontWeight: 700,
+              color: 'var(--tds-orange-500)',
+              marginBottom: 3,
+            }}>
+              {result.financialStressAge}세부터 현금·투자자산이 부족해져요
+            </div>
+            <div style={{ fontSize: 12, color: 'var(--tds-gray-500)', lineHeight: 1.5 }}>
+              부동산 덕분에 총 순자산은 유지되지만, 그때부터는 주택 활용(매각·주택연금 등) 전략이 필요해요.
             </div>
           </div>
         </div>

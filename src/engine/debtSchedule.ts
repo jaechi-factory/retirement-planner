@@ -191,15 +191,20 @@ export function getAnnualPaymentFromSchedule(
 
 /**
  * 특정 연도말(0-based) 잔여 원금.
- * yearIndex=0 → 12번째 달 말 잔액, yearIndex=1 → 24번째 달 말 잔액 ...
+ * yearIndex=-1 → 상환 시작 전 원래 잔액 (시뮬레이션 초기 스냅샷용)
+ * yearIndex=0  → 12번째 달 말 잔액, yearIndex=1 → 24번째 달 말 잔액 ...
  */
 export function getRemainingBalanceFromSchedule(
   schedule: MonthlyDebtRow[],
   yearIndex: number,
 ): number {
-  const targetMonth = (yearIndex + 1) * 12 - 1; // 해당 연도 마지막 달 index
-  // 스케줄이 끝났으면 0 (완전 상환)
   if (schedule.length === 0) return 0;
+  // yearIndex=-1: 상환 시작 전 원래 잔액 = 첫 달 납부 전 잔액
+  if (yearIndex < 0) {
+    const firstRow = schedule[0];
+    return firstRow.remainingBalance + firstRow.principal;
+  }
+  const targetMonth = (yearIndex + 1) * 12 - 1; // 해당 연도 마지막 달 index
   // 스케줄 범위 밖이면 0
   const lastRow = schedule[schedule.length - 1];
   if (targetMonth > lastRow.monthIndex) return 0;
