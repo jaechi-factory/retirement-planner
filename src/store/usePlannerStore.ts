@@ -1,13 +1,14 @@
 import { create } from 'zustand';
 import type { PlannerInputs, AssetAllocation, DebtAllocation } from '../types/inputs';
 import type { PensionInputs } from '../types/pension';
-import type { CalculationResult, Verdict } from '../types/calculation';
+import type { CalculationResult, HousingScenarioResult, HousingScenarioSet, Verdict } from '../types/calculation';
 import { DEFAULT_INFLATION_RATE, DEFAULT_INCOME_GROWTH_RATE, DEFAULT_EXPENSE_GROWTH_RATE, DEFAULT_ASSET_RETURNS } from '../utils/constants';
 import { calcTotalAsset, calcTotalDebt, calcWeightedReturn, calcTotalAnnualRepayment, precomputeDebtSchedules } from '../engine/assetWeighting';
-import { simulate, findDepletionAge, findFinancialStressAge } from '../engine/calculator';
+import { simulate, findDepletionAge, findFinancialStressAge, findHousingAnnuityStartAge, findHousingLiquidationAge } from '../engine/calculator';
 import { findMaxSustainableMonthly } from '../engine/binarySearch';
 import { judgeVerdict } from '../engine/verdictEngine';
 import { getTotalMonthlyPensionTodayValue, getPensionMonthlyAtRetirementStart, getNPSStartAgeByBirthYear } from '../engine/pensionEstimation';
+import { POST_SALE_HOUSING_COST_YIELD } from '../engine/housingPolicy';
 
 const defaultPension: PensionInputs = {
   publicPension: {
@@ -79,6 +80,97 @@ const defaultInputs: PlannerInputs = {
   pension: defaultPension,
 };
 
+/** 시나리오 1개 분량의 결과를 계산 */
+function runScenario(
+  inputs: PlannerInputs,
+  policy: 'keep' | 'annuity' | 'liquidate',
+  debtSchedules: ReturnType<typeof precomputeDebtSchedules>,
+): HousingScenarioResult {
+  const { goal, status } = inputs;
+  const inflationDecimal = goal.inflationRate / 100;
+
+  const possibleMonthly = findMaxSustainableMonthly(inputs, policy);
+  const targetSnapshots = simulate(inputs, goal.targetMonthly, policy, debtSchedules);
+
+  // 소진 나이
+  const cashDepletionAge = findFinancialStressAge(targetSnapshots); // 금융자산 고갈
+  const netDepletionAge = findDepletionAge(targetSnapshots);        // 순자산 고갈
+
+  // 주택연금 정보 (B 시나리오)
+  const annuityStartAge = findHousingAnnuityStartAge(targetSnapshots);
+  let housingAnnuityMonthlyNominal = 0;
+  let housingAnnuityMonthlyTodayValue = 0;
+  if (annuityStartAge !== null) {
+    const snap = targetSnapshots.find(s => s.age === annuityStartAge);
+    if (snap && snap.housingAnnuityIncomeThisYear) {
+      housingAnnuityMonthlyNominal = snap.housingAnnuityIncomeThisYear / 12;
+      housingAnnuityMonthlyTodayValue =
+        housingAnnuityMonthlyNominal / Math.pow(1 + inflationDecimal, annuityStartAge - status.currentAge);
+    }
+  }
+
+  // 집 매각 정보 (C 시나리오)
+  const liquidationAge = findHousingLiquidationAge(targetSnapshots);
+  let liquidationNetProceeds = 0;
+  let postSaleAnnualHousingCost = 0;
+  if (liquidationAge !== null) {
+    const snap = targetSnapshots.find(s => s.age === liquidationAge);
+    if (snap && snap.postSaleHousingCostThisYear !== undefined) {
+      postSaleAnnualHousingCost = snap.postSaleHousingCostThisYear;
+      // 순수익 역산: cost = proceeds × 3%
+      liquidationNetProceeds = POST_SALE_HOUSING_COST_YIELD > 0
+        ? postSaleAnnualHousingCost / POST_SALE_HOUSING_COST_YIELD
+        : 0;
+    }
+  }
+
+  const survivesToLifeExpectancy =
+    targetSnapshots.length > 0 &&
+    targetSnapshots[targetSnapshots.length - 1].financialAssetEnd >= 0;
+
+  return {
+    policy,
+    possibleMonthly,
+    survivesToLifeExpectancy,
+    cashDepletionAge,
+    financialDepletionAge: cashDepletionAge,
+    netDepletionAge,
+    housingAnnuityStartAge: annuityStartAge,
+    housingAnnuityMonthlyNominal,
+    housingAnnuityMonthlyTodayValue,
+    housingLiquidationAge: liquidationAge,
+    liquidationNetProceeds,
+    postSaleAnnualHousingCost,
+    targetYearlySnapshots: targetSnapshots,
+  };
+}
+
+/** 추천 시나리오 선택 */
+function pickRecommendedScenario(
+  targetMonthly: number,
+  keep: HousingScenarioResult,
+  annuity: HousingScenarioResult,
+  liquidate: HousingScenarioResult,
+): { recommended: 'keep' | 'annuity' | 'liquidate'; reason: string } {
+  if (keep.possibleMonthly >= targetMonthly) {
+    return { recommended: 'keep', reason: '금융자산만으로 목표 생활비를 충당할 수 있어요.' };
+  }
+  if (annuity.possibleMonthly >= targetMonthly) {
+    return { recommended: 'annuity', reason: '주택연금을 활용하면 목표 생활비를 충당할 수 있어요.' };
+  }
+  if (liquidate.possibleMonthly >= targetMonthly) {
+    return { recommended: 'liquidate', reason: '집을 매각해 임대로 전환하면 목표 생활비를 충당할 수 있어요.' };
+  }
+  // 셋 다 불가 → 그나마 possibleMonthly가 가장 큰 시나리오 추천
+  const best = [keep, annuity, liquidate].reduce((a, b) =>
+    b.possibleMonthly > a.possibleMonthly ? b : a
+  );
+  return {
+    recommended: best.policy as 'keep' | 'annuity' | 'liquidate',
+    reason: '어떤 방법으로도 목표를 맞추기 어려워요. 목표를 조정하거나 저축을 늘려보세요.',
+  };
+}
+
 function runCalculation(inputs: PlannerInputs): CalculationResult {
   const { goal, status, assets, debts, children, pension } = inputs;
 
@@ -107,6 +199,7 @@ function runCalculation(inputs: PlannerInputs): CalculationResult {
       possibleMonthly: 0, yearlySnapshots: [],
       depletionAge: null, financialStressAge: null,
       targetYearlySnapshots: [],
+      housingScenarios: null,
       isValid: false,
       errorMessage: null,
     };
@@ -129,6 +222,7 @@ function runCalculation(inputs: PlannerInputs): CalculationResult {
       possibleMonthly: 0, yearlySnapshots: [],
       depletionAge: null, financialStressAge: null,
       targetYearlySnapshots: [],
+      housingScenarios: null,
       isValid: false,
       errorMessage: '은퇴 나이는 현재 나이보다, 기대수명은 은퇴 나이보다 커야 해요.',
     };
@@ -174,15 +268,45 @@ function runCalculation(inputs: PlannerInputs): CalculationResult {
     ? totalMonthlyPensionTodayValue / goal.targetMonthly
     : 0;
 
-  // 부채 스케줄 선계산 — runCalculation 내 3번의 simulate 호출에 재사용
+  // 부채 스케줄 선계산 — 3 시나리오 모두 재사용
   const debtSchedules = precomputeDebtSchedules(debts);
 
-  const possibleMonthly = findMaxSustainableMonthly(inputs);
-  const yearlySnapshots = simulate(inputs, possibleMonthly, debtSchedules);
+  // ── 3 시나리오 계산 ──────────────────────────────────────────────────
+  const hasHousing = assets.realEstate.amount > 0;
 
-  const targetSnapshots = simulate(inputs, goal.targetMonthly, debtSchedules);
-  const depletionAge = findDepletionAge(targetSnapshots);
-  const financialStressAge = findFinancialStressAge(targetSnapshots);
+  const keepResult   = runScenario(inputs, 'keep',      debtSchedules);
+  const annuityResult   = hasHousing ? runScenario(inputs, 'annuity',   debtSchedules) : keepResult;
+  const liquidateResult = hasHousing ? runScenario(inputs, 'liquidate', debtSchedules) : keepResult;
+
+  const { recommended, reason } = pickRecommendedScenario(
+    goal.targetMonthly,
+    keepResult,
+    annuityResult,
+    liquidateResult,
+  );
+
+  const housingScenarios: HousingScenarioSet | null = hasHousing
+    ? {
+        keep: keepResult,
+        annuity: annuityResult,
+        liquidate: liquidateResult,
+        recommendedScenario: recommended,
+        recommendationReason: reason,
+      }
+    : null;
+
+  // 추천 시나리오 기준으로 대표값 결정
+  const recommendedResult = hasHousing
+    ? { keep: keepResult, annuity: annuityResult, liquidate: liquidateResult }[recommended]
+    : keepResult;
+
+  const possibleMonthly = recommendedResult.possibleMonthly;
+  const targetYearlySnapshots = recommendedResult.targetYearlySnapshots;
+  const depletionAge = findDepletionAge(targetYearlySnapshots);
+  const financialStressAge = findFinancialStressAge(targetYearlySnapshots);
+
+  // possibleMonthly 기준 스냅샷 (내부용)
+  const yearlySnapshots = simulate(inputs, possibleMonthly, recommended, debtSchedules);
 
   return {
     totalAsset,
@@ -200,7 +324,8 @@ function runCalculation(inputs: PlannerInputs): CalculationResult {
     yearlySnapshots,
     depletionAge,
     financialStressAge,
-    targetYearlySnapshots: targetSnapshots,
+    targetYearlySnapshots,
+    housingScenarios,
     isValid: true,
   };
 }

@@ -1,3 +1,5 @@
+import type { HousingPolicy } from '../engine/housingPolicy';
+
 export interface YearlySnapshot {
   age: number;
   isRetired: boolean;
@@ -16,6 +18,44 @@ export interface YearlySnapshot {
   annualDebtRepaymentThisYear: number; // 부채상환 (만원)
   annualChildExpenseThisYear: number;  // 자녀지출 (만원)
   annualNetCashflow: number;         // 순현금흐름 (만원)
+
+  // 주택 활용 정책 관련 (정책 시나리오 시뮬레이션에서만 채워짐)
+  housingAnnuityIncomeThisYear?: number;  // 주택연금 수령액 (만원)
+  postSaleHousingCostThisYear?: number;   // 집 매각 후 임대비용 (만원)
+}
+
+/** 주택 활용 시나리오 결과 */
+export interface HousingScenarioResult {
+  policy: HousingPolicy;
+  possibleMonthly: number;             // 지속 가능한 월 생활비 (현재가치, 만원)
+  survivesToLifeExpectancy: boolean;   // 기대수명까지 자산 유지 여부
+
+  // 소진 나이 정보
+  cashDepletionAge: number | null;        // 현금+예금 소진 나이
+  financialDepletionAge: number | null;   // 금융자산 (현금+예금+주식+채권+코인) 소진 나이
+  netDepletionAge: number | null;         // 순자산(전체) 소진 나이 (null=기대수명까지 유지)
+
+  // 주택연금 (B 시나리오)
+  housingAnnuityStartAge: number | null;  // 주택연금 개시 나이
+  housingAnnuityMonthlyNominal: number;   // 주택연금 명목 월 수령액 (만원)
+  housingAnnuityMonthlyTodayValue: number; // 주택연금 현재가치 월 수령액 (만원)
+
+  // 집 매각 (C 시나리오)
+  housingLiquidationAge: number | null;   // 집 매각 나이
+  liquidationNetProceeds: number;         // 매각 순수익 (부채·헤어컷 차감 후, 만원)
+  postSaleAnnualHousingCost: number;      // 매각 후 연 임대비 (만원)
+
+  // 차트용 스냅샷
+  targetYearlySnapshots: YearlySnapshot[];
+}
+
+/** 3개 시나리오 세트 + 추천 결과 */
+export interface HousingScenarioSet {
+  keep: HousingScenarioResult;
+  annuity: HousingScenarioResult;
+  liquidate: HousingScenarioResult;
+  recommendedScenario: 'keep' | 'annuity' | 'liquidate';
+  recommendationReason: string;
 }
 
 export interface CalculationResult {
@@ -29,10 +69,10 @@ export interface CalculationResult {
   requiredMonthlyAtRetirement: number; // 은퇴시점 필요 월생활비 (만원)
   liquidRatio: number;         // 유동자산 비율 (realEstate 제외, 0~1)
 
-  // 역산 결과
-  possibleMonthly: number;     // 가능한 월 생활비 (만원, 현재가치)
+  // 역산 결과 (추천 시나리오 기준)
+  possibleMonthly: number;     // 가능한 월 생활비 (만원, 현재가치) — 추천 시나리오 possibleMonthly
 
-  // 시뮬레이션 데이터
+  // 시뮬레이션 데이터 (추천 시나리오 기준)
   yearlySnapshots: YearlySnapshot[];        // possibleMonthly 기준 (내부 계산용)
   targetYearlySnapshots: YearlySnapshot[];  // targetMonthly 기준 (차트 표시용)
 
@@ -41,9 +81,12 @@ export interface CalculationResult {
   monthlyPensionAtRetirementStart: number;  // 은퇴 직후 시점 이미 개시된 연금 합계 (현재가치, 만원)
   pensionCoverageRate: number;              // 연금 커버율 = 전체합계 / 목표생활비 (0~1)
 
-  // 자산 소진
+  // 자산 소진 (추천 시나리오 기준)
   depletionAge: number | null;         // 목표 생활비 기준 순자산 소진 나이 (null = 기대수명까지 유지)
   financialStressAge: number | null;   // 금융자산만 먼저 바닥나는 나이 (null = 기대수명까지 유지)
+
+  // 주택 활용 시나리오 세트
+  housingScenarios: HousingScenarioSet | null; // 부동산 없으면 null
 
   // 유효성
   isValid: boolean;

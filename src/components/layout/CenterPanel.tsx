@@ -85,6 +85,7 @@ export default function CenterPanel() {
           currentAge={inputs.status.currentAge}
           retirementAge={inputs.goal.retirementAge}
           lifeExpectancy={inputs.goal.lifeExpectancy}
+          housingScenarios={result.housingScenarios}
         />
 
         {verdict && <GapIndicator verdict={verdict} />}
