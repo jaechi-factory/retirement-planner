@@ -131,10 +131,16 @@ export function simulate(
   return snapshots;
 }
 
-/** 전 구간에서 순자산(금융자산 + 부동산 - 부채)이 0 미만이 되지 않아야 지속 가능 */
+/**
+ * 전 구간에서 금융자산이 0 미만이 되지 않아야 지속 가능
+ *
+ * 2버킷 모델에서 부동산은 생활비 재원으로 자동 인출되지 않으므로,
+ * 지속 가능성은 실제로 쓸 수 있는 금융자산 기준으로 판단한다.
+ * 부동산이 아무리 커도 금융자산이 바닥나면 생활이 불가능하기 때문.
+ */
 export function isSustainable(snapshots: YearlySnapshot[]): boolean {
   if (snapshots.length === 0) return false;
-  return snapshots.every(s => s.netAssetEnd >= 0);
+  return snapshots.every(s => s.financialAssetEnd >= 0);
 }
 
 /** 순자산이 처음 0 미만이 되는 나이 (기대수명까지 버티면 null) */
