@@ -1,25 +1,22 @@
 import './index.css';
-import LeftPanel from './components/layout/LeftPanel';
-import CenterPanel from './components/layout/CenterPanel';
-import RightPanel from './components/layout/RightPanel';
+import InputWorkbench from './components/layout/InputWorkbench';
+import ResultWorkbench from './components/layout/ResultWorkbench';
 
 export default function App() {
   return (
     <div
       style={{
         display: 'flex',
-        minHeight: '100vh',
+        flexDirection: 'column',
+        height: '100vh',
         background: 'var(--tds-gray-50)',
       }}
     >
       {/* 헤더 */}
       <div
         style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
           height: 56,
+          flexShrink: 0,
           background: 'var(--tds-white)',
           borderBottom: '1px solid var(--tds-gray-100)',
           display: 'flex',
@@ -51,17 +48,16 @@ export default function App() {
         </span>
       </div>
 
-      {/* 3컬럼 레이아웃 */}
+      {/* 2컬럼 레이아웃 */}
       <div
         style={{
           display: 'flex',
-          width: '100%',
-          paddingTop: 56,
+          flex: 1,
+          overflow: 'hidden',
         }}
       >
-        <LeftPanel />
-        <CenterPanel />
-        <RightPanel />
+        <InputWorkbench />
+        <ResultWorkbench />
       </div>
     </div>
   );

@@ -2,13 +2,17 @@ import { create } from 'zustand';
 import type { PlannerInputs, AssetAllocation, DebtAllocation } from '../types/inputs';
 import type { PensionInputs } from '../types/pension';
 import type { CalculationResult, HousingScenarioResult, HousingScenarioSet, Verdict } from '../types/calculation';
+import type { CalculationResultV2 } from '../types/calculationV2';
+import type { HousingPolicy } from '../engine/housingPolicy';
+import type { FundingPolicy, LiquidationPolicy } from '../engine/fundingPolicy';
+import { DEFAULT_FUNDING_POLICY, DEFAULT_LIQUIDATION_POLICY } from '../engine/fundingPolicy';
 import { DEFAULT_INFLATION_RATE, DEFAULT_INCOME_GROWTH_RATE, DEFAULT_EXPENSE_GROWTH_RATE, DEFAULT_ASSET_RETURNS } from '../utils/constants';
 import { calcTotalAsset, calcTotalDebt, calcWeightedReturn, calcTotalAnnualRepayment, precomputeDebtSchedules } from '../engine/assetWeighting';
-import { simulate, findDepletionAge, findFinancialStressAge, findHousingAnnuityStartAge, findHousingLiquidationAge } from '../engine/calculator';
+import { simulate, findDepletionAge, findFinancialStressAge } from '../engine/calculator';
 import { findMaxSustainableMonthly } from '../engine/binarySearch';
 import { judgeVerdict } from '../engine/verdictEngine';
 import { getTotalMonthlyPensionTodayValue, getPensionMonthlyAtRetirementStart, getNPSStartAgeByBirthYear } from '../engine/pensionEstimation';
-import { POST_SALE_HOUSING_COST_YIELD } from '../engine/housingPolicy';
+import { runCalculationV2 } from '../engine/calculatorV2';
 
 const defaultPension: PensionInputs = {
   publicPension: {
@@ -80,98 +84,47 @@ const defaultInputs: PlannerInputs = {
   pension: defaultPension,
 };
 
-/** 시나리오 1개 분량의 결과를 계산 */
-function runScenario(
-  inputs: PlannerInputs,
-  policy: 'keep' | 'annuity' | 'liquidate',
-  debtSchedules: ReturnType<typeof precomputeDebtSchedules>,
-): HousingScenarioResult {
-  const { goal, status } = inputs;
-  const inflationDecimal = goal.inflationRate / 100;
-
+// ── 주택 활용 시나리오 헬퍼 ────────────────────────────────────────────
+function runScenario(inputs: PlannerInputs, policy: HousingPolicy): HousingScenarioResult {
+  const { goal } = inputs;
   const possibleMonthly = findMaxSustainableMonthly(inputs, policy);
-  const targetSnapshots = simulate(inputs, goal.targetMonthly, policy, debtSchedules);
-
-  // 소진 나이
-  const cashDepletionAge = findFinancialStressAge(targetSnapshots); // 금융자산 고갈
-  const netDepletionAge = findDepletionAge(targetSnapshots);        // 순자산 고갈
-
-  // 주택연금 정보 (B 시나리오)
-  const annuityStartAge = findHousingAnnuityStartAge(targetSnapshots);
-  let housingAnnuityMonthlyNominal = 0;
-  let housingAnnuityMonthlyTodayValue = 0;
-  if (annuityStartAge !== null) {
-    const snap = targetSnapshots.find(s => s.age === annuityStartAge);
-    if (snap && snap.housingAnnuityIncomeThisYear) {
-      housingAnnuityMonthlyNominal = snap.housingAnnuityIncomeThisYear / 12;
-      housingAnnuityMonthlyTodayValue =
-        housingAnnuityMonthlyNominal / Math.pow(1 + inflationDecimal, annuityStartAge - status.currentAge);
-    }
-  }
-
-  // 집 매각 정보 (C 시나리오)
-  const liquidationAge = findHousingLiquidationAge(targetSnapshots);
-  let liquidationNetProceeds = 0;
-  let postSaleAnnualHousingCost = 0;
-  if (liquidationAge !== null) {
-    const snap = targetSnapshots.find(s => s.age === liquidationAge);
-    if (snap && snap.postSaleHousingCostThisYear !== undefined) {
-      postSaleAnnualHousingCost = snap.postSaleHousingCostThisYear;
-      // 순수익 역산: cost = proceeds × 3%
-      liquidationNetProceeds = POST_SALE_HOUSING_COST_YIELD > 0
-        ? postSaleAnnualHousingCost / POST_SALE_HOUSING_COST_YIELD
-        : 0;
-    }
-  }
-
-  const survivesToLifeExpectancy =
-    targetSnapshots.length > 0 &&
-    targetSnapshots[targetSnapshots.length - 1].financialAssetEnd >= 0;
+  const debtSchedules = precomputeDebtSchedules(inputs.debts);
+  const targetYearlySnapshots = simulate(inputs, goal.targetMonthly, policy, debtSchedules);
+  const netDepletionAge = findDepletionAge(targetYearlySnapshots);
+  const financialDepletionAge = findFinancialStressAge(targetYearlySnapshots);
 
   return {
     policy,
     possibleMonthly,
-    survivesToLifeExpectancy,
-    cashDepletionAge,
-    financialDepletionAge: cashDepletionAge,
+    survivesToLifeExpectancy: netDepletionAge === null,
+    cashDepletionAge: null,
+    financialDepletionAge,
     netDepletionAge,
-    housingAnnuityStartAge: annuityStartAge,
-    housingAnnuityMonthlyNominal,
-    housingAnnuityMonthlyTodayValue,
-    housingLiquidationAge: liquidationAge,
-    liquidationNetProceeds,
-    postSaleAnnualHousingCost,
-    targetYearlySnapshots: targetSnapshots,
+    housingAnnuityStartAge: null,
+    housingAnnuityMonthlyNominal: 0,
+    housingAnnuityMonthlyTodayValue: 0,
+    housingLiquidationAge: null,
+    liquidationNetProceeds: 0,
+    postSaleAnnualHousingCost: 0,
+    targetYearlySnapshots,
   };
 }
 
-/** 추천 시나리오 선택 */
 function pickRecommendedScenario(
-  targetMonthly: number,
   keep: HousingScenarioResult,
   annuity: HousingScenarioResult,
   liquidate: HousingScenarioResult,
-): { recommended: 'keep' | 'annuity' | 'liquidate'; reason: string } {
-  if (keep.possibleMonthly >= targetMonthly) {
-    return { recommended: 'keep', reason: '금융자산만으로 목표 생활비를 충당할 수 있어요.' };
+): { recommendedScenario: 'keep' | 'annuity' | 'liquidate'; recommendationReason: string } {
+  if (keep.possibleMonthly >= annuity.possibleMonthly && keep.possibleMonthly >= liquidate.possibleMonthly) {
+    return { recommendedScenario: 'keep', recommendationReason: '집을 유지해도 은퇴 자금이 충분해요.' };
   }
-  if (annuity.possibleMonthly >= targetMonthly) {
-    return { recommended: 'annuity', reason: '주택연금을 활용하면 목표 생활비를 충당할 수 있어요.' };
+  if (annuity.possibleMonthly >= liquidate.possibleMonthly) {
+    return { recommendedScenario: 'annuity', recommendationReason: '주택연금이 생활비를 효과적으로 보완해요.' };
   }
-  if (liquidate.possibleMonthly >= targetMonthly) {
-    return { recommended: 'liquidate', reason: '집을 매각해 임대로 전환하면 목표 생활비를 충당할 수 있어요.' };
-  }
-  // 셋 다 불가 → 그나마 possibleMonthly가 가장 큰 시나리오 추천
-  const best = [keep, annuity, liquidate].reduce((a, b) =>
-    b.possibleMonthly > a.possibleMonthly ? b : a
-  );
-  return {
-    recommended: best.policy as 'keep' | 'annuity' | 'liquidate',
-    reason: '어떤 방법으로도 목표를 맞추기 어려워요. 목표를 조정하거나 저축을 늘려보세요.',
-  };
+  return { recommendedScenario: 'liquidate', recommendationReason: '집을 매각하면 더 많은 생활비가 가능해요.' };
 }
 
-function runCalculation(inputs: PlannerInputs): CalculationResult {
+function runCalculation(inputs: PlannerInputs, advancedHousingEnabled = false): CalculationResult {
   const { goal, status, assets, debts, children, pension } = inputs;
 
   const requiredFieldsMissing =
@@ -199,6 +152,7 @@ function runCalculation(inputs: PlannerInputs): CalculationResult {
       possibleMonthly: 0, yearlySnapshots: [],
       depletionAge: null, financialStressAge: null,
       targetYearlySnapshots: [],
+      firstYearMonthlyDebt: 0,
       housingScenarios: null,
       isValid: false,
       errorMessage: null,
@@ -222,6 +176,7 @@ function runCalculation(inputs: PlannerInputs): CalculationResult {
       possibleMonthly: 0, yearlySnapshots: [],
       depletionAge: null, financialStressAge: null,
       targetYearlySnapshots: [],
+      firstYearMonthlyDebt: 0,
       housingScenarios: null,
       isValid: false,
       errorMessage: '은퇴 나이는 현재 나이보다, 기대수명은 은퇴 나이보다 커야 해요.',
@@ -268,45 +223,35 @@ function runCalculation(inputs: PlannerInputs): CalculationResult {
     ? totalMonthlyPensionTodayValue / goal.targetMonthly
     : 0;
 
-  // 부채 스케줄 선계산 — 3 시나리오 모두 재사용
+  // 부채 스케줄 선계산
   const debtSchedules = precomputeDebtSchedules(debts);
 
-  // ── 3 시나리오 계산 ──────────────────────────────────────────────────
-  const hasHousing = assets.realEstate.amount > 0;
+  // ── 메인 계산: 금융자산 기준 (keep 정책) ─────────────────────────────
+  const possibleMonthly = findMaxSustainableMonthly(inputs, 'keep');
+  const targetYearlySnapshots = simulate(inputs, goal.targetMonthly, 'keep', debtSchedules);
+  const yearlySnapshots = simulate(inputs, possibleMonthly, 'keep', debtSchedules);
 
-  const keepResult   = runScenario(inputs, 'keep',      debtSchedules);
-  const annuityResult   = hasHousing ? runScenario(inputs, 'annuity',   debtSchedules) : keepResult;
-  const liquidateResult = hasHousing ? runScenario(inputs, 'liquidate', debtSchedules) : keepResult;
-
-  const { recommended, reason } = pickRecommendedScenario(
-    goal.targetMonthly,
-    keepResult,
-    annuityResult,
-    liquidateResult,
-  );
-
-  const housingScenarios: HousingScenarioSet | null = hasHousing
-    ? {
-        keep: keepResult,
-        annuity: annuityResult,
-        liquidate: liquidateResult,
-        recommendedScenario: recommended,
-        recommendationReason: reason,
-      }
-    : null;
-
-  // 추천 시나리오 기준으로 대표값 결정
-  const recommendedResult = hasHousing
-    ? { keep: keepResult, annuity: annuityResult, liquidate: liquidateResult }[recommended]
-    : keepResult;
-
-  const possibleMonthly = recommendedResult.possibleMonthly;
-  const targetYearlySnapshots = recommendedResult.targetYearlySnapshots;
   const depletionAge = findDepletionAge(targetYearlySnapshots);
   const financialStressAge = findFinancialStressAge(targetYearlySnapshots);
 
-  // possibleMonthly 기준 스냅샷 (내부용)
-  const yearlySnapshots = simulate(inputs, possibleMonthly, recommended, debtSchedules);
+  // 첫 해 월 부채 상환액 (debt schedule 기준) — UI 표시용
+  const firstYearMonthlyDebt = Math.round(totalAnnualRepayment / 12);
+
+  // ── 집 활용 전략 시나리오 (옵션) ─────────────────────────────────────
+  let housingScenarios: HousingScenarioSet | null = null;
+  if (advancedHousingEnabled && assets.realEstate.amount > 0) {
+    const keepResult = runScenario(inputs, 'keep');
+    const annuityResult = runScenario(inputs, 'annuity');
+    const liquidateResult = runScenario(inputs, 'liquidate');
+    const { recommendedScenario, recommendationReason } = pickRecommendedScenario(keepResult, annuityResult, liquidateResult);
+    housingScenarios = {
+      keep: keepResult,
+      annuity: annuityResult,
+      liquidate: liquidateResult,
+      recommendedScenario,
+      recommendationReason,
+    };
+  }
 
   return {
     totalAsset,
@@ -325,6 +270,7 @@ function runCalculation(inputs: PlannerInputs): CalculationResult {
     depletionAge,
     financialStressAge,
     targetYearlySnapshots,
+    firstYearMonthlyDebt,
     housingScenarios,
     isValid: true,
   };
@@ -395,46 +341,55 @@ interface PlannerStore {
   inputs: PlannerInputs;
   result: CalculationResult;
   verdict: Verdict | null;
+  advancedHousingEnabled: boolean;
+  // V2 병행 탑재
+  resultV2: CalculationResultV2 | null;
+  fundingPolicy: FundingPolicy;
+  liquidationPolicy: LiquidationPolicy;
   setGoal: (partial: Partial<PlannerInputs['goal']>) => void;
   setStatus: (partial: Partial<PlannerInputs['status']>) => void;
   setAsset: (key: keyof AssetAllocation, partial: Partial<AssetAllocation[keyof AssetAllocation]>) => void;
   setDebt: (key: keyof DebtAllocation, partial: Partial<DebtAllocation[keyof DebtAllocation]>) => void;
   setChildren: (partial: Partial<PlannerInputs['children']>) => void;
   setPension: (partial: Partial<PensionInputs>) => void;
+  setFundingPolicy: (partial: Partial<FundingPolicy>) => void;
+  toggleHousing: () => void;
   resetAll: () => void;
 }
 
-const computeState = (inputs: PlannerInputs): Pick<PlannerStore, 'inputs' | 'result' | 'verdict'> => {
-  const result = runCalculation(inputs);
+const computeState = (
+  inputs: PlannerInputs,
+  advancedHousingEnabled = false,
+  fundingPolicy: FundingPolicy = DEFAULT_FUNDING_POLICY,
+  liquidationPolicy: LiquidationPolicy = DEFAULT_LIQUIDATION_POLICY,
+): Pick<PlannerStore, 'inputs' | 'result' | 'verdict' | 'resultV2'> => {
+  const result = runCalculation(inputs, advancedHousingEnabled);
   const verdict = result.isValid
     ? judgeVerdict(inputs.goal.targetMonthly, result.possibleMonthly)
     : null;
-  return { inputs, result, verdict };
+  const resultV2 = runCalculationV2(inputs, fundingPolicy, liquidationPolicy);
+  return { inputs, result, verdict, resultV2 };
 };
 
 export const usePlannerStore = create<PlannerStore>((set, get) => ({
   ...computeState(loadInputsFromStorage()),
+  advancedHousingEnabled: false,
+  fundingPolicy: DEFAULT_FUNDING_POLICY,
+  liquidationPolicy: DEFAULT_LIQUIDATION_POLICY,
 
   setGoal: (partial) => {
     const current = get().inputs;
-    let newPension = current.pension;
-    if (partial.retirementAge !== undefined && partial.retirementAge > 0) {
-      const newStartAge = Math.max(55, partial.retirementAge);
-      newPension = {
-        ...newPension,
-        retirementPension: { ...newPension.retirementPension, startAge: newStartAge },
-        privatePension: { ...newPension.privatePension, startAge: newStartAge },
-      };
-    }
-    const inputs: PlannerInputs = { ...current, goal: { ...current.goal, ...partial }, pension: newPension };
+    // P0 fix: 은퇴 나이 변경이 연금 시작 나이를 자동 동기화하지 않음 (4개 나이 완전 독립)
+    const inputs: PlannerInputs = { ...current, goal: { ...current.goal, ...partial } };
     saveInputsToStorage(inputs);
-    set(computeState(inputs));
+    set(computeState(inputs, get().advancedHousingEnabled, get().fundingPolicy, get().liquidationPolicy));
   },
   setStatus: (partial) => {
     const current = get().inputs;
     let newPension = current.pension;
     if (partial.currentAge !== undefined && partial.currentAge > 0) {
-      const birthYear = 2026 - partial.currentAge;
+      // P0 fix: 하드코딩 2026 제거, 런타임 연도 사용
+      const birthYear = new Date().getFullYear() - partial.currentAge;
       const npsStartAge = getNPSStartAgeByBirthYear(birthYear);
       newPension = {
         ...newPension,
@@ -443,7 +398,7 @@ export const usePlannerStore = create<PlannerStore>((set, get) => ({
     }
     const inputs: PlannerInputs = { ...current, status: { ...current.status, ...partial }, pension: newPension };
     saveInputsToStorage(inputs);
-    set(computeState(inputs));
+    set(computeState(inputs, get().advancedHousingEnabled, get().fundingPolicy, get().liquidationPolicy));
   },
   setAsset: (key, partial) => {
     const inputs: PlannerInputs = {
@@ -451,7 +406,7 @@ export const usePlannerStore = create<PlannerStore>((set, get) => ({
       assets: { ...get().inputs.assets, [key]: { ...get().inputs.assets[key], ...partial } },
     };
     saveInputsToStorage(inputs);
-    set(computeState(inputs));
+    set(computeState(inputs, get().advancedHousingEnabled, get().fundingPolicy, get().liquidationPolicy));
   },
   setDebt: (key, partial) => {
     const inputs: PlannerInputs = {
@@ -459,12 +414,12 @@ export const usePlannerStore = create<PlannerStore>((set, get) => ({
       debts: { ...get().inputs.debts, [key]: { ...get().inputs.debts[key], ...partial } },
     };
     saveInputsToStorage(inputs);
-    set(computeState(inputs));
+    set(computeState(inputs, get().advancedHousingEnabled, get().fundingPolicy, get().liquidationPolicy));
   },
   setChildren: (partial) => {
     const inputs: PlannerInputs = { ...get().inputs, children: { ...get().inputs.children, ...partial } };
     saveInputsToStorage(inputs);
-    set(computeState(inputs));
+    set(computeState(inputs, get().advancedHousingEnabled, get().fundingPolicy, get().liquidationPolicy));
   },
   setPension: (partial) => {
     const inputs: PlannerInputs = {
@@ -472,10 +427,26 @@ export const usePlannerStore = create<PlannerStore>((set, get) => ({
       pension: { ...get().inputs.pension, ...partial },
     };
     saveInputsToStorage(inputs);
-    set(computeState(inputs));
+    set(computeState(inputs, get().advancedHousingEnabled, get().fundingPolicy, get().liquidationPolicy));
+  },
+  setFundingPolicy: (partial) => {
+    const newPolicy: FundingPolicy = { ...get().fundingPolicy, ...partial };
+    set({
+      fundingPolicy: newPolicy,
+      ...computeState(get().inputs, get().advancedHousingEnabled, newPolicy, get().liquidationPolicy),
+    });
+  },
+  toggleHousing: () => {
+    const newEnabled = !get().advancedHousingEnabled;
+    set({ advancedHousingEnabled: newEnabled, ...computeState(get().inputs, newEnabled, get().fundingPolicy, get().liquidationPolicy) });
   },
   resetAll: () => {
     localStorage.removeItem(STORAGE_KEY);
-    set(computeState(defaultInputs));
+    set({
+      advancedHousingEnabled: false,
+      fundingPolicy: DEFAULT_FUNDING_POLICY,
+      liquidationPolicy: DEFAULT_LIQUIDATION_POLICY,
+      ...computeState(defaultInputs, false, DEFAULT_FUNDING_POLICY, DEFAULT_LIQUIDATION_POLICY),
+    });
   },
 }));
