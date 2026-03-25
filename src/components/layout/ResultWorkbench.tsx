@@ -5,7 +5,7 @@ import YearlySummaryTable from '../result/v2/YearlySummaryTable';
 import AssetBalanceChart from '../charts/AssetBalanceChart';
 import SummaryTab from '../result/v2/SummaryTab';
 import PensionTab from '../result/v2/PensionTab';
-import type { PropertyOptionResult, YearlyAggregateV2, FundingStage } from '../../types/calculationV2';
+import type { YearlyAggregateV2, FundingStage } from '../../types/calculationV2';
 import type { CalculationResult } from '../../types/calculation';
 import type { PlannerInputs } from '../../types/inputs';
 
@@ -121,135 +121,6 @@ function WhyPathSection({
   );
 }
 
-// ── 3층: 전략 비교 ─────────────────────────────────────────────────────────────
-function ComparisonRows({ options }: { options: PropertyOptionResult[] }) {
-  // 좋은 순서로 정렬: 기대수명 달성 → failureAge 내림차순 → monthly 내림차순
-  const sorted = [...options].sort((a, b) => {
-    if (a.survivesToLifeExpectancy !== b.survivesToLifeExpectancy)
-      return a.survivesToLifeExpectancy ? -1 : 1;
-    const aFail = a.failureAge ?? Infinity;
-    const bFail = b.failureAge ?? Infinity;
-    if (aFail !== bFail) return bFail - aFail;
-    return b.sustainableMonthly - a.sustainableMonthly;
-  });
-
-  return (
-    <div
-      style={{
-        borderRadius: 16,
-        border: '1px solid var(--tds-gray-100)',
-        overflow: 'hidden',
-        marginBottom: 20,
-      }}
-    >
-      <div
-        style={{
-          padding: '16px 20px 12px',
-          fontSize: 12,
-          fontWeight: 700,
-          color: 'var(--tds-gray-400)',
-          letterSpacing: 0.3,
-          borderBottom: '1px solid var(--tds-gray-100)',
-        }}
-      >
-        집 활용 방식별 비교
-      </div>
-      {sorted.map((opt, i) => {
-        const isRec = opt.isRecommended;
-
-        let statusLabel: string;
-        let statusPositive: boolean;
-        if (opt.survivesToLifeExpectancy) {
-          statusLabel = '기대수명 달성';
-          statusPositive = true;
-        } else if (opt.failureAge !== null) {
-          statusLabel = `${opt.failureAge}세까지`;
-          statusPositive = false;
-        } else {
-          statusLabel = '지속 불가';
-          statusPositive = false;
-        }
-
-        const amountText = opt.sustainableMonthly > 0
-          ? `월 ${opt.sustainableMonthly.toLocaleString()}만원`
-          : '지속 불가';
-
-        return (
-          <div
-            key={opt.strategy}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              padding: '14px 20px',
-              borderBottom: i < sorted.length - 1 ? '1px solid var(--tds-gray-50)' : undefined,
-              background: isRec ? 'var(--tds-blue-50, #EEF4FF)' : 'transparent',
-              gap: 12,
-            }}
-          >
-            {/* 전략명 */}
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div
-                style={{
-                  fontSize: 13,
-                  fontWeight: isRec ? 700 : 500,
-                  color: isRec ? 'var(--tds-blue-600, #1A5DC2)' : 'var(--tds-gray-500)',
-                  lineHeight: 1.5,
-                }}
-              >
-                {opt.label}
-                {isRec && (
-                  <span
-                    style={{
-                      marginLeft: 6,
-                      fontSize: 10,
-                      fontWeight: 700,
-                      color: 'var(--tds-blue-600, #1A5DC2)',
-                      background: 'var(--tds-blue-100, #D6E4FF)',
-                      borderRadius: 4,
-                      padding: '1px 6px',
-                      verticalAlign: 'middle',
-                    }}
-                  >
-                    추천
-                  </span>
-                )}
-              </div>
-            </div>
-
-            {/* 월 금액 */}
-            <div
-              style={{
-                fontSize: 14,
-                fontWeight: isRec ? 800 : 500,
-                color: isRec ? 'var(--tds-blue-600, #1A5DC2)' : 'var(--tds-gray-400)',
-                flexShrink: 0,
-              }}
-            >
-              {amountText}
-            </div>
-
-            {/* 상태 태그 */}
-            <div
-              style={{
-                fontSize: 11,
-                fontWeight: 600,
-                color: statusPositive ? '#1B7F3A' : 'var(--tds-gray-400)',
-                background: statusPositive ? '#E8F5E9' : 'var(--tds-gray-100)',
-                borderRadius: 6,
-                padding: '4px 10px',
-                flexShrink: 0,
-                minWidth: 68,
-                textAlign: 'center',
-              }}
-            >
-              {statusLabel}
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
 
 // ── 4층: 세부 탭 ──────────────────────────────────────────────────────────────
 const TABS = ['요약', '연금', '자산 추이', '연도별 상세'] as const;
@@ -264,7 +135,6 @@ function DetailTabsInner({
 }: {
   detailYearlyAggregates: YearlyAggregateV2[];
   retirementAge: number;
-  propertyOptions: PropertyOptionResult[];
   strategyLabel: string;
   result: CalculationResult;
   inputs: PlannerInputs;
@@ -478,7 +348,6 @@ export default function ResultWorkbench() {
         <DetailTabsInner
           detailYearlyAggregates={detailYearlyAggregates}
           retirementAge={inputs.goal.retirementAge}
-          propertyOptions={propertyOptions}
           strategyLabel={recommended?.label ?? ''}
           result={result}
           inputs={inputs}
