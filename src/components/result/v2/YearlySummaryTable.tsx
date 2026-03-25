@@ -1,15 +1,10 @@
 import { useState } from 'react';
 import type { YearlyAggregateV2 } from '../../../types/calculationV2';
+import { fmtKRW } from '../../../utils/format';
 
 interface Props {
   rows: YearlyAggregateV2[];
   retirementAge: number;
-}
-
-function fmt(v: number): string {
-  const r = Math.round(v);
-  if (Math.abs(r) >= 10000) return `${(r / 10000).toFixed(1)}억`;
-  return r.toLocaleString();
 }
 
 export default function YearlySummaryTable({ rows, retirementAge }: Props) {
@@ -81,23 +76,23 @@ export default function YearlySummaryTable({ rows, retirementAge }: Props) {
                       {row.ageYear}세
                     </td>
                     <td style={{ padding: '7px 12px', textAlign: 'right', color: 'var(--tds-gray-700)' }}>
-                      {fmt(row.cashLikeEnd)}
+                      {fmtKRW(row.cashLikeEnd)}
                     </td>
                     <td style={{ padding: '7px 12px', textAlign: 'right', color: 'var(--tds-gray-700)' }}>
-                      {fmt(row.financialInvestableEnd)}
+                      {fmtKRW(row.financialInvestableEnd)}
                     </td>
                     <td style={{ padding: '7px 12px', textAlign: 'right', color: 'var(--tds-gray-700)' }}>
-                      {fmt(row.propertyValueEnd)}
+                      {fmtKRW(row.propertyValueEnd)}
                     </td>
                     <td style={{ padding: '7px 12px', textAlign: 'right', color: row.securedLoanBalanceEnd > 0 ? '#C0392B' : 'var(--tds-gray-700)' }}>
-                      {row.securedLoanBalanceEnd > 0 ? `-${fmt(row.securedLoanBalanceEnd)}` : '-'}
+                      {row.securedLoanBalanceEnd > 0 ? `-${fmtKRW(row.securedLoanBalanceEnd)}` : '-'}
                     </td>
                     <td style={{ padding: '7px 12px', textAlign: 'right', color: 'var(--tds-gray-700)' }}>
-                      {Math.round(row.totalExpense / 12).toLocaleString()}
+                      {fmtKRW(row.totalExpense / 12)}
                     </td>
                     <td style={{ padding: '7px 12px', textAlign: 'right', fontSize: 11, color: hasShortfall ? '#C0392B' : 'var(--tds-gray-400)' }}>
                       {hasShortfall
-                        ? `부족 ${fmt(row.totalShortfall)}`
+                        ? `부족 ${fmtKRW(row.totalShortfall)}`
                         : row.eventSummary.length > 0
                         ? row.eventSummary[0]
                         : ''}
@@ -115,22 +110,22 @@ export default function YearlySummaryTable({ rows, retirementAge }: Props) {
                         {m.ageMonthIndex + 1}월
                       </td>
                       <td style={{ padding: '5px 12px', textAlign: 'right', fontSize: 11, color: 'var(--tds-gray-600)' }}>
-                        {fmt(m.cashLikeEnd)}
+                        {fmtKRW(m.cashLikeEnd)}
                       </td>
                       <td style={{ padding: '5px 12px', textAlign: 'right', fontSize: 11, color: 'var(--tds-gray-600)' }}>
-                        {fmt(m.financialInvestableEnd)}
+                        {fmtKRW(m.financialInvestableEnd)}
                       </td>
                       <td style={{ padding: '5px 12px', textAlign: 'right', fontSize: 11, color: 'var(--tds-gray-600)' }}>
-                        {fmt(m.propertyValueEnd)}
+                        {fmtKRW(m.propertyValueEnd)}
                       </td>
                       <td style={{ padding: '5px 12px', textAlign: 'right', fontSize: 11, color: m.securedLoanBalanceEnd > 0 ? '#C0392B' : 'var(--tds-gray-400)' }}>
-                        {m.securedLoanBalanceEnd > 0 ? `-${fmt(m.securedLoanBalanceEnd)}` : '-'}
+                        {m.securedLoanBalanceEnd > 0 ? `-${fmtKRW(m.securedLoanBalanceEnd)}` : '-'}
                       </td>
                       <td style={{ padding: '5px 12px', textAlign: 'right', fontSize: 11, color: 'var(--tds-gray-600)' }}>
-                        {Math.round(m.expenseThisMonth).toLocaleString()}
+                        {fmtKRW(m.expenseThisMonth)}
                       </td>
                       <td style={{ padding: '5px 12px', textAlign: 'right', fontSize: 11, color: m.shortfallThisMonth > 0 ? '#C0392B' : 'var(--tds-gray-400)' }}>
-                        {m.shortfallThisMonth > 0 ? `부족 ${fmt(m.shortfallThisMonth)}` : ''}
+                        {m.shortfallThisMonth > 0 ? `부족 ${fmtKRW(m.shortfallThisMonth)}` : ''}
                       </td>
                       <td />
                     </tr>

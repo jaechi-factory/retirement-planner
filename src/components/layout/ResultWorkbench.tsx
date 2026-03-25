@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { usePlannerStore } from '../../store/usePlannerStore';
+import { fmtKRW } from '../../utils/format';
 import FundingTimeline from '../result/v2/FundingTimeline';
 import YearlySummaryTable from '../result/v2/YearlySummaryTable';
 import AssetBalanceChart from '../charts/AssetBalanceChart';
@@ -42,7 +43,7 @@ function HeroSection({
           marginBottom: 10,
         }}
       >
-        월 {sustainableMonthly.toLocaleString()}만원
+        월 {fmtKRW(sustainableMonthly)}
       </div>
       <div
         style={{
@@ -52,8 +53,8 @@ function HeroSection({
         }}
       >
         {positive
-          ? `목표보다 월 ${targetGap.toLocaleString()}만원 더 가능 ✓`
-          : `목표보다 월 ${Math.abs(targetGap).toLocaleString()}만원 부족`}
+          ? `목표보다 월 ${fmtKRW(targetGap)} 더 가능 ✓`
+          : `목표보다 월 ${fmtKRW(Math.abs(targetGap))} 부족`}
       </div>
     </div>
   );

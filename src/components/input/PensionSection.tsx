@@ -10,6 +10,7 @@ import {
   estimatePrivatePension,
   estimatePrivatePensionProducts,
 } from '../../engine/pensionEstimation';
+import { fmtKRW } from '../../utils/format';
 
 // ─── 공통 스타일 ─────────────────────────────────────────────────────────────
 
@@ -138,10 +139,10 @@ function PublicPensionCard() {
             }}>
               <div>
                 <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--tds-gray-700)' }}>
-                  월 {Math.round(meta.base).toLocaleString('ko-KR')}만원
+                  월 {fmtKRW(meta.base)}
                 </span>
                 <div style={{ fontSize: 12, color: 'var(--tds-blue-400)', marginTop: 2 }}>
-                  소득 상한({Math.round(meta.pensionableMonthly).toLocaleString('ko-KR')}만원) 기준
+                  소득 상한({fmtKRW(meta.pensionableMonthly)}) 기준
                 </div>
               </div>
               <CappedBadge />
@@ -150,10 +151,10 @@ function PublicPensionCard() {
             /* 소득 상한 미도달 시: 중립 추정값 단일 표시 */
             <div style={{ margin: '4px 0 8px' }}>
               <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--tds-gray-700)', marginBottom: 2 }}>
-                월 {Math.round(meta.base).toLocaleString('ko-KR')}만원
+                월 {fmtKRW(meta.base)}
               </div>
               <div style={{ fontSize: 12, color: 'var(--tds-gray-400)' }}>
-                보수적 {Math.round(meta.conservative).toLocaleString('ko-KR')} ~ 낙관적 {Math.round(meta.optimistic).toLocaleString('ko-KR')}만원 범위
+                보수적 {fmtKRW(meta.conservative)} ~ 낙관적 {fmtKRW(meta.optimistic)} 범위
               </div>
             </div>
           )}
@@ -164,7 +165,7 @@ function PublicPensionCard() {
       ) : (
         <>
           <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--tds-gray-700)', margin: '4px 0 2px' }}>
-            월 {Math.round(displayValue).toLocaleString('ko-KR')}만원
+            월 {fmtKRW(displayValue)}
           </div>
           <div style={{ fontSize: 12, color: 'var(--tds-gray-400)' }}>
             {publicPension.startAge}세부터 수령
@@ -303,7 +304,7 @@ function RetirementPensionCard() {
       </div>
 
       <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--tds-gray-700)', margin: '4px 0 2px' }}>
-        월 {Math.round(displayValue).toLocaleString('ko-KR')}만원
+        월 {fmtKRW(displayValue)}
       </div>
       <div style={{ fontSize: 12, color: 'var(--tds-gray-400)' }}>
         {startAge}세부터 {retirementPension.payoutYears}년간 수령
@@ -645,7 +646,7 @@ function PrivatePensionCard() {
           {/* 총합 표시 + 되돌아가기 */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
             <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--tds-gray-700)' }}>
-              합계 월 {displayValue.toLocaleString('ko-KR')}만원
+              합계 월 {fmtKRW(displayValue)}
             </div>
             <button
               onClick={exitDetailMode}
@@ -703,7 +704,7 @@ function PrivatePensionCard() {
         <>
           {/* 예상 연금액 */}
           <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--tds-gray-700)', margin: '4px 0 2px' }}>
-            월 {displayValue.toLocaleString('ko-KR')}만원
+            월 {fmtKRW(displayValue)}
           </div>
           <div style={{ fontSize: 12, color: 'var(--tds-gray-400)', marginBottom: 12 }}>
             {privatePension.startAge}세부터 {privatePension.payoutYears}년간 수령
@@ -839,7 +840,7 @@ export default function PensionSection() {
               추정값 · 지금 기준
             </div>
             <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--tds-gray-600)' }}>
-              월 {totalPension.toLocaleString('ko-KR')}만원 보탬이 돼요
+              월 {fmtKRW(totalPension)} 보탬이 돼요
             </div>
           </div>
           {coveragePct > 0 && (

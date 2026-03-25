@@ -1,6 +1,6 @@
 import type { CalculationResult } from '../../../types/calculation';
 import type { PlannerInputs } from '../../../types/inputs';
-import { formatEok } from '../../../utils/format';
+import { fmtKRW } from '../../../utils/format';
 
 interface Props {
   result: CalculationResult;
@@ -84,13 +84,13 @@ export default function SummaryTab({ result, inputs }: Props) {
       >
         <StatItem
           label="순자산"
-          value={formatEok(netWorth)}
-          sub={`총자산 ${formatEok(totalAsset)}`}
+          value={fmtKRW(netWorth)}
+          sub={`총자산 ${fmtKRW(totalAsset)}`}
           valueColor={netWorthColor}
         />
         <StatItem
           label="총부채"
-          value={formatEok(totalDebt)}
+          value={fmtKRW(totalDebt)}
           valueColor={totalDebt > 0 ? '#C0392B' : undefined}
         />
         <StatItem
@@ -99,7 +99,7 @@ export default function SummaryTab({ result, inputs }: Props) {
         />
         <StatItem
           label="올해 기준 여유자금"
-          value={`월 ${monthlySavings >= 0 ? '+' : ''}${monthlySavings.toLocaleString()}만원`}
+          value={`월 ${monthlySavings >= 0 ? '+' : ''}${fmtKRW(Math.abs(monthlySavings))}`}
           sub="세후소득 - 지출 - 부채상환"
           valueColor={savingsColor}
         />
@@ -109,7 +109,7 @@ export default function SummaryTab({ result, inputs }: Props) {
       {inputs.children.hasChildren && annualChildExpense > 0 && (
         <StatItem
           label="자녀 관련 연 지출"
-          value={formatEok(annualChildExpense)}
+          value={fmtKRW(annualChildExpense)}
           sub={`${inputs.children.independenceAge}세까지 계속`}
         />
       )}

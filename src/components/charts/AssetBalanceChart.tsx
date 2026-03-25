@@ -13,17 +13,12 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import type { YearlyAggregateV2 } from '../../types/calculationV2';
+import { fmtKRW, fmtKRWAxis } from '../../utils/format';
 
 interface Props {
   rows: YearlyAggregateV2[];
   retirementAge: number;
   strategyLabel?: string;
-}
-
-function fmt(v: number) {
-  if (v >= 10000) return `${(v / 10000).toFixed(0)}억`;
-  if (v >= 1000) return `${(v / 1000).toFixed(1)}천`;
-  return `${v}`;
 }
 
 export default function AssetBalanceChart({ rows, retirementAge, strategyLabel }: Props) {
@@ -83,14 +78,14 @@ export default function AssetBalanceChart({ rows, retirementAge, strategyLabel }
             interval="preserveStartEnd"
           />
           <YAxis
-            tickFormatter={fmt}
+            tickFormatter={fmtKRWAxis}
             tick={{ fontSize: 10, fill: 'var(--tds-gray-400)' }}
             tickLine={false}
             axisLine={false}
             width={44}
           />
           <Tooltip
-            formatter={(value, name) => [`${Number(value).toLocaleString()}만원`, name as string]}
+            formatter={(value, name) => [fmtKRW(Number(value)), name as string]}
             labelFormatter={(label) => `${label}세`}
             contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid var(--tds-gray-100)' }}
           />
