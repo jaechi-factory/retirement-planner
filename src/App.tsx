@@ -12,7 +12,7 @@ export default function App() {
         background: 'var(--tds-gray-100)',
       }}
     >
-      {/* 헤더 — full width 흰 배경, 내부 텍스트는 70% 정렬 */}
+      {/* 헤더 — full width 흰 배경, 내부 텍스트는 90% 정렬 */}
       <div
         style={{
           height: 56,
@@ -26,7 +26,8 @@ export default function App() {
       >
         <div
           style={{
-            width: '70%',
+            width: '90%',
+            maxWidth: 1440,
             display: 'flex',
             alignItems: 'center',
             paddingLeft: 40,
@@ -55,7 +56,7 @@ export default function App() {
         </div>
       </div>
 
-      {/* 2컬럼 레이아웃 — 70% 카드로 띄우기 */}
+      {/* 2컬럼 레이아웃 */}
       <div
         style={{
           display: 'flex',
@@ -67,7 +68,8 @@ export default function App() {
         <div
           style={{
             display: 'flex',
-            width: '70%',
+            width: '90%',
+            maxWidth: 1440,
             overflow: 'hidden',
             background: 'var(--tds-white)',
             borderLeft: '1px solid var(--tds-gray-100)',

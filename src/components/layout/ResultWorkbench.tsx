@@ -3,7 +3,6 @@ import { usePlannerStore } from '../../store/usePlannerStore';
 import FundingTimeline from '../result/v2/FundingTimeline';
 import YearlySummaryTable from '../result/v2/YearlySummaryTable';
 import AssetBalanceChart from '../charts/AssetBalanceChart';
-import PropertyStrategyChart from '../charts/PropertyStrategyChart';
 import SummaryTab from '../result/v2/SummaryTab';
 import PensionTab from '../result/v2/PensionTab';
 import type { PropertyOptionResult, YearlyAggregateV2, FundingStage } from '../../types/calculationV2';
@@ -26,30 +25,31 @@ function HeroSection({
       style={{
         borderRadius: 16,
         border: '1px solid var(--tds-gray-100)',
-        padding: '28px 28px 24px',
-        marginBottom: 12,
+        padding: '32px 28px 28px',
+        marginBottom: 20,
       }}
     >
-      <div style={{ fontSize: 12, color: 'var(--tds-gray-400)', marginBottom: 8 }}>
+      <div style={{ fontSize: 12, color: 'var(--tds-gray-400)', marginBottom: 10, letterSpacing: 0.2 }}>
         {recommendedLabel} 기준
       </div>
       <div
         style={{
-          fontSize: 40,
+          fontSize: 44,
           fontWeight: 900,
           color: 'var(--tds-gray-900)',
-          letterSpacing: '-1.5px',
+          letterSpacing: '-2px',
           lineHeight: 1.1,
-          marginBottom: 10,
+          marginBottom: 14,
         }}
       >
         월 {sustainableMonthly.toLocaleString()}만원
       </div>
       <div
         style={{
-          fontSize: 14,
+          fontSize: 15,
           fontWeight: 700,
           color: positive ? '#1B7F3A' : '#C0392B',
+          lineHeight: 1.5,
         }}
       >
         {positive
@@ -79,29 +79,29 @@ function WhyPathSection({
       style={{
         borderRadius: 16,
         border: '1px solid var(--tds-gray-100)',
-        padding: '20px 20px 16px',
-        marginBottom: 12,
+        padding: '22px 24px 20px',
+        marginBottom: 20,
       }}
     >
-      <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--tds-gray-700)', marginBottom: 12 }}>
+      <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--tds-gray-700)', marginBottom: 14, letterSpacing: 0.1 }}>
         이런 흐름으로 자금이 움직여요
       </div>
 
-      {/* 경로 요약 문장 */}
       {pathLines.length > 0 && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 7, marginBottom: fundingTimeline.length >= 2 ? 16 : 0 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: fundingTimeline.length >= 2 ? 20 : 0 }}>
           {pathLines.map((line, i) => (
             <div
               key={i}
               style={{
                 fontSize: 13,
+                lineHeight: 1.6,
                 color: line.positive ? '#1B7F3A' : 'var(--tds-gray-600)',
                 display: 'flex',
                 alignItems: 'flex-start',
                 gap: 8,
               }}
             >
-              <span style={{ color: line.positive ? '#1B7F3A' : 'var(--tds-gray-300)', flexShrink: 0 }}>
+              <span style={{ color: line.positive ? '#1B7F3A' : 'var(--tds-gray-300)', flexShrink: 0, marginTop: 2 }}>
                 {line.positive ? '✓' : '·'}
               </span>
               {line.text}
@@ -110,7 +110,6 @@ function WhyPathSection({
         </div>
       )}
 
-      {/* 자금 흐름 타임라인 바 */}
       {fundingTimeline.length >= 2 && (
         <FundingTimeline
           stages={fundingTimeline}
@@ -130,39 +129,37 @@ function ComparisonRows({ options }: { options: PropertyOptionResult[] }) {
         borderRadius: 16,
         border: '1px solid var(--tds-gray-100)',
         overflow: 'hidden',
-        marginBottom: 12,
+        marginBottom: 20,
       }}
     >
       <div
         style={{
-          padding: '14px 20px 10px',
+          padding: '16px 20px 12px',
           fontSize: 12,
           fontWeight: 700,
           color: 'var(--tds-gray-400)',
           letterSpacing: 0.3,
-          borderBottom: '1px solid var(--tds-gray-50)',
+          borderBottom: '1px solid var(--tds-gray-100)',
         }}
       >
-        집을 어떻게 쓰느냐에 따라 결과가 달라져요
+        집을 어떻게 활용하느냐에 따라 결과가 달라져요
       </div>
       {options.map((opt, i) => {
         const isRec = opt.isRecommended;
 
-        // 판정 라벨
         let statusLabel: string;
         let statusPositive: boolean;
         if (opt.survivesToLifeExpectancy) {
           statusLabel = '기대수명 달성';
           statusPositive = true;
         } else if (opt.failureAge !== null) {
-          statusLabel = `${opt.failureAge}세까지 가능`;
+          statusLabel = `${opt.failureAge}세까지`;
           statusPositive = false;
         } else {
           statusLabel = '지속 불가';
           statusPositive = false;
         }
 
-        // 금액 표시: 0이면 "지속 불가"
         const amountText = opt.sustainableMonthly > 0
           ? `월 ${opt.sustainableMonthly.toLocaleString()}만원`
           : '지속 불가';
@@ -173,7 +170,7 @@ function ComparisonRows({ options }: { options: PropertyOptionResult[] }) {
             style={{
               display: 'flex',
               alignItems: 'center',
-              padding: '12px 20px',
+              padding: '14px 20px',
               borderBottom: i < options.length - 1 ? '1px solid var(--tds-gray-50)' : undefined,
               background: isRec ? 'var(--tds-blue-50, #EEF4FF)' : 'transparent',
               gap: 12,
@@ -181,31 +178,32 @@ function ComparisonRows({ options }: { options: PropertyOptionResult[] }) {
           >
             {/* 전략명 */}
             <div style={{ flex: 1, minWidth: 0 }}>
-              <span
+              <div
                 style={{
                   fontSize: 13,
                   fontWeight: isRec ? 700 : 500,
                   color: isRec ? 'var(--tds-blue-600, #1A5DC2)' : 'var(--tds-gray-500)',
+                  lineHeight: 1.5,
                 }}
               >
                 {opt.label}
-              </span>
-              {isRec && (
-                <span
-                  style={{
-                    marginLeft: 6,
-                    fontSize: 10,
-                    fontWeight: 700,
-                    color: 'var(--tds-blue-600, #1A5DC2)',
-                    background: 'var(--tds-blue-100, #D6E4FF)',
-                    borderRadius: 4,
-                    padding: '1px 5px',
-                    verticalAlign: 'middle',
-                  }}
-                >
-                  추천
-                </span>
-              )}
+                {isRec && (
+                  <span
+                    style={{
+                      marginLeft: 6,
+                      fontSize: 10,
+                      fontWeight: 700,
+                      color: 'var(--tds-blue-600, #1A5DC2)',
+                      background: 'var(--tds-blue-100, #D6E4FF)',
+                      borderRadius: 4,
+                      padding: '1px 6px',
+                      verticalAlign: 'middle',
+                    }}
+                  >
+                    추천
+                  </span>
+                )}
+              </div>
             </div>
 
             {/* 월 금액 */}
@@ -228,9 +226,9 @@ function ComparisonRows({ options }: { options: PropertyOptionResult[] }) {
                 color: statusPositive ? '#1B7F3A' : 'var(--tds-gray-400)',
                 background: statusPositive ? '#E8F5E9' : 'var(--tds-gray-100)',
                 borderRadius: 6,
-                padding: '3px 8px',
+                padding: '4px 10px',
                 flexShrink: 0,
-                minWidth: 72,
+                minWidth: 68,
                 textAlign: 'center',
               }}
             >
@@ -250,7 +248,6 @@ type TabName = (typeof TABS)[number];
 function DetailTabsInner({
   detailYearlyAggregates,
   retirementAge,
-  propertyOptions,
   result,
   inputs,
 }: {
@@ -277,7 +274,7 @@ function DetailTabsInner({
             onClick={() => setActiveTab(tab)}
             style={{
               flex: 1,
-              padding: '12px 6px',
+              padding: '13px 6px',
               fontSize: 12,
               fontWeight: activeTab === tab ? 700 : 500,
               color: activeTab === tab ? 'var(--tds-blue-600, #1A5DC2)' : 'var(--tds-gray-400)',
@@ -295,14 +292,11 @@ function DetailTabsInner({
           </button>
         ))}
       </div>
-      <div style={{ padding: '20px' }}>
+      <div style={{ padding: '24px 20px' }}>
         {activeTab === '요약' && <SummaryTab result={result} inputs={inputs} />}
         {activeTab === '연금' && <PensionTab result={result} inputs={inputs} />}
         {activeTab === '자산 추이' && (
-          <>
-            <AssetBalanceChart rows={detailYearlyAggregates} retirementAge={retirementAge} />
-            <PropertyStrategyChart options={propertyOptions} />
-          </>
+          <AssetBalanceChart rows={detailYearlyAggregates} retirementAge={retirementAge} />
         )}
         {activeTab === '연도별 상세' && (
           <YearlySummaryTable rows={detailYearlyAggregates} retirementAge={retirementAge} />
@@ -338,14 +332,13 @@ export default function ResultWorkbench() {
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: 8,
+            gap: 10,
           }}
         >
           <div style={{ fontSize: 28, color: 'var(--tds-gray-200)' }}>—</div>
-          <div style={{ fontSize: 14, color: 'var(--tds-gray-400)', textAlign: 'center' }}>
-            나이, 은퇴 나이, 기대수명, 목표 생활비를 입력하면
+          <div style={{ fontSize: 14, color: 'var(--tds-gray-400)', textAlign: 'center', lineHeight: 1.7 }}>
+            나이, 은퇴 나이, 기대수명, 목표 생활비를 입력하면<br />분석이 시작돼요.
           </div>
-          <div style={{ fontSize: 14, color: 'var(--tds-gray-400)' }}>분석이 시작돼요.</div>
         </div>
       </div>
     );
@@ -354,7 +347,6 @@ export default function ResultWorkbench() {
   const { summary, propertyOptions, warnings, fundingTimeline, detailYearlyAggregates } = resultV2;
   const recommended = propertyOptions.find((o) => o.isRecommended);
 
-  // 2층 경로 문장
   const pathLines: Array<{ text: string; positive?: boolean }> = [];
 
   if (summary.financialExhaustionAge) {
@@ -392,7 +384,7 @@ export default function ResultWorkbench() {
         flex: 1,
         height: 'calc(100vh - 56px)',
         overflowY: 'auto',
-        padding: '24px 20px 48px',
+        padding: '28px 24px 56px',
         scrollbarWidth: 'thin',
         borderLeft: '1px solid var(--tds-gray-100)',
       }}
@@ -405,11 +397,12 @@ export default function ResultWorkbench() {
             background: '#FFF0F0',
             border: '1px solid #FFB3B3',
             borderRadius: 10,
-            padding: '10px 16px',
-            marginBottom: 12,
+            padding: '12px 16px',
+            marginBottom: 16,
             fontSize: 13,
             color: '#C0392B',
             fontWeight: 600,
+            lineHeight: 1.6,
           }}
         >
           ⚠️ {w.message}
@@ -440,9 +433,10 @@ export default function ResultWorkbench() {
           key={i}
           style={{
             fontSize: 12,
+            lineHeight: 1.6,
             color: w.severity === 'warning' ? '#8B6914' : 'var(--tds-gray-400)',
-            padding: '8px 12px',
-            marginBottom: 8,
+            padding: '10px 14px',
+            marginBottom: 10,
             background: w.severity === 'warning' ? '#FFFBE6' : 'var(--tds-gray-50)',
             borderRadius: 8,
           }}
@@ -457,7 +451,7 @@ export default function ResultWorkbench() {
           borderRadius: 16,
           border: '1px solid var(--tds-gray-100)',
           overflow: 'hidden',
-          marginTop: 4,
+          marginTop: 8,
         }}
       >
         <DetailTabsInner

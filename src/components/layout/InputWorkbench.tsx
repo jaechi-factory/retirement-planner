@@ -12,7 +12,7 @@ export default function InputWorkbench() {
   return (
     <div
       style={{
-        width: 440,
+        width: 460,
         flexShrink: 0,
         height: 'calc(100vh - 56px)',
         overflowY: 'auto',
