@@ -22,8 +22,8 @@ const ANNUITY_RATE_TABLE: Array<{ age: number; rate: number }> = [
 /** 주택연금 최소 가입 나이 */
 export const HOUSING_ANNUITY_MIN_AGE = 55;
 
-/** 주택연금 주택가격 상한 (만원 단위: 12억 = 12,000만원) */
-const HOUSING_ANNUITY_PRICE_CAP = 12_000;
+/** 주택연금 주택가격 상한 (만원 단위: 12억 = 120,000만원) */
+const HOUSING_ANNUITY_PRICE_CAP = 120_000;
 
 /**
  * 나이에 따른 월 지급률 선형 보간

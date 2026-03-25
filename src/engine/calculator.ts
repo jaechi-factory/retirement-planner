@@ -13,8 +13,8 @@ import {
 } from './assetWeighting';
 import { getAnnualPensionIncomeForAge } from './pensionEstimation';
 
-/** 주택연금 최대 주택가격 상한 (만원) */
-const HOUSING_ANNUITY_PRICE_CAP = 12_000;
+/** 주택연금 최대 주택가격 상한 (만원: 12억 = 120,000만원) */
+const HOUSING_ANNUITY_PRICE_CAP = 120_000;
 
 /**
  * 연간 시뮬레이션 실행 (2버킷: 금융자산 / 부동산 분리 + 주택 활용 정책)

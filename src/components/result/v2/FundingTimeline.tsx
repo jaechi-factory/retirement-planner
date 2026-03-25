@@ -33,7 +33,7 @@ export default function FundingTimeline({ stages, retirementAge, lifeExpectancy 
       }}
     >
       <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--tds-gray-700)', marginBottom: 14 }}>
-        자금 조달 순서
+        언제 어디서 돈이 나오나요
       </div>
 
       {/* 타임라인 바 */}

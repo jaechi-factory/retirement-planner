@@ -149,13 +149,13 @@ function buildFundingTimeline(
     if (agg.totalIncome > 0 && incomeEnd === null) {
       incomeEnd = agg.ageYear;
     }
-    if (agg.eventSummary.includes('투자자산 매도 시작') && cashEnd === null) {
+    if (agg.eventSummary.includes('주식·채권 팔기 시작') && cashEnd === null) {
       cashEnd = agg.ageYear;
     }
-    if (agg.eventSummary.includes('투자자산 소진') && financialEnd === null) {
+    if (agg.eventSummary.includes('주식·채권 소진') && financialEnd === null) {
       financialEnd = agg.ageYear;
     }
-    if (agg.eventSummary.includes('부동산 전략 개시') && propertyStart === null) {
+    if (agg.eventSummary.includes('집 활용 시작') && propertyStart === null) {
       propertyStart = agg.ageYear;
     }
     if (agg.eventSummary.includes('자금 부족') && failureStart === null) {
@@ -181,7 +181,7 @@ function buildFundingTimeline(
   const cashEndAge = cashEnd ?? financialEnd ?? propertyStart ?? failureStart ?? lastYear;
   if (cashEndAge !== null && cashEndAge > cashStart) {
     stages.push({
-      label: '현금/예금 사용',
+      label: '현금·예금으로 생활',
       fromAge: cashStart,
       toAge: cashEndAge,
       bucketType: 'cash_like',
@@ -193,7 +193,7 @@ function buildFundingTimeline(
     const finEndAge = financialEnd ?? propertyStart ?? failureStart ?? lastYear;
     if (finEndAge !== null && finEndAge > cashEnd) {
       stages.push({
-        label: '투자자산 매도',
+        label: '주식·채권 팔아서 생활',
         fromAge: cashEnd,
         toAge: finEndAge,
         bucketType: 'financial',
@@ -205,7 +205,7 @@ function buildFundingTimeline(
   if (propertyStart !== null) {
     const propEnd = failureStart ?? lastYear;
     stages.push({
-      label: '부동산 활용',
+      label: '집 활용해서 생활',
       fromAge: propertyStart,
       toAge: propEnd,
       bucketType: 'property_keep',
@@ -229,10 +229,10 @@ function buildAssumptions(inputs: PlannerInputs, fundingPolicy: FundingPolicy): 
   return [
     { label: '물가상승률', value: `${inputs.goal.inflationRate}%` },
     { label: '수입 증가율', value: `${inputs.status.incomeGrowthRate}%` },
-    { label: '유동성 버퍼', value: `목표 생활비 ${fundingPolicy.liquidityBufferMonths}개월치` },
-    { label: '부동산 매각 비용', value: '매각가의 5%' },
-    { label: '담보대출 금리', value: '연 4.5%' },
-    { label: '담보대출 LTV', value: '60%' },
+    { label: '비상금 여유분', value: `목표 생활비 ${fundingPolicy.liquidityBufferMonths}개월치` },
+    { label: '집 팔 때 드는 비용', value: '매각가의 5%' },
+    { label: '집 담보 대출 금리', value: '연 4.5%' },
+    { label: '집 담보 대출 한도', value: '집 시세의 60%' },
   ];
 }
 
@@ -314,25 +314,17 @@ export function runCalculationV2(
     opt.isRecommended = opt.strategy === recommendedStrategy;
   }
 
-  // 권장 전략 기준 snapshots (상세 테이블용)
+  // 권장 전략 기준 데이터 (yearlyAggregates 안에 months 포함 — 중복 시뮬레이션 없음)
   const recommendedOption = propertyOptions.find((o) => o.isRecommended)!;
   const detailYearlyAggregates: YearlyAggregateV2[] = recommendedOption.yearlyAggregates;
 
-  // 권장 전략 기준 이벤트 나이
-  const recommendedSnapshots = simulateMonthlyV2(
-    inputs,
-    goal.targetMonthly,
-    recommendedStrategy,
-    fundingPolicy,
-    liquidationPolicy,
-    debtSchedules,
-  );
-
-  const cashRunoutAge = findFinancialSellStartAgeV2(recommendedSnapshots);
-  const financialSellStartAge = findFinancialSellStartAgeV2(recommendedSnapshots);
-  const financialExhaustionAge = findFinancialExhaustionAgeV2(recommendedSnapshots);
-  const propertyInterventionAge = findPropertyInterventionAgeV2(recommendedSnapshots);
-  const failureAge = findFailureAgeV2(recommendedSnapshots);
+  // 이벤트 나이: yearlyAggregates 안의 months에서 추출 (기준 통일)
+  const allMonths = detailYearlyAggregates.flatMap((a) => a.months);
+  const cashRunoutAge = findFinancialSellStartAgeV2(allMonths);
+  const financialSellStartAge = findFinancialSellStartAgeV2(allMonths);
+  const financialExhaustionAge = findFinancialExhaustionAgeV2(allMonths);
+  const propertyInterventionAge = findPropertyInterventionAgeV2(allMonths);
+  const failureAge = findFailureAgeV2(allMonths);
 
   const sustainableMonthly = recommendedOption.sustainableMonthly;
   const targetGap = sustainableMonthly - goal.targetMonthly;

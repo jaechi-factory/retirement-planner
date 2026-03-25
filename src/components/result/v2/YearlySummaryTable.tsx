@@ -30,13 +30,13 @@ export default function YearlySummaryTable({ rows, retirementAge }: Props) {
           borderBottom: '1px solid var(--tds-gray-100)',
         }}
       >
-        연도별 자산 흐름
+        연도별 자산 현황
       </div>
       <div style={{ overflowX: 'auto' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
           <thead>
             <tr style={{ background: 'var(--tds-gray-50)', borderBottom: '1px solid var(--tds-gray-100)' }}>
-              {['나이', '현금성', '투자자산', '부동산', '부채', '생활비', '이벤트'].map((h) => (
+              {['나이', '현금·예금', '주식·채권', '부동산', '대출 잔금', '월 생활비', '주요 변화'].map((h) => (
                 <th
                   key={h}
                   style={{

@@ -27,8 +27,8 @@ const COLORS = {
 
 const LABELS: Record<string, string> = {
   keep: '집 그냥 두기',
-  secured_loan: '집 담보',
-  sell: '집 매각',
+  secured_loan: '집 담보 대출',
+  sell: '집 팔기',
 };
 
 export default function PropertyStrategyChart({ options }: Props) {
@@ -73,7 +73,7 @@ export default function PropertyStrategyChart({ options }: Props) {
     >
       {/* 지속가능 생활비 비교 */}
       <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--tds-gray-700)', marginBottom: 12 }}>
-        전략별 지속가능 월 생활비
+        방법별 최대 월 생활비
       </div>
       <ResponsiveContainer width="100%" height={140}>
         <ComposedChart data={barData} layout="vertical" margin={{ top: 0, right: 60, left: 60, bottom: 0 }}>
@@ -108,7 +108,7 @@ export default function PropertyStrategyChart({ options }: Props) {
 
       {/* 순자산 추이 오버레이 */}
       <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--tds-gray-700)', padding: '16px 12px 10px', marginTop: 8 }}>
-        전략별 순자산 추이 비교
+        방법별 전체 자산 변화
       </div>
       <ResponsiveContainer width="100%" height={200}>
         <ComposedChart data={lineData} margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>

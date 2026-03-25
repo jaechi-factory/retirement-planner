@@ -30,8 +30,8 @@ export default function AssetBalanceChart({ rows, retirementAge }: Props) {
 
   const data = rows.map((r) => ({
     age: r.ageYear,
-    현금성: r.cashLikeEnd,
-    투자자산: r.financialInvestableEnd,
+    '현금·예금': r.cashLikeEnd,
+    '주식·채권': r.financialInvestableEnd,
     부동산: Math.max(0, r.propertyValueEnd - r.securedLoanBalanceEnd),
     shortfall: r.totalShortfall,
   }));
@@ -47,7 +47,7 @@ export default function AssetBalanceChart({ rows, retirementAge }: Props) {
       }}
     >
       <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--tds-gray-700)', marginBottom: 12 }}>
-        버킷별 자산 잔고 추이
+        자산별 남은 돈 변화
       </div>
       <ResponsiveContainer width="100%" height={220}>
         <AreaChart data={data} margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
@@ -90,14 +90,14 @@ export default function AssetBalanceChart({ rows, retirementAge }: Props) {
           {/* 은퇴 시점 수직선 */}
           <Area
             type="monotone"
-            dataKey="현금성"
+            dataKey="현금·예금"
             stroke="#1565C0"
             strokeWidth={1.5}
             fill="url(#cashGrad)"
           />
           <Area
             type="monotone"
-            dataKey="투자자산"
+            dataKey="주식·채권"
             stroke="#4527A0"
             strokeWidth={1.5}
             fill="url(#finGrad)"
@@ -113,7 +113,7 @@ export default function AssetBalanceChart({ rows, retirementAge }: Props) {
       </ResponsiveContainer>
       {retirementAge > 0 && (
         <div style={{ fontSize: 10, color: 'var(--tds-gray-400)', textAlign: 'right', padding: '0 16px', marginTop: 4 }}>
-          은퇴 시점: {retirementAge}세 / 부동산 = 평가액 - 담보대출
+          은퇴 시점: {retirementAge}세 / 부동산 = 집 시세 - 대출 잔금
         </div>
       )}
     </div>

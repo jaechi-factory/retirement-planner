@@ -122,6 +122,8 @@ export function simulateMonthlyV2(
   let propertySaleProceedsBucket = 0;
   let propertySold = false;
   let propertyInterventionStarted = false;
+  let baseRentalMonthlyAtSale = 0; // 매각 시점 기준 월 임대비 (이후 물가 연동)
+  let propertySaleMonthIndex = -1; // 매각 발생 월 인덱스
 
   // 이벤트 플래그 (처음 발생 여부 추적)
   let financialSellEverStarted = false;
@@ -208,10 +210,11 @@ export function simulateMonthlyV2(
           ? (annualChildExpense / 12) * Math.pow(1 + monthlyInflation, monthsFromNow)
           : 0;
 
-      // 매각 후 임대비
+      // 매각 후 임대비 (매각 시점 기준액에 물가 연동)
       let rentalCostThisMonth = 0;
-      if (propertySold && propertySaleProceedsBucket > 0) {
-        rentalCostThisMonth = (propertySaleProceedsBucket * POST_SALE_RENTAL_ANNUAL_YIELD) / 12;
+      if (propertySold && propertySaleMonthIndex >= 0) {
+        const monthsSinceSale = totalMonthIndex - propertySaleMonthIndex;
+        rentalCostThisMonth = baseRentalMonthlyAtSale * Math.pow(1 + monthlyInflation, monthsSinceSale);
       }
 
       cashLike -= expenseThisMonth + debtServiceThisMonth + childExpenseThisMonth + rentalCostThisMonth;
@@ -280,6 +283,8 @@ export function simulateMonthlyV2(
           const netProceeds = Math.max(0, grossProceeds - remainingMortgage);
 
           propertySaleProceedsBucket = netProceeds;
+          baseRentalMonthlyAtSale = (netProceeds * POST_SALE_RENTAL_ANNUAL_YIELD) / 12;
+          propertySaleMonthIndex = totalMonthIndex;
           cashLike += netProceeds;
           propertyValue = 0;
           propertySold = true;
@@ -392,10 +397,10 @@ export function aggregateToYearly(snapshots: MonthlySnapshotV2[]): YearlyAggrega
     const last = months[months.length - 1];
 
     const eventSummary: string[] = [];
-    if (months.some((m) => m.eventFlags.financialSellStarted)) eventSummary.push('투자자산 매도 시작');
-    if (months.some((m) => m.eventFlags.financialExhausted)) eventSummary.push('투자자산 소진');
-    if (months.some((m) => m.eventFlags.propertyInterventionStarted)) eventSummary.push('부동산 전략 개시');
-    if (months.some((m) => m.eventFlags.propertySold)) eventSummary.push('집 매각');
+    if (months.some((m) => m.eventFlags.financialSellStarted)) eventSummary.push('주식·채권 팔기 시작');
+    if (months.some((m) => m.eventFlags.financialExhausted)) eventSummary.push('주식·채권 소진');
+    if (months.some((m) => m.eventFlags.propertyInterventionStarted)) eventSummary.push('집 활용 시작');
+    if (months.some((m) => m.eventFlags.propertySold)) eventSummary.push('집 팔기');
     if (months.some((m) => m.eventFlags.failureOccurred)) eventSummary.push('자금 부족');
 
     result.push({
