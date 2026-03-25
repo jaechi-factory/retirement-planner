@@ -25,7 +25,7 @@ import {
   findFailureAgeV2,
 } from './simulatorV2';
 import { findMaxSustainableMonthlyV2 } from './binarySearchV2';
-import { precomputeDebtSchedules } from './assetWeighting';
+import { precomputeDebtSchedules, calcTotalAnnualRepayment } from './assetWeighting';
 import {
   getTotalMonthlyPensionTodayValue,
 } from './pensionEstimation';
@@ -241,6 +241,23 @@ function buildWarnings(
   options: PropertyOptionResult[],
 ): WarningItem[] {
   const warnings: WarningItem[] = [];
+
+  // 은퇴 전 유동성 위기: 현재 수입으로 지출+대출을 감당 못할 때
+  if (inputs.status.annualIncome > 0) {
+    const totalAnnualRepayment = calcTotalAnnualRepayment(inputs.debts);
+    const childExpense = inputs.children.hasChildren &&
+      inputs.status.currentAge <= inputs.children.independenceAge
+        ? inputs.children.count * inputs.children.monthlyPerChild * 12
+        : 0;
+    const annualNetSavings =
+      inputs.status.annualIncome - inputs.status.annualExpense - totalAnnualRepayment - childExpense;
+    if (annualNetSavings < 0) {
+      warnings.push({
+        severity: 'warning',
+        message: `현재 수입으로는 생활비와 대출 상환을 감당하기 어려워요. 월 ${Math.round(Math.abs(annualNetSavings) / 12).toLocaleString()}만원이 부족해요.`,
+      });
+    }
+  }
 
   const keepOption = options.find((o) => o.strategy === 'keep');
   if (keepOption && !keepOption.survivesToLifeExpectancy) {

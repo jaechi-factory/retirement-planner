@@ -14,7 +14,7 @@ import {
 // ─── 공통 스타일 ─────────────────────────────────────────────────────────────
 
 const cardStyle: React.CSSProperties = {
-  border: '1.5px solid var(--tds-gray-100)',
+  border: '1px solid var(--tds-gray-100)',
   borderRadius: 12,
   padding: '14px 16px',
   background: 'var(--tds-white)',
@@ -137,7 +137,7 @@ function PublicPensionCard() {
               background: 'var(--tds-blue-50)',
             }}>
               <div>
-                <span style={{ fontSize: 20, fontWeight: 800, color: 'var(--tds-blue-500)' }}>
+                <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--tds-gray-700)' }}>
                   월 {meta.base.toLocaleString('ko-KR')}만원
                 </span>
                 <div style={{ fontSize: 12, color: 'var(--tds-blue-400)', marginTop: 2 }}>
@@ -166,8 +166,8 @@ function PublicPensionCard() {
                     {label}
                   </span>
                   <span style={{
-                    fontSize: isMain ? 18 : 14, fontWeight: isMain ? 800 : 600,
-                    color: isMain ? 'var(--tds-blue-500)' : 'var(--tds-gray-500)',
+                    fontSize: isMain ? 15 : 13, fontWeight: isMain ? 700 : 500,
+                    color: isMain ? 'var(--tds-gray-700)' : 'var(--tds-gray-400)',
                   }}>
                     월 {value.toLocaleString('ko-KR')}만원
                   </span>
@@ -181,7 +181,7 @@ function PublicPensionCard() {
         </>
       ) : (
         <>
-          <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--tds-gray-900)', margin: '4px 0 2px' }}>
+          <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--tds-gray-700)', margin: '4px 0 2px' }}>
             월 {displayValue.toLocaleString('ko-KR')}만원
           </div>
           <div style={{ fontSize: 12, color: 'var(--tds-gray-400)' }}>
@@ -320,7 +320,7 @@ function RetirementPensionCard() {
         {isAuto ? <AutoBadge /> : <ManualBadge />}
       </div>
 
-      <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--tds-blue-500)', margin: '4px 0 2px' }}>
+      <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--tds-gray-700)', margin: '4px 0 2px' }}>
         월 {displayValue.toLocaleString('ko-KR')}만원
       </div>
       <div style={{ fontSize: 12, color: 'var(--tds-gray-400)' }}>
@@ -662,7 +662,7 @@ function PrivatePensionCard() {
         <>
           {/* 총합 표시 + 되돌아가기 */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-            <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--tds-blue-500)' }}>
+            <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--tds-gray-700)' }}>
               합계 월 {displayValue.toLocaleString('ko-KR')}만원
             </div>
             <button
@@ -720,7 +720,7 @@ function PrivatePensionCard() {
         // ── 기본 모드 (총합 1개 입력) ────────────────────────────────────
         <>
           {/* 예상 연금액 */}
-          <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--tds-blue-500)', margin: '4px 0 2px' }}>
+          <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--tds-gray-700)', margin: '4px 0 2px' }}>
             월 {displayValue.toLocaleString('ko-KR')}만원
           </div>
           <div style={{ fontSize: 12, color: 'var(--tds-gray-400)', marginBottom: 12 }}>
@@ -848,20 +848,20 @@ export default function PensionSection() {
       {/* 하단 결과 요약 */}
       {totalPension > 0 && (
         <div style={{
-          marginTop: 14, padding: '12px 14px',
-          background: 'var(--tds-blue-50)', borderRadius: 10,
+          marginTop: 14, padding: '10px 14px',
+          background: 'var(--tds-gray-50)', borderRadius: 10,
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         }}>
           <div>
-            <div style={{ fontSize: 12, color: 'var(--tds-blue-400)', marginBottom: 2 }}>
+            <div style={{ fontSize: 11, color: 'var(--tds-gray-400)', marginBottom: 2 }}>
               추정값 · 지금 기준
             </div>
-            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--tds-blue-500)' }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--tds-gray-600)' }}>
               월 {totalPension.toLocaleString('ko-KR')}만원 보탬이 돼요
             </div>
           </div>
           {coveragePct > 0 && (
-            <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--tds-blue-500)' }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--tds-gray-500)' }}>
               {coveragePct}%
             </div>
           )}

@@ -18,7 +18,7 @@ export const SECURED_LOAN_ANNUAL_RATE = 0.045;
 
 /** 부동산 전략별 UI 레이블 */
 export const PROPERTY_STRATEGY_LABELS: Record<PropertyStrategyV2, string> = {
-  keep: '집 그냥 두기',
-  secured_loan: '집 담보로 버티기',
-  sell: '집 팔아서 현금화',
+  keep: '집 안 건드리기',
+  secured_loan: '집에 살며 현금흐름 만들기',
+  sell: '집 팔고 생활비 늘리기',
 };

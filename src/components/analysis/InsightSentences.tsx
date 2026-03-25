@@ -31,7 +31,7 @@ export default function InsightSentences({ result, inputs, verdict }: Props) {
 
   if (weightedReturn > 0) {
     insights.push(
-      `보유 자산의 기대수익률은 연 ${weightedReturn.toFixed(1)}%예요.`
+      `보유자산 평균 수익률은 연 ${weightedReturn.toFixed(1)}%예요.`
     );
   }
 

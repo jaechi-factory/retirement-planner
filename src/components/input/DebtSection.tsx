@@ -192,7 +192,7 @@ export default function DebtSection() {
                 <div style={{
                   marginTop: 4,
                   borderRadius: 10,
-                  border: '1.5px solid var(--tds-gray-100)',
+                  border: '1px solid var(--tds-gray-100)',
                   overflow: 'hidden',
                 }}>
                   <div style={{
@@ -205,35 +205,38 @@ export default function DebtSection() {
                   }}>
                     상환 미리보기
                   </div>
-                  <div style={{ padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: 12, color: 'var(--tds-gray-500)' }}>첫 달에 갚을 돈</span>
-                      <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--tds-gray-700)' }}>
+                  <div style={{
+                    padding: '10px 12px',
+                    display: 'grid',
+                    gridTemplateColumns: '1fr 1fr',
+                    gap: 8,
+                  }}>
+                    <div style={{ padding: '8px 10px', background: 'var(--tds-gray-50)', borderRadius: 8 }}>
+                      <div style={{ fontSize: 11, color: 'var(--tds-gray-400)', marginBottom: 3 }}>첫 달에 갚을 돈</div>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--tds-gray-700)' }}>
                         −{Math.round(summary.firstMonthPayment).toLocaleString('ko-KR')}만원
-                      </span>
+                      </div>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: 12, color: 'var(--tds-gray-500)' }}>첫해에 갚을 돈</span>
-                      <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--tds-gray-500)' }}>
+                    <div style={{ padding: '8px 10px', background: 'var(--tds-gray-50)', borderRadius: 8 }}>
+                      <div style={{ fontSize: 11, color: 'var(--tds-gray-400)', marginBottom: 3 }}>첫해에 갚을 돈</div>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--tds-gray-500)' }}>
                         −{Math.round(summary.firstYearAnnualPayment).toLocaleString('ko-KR')}만원
-                      </span>
+                      </div>
                     </div>
-                    <div style={{ height: 1, background: 'var(--tds-gray-100)', margin: '2px 0' }} />
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--tds-gray-700)' }}>
-                        가장 많이 갚는 달
-                      </span>
-                      <span style={{ fontSize: 16, fontWeight: 800, color: 'var(--tds-red-500, #F04452)' }}>
+                    <div style={{ padding: '8px 10px', background: 'var(--tds-gray-50)', borderRadius: 8 }}>
+                      <div style={{ fontSize: 11, color: 'var(--tds-gray-400)', marginBottom: 3 }}>총 이자 부담</div>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: '#C0392B' }}>
+                        −{Math.round(summary.totalInterest).toLocaleString('ko-KR')}만원
+                      </div>
+                    </div>
+                    <div style={{ padding: '8px 10px', background: 'var(--tds-gray-50)', borderRadius: 8 }}>
+                      <div style={{ fontSize: 11, color: 'var(--tds-gray-400)', marginBottom: 3 }}>가장 많이 갚는 달</div>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: '#C0392B' }}>
                         −{Math.round(summary.maxMonthPayment).toLocaleString('ko-KR')}만원
-                      </span>
-                    </div>
-                    <div style={{
-                      fontSize: 12, color: 'var(--tds-gray-400)', lineHeight: 1.5,
-                      padding: '6px 8px',
-                      background: 'var(--tds-gray-50)',
-                      borderRadius: 6,
-                    }}>
-                      {Math.floor(summary.maxMonthIndex / 12) + 1}년차에 부담이 가장 커요.
+                      </div>
+                      <div style={{ fontSize: 11, color: 'var(--tds-gray-400)', marginTop: 2 }}>
+                        {Math.floor(summary.maxMonthIndex / 12) + 1}년차
+                      </div>
                     </div>
                   </div>
                 </div>

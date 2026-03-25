@@ -4,19 +4,21 @@ import FundingTimeline from '../result/v2/FundingTimeline';
 import YearlySummaryTable from '../result/v2/YearlySummaryTable';
 import AssetBalanceChart from '../charts/AssetBalanceChart';
 import PropertyStrategyChart from '../charts/PropertyStrategyChart';
+import SummaryTab from '../result/v2/SummaryTab';
+import PensionTab from '../result/v2/PensionTab';
 import type { PropertyOptionResult, YearlyAggregateV2, FundingStage } from '../../types/calculationV2';
+import type { CalculationResult } from '../../types/calculation';
+import type { PlannerInputs } from '../../types/inputs';
 
-/** 1단: 히어로 — 답 1개만 */
+// ── 1층: Hero ─────────────────────────────────────────────────────────────────
 function HeroSection({
   sustainableMonthly,
   targetGap,
   recommendedLabel,
-  pathLines,
 }: {
   sustainableMonthly: number;
   targetGap: number;
   recommendedLabel: string;
-  pathLines: Array<{ text: string; positive?: boolean }>;
 }) {
   const positive = targetGap >= 0;
   return (
@@ -28,12 +30,9 @@ function HeroSection({
         marginBottom: 12,
       }}
     >
-      {/* 전략 레이블 */}
       <div style={{ fontSize: 12, color: 'var(--tds-gray-400)', marginBottom: 8 }}>
         {recommendedLabel} 기준
       </div>
-
-      {/* 핵심 숫자 — 화면 안에서 이것만 크게 */}
       <div
         style={{
           fontSize: 40,
@@ -46,44 +45,84 @@ function HeroSection({
       >
         월 {sustainableMonthly.toLocaleString()}만원
       </div>
-
-      {/* 판단 1줄 */}
       <div
         style={{
           fontSize: 14,
           fontWeight: 700,
           color: positive ? '#1B7F3A' : '#C0392B',
-          marginBottom: 20,
         }}
       >
         {positive
           ? `목표보다 월 ${targetGap.toLocaleString()}만원 더 가능해요 ✓`
           : `목표보다 월 ${Math.abs(targetGap).toLocaleString()}만원이 부족해요`}
       </div>
-
-      {/* 이유 3줄 */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {pathLines.map((line, i) => (
-          <div
-            key={i}
-            style={{
-              fontSize: 13,
-              color: line.positive ? '#1B7F3A' : 'var(--tds-gray-600)',
-              display: 'flex',
-              alignItems: 'flex-start',
-              gap: 8,
-            }}
-          >
-            <span style={{ color: 'var(--tds-gray-300)', flexShrink: 0 }}>·</span>
-            {line.text}
-          </div>
-        ))}
-      </div>
     </div>
   );
 }
 
-/** 2단: 선택지 비교 — 3개 row (카드 아님) */
+// ── 2층: Why/Path ─────────────────────────────────────────────────────────────
+function WhyPathSection({
+  pathLines,
+  fundingTimeline,
+  retirementAge,
+  lifeExpectancy,
+}: {
+  pathLines: Array<{ text: string; positive?: boolean }>;
+  fundingTimeline: FundingStage[];
+  retirementAge: number;
+  lifeExpectancy: number;
+}) {
+  if (pathLines.length === 0 && fundingTimeline.length < 2) return null;
+
+  return (
+    <div
+      style={{
+        borderRadius: 16,
+        border: '1px solid var(--tds-gray-100)',
+        padding: '20px 20px 16px',
+        marginBottom: 12,
+      }}
+    >
+      <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--tds-gray-700)', marginBottom: 12 }}>
+        이런 흐름으로 자금이 움직여요
+      </div>
+
+      {/* 경로 요약 문장 */}
+      {pathLines.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 7, marginBottom: fundingTimeline.length >= 2 ? 16 : 0 }}>
+          {pathLines.map((line, i) => (
+            <div
+              key={i}
+              style={{
+                fontSize: 13,
+                color: line.positive ? '#1B7F3A' : 'var(--tds-gray-600)',
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: 8,
+              }}
+            >
+              <span style={{ color: line.positive ? '#1B7F3A' : 'var(--tds-gray-300)', flexShrink: 0 }}>
+                {line.positive ? '✓' : '·'}
+              </span>
+              {line.text}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* 자금 흐름 타임라인 바 */}
+      {fundingTimeline.length >= 2 && (
+        <FundingTimeline
+          stages={fundingTimeline}
+          retirementAge={retirementAge}
+          lifeExpectancy={lifeExpectancy}
+        />
+      )}
+    </div>
+  );
+}
+
+// ── 3층: 전략 비교 ─────────────────────────────────────────────────────────────
 function ComparisonRows({ options }: { options: PropertyOptionResult[] }) {
   return (
     <div
@@ -104,14 +143,29 @@ function ComparisonRows({ options }: { options: PropertyOptionResult[] }) {
           borderBottom: '1px solid var(--tds-gray-50)',
         }}
       >
-        부동산 활용 방법 비교
+        집을 어떻게 쓰느냐에 따라 결과가 달라져요
       </div>
       {options.map((opt, i) => {
         const isRec = opt.isRecommended;
-        const tagText = opt.survivesToLifeExpectancy
-          ? '기대수명 달성'
-          : `${opt.failureAge}세 고갈`;
-        const tagPositive = opt.survivesToLifeExpectancy;
+
+        // 판정 라벨
+        let statusLabel: string;
+        let statusPositive: boolean;
+        if (opt.survivesToLifeExpectancy) {
+          statusLabel = '기대수명 달성';
+          statusPositive = true;
+        } else if (opt.failureAge !== null) {
+          statusLabel = `${opt.failureAge}세까지 가능`;
+          statusPositive = false;
+        } else {
+          statusLabel = '지속 불가';
+          statusPositive = false;
+        }
+
+        // 금액 표시: 0이면 "지속 불가"
+        const amountText = opt.sustainableMonthly > 0
+          ? `월 ${opt.sustainableMonthly.toLocaleString()}만원`
+          : '지속 불가';
 
         return (
           <div
@@ -157,22 +211,22 @@ function ComparisonRows({ options }: { options: PropertyOptionResult[] }) {
             {/* 월 금액 */}
             <div
               style={{
-                fontSize: 15,
-                fontWeight: isRec ? 800 : 600,
+                fontSize: 14,
+                fontWeight: isRec ? 800 : 500,
                 color: isRec ? 'var(--tds-blue-600, #1A5DC2)' : 'var(--tds-gray-400)',
                 flexShrink: 0,
               }}
             >
-              월 {opt.sustainableMonthly.toLocaleString()}만원
+              {amountText}
             </div>
 
-            {/* 태그 */}
+            {/* 상태 태그 */}
             <div
               style={{
                 fontSize: 11,
                 fontWeight: 600,
-                color: tagPositive ? '#1B7F3A' : 'var(--tds-gray-400)',
-                background: tagPositive ? '#E8F5E9' : 'var(--tds-gray-100)',
+                color: statusPositive ? '#1B7F3A' : 'var(--tds-gray-400)',
+                background: statusPositive ? '#E8F5E9' : 'var(--tds-gray-100)',
                 borderRadius: 6,
                 padding: '3px 8px',
                 flexShrink: 0,
@@ -180,7 +234,7 @@ function ComparisonRows({ options }: { options: PropertyOptionResult[] }) {
                 textAlign: 'center',
               }}
             >
-              {tagText}
+              {statusLabel}
             </div>
           </div>
         );
@@ -189,15 +243,82 @@ function ComparisonRows({ options }: { options: PropertyOptionResult[] }) {
   );
 }
 
-const TABS = ['차트', '타임라인', '연도별 상세'] as const;
+// ── 4층: 세부 탭 ──────────────────────────────────────────────────────────────
+const TABS = ['요약', '연금', '자산 추이', '연도별 상세'] as const;
 type TabName = (typeof TABS)[number];
 
+function DetailTabsInner({
+  detailYearlyAggregates,
+  retirementAge,
+  propertyOptions,
+  result,
+  inputs,
+}: {
+  detailYearlyAggregates: YearlyAggregateV2[];
+  retirementAge: number;
+  propertyOptions: PropertyOptionResult[];
+  result: CalculationResult;
+  inputs: PlannerInputs;
+}) {
+  const [activeTab, setActiveTab] = useState<TabName>('요약');
+
+  return (
+    <>
+      <div
+        style={{
+          display: 'flex',
+          borderBottom: '1px solid var(--tds-gray-100)',
+          background: 'var(--tds-gray-50)',
+        }}
+      >
+        {TABS.map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            style={{
+              flex: 1,
+              padding: '12px 6px',
+              fontSize: 12,
+              fontWeight: activeTab === tab ? 700 : 500,
+              color: activeTab === tab ? 'var(--tds-blue-600, #1A5DC2)' : 'var(--tds-gray-400)',
+              background: 'transparent',
+              border: 'none',
+              borderBottom:
+                activeTab === tab ? '2px solid var(--tds-blue-500)' : '2px solid transparent',
+              cursor: 'pointer',
+              transition: 'all 0.15s',
+              fontFamily: 'inherit',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {tab}
+          </button>
+        ))}
+      </div>
+      <div style={{ padding: '20px' }}>
+        {activeTab === '요약' && <SummaryTab result={result} inputs={inputs} />}
+        {activeTab === '연금' && <PensionTab result={result} inputs={inputs} />}
+        {activeTab === '자산 추이' && (
+          <>
+            <AssetBalanceChart rows={detailYearlyAggregates} retirementAge={retirementAge} />
+            <PropertyStrategyChart options={propertyOptions} />
+          </>
+        )}
+        {activeTab === '연도별 상세' && (
+          <YearlySummaryTable rows={detailYearlyAggregates} retirementAge={retirementAge} />
+        )}
+      </div>
+    </>
+  );
+}
+
+// ── 메인 컴포넌트 ──────────────────────────────────────────────────────────────
 export default function ResultWorkbench() {
   const resultV2 = usePlannerStore((s) => s.resultV2);
+  const result = usePlannerStore((s) => s.result);
   const inputs = usePlannerStore((s) => s.inputs);
 
-  /* ── 빈 상태 ── */
-  if (!resultV2) {
+  if (!resultV2 || !result.isValid) {
     return (
       <div
         style={{
@@ -233,22 +354,22 @@ export default function ResultWorkbench() {
   const { summary, propertyOptions, warnings, fundingTimeline, detailYearlyAggregates } = resultV2;
   const recommended = propertyOptions.find((o) => o.isRecommended);
 
-  /* ── 자산 경로 3줄 ── */
+  // 2층 경로 문장
   const pathLines: Array<{ text: string; positive?: boolean }> = [];
 
   if (summary.financialExhaustionAge) {
-    pathLines.push({ text: `${summary.financialExhaustionAge}세에 투자자산이 소진돼요` });
+    pathLines.push({ text: `${summary.financialExhaustionAge}세에 주식·채권이 소진돼요` });
   } else if (summary.financialSellStartAge) {
-    pathLines.push({ text: `${summary.financialSellStartAge}세부터 투자자산을 팔기 시작해요` });
+    pathLines.push({ text: `${summary.financialSellStartAge}세부터 주식·채권을 팔기 시작해요` });
   } else {
-    pathLines.push({ text: '투자자산은 기대수명까지 유지돼요', positive: true });
+    pathLines.push({ text: '주식·채권은 기대수명까지 유지돼요', positive: true });
   }
 
   if (summary.propertyInterventionAge) {
     if (recommended?.strategy === 'secured_loan') {
-      pathLines.push({ text: `${summary.propertyInterventionAge}세부터 집을 담보로 대출받아야 해요` });
+      pathLines.push({ text: `${summary.propertyInterventionAge}세부터 집을 담보로 현금흐름을 만들어요` });
     } else if (recommended?.strategy === 'sell') {
-      pathLines.push({ text: `${summary.propertyInterventionAge}세에 집을 팔아 현금화해야 해요` });
+      pathLines.push({ text: `${summary.propertyInterventionAge}세에 집을 팔아 생활비를 늘려요` });
     } else {
       pathLines.push({ text: `${summary.propertyInterventionAge}세부터 집을 활용해야 해요` });
     }
@@ -263,6 +384,7 @@ export default function ResultWorkbench() {
   }
 
   const criticalWarnings = warnings.filter((w) => w.severity === 'critical');
+  const otherWarnings = warnings.filter((w) => w.severity !== 'critical');
 
   return (
     <div
@@ -275,7 +397,7 @@ export default function ResultWorkbench() {
         borderLeft: '1px solid var(--tds-gray-100)',
       }}
     >
-      {/* 치명 경고 — 히어로 위에만 */}
+      {/* 치명 경고 */}
       {criticalWarnings.map((w, i) => (
         <div
           key={i}
@@ -294,37 +416,42 @@ export default function ResultWorkbench() {
         </div>
       ))}
 
-      {/* 1단: 히어로 */}
+      {/* 1층: Hero */}
       <HeroSection
         sustainableMonthly={summary.sustainableMonthly}
         targetGap={summary.targetGap}
         recommendedLabel={recommended?.label ?? '추천 전략'}
-        pathLines={pathLines}
       />
 
-      {/* 2단: 선택지 비교 */}
+      {/* 2층: Why/Path */}
+      <WhyPathSection
+        pathLines={pathLines}
+        fundingTimeline={fundingTimeline}
+        retirementAge={inputs.goal.retirementAge}
+        lifeExpectancy={inputs.goal.lifeExpectancy}
+      />
+
+      {/* 3층: 전략 비교 */}
       <ComparisonRows options={propertyOptions} />
 
-      {/* info/warning 경고 — 비교 아래 */}
-      {warnings
-        .filter((w) => w.severity !== 'critical')
-        .map((w, i) => (
-          <div
-            key={i}
-            style={{
-              fontSize: 12,
-              color: w.severity === 'warning' ? '#8B6914' : 'var(--tds-gray-400)',
-              padding: '8px 12px',
-              marginBottom: 8,
-              background: w.severity === 'warning' ? '#FFFBE6' : 'var(--tds-gray-50)',
-              borderRadius: 8,
-            }}
-          >
-            {w.severity === 'warning' ? '⚠ ' : 'ℹ '}{w.message}
-          </div>
-        ))}
+      {/* info/warning 경고 */}
+      {otherWarnings.map((w, i) => (
+        <div
+          key={i}
+          style={{
+            fontSize: 12,
+            color: w.severity === 'warning' ? '#8B6914' : 'var(--tds-gray-400)',
+            padding: '8px 12px',
+            marginBottom: 8,
+            background: w.severity === 'warning' ? '#FFFBE6' : 'var(--tds-gray-50)',
+            borderRadius: 8,
+          }}
+        >
+          {w.severity === 'warning' ? '⚠ ' : 'ℹ '}{w.message}
+        </div>
+      ))}
 
-      {/* 4단: 세부 분석 탭 */}
+      {/* 4층: 세부 분석 탭 */}
       <div
         style={{
           borderRadius: 16,
@@ -335,81 +462,12 @@ export default function ResultWorkbench() {
       >
         <DetailTabsInner
           detailYearlyAggregates={detailYearlyAggregates}
-          fundingTimeline={fundingTimeline}
           retirementAge={inputs.goal.retirementAge}
-          lifeExpectancy={inputs.goal.lifeExpectancy}
           propertyOptions={propertyOptions}
+          result={result}
+          inputs={inputs}
         />
       </div>
     </div>
-  );
-}
-
-function DetailTabsInner({
-  detailYearlyAggregates,
-  fundingTimeline,
-  retirementAge,
-  lifeExpectancy,
-  propertyOptions,
-}: {
-  detailYearlyAggregates: YearlyAggregateV2[];
-  fundingTimeline: FundingStage[];
-  retirementAge: number;
-  lifeExpectancy: number;
-  propertyOptions: PropertyOptionResult[];
-}) {
-  const [activeTab, setActiveTab] = useState<TabName>('차트');
-
-  return (
-    <>
-      <div
-        style={{
-          display: 'flex',
-          borderBottom: '1px solid var(--tds-gray-100)',
-          background: 'var(--tds-gray-50)',
-        }}
-      >
-        {TABS.map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            style={{
-              flex: 1,
-              padding: '12px 8px',
-              fontSize: 13,
-              fontWeight: activeTab === tab ? 700 : 500,
-              color: activeTab === tab ? 'var(--tds-blue-600, #1A5DC2)' : 'var(--tds-gray-400)',
-              background: 'transparent',
-              border: 'none',
-              borderBottom:
-                activeTab === tab ? '2px solid var(--tds-blue-500)' : '2px solid transparent',
-              cursor: 'pointer',
-              transition: 'all 0.15s',
-              fontFamily: 'inherit',
-            }}
-          >
-            {tab}
-          </button>
-        ))}
-      </div>
-      <div style={{ padding: '20px' }}>
-        {activeTab === '차트' && (
-          <>
-            <AssetBalanceChart rows={detailYearlyAggregates} retirementAge={retirementAge} />
-            <PropertyStrategyChart options={propertyOptions} />
-          </>
-        )}
-        {activeTab === '타임라인' && (
-          <FundingTimeline
-            stages={fundingTimeline}
-            retirementAge={retirementAge}
-            lifeExpectancy={lifeExpectancy}
-          />
-        )}
-        {activeTab === '연도별 상세' && (
-          <YearlySummaryTable rows={detailYearlyAggregates} retirementAge={retirementAge} />
-        )}
-      </div>
-    </>
   );
 }

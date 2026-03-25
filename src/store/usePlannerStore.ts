@@ -234,8 +234,12 @@ function runCalculation(inputs: PlannerInputs, advancedHousingEnabled = false): 
   const depletionAge = findDepletionAge(targetYearlySnapshots);
   const financialStressAge = findFinancialStressAge(targetYearlySnapshots);
 
-  // 첫 해 월 부채 상환액 (debt schedule 기준) — UI 표시용
-  const firstYearMonthlyDebt = Math.round(totalAnnualRepayment / 12);
+  // 첫 해 월 부채 상환액 (debt schedule 첫 달 기준) — UI 표시용
+  const firstYearMonthlyDebt = Math.round(
+    (debtSchedules.mortgage[0]?.payment ?? 0) +
+    (debtSchedules.creditLoan[0]?.payment ?? 0) +
+    (debtSchedules.otherLoan[0]?.payment ?? 0),
+  );
 
   // ── 집 활용 전략 시나리오 (옵션) ─────────────────────────────────────
   let housingScenarios: HousingScenarioSet | null = null;
