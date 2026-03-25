@@ -447,8 +447,6 @@ export default function ResultWorkbench() {
         lifeExpectancy={inputs.goal.lifeExpectancy}
       />
 
-      {/* 3층: 전략 비교 */}
-      <ComparisonRows options={propertyOptions} />
 
       {/* info/warning 경고 */}
       {otherWarnings.map((w, i) => (
