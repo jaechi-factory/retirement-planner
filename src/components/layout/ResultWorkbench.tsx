@@ -23,38 +23,37 @@ function HeroSection({
   return (
     <div
       style={{
-        borderRadius: 16,
+        borderRadius: 14,
         border: '1px solid var(--tds-gray-100)',
-        padding: '32px 28px 28px',
-        marginBottom: 20,
+        padding: '22px 24px 20px',
+        marginBottom: 16,
       }}
     >
-      <div style={{ fontSize: 12, color: 'var(--tds-gray-400)', marginBottom: 10, letterSpacing: 0.2 }}>
+      <div style={{ fontSize: 11, color: 'var(--tds-gray-400)', marginBottom: 6 }}>
         {recommendedLabel} 기준
       </div>
       <div
         style={{
-          fontSize: 44,
+          fontSize: 36,
           fontWeight: 900,
           color: 'var(--tds-gray-900)',
-          letterSpacing: '-2px',
+          letterSpacing: '-1.5px',
           lineHeight: 1.1,
-          marginBottom: 14,
+          marginBottom: 10,
         }}
       >
         월 {sustainableMonthly.toLocaleString()}만원
       </div>
       <div
         style={{
-          fontSize: 15,
+          fontSize: 13,
           fontWeight: 700,
           color: positive ? '#1B7F3A' : '#C0392B',
-          lineHeight: 1.5,
         }}
       >
         {positive
-          ? `목표보다 월 ${targetGap.toLocaleString()}만원 더 가능해요 ✓`
-          : `목표보다 월 ${Math.abs(targetGap).toLocaleString()}만원이 부족해요`}
+          ? `목표보다 월 ${targetGap.toLocaleString()}만원 더 가능 ✓`
+          : `목표보다 월 ${Math.abs(targetGap).toLocaleString()}만원 부족`}
       </div>
     </div>
   );
@@ -268,8 +267,7 @@ export default function ResultWorkbench() {
     pathLines.push({ text: '기대수명까지 자금이 유지돼요', positive: true });
   }
 
-  const criticalWarnings = warnings.filter((w) => w.severity === 'critical');
-  const otherWarnings = warnings.filter((w) => w.severity !== 'critical');
+  const allWarnings = warnings.filter((w) => w.severity !== 'critical');
 
   return (
     <div
@@ -282,25 +280,6 @@ export default function ResultWorkbench() {
         borderLeft: '1px solid var(--tds-gray-100)',
       }}
     >
-      {/* 치명 경고 */}
-      {criticalWarnings.map((w, i) => (
-        <div
-          key={i}
-          style={{
-            background: '#FFF0F0',
-            border: '1px solid #FFB3B3',
-            borderRadius: 10,
-            padding: '12px 16px',
-            marginBottom: 16,
-            fontSize: 13,
-            color: '#C0392B',
-            fontWeight: 600,
-            lineHeight: 1.6,
-          }}
-        >
-          ⚠️ {w.message}
-        </div>
-      ))}
 
       {/* 1층: Hero */}
       <HeroSection
@@ -318,8 +297,8 @@ export default function ResultWorkbench() {
       />
 
 
-      {/* info/warning 경고 */}
-      {otherWarnings.map((w, i) => (
+      {/* 경고/안내 */}
+      {allWarnings.map((w, i) => (
         <div
           key={i}
           style={{
