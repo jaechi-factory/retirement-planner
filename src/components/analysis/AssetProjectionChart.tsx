@@ -1,6 +1,7 @@
+import { useState } from 'react';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid,
-  Tooltip, ReferenceLine, ResponsiveContainer, Legend,
+  Tooltip, ReferenceLine, ResponsiveContainer,
 } from 'recharts';
 import type { YearlySnapshot } from '../../types/calculation';
 
@@ -133,35 +134,28 @@ export default function AssetProjectionChart({
   retirementAge,
   pensionStartAges = {},
 }: Props) {
-  if (snapshots.length === 0) return null;
+  const [showNet, setShowNet] = useState(false);
 
-  const hasHousing = snapshots.some(s => s.housingAssetEnd > 0);
+  if (snapshots.length === 0) return null;
 
   const data = snapshots.map((s) => ({
     age: s.age,
     financial: s.financialAssetEnd / 10000,
-    housing: hasHousing ? s.housingAssetEnd / 10000 : undefined,
     net: s.netAssetEnd / 10000,
     snapshot: s,
   }));
 
-  // 금융자산 기준 피크 & 소진
   const financialValues = data.map(d => d.financial);
-  const minFinancial = Math.min(...financialValues);
-  const maxFinancial = Math.max(...financialValues, 0.1);
+  const netValues = data.map(d => d.net);
+  const allValues = showNet ? [...financialValues, ...netValues] : financialValues;
 
-  const housingValues = hasHousing ? data.map(d => d.housing ?? 0) : [0];
-  const maxHousing = Math.max(...housingValues, 0);
-
-  const yMin = minFinancial < 0 ? Math.floor(minFinancial * 1.2) : 0;
-  const yMax = Math.ceil(Math.max(maxFinancial, maxHousing) * 1.12);
+  const minVal = Math.min(...allValues);
+  const maxVal = Math.max(...allValues, 0.1);
+  const yMin = minVal < 0 ? Math.floor(minVal * 1.2) : 0;
+  const yMax = Math.ceil(maxVal * 1.12);
 
   const financialDepletionAge = data.find(d => d.financial < 0)?.age ?? null;
   const netDepletionAge = data.find(d => d.net < 0)?.age ?? null;
-
-  // 주택 이벤트 마커
-  const annuityStartAge = snapshots.find(s => s.housingAnnuityIncomeThisYear && s.housingAnnuityIncomeThisYear > 0)?.age ?? null;
-  const liquidationAge = snapshots.find(s => s.postSaleHousingCostThisYear !== undefined && s.housingAssetEnd === 0)?.age ?? null;
 
   const pensionEvents = [
     pensionStartAges.retirement != null && { age: pensionStartAges.retirement, label: '퇴직연금', color: '#22C55E' },
@@ -172,23 +166,52 @@ export default function AssetProjectionChart({
   return (
     <div>
       <div style={{ marginBottom: 10 }}>
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 4 }}>
-          <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--tds-gray-700)' }}>나이별 자산 추이</span>
-          <span style={{ fontSize: 12, color: 'var(--tds-gray-400)' }}>목표 생활비 기준</span>
-        </div>
-        <div style={{ fontSize: 12, color: 'var(--tds-gray-400)', marginBottom: 8, lineHeight: 1.5 }}>
-          소득·연금·생활비·대출을 반영한 뒤 남는 자산 잔고예요
+        {/* 헤더 + 토글 */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+              <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--tds-gray-700)' }}>금융자산 추이</span>
+              <span style={{ fontSize: 12, color: 'var(--tds-gray-400)' }}>목표 생활비 기준</span>
+            </div>
+            <div style={{ fontSize: 12, color: 'var(--tds-gray-400)', marginTop: 3, lineHeight: 1.5 }}>
+              소득·연금·생활비·대출 반영 후 남는 금융자산 잔고예요
+            </div>
+          </div>
+          {/* 순자산 토글 */}
+          <button
+            onClick={() => setShowNet(v => !v)}
+            style={{
+              flexShrink: 0,
+              marginLeft: 8,
+              padding: '4px 10px',
+              borderRadius: 20,
+              border: `1px solid ${showNet ? 'var(--tds-gray-400)' : 'var(--tds-gray-200)'}`,
+              background: showNet ? 'var(--tds-gray-100)' : 'transparent',
+              fontSize: 11,
+              fontWeight: 600,
+              color: showNet ? 'var(--tds-gray-700)' : 'var(--tds-gray-400)',
+              cursor: 'pointer',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            순자산 {showNet ? '숨기기' : '함께 보기'}
+          </button>
         </div>
 
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
+        {/* 범례 */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <div style={{ width: 14, height: 2, background: '#3B82F6', borderRadius: 1 }} />
+            <span style={{ fontSize: 11, color: 'var(--tds-gray-500)' }}>금융자산</span>
+          </div>
+          {showNet && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              <div style={{ width: 14, height: 2, background: '#9CA3AF', borderRadius: 1, borderTop: '1px dashed #9CA3AF' }} />
+              <span style={{ fontSize: 11, color: 'var(--tds-gray-500)' }}>순자산 (부동산 포함)</span>
+            </div>
+          )}
           {financialDepletionAge !== null && (
-            <EventBadge label="금융자산 고갈" value={`${financialDepletionAge}세`} color="var(--tds-orange-500)" />
-          )}
-          {annuityStartAge !== null && (
-            <EventBadge label="주택연금 개시" value={`${annuityStartAge}세`} color="#F97316" />
-          )}
-          {liquidationAge !== null && (
-            <EventBadge label="집 매각" value={`${liquidationAge}세`} color="#EF4444" />
+            <EventBadge label="현금·투자자산 부족" value={`${financialDepletionAge}세`} color="var(--tds-orange-500)" />
           )}
           {netDepletionAge !== null && (
             <EventBadge label="전체 소진" value={`${netDepletionAge}세`} color="var(--tds-red-500)" />
@@ -237,26 +260,7 @@ export default function AssetProjectionChart({
             />
           ))}
 
-          {annuityStartAge !== null && (
-            <ReferenceLine
-              x={annuityStartAge}
-              stroke="#F97316"
-              strokeWidth={1.5}
-              strokeDasharray="4 2"
-              label={{ value: '주택연금', position: 'top', fontSize: 10, fill: '#F97316' }}
-            />
-          )}
-
-          {liquidationAge !== null && (
-            <ReferenceLine
-              x={liquidationAge}
-              stroke="#EF4444"
-              strokeWidth={1.5}
-              label={{ value: '매각', position: 'top', fontSize: 10, fill: '#EF4444' }}
-            />
-          )}
-
-          {netDepletionAge !== null && !liquidationAge && !annuityStartAge && (
+          {netDepletionAge !== null && (
             <ReferenceLine
               x={netDepletionAge}
               stroke="#EF4444"
@@ -276,24 +280,19 @@ export default function AssetProjectionChart({
             activeDot={{ r: 4 }}
           />
 
-          {/* 부동산 선 (주황색, 있는 경우만) */}
-          {hasHousing && (
+          {/* 순자산 선 (회색 점선, 토글 시에만) */}
+          {showNet && (
             <Line
               type="linear"
-              dataKey="housing"
-              name="부동산"
-              stroke="#F97316"
+              dataKey="net"
+              name="순자산"
+              stroke="#9CA3AF"
               strokeWidth={1.5}
-              strokeDasharray="5 3"
+              strokeDasharray="4 3"
               dot={false}
               activeDot={{ r: 3 }}
             />
           )}
-
-          {hasHousing && <Legend
-            wrapperStyle={{ fontSize: 11, paddingTop: 4 }}
-            formatter={(value) => <span style={{ color: 'var(--tds-gray-500)' }}>{value}</span>}
-          />}
         </LineChart>
       </ResponsiveContainer>
 

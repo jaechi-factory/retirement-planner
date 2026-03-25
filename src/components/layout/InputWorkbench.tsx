@@ -20,6 +20,7 @@ export default function InputWorkbench() {
         scrollbarWidth: 'thin',
         borderRight: '1px solid var(--tds-gray-100)',
         background: 'var(--tds-white)',
+
       }}
     >
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>

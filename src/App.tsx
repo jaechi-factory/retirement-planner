@@ -9,10 +9,10 @@ export default function App() {
         display: 'flex',
         flexDirection: 'column',
         height: '100vh',
-        background: 'var(--tds-gray-50)',
+        background: 'var(--tds-gray-100)',
       }}
     >
-      {/* 헤더 */}
+      {/* 헤더 — full width 흰 배경, 내부 텍스트는 70% 정렬 */}
       <div
         style={{
           height: 56,
@@ -20,44 +20,63 @@ export default function App() {
           background: 'var(--tds-white)',
           borderBottom: '1px solid var(--tds-gray-100)',
           display: 'flex',
-          alignItems: 'center',
-          padding: '0 28px',
+          justifyContent: 'center',
           zIndex: 100,
-          boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
         }}
       >
-        <span
+        <div
           style={{
-            fontSize: 17,
-            fontWeight: 800,
-            color: 'var(--tds-blue-500)',
-            letterSpacing: '-0.3px',
+            width: '70%',
+            display: 'flex',
+            alignItems: 'center',
+            paddingLeft: 40,
           }}
         >
-          내 노후는 괜찮을까?
-        </span>
-        <span
-          style={{
-            marginLeft: 10,
-            fontSize: 12,
-            color: 'var(--tds-gray-400, #B0B8C1)',
-            fontWeight: 400,
-          }}
-        >
-          내 재무 구조로 은퇴 후 얼마를 쓸 수 있을까요?
-        </span>
+          <span
+            style={{
+              fontSize: 17,
+              fontWeight: 800,
+              color: 'var(--tds-blue-500)',
+              letterSpacing: '-0.3px',
+            }}
+          >
+            내 노후는 괜찮을까?
+          </span>
+          <span
+            style={{
+              marginLeft: 10,
+              fontSize: 12,
+              color: 'var(--tds-gray-300)',
+              fontWeight: 400,
+            }}
+          >
+            내 재무 구조로 은퇴 후 얼마를 쓸 수 있을까요?
+          </span>
+        </div>
       </div>
 
-      {/* 2컬럼 레이아웃 */}
+      {/* 2컬럼 레이아웃 — 70% 카드로 띄우기 */}
       <div
         style={{
           display: 'flex',
+          justifyContent: 'center',
           flex: 1,
           overflow: 'hidden',
         }}
       >
-        <InputWorkbench />
-        <ResultWorkbench />
+        <div
+          style={{
+            display: 'flex',
+            width: '70%',
+            overflow: 'hidden',
+            background: 'var(--tds-white)',
+            borderLeft: '1px solid var(--tds-gray-100)',
+            borderRight: '1px solid var(--tds-gray-100)',
+          }}
+        >
+          <InputWorkbench />
+          <ResultWorkbench />
+        </div>
       </div>
     </div>
   );

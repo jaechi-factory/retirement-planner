@@ -16,7 +16,7 @@ const ASSET_LABELS: Record<string, string> = {
   stock_us: '해외 주식',
   bond: '채권',
   crypto: '코인',
-  realEstate: '부동산',
+  realEstate: '보유 부동산',
 };
 
 export default function InsightSentences({ result, inputs, verdict }: Props) {

@@ -19,15 +19,24 @@ export default function ResultWorkbench() {
           flex: 1,
           height: 'calc(100vh - 56px)',
           overflowY: 'auto',
-          padding: '40px 32px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: 'var(--tds-gray-400)',
-          fontSize: 15,
+          padding: '24px 20px',
+          background: 'var(--tds-white)',
         }}
       >
-        나이, 은퇴 나이, 기대수명, 목표 생활비를 입력하면 분석이 시작돼요.
+        <div
+          style={{
+            border: '1px solid var(--tds-gray-100)',
+            borderRadius: 16,
+            padding: '40px 28px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'var(--tds-gray-300)',
+            fontSize: 14,
+          }}
+        >
+          나이, 은퇴 나이, 기대수명, 목표 생활비를 입력하면 분석이 시작돼요.
+        </div>
       </div>
     );
   }
@@ -43,9 +52,9 @@ export default function ResultWorkbench() {
         flex: 1,
         height: 'calc(100vh - 56px)',
         overflowY: 'auto',
-        padding: '32px 32px 48px',
+        padding: '24px 20px 48px',
         scrollbarWidth: 'thin',
-        background: 'var(--tds-gray-50)',
+        background: 'var(--tds-white)',
       }}
     >
       {/* 경고 배너 */}
@@ -74,7 +83,6 @@ export default function ResultWorkbench() {
           borderRadius: 16,
           padding: '28px 28px 24px',
           marginBottom: 20,
-          boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
           border: '1px solid var(--tds-gray-100)',
         }}
       >
@@ -129,7 +137,7 @@ export default function ResultWorkbench() {
             <div
               key={i}
               style={{
-                background: 'var(--tds-gray-50)',
+                background: 'var(--tds-gray-100)',
                 borderRadius: 10,
                 padding: '12px 14px',
               }}
@@ -165,9 +173,8 @@ export default function ResultWorkbench() {
                 border: opt.isRecommended
                   ? '2px solid var(--tds-blue-500)'
                   : '1px solid var(--tds-gray-100)',
-                borderRadius: 12,
+                borderRadius: 16,
                 padding: '16px 18px',
-                boxShadow: opt.isRecommended ? '0 2px 12px rgba(0,100,255,0.08)' : undefined,
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
@@ -221,7 +228,7 @@ export default function ResultWorkbench() {
         <div
           key={i}
           style={{
-            background: w.severity === 'warning' ? '#FFFBE6' : 'var(--tds-gray-50)',
+            background: 'var(--tds-white)',
             border: `1px solid ${w.severity === 'warning' ? '#FFE58F' : 'var(--tds-gray-100)'}`,
             borderRadius: 8,
             padding: '10px 14px',

@@ -81,12 +81,15 @@ export interface CalculationResult {
   monthlyPensionAtRetirementStart: number;  // 은퇴 직후 시점 이미 개시된 연금 합계 (현재가치, 만원)
   pensionCoverageRate: number;              // 연금 커버율 = 전체합계 / 목표생활비 (0~1)
 
-  // 자산 소진 (추천 시나리오 기준)
+  // 자산 소진 (금융자산 keep 기준)
   depletionAge: number | null;         // 목표 생활비 기준 순자산 소진 나이 (null = 기대수명까지 유지)
-  financialStressAge: number | null;   // 금융자산만 먼저 바닥나는 나이 (null = 기대수명까지 유지)
+  financialStressAge: number | null;   // 금융자산 고갈 나이 (null = 기대수명까지 유지)
 
-  // 주택 활용 시나리오 세트
-  housingScenarios: HousingScenarioSet | null; // 부동산 없으면 null
+  // 첫 해 월 부채 상환액 (debt schedule 기준, 만원) — UI 표시용
+  firstYearMonthlyDebt: number;
+
+  // 주택 활용 시나리오 세트 (기본값 null; 옵션형 "집 활용 전략" 섹션 활성화 시 채워짐)
+  housingScenarios: HousingScenarioSet | null;
 
   // 유효성
   isValid: boolean;

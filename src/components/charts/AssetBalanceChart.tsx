@@ -40,13 +40,13 @@ export default function AssetBalanceChart({ rows, retirementAge }: Props) {
     <div
       style={{
         background: 'var(--tds-white)',
-        borderRadius: 12,
-        padding: '20px 8px 12px 8px',
+        borderRadius: 16,
+        padding: '20px 20px 12px',
         marginBottom: 20,
         border: '1px solid var(--tds-gray-100)',
       }}
     >
-      <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--tds-gray-700)', padding: '0 12px', marginBottom: 12 }}>
+      <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--tds-gray-700)', marginBottom: 12 }}>
         버킷별 자산 잔고 추이
       </div>
       <ResponsiveContainer width="100%" height={220}>

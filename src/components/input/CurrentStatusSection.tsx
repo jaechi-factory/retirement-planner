@@ -9,15 +9,7 @@ export default function CurrentStatusSection() {
 
   const monthlyIncome = Math.round(status.annualIncome / 12);
   const monthlyExpense = Math.round(status.annualExpense / 12);
-  const monthlyDebt = result.isValid ? Math.round(
-    Object.values(inputs.debts).reduce((sum, d) => {
-      if (d.balance <= 0 || d.repaymentYears <= 0) return sum;
-      const rm = (d.interestRate / 100) / 12;
-      const n = d.repaymentYears * 12;
-      if (rm === 0) return sum + d.balance / d.repaymentYears / 12;
-      return sum + d.balance * rm * Math.pow(1 + rm, n) / (Math.pow(1 + rm, n) - 1);
-    }, 0)
-  ) : 0;
+  const monthlyDebt = result.firstYearMonthlyDebt;
   const monthlyChild = inputs.children.hasChildren
     ? Math.round(inputs.children.count * inputs.children.monthlyPerChild)
     : 0;

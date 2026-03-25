@@ -1,10 +1,9 @@
 import { usePlannerStore } from '../../store/usePlannerStore';
-import VerdictBadge from '../result/VerdictBadge';
-import MonthlyComparison from '../result/MonthlyComparison';
-import GapIndicator from '../result/GapIndicator';
+import { formatEok } from '../../utils/format';
+import { HOUSING_ANNUITY_MIN_AGE } from '../../engine/housingAnnuity';
 
 export default function CenterPanel() {
-  const { inputs, result, verdict } = usePlannerStore();
+  const { inputs, result, verdict, advancedHousingEnabled, toggleHousing } = usePlannerStore();
 
   if (!result.isValid) {
     const isWaiting = result.errorMessage == null;
@@ -51,6 +50,17 @@ export default function CenterPanel() {
     );
   }
 
+  const gap = result.possibleMonthly - inputs.goal.targetMonthly;
+  const isOk = gap >= 0;
+  const retirementYears = inputs.goal.lifeExpectancy - inputs.goal.retirementAge;
+
+  // 핵심 경고: depletionAge(전체 소진) > financialStressAge(금융자산 부족) 순
+  const warningText = result.depletionAge !== null
+    ? `${result.depletionAge}세에 전체 자산이 소진돼요 — 목표 생활비 기준`
+    : result.financialStressAge !== null
+    ? `${result.financialStressAge}세부터 현금·투자자산이 부족해질 수 있어요`
+    : null;
+
   return (
     <div
       style={{
@@ -61,36 +71,248 @@ export default function CenterPanel() {
         padding: '24px 16px',
       }}
     >
+      {/* ── Hero 카드 ── */}
       <div
         style={{
           background: 'var(--tds-white)',
           borderRadius: 16,
-          padding: '24px 20px',
+          padding: '20px 20px 16px',
           boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
           position: 'sticky',
           top: 0,
         }}
       >
-        {/* 헤더 */}
-        <div style={{ marginBottom: 20 }}>
-          <p style={{ margin: '0 0 8px', fontSize: 13, color: 'var(--tds-gray-500)' }}>
-            내 은퇴 준비 상태
-          </p>
-          {verdict && <VerdictBadge verdict={verdict} />}
+        {/* 상단: 라벨 + 상태 뱃지 */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+          <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--tds-gray-500)', letterSpacing: 0.3 }}>
+            평생 가능한 월생활비
+          </span>
+          {verdict && (
+            <span style={{
+              fontSize: 11,
+              fontWeight: 700,
+              padding: '4px 10px',
+              borderRadius: 100,
+              background: verdict.bgColor,
+              color: verdict.color,
+              whiteSpace: 'nowrap',
+            }}>
+              {verdict.label}
+            </span>
+          )}
         </div>
 
-        <MonthlyComparison
-          targetMonthly={inputs.goal.targetMonthly}
-          possibleMonthly={result.possibleMonthly}
-          currentAge={inputs.status.currentAge}
-          retirementAge={inputs.goal.retirementAge}
-          lifeExpectancy={inputs.goal.lifeExpectancy}
-          housingScenarios={result.housingScenarios}
-        />
+        {/* 메인 숫자 */}
+        <div style={{ marginBottom: 14 }}>
+          <div style={{
+            fontSize: 40,
+            fontWeight: 800,
+            letterSpacing: '-1.5px',
+            color: isOk ? 'var(--tds-gray-900)' : 'var(--tds-orange-500)',
+            lineHeight: 1.1,
+          }}>
+            월 {result.possibleMonthly.toLocaleString('ko-KR')}만원
+          </div>
+          <div style={{ fontSize: 12, color: 'var(--tds-gray-400)', marginTop: 5 }}>
+            금융자산 기준 · 연금 포함 · 은퇴 후 {inputs.goal.lifeExpectancy}세까지 {retirementYears}년간
+          </div>
+        </div>
 
-        {verdict && <GapIndicator verdict={verdict} />}
+        {/* 목표 대비 */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          padding: '9px 12px',
+          borderRadius: 10,
+          background: isOk ? 'var(--tds-blue-50)' : 'var(--tds-orange-50)',
+          marginBottom: warningText ? 8 : 0,
+        }}>
+          <span style={{ fontSize: 12, color: 'var(--tds-gray-500)' }}>
+            목표 월 {inputs.goal.targetMonthly.toLocaleString('ko-KR')}만원 대비
+          </span>
+          {gap === 0 ? (
+            <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--tds-blue-500)' }}>딱 맞아요</span>
+          ) : (
+            <span style={{
+              fontSize: 14,
+              fontWeight: 800,
+              color: isOk ? 'var(--tds-blue-600, #1D4ED8)' : 'var(--tds-red-500)',
+            }}>
+              {isOk ? '+' : ''}{gap.toLocaleString('ko-KR')}만원
+            </span>
+          )}
+        </div>
 
-        {/* 지금 바로 쓰기 쉬운 돈 카드 */}
+        {/* 핵심 경고 — 있을 때만 */}
+        {warningText && (
+          <div style={{
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: 6,
+            padding: '8px 12px',
+            borderRadius: 8,
+            background: result.depletionAge !== null ? 'var(--tds-red-50)' : 'var(--tds-orange-50)',
+          }}>
+            <span style={{ fontSize: 13, lineHeight: 1.2, flexShrink: 0 }}>⚠️</span>
+            <span style={{
+              fontSize: 12,
+              color: result.depletionAge !== null ? 'var(--tds-red-600, #B91C1C)' : 'var(--tds-orange-600, #B45309)',
+              lineHeight: 1.5,
+            }}>
+              {warningText}
+            </span>
+          </div>
+        )}
+
+        {/* 집 활용 전략 섹션 */}
+        {result.totalAsset > 0 && inputs.assets.realEstate.amount > 0 && (
+          <div style={{ marginTop: 12 }}>
+            <button
+              onClick={toggleHousing}
+              style={{
+                width: '100%',
+                padding: '10px 14px',
+                background: advancedHousingEnabled ? 'var(--tds-blue-50)' : 'var(--tds-gray-50)',
+                border: `1px solid ${advancedHousingEnabled ? 'var(--tds-blue-200, #BFD7FF)' : 'var(--tds-gray-100)'}`,
+                borderRadius: 10,
+                cursor: 'pointer',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                fontSize: 13,
+                fontWeight: 600,
+                color: advancedHousingEnabled ? 'var(--tds-blue-600)' : 'var(--tds-gray-600)',
+              }}
+            >
+              <span>보유 부동산 활용 전략 보기</span>
+              <span style={{ fontSize: 11 }}>{advancedHousingEnabled ? '▲ 접기' : '▼'}</span>
+            </button>
+
+            {advancedHousingEnabled && result.housingScenarios && (() => {
+              const hs = result.housingScenarios;
+              // 주택연금 자격 체크
+              const retirementAge = inputs.goal.retirementAge;
+              // 주택연금 최소 가입 나이(55세) 이전에 은퇴하면 일정 기간 수령 불가
+              const annuityEligibleAtRetirement = retirementAge >= HOUSING_ANNUITY_MIN_AGE;
+              // 실물자산 12억 초과 시 초과분 미반영 (상한 적용)
+              const ANNUITY_PRICE_CAP_EOK = 12; // 억 단위 표시용
+              const housingEok = inputs.assets.realEstate.amount / 10000;
+              const isCapped = housingEok > ANNUITY_PRICE_CAP_EOK;
+
+              const rows: Array<{ label: string; policy: 'keep' | 'annuity' | 'liquidate' }> = [
+                { label: '집 그대로 유지', policy: 'keep' },
+                { label: '주택연금 활용', policy: 'annuity' },
+                { label: '집 매각 후 임대', policy: 'liquidate' },
+              ];
+              return (
+                <div style={{
+                  marginTop: 6,
+                  borderRadius: 10,
+                  border: '1px solid var(--tds-gray-100)',
+                  overflow: 'hidden',
+                }}>
+                  <div style={{
+                    background: 'var(--tds-gray-50)',
+                    padding: '8px 12px',
+                    fontSize: 12,
+                    fontWeight: 700,
+                    color: 'var(--tds-gray-500)',
+                  }}>
+                    전략별 가능한 월생활비 비교
+                  </div>
+                  {rows.map(({ label, policy }, idx) => {
+                    const scenario = hs[policy];
+                    const scenarioGap = scenario.possibleMonthly - inputs.goal.targetMonthly;
+                    const isRecommended = hs.recommendedScenario === policy;
+                    const isLast = idx === rows.length - 1;
+
+                    // 주택연금 자격 안내 (annuity 행에만)
+                    const annuityNote = policy === 'annuity' && !annuityEligibleAtRetirement
+                      ? `은퇴 나이 ${retirementAge}세 → ${HOUSING_ANNUITY_MIN_AGE}세 이후부터 수령 시작`
+                      : policy === 'annuity' && isCapped
+                      ? `${ANNUITY_PRICE_CAP_EOK}억 초과분은 상한 적용`
+                      : null;
+
+                    return (
+                      <div
+                        key={policy}
+                        style={{
+                          padding: '10px 12px',
+                          borderBottom: isLast ? 'none' : '1px solid var(--tds-gray-50)',
+                          background: isRecommended ? 'var(--tds-blue-50)' : 'white',
+                        }}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <span style={{
+                              fontSize: 12,
+                              color: 'var(--tds-gray-700)',
+                              fontWeight: isRecommended ? 700 : 400,
+                            }}>
+                              {label}
+                            </span>
+                            {isRecommended && (
+                              <span style={{
+                                fontSize: 10,
+                                background: 'var(--tds-blue-500)',
+                                color: 'white',
+                                borderRadius: 4,
+                                padding: '1px 6px',
+                              }}>
+                                추천
+                              </span>
+                            )}
+                          </div>
+                          <div style={{ textAlign: 'right' }}>
+                            <div style={{
+                              fontSize: 14,
+                              fontWeight: 700,
+                              color: scenarioGap >= 0 ? 'var(--tds-blue-500)' : 'var(--tds-orange-500)',
+                            }}>
+                              월 {scenario.possibleMonthly.toLocaleString('ko-KR')}만원
+                            </div>
+                            {scenarioGap !== 0 && (
+                              <div style={{
+                                fontSize: 11,
+                                color: scenarioGap >= 0 ? 'var(--tds-blue-400)' : 'var(--tds-red-400)',
+                              }}>
+                                목표 대비 {scenarioGap >= 0 ? '+' : ''}{scenarioGap.toLocaleString('ko-KR')}만
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        {annuityNote && (
+                          <div style={{
+                            marginTop: 4,
+                            fontSize: 11,
+                            color: 'var(--tds-gray-400)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 4,
+                          }}>
+                            <span>ℹ</span>
+                            <span>{annuityNote}</span>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                  <div style={{
+                    padding: '8px 12px',
+                    fontSize: 11,
+                    color: 'var(--tds-gray-400)',
+                    borderTop: '1px solid var(--tds-gray-50)',
+                  }}>
+                    {hs.recommendationReason} · 보유 부동산 {formatEok(inputs.assets.realEstate.amount)} 기준
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+        )}
+
+        {/* 바로 쓸 수 있는 자산 */}
         {result.totalAsset > 0 && (() => {
           const liquidAsset = Math.round(result.totalAsset * result.liquidRatio);
           const liquidPct = Math.round(result.liquidRatio * 100);
@@ -99,27 +321,39 @@ export default function CenterPanel() {
 
           return (
             <div style={{
-              marginTop: 16,
-              padding: '12px 14px',
+              marginTop: 12,
+              padding: '10px 14px',
               background: 'var(--tds-gray-50)',
               borderRadius: 10,
               border: '1px solid var(--tds-gray-100)',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'flex-start',
+              gap: 8,
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+              <div>
                 <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--tds-gray-600)' }}>
-                  지금 바로 쓰기 쉬운 돈
+                  바로 쓸 수 있는 자산
                 </span>
-                <span style={{ fontSize: 13, fontWeight: 800, color: isLow ? 'var(--tds-orange-500, #F07A14)' : 'var(--tds-gray-700)' }}>
-                  {liquidAsset.toLocaleString('ko-KR')}만원 ({liquidPct}%)
-                </span>
+                <p style={{ fontSize: 11, color: 'var(--tds-gray-400)', margin: '3px 0 0', lineHeight: 1.4 }}>
+                  {isLow
+                    ? '자산 대부분이 부동산이에요'
+                    : isMid
+                    ? '자산의 절반 이상이 부동산이에요'
+                    : '현금·투자 자산 비중이 높아요'}
+                </p>
               </div>
-              <p style={{ fontSize: 12, color: 'var(--tds-gray-500)', margin: 0, lineHeight: 1.5 }}>
-                {isLow
-                  ? '자산 대부분이 부동산이에요. 생활비로 바로 쓰기 어려울 수 있어요.'
-                  : isMid
-                  ? '자산의 절반 이상이 부동산이에요. 실제 생활비 여력은 더 적을 수 있어요.'
-                  : '대부분 현금·투자 자산이에요. 생활비로 활용하기 좋은 구조예요.'}
-              </p>
+              <span style={{
+                fontSize: 14,
+                fontWeight: 800,
+                color: isLow ? 'var(--tds-orange-500)' : 'var(--tds-gray-700)',
+                whiteSpace: 'nowrap',
+              }}>
+                {liquidAsset.toLocaleString('ko-KR')}만원
+                <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--tds-gray-400)', marginLeft: 4 }}>
+                  ({liquidPct}%)
+                </span>
+              </span>
             </div>
           );
         })()}

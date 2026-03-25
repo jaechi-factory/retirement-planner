@@ -61,6 +61,11 @@ export default function AssetSection() {
                 onChange={(v) => setAsset(key, { expectedReturn: v })}
               />
             </div>
+            {key === 'realEstate' && (
+              <p style={{ fontSize: 11, color: 'var(--tds-gray-400)', margin: '4px 0 0', lineHeight: 1.5 }}>
+                투자·임대 부동산을 포함해요. 실거주 집 전략은 결과 화면에서 따로 확인할 수 있어요.
+              </p>
+            )}
           </div>
         ))}
       </div>

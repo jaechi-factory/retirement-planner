@@ -2,7 +2,7 @@ import { usePlannerStore } from '../../store/usePlannerStore';
 import StatCard from '../analysis/StatCard';
 import AssetProjectionChart from '../analysis/AssetProjectionChart';
 import InsightSentences from '../analysis/InsightSentences';
-import { formatEok, formatPercent } from '../../utils/format';
+import { formatEok } from '../../utils/format';
 import { getPensionBreakdown, getPensionTimeline } from '../../engine/pensionEstimation';
 
 export default function RightPanel() {
@@ -43,68 +43,11 @@ export default function RightPanel() {
         padding: '24px 16px',
       }}
     >
-      {/* 자산 소진 경고 — 추천 시나리오 기준 */}
-      {result.depletionAge !== null && (
-        <div style={{
-          background: verdict.level === 'critical' ? 'var(--tds-red-50)' : 'var(--tds-orange-50)',
-          border: `1.5px solid ${verdict.level === 'critical' ? 'var(--tds-red-200, #FFBDBD)' : 'var(--tds-orange-200, #FFDBB5)'}`,
-          borderRadius: 12,
-          padding: '14px 16px',
-          marginBottom: 12,
-          display: 'flex',
-          alignItems: 'flex-start',
-          gap: 10,
-        }}>
-          <span style={{ fontSize: 18, lineHeight: 1 }}>⚠️</span>
-          <div>
-            <div style={{
-              fontSize: 13, fontWeight: 700,
-              color: verdict.level === 'critical' ? 'var(--tds-red-500)' : 'var(--tds-orange-500)',
-              marginBottom: 3,
-            }}>
-              목표 생활비로 살면 {result.depletionAge}세에 전체 자산이 소진돼요
-            </div>
-            <div style={{ fontSize: 12, color: 'var(--tds-gray-500)', lineHeight: 1.5 }}>
-              기대수명 {inputs.goal.lifeExpectancy}세까지 {inputs.goal.lifeExpectancy - result.depletionAge}년이 부족해요.
-              월 목표를 낮추거나 저축을 늘려보세요.
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 금융자산 고갈 경보 — 주택 활용 불필요한 경우에만 표시 */}
-      {result.depletionAge === null && result.financialStressAge !== null && !result.housingScenarios && (
-        <div style={{
-          background: 'var(--tds-orange-50)',
-          border: '1.5px solid var(--tds-orange-200, #FFDBB5)',
-          borderRadius: 12,
-          padding: '14px 16px',
-          marginBottom: 12,
-          display: 'flex',
-          alignItems: 'flex-start',
-          gap: 10,
-        }}>
-          <span style={{ fontSize: 18, lineHeight: 1 }}>🏠</span>
-          <div>
-            <div style={{
-              fontSize: 13, fontWeight: 700,
-              color: 'var(--tds-orange-500)',
-              marginBottom: 3,
-            }}>
-              {result.financialStressAge}세부터 현금·투자자산이 부족해져요
-            </div>
-            <div style={{ fontSize: 12, color: 'var(--tds-gray-500)', lineHeight: 1.5 }}>
-              부동산 덕분에 총 순자산은 유지되지만, 그때부터는 주택 활용(매각·주택연금 등) 전략이 필요해요.
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 자산 요약 카드 그리드 */}
+      {/* ── 자산 요약 카드 (3칸) ── */}
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
+          gridTemplateColumns: '1fr 1fr 1fr',
           gap: 8,
           marginBottom: 12,
         }}
@@ -121,19 +64,14 @@ export default function RightPanel() {
           valueColor={result.totalDebt > 0 ? 'var(--tds-red-500)' : undefined}
         />
         <StatCard
-          label="전체 기대수익률"
-          value={formatPercent(result.weightedReturn)}
-          sub="가중평균"
-        />
-        <StatCard
-          label="올해 기준 여유자금"
+          label="올해 저축 여력"
           value={formatEok(result.annualNetSavings)}
-          sub="현재 입력 기준 · 해마다 달라짐"
+          sub="세후소득 - 지출 - 부채상환"
           valueColor={savingsColor}
         />
       </div>
 
-      {/* 자녀 지출 (있는 경우만) */}
+      {/* ── 자녀 지출 (있는 경우만) ── */}
       {inputs.children.hasChildren && (
         <div style={{ marginBottom: 12 }}>
           <StatCard
@@ -144,7 +82,7 @@ export default function RightPanel() {
         </div>
       )}
 
-      {/* 연금 결과 카드 */}
+      {/* ── 연금 커버율 카드 ── */}
       <div
         style={{
           background: 'var(--tds-white)',
@@ -161,7 +99,7 @@ export default function RightPanel() {
           추정값 · 지금 기준
         </div>
 
-        {/* 커버율 — 대표 숫자 */}
+        {/* 커버율 대표 숫자 */}
         <div style={{
           padding: '16px 16px',
           borderRadius: 12,
@@ -183,7 +121,7 @@ export default function RightPanel() {
           </div>
         </div>
 
-        {/* 은퇴 직후 / 모든 연금 개시 후 — 보조 */}
+        {/* 은퇴 직후 / 모든 연금 개시 후 */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 14 }}>
           <div style={{ padding: '10px 12px', background: 'var(--tds-gray-50)', borderRadius: 10 }}>
             <div style={{ fontSize: 11, color: 'var(--tds-gray-400)', fontWeight: 600, marginBottom: 4 }}>
@@ -230,7 +168,7 @@ export default function RightPanel() {
         </p>
       </div>
 
-      {/* 연금 개시 타임라인 */}
+      {/* ── 연금 개시 타임라인 ── */}
       {timeline.length > 0 && (
         <div
           style={{
@@ -256,7 +194,6 @@ export default function RightPanel() {
 
               return (
                 <div key={`${ev.age}-${ev.pensionType}`} style={{ display: 'flex', gap: 12 }}>
-                  {/* 타임라인 라인 */}
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: 20, flexShrink: 0 }}>
                     <div style={{
                       width: 10, height: 10, borderRadius: '50%', marginTop: 3,
@@ -267,7 +204,6 @@ export default function RightPanel() {
                     )}
                   </div>
 
-                  {/* 내용 */}
                   <div style={{ paddingBottom: isLast ? 0 : 16, flex: 1 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                       <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--tds-gray-900)' }}>
@@ -300,7 +236,7 @@ export default function RightPanel() {
         </div>
       )}
 
-      {/* 차트 */}
+      {/* ── 차트 ── */}
       <div
         style={{
           background: 'var(--tds-white)',
@@ -321,7 +257,7 @@ export default function RightPanel() {
         />
       </div>
 
-      {/* 해석 문장 */}
+      {/* ── 해석 ── */}
       <div
         style={{
           background: 'var(--tds-white)',

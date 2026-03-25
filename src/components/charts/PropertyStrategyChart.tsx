@@ -65,14 +65,14 @@ export default function PropertyStrategyChart({ options }: Props) {
     <div
       style={{
         background: 'var(--tds-white)',
-        borderRadius: 12,
-        padding: '20px 8px 12px 8px',
+        borderRadius: 16,
+        padding: '20px 20px 12px',
         marginBottom: 20,
         border: '1px solid var(--tds-gray-100)',
       }}
     >
       {/* 지속가능 생활비 비교 */}
-      <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--tds-gray-700)', padding: '0 12px', marginBottom: 12 }}>
+      <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--tds-gray-700)', marginBottom: 12 }}>
         전략별 지속가능 월 생활비
       </div>
       <ResponsiveContainer width="100%" height={140}>

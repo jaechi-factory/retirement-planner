@@ -26,7 +26,7 @@ export default function FundingTimeline({ stages, retirementAge, lifeExpectancy 
     <div
       style={{
         background: 'var(--tds-white)',
-        borderRadius: 12,
+        borderRadius: 16,
         padding: '20px 20px 16px',
         marginBottom: 20,
         border: '1px solid var(--tds-gray-100)',

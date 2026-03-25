@@ -15,7 +15,7 @@ export default function YearlySummaryTable({ rows, retirementAge }: Props) {
     <div
       style={{
         background: 'var(--tds-white)',
-        borderRadius: 12,
+        borderRadius: 16,
         overflow: 'hidden',
         border: '1px solid var(--tds-gray-100)',
         marginBottom: 20,
