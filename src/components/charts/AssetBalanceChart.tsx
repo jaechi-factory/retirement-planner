@@ -17,6 +17,7 @@ import type { YearlyAggregateV2 } from '../../types/calculationV2';
 interface Props {
   rows: YearlyAggregateV2[];
   retirementAge: number;
+  strategyLabel?: string;
 }
 
 function fmt(v: number) {
@@ -25,7 +26,7 @@ function fmt(v: number) {
   return `${v}`;
 }
 
-export default function AssetBalanceChart({ rows, retirementAge }: Props) {
+export default function AssetBalanceChart({ rows, retirementAge, strategyLabel }: Props) {
   if (rows.length === 0) return null;
 
   const data = rows.map((r) => ({
@@ -46,8 +47,15 @@ export default function AssetBalanceChart({ rows, retirementAge }: Props) {
         border: '1px solid var(--tds-gray-100)',
       }}
     >
-      <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--tds-gray-700)', marginBottom: 12 }}>
-        자산별 남은 돈 변화
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 12 }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--tds-gray-700)' }}>
+          자산별 남은 돈 변화
+        </div>
+        {strategyLabel && (
+          <span style={{ fontSize: 11, color: 'var(--tds-gray-400)' }}>
+            {strategyLabel} 기준
+          </span>
+        )}
       </div>
       <ResponsiveContainer width="100%" height={220}>
         <AreaChart data={data} margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>

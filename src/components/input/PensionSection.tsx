@@ -138,41 +138,23 @@ function PublicPensionCard() {
             }}>
               <div>
                 <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--tds-gray-700)' }}>
-                  월 {meta.base.toLocaleString('ko-KR')}만원
+                  월 {Math.round(meta.base).toLocaleString('ko-KR')}만원
                 </span>
                 <div style={{ fontSize: 12, color: 'var(--tds-blue-400)', marginTop: 2 }}>
-                  소득 상한({meta.pensionableMonthly.toLocaleString('ko-KR')}만원) 기준
+                  소득 상한({Math.round(meta.pensionableMonthly).toLocaleString('ko-KR')}만원) 기준
                 </div>
               </div>
               <CappedBadge />
             </div>
           ) : (
-            /* 소득 상한 미도달 시: 보수적/중립적/낙관적 범위 */
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 4, margin: '6px 0 8px' }}>
-              {[
-                { label: '보수적', value: meta.conservative, isMain: false },
-                { label: '중립적', value: meta.base, isMain: true },
-                { label: '낙관적', value: meta.optimistic, isMain: false },
-              ].map(({ label, value, isMain }) => (
-                <div key={label} style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                  padding: '6px 10px', borderRadius: 8,
-                  background: isMain ? 'var(--tds-blue-50)' : 'transparent',
-                }}>
-                  <span style={{
-                    fontSize: 12, fontWeight: isMain ? 700 : 500,
-                    color: isMain ? 'var(--tds-blue-500)' : 'var(--tds-gray-400)',
-                  }}>
-                    {label}
-                  </span>
-                  <span style={{
-                    fontSize: isMain ? 15 : 13, fontWeight: isMain ? 700 : 500,
-                    color: isMain ? 'var(--tds-gray-700)' : 'var(--tds-gray-400)',
-                  }}>
-                    월 {value.toLocaleString('ko-KR')}만원
-                  </span>
-                </div>
-              ))}
+            /* 소득 상한 미도달 시: 중립 추정값 단일 표시 */
+            <div style={{ margin: '4px 0 8px' }}>
+              <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--tds-gray-700)', marginBottom: 2 }}>
+                월 {Math.round(meta.base).toLocaleString('ko-KR')}만원
+              </div>
+              <div style={{ fontSize: 12, color: 'var(--tds-gray-400)' }}>
+                보수적 {Math.round(meta.conservative).toLocaleString('ko-KR')} ~ 낙관적 {Math.round(meta.optimistic).toLocaleString('ko-KR')}만원 범위
+              </div>
             </div>
           )}
           <div style={{ fontSize: 12, color: 'var(--tds-gray-400)' }}>
@@ -182,7 +164,7 @@ function PublicPensionCard() {
       ) : (
         <>
           <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--tds-gray-700)', margin: '4px 0 2px' }}>
-            월 {displayValue.toLocaleString('ko-KR')}만원
+            월 {Math.round(displayValue).toLocaleString('ko-KR')}만원
           </div>
           <div style={{ fontSize: 12, color: 'var(--tds-gray-400)' }}>
             {publicPension.startAge}세부터 수령
@@ -321,7 +303,7 @@ function RetirementPensionCard() {
       </div>
 
       <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--tds-gray-700)', margin: '4px 0 2px' }}>
-        월 {displayValue.toLocaleString('ko-KR')}만원
+        월 {Math.round(displayValue).toLocaleString('ko-KR')}만원
       </div>
       <div style={{ fontSize: 12, color: 'var(--tds-gray-400)' }}>
         {startAge}세부터 {retirementPension.payoutYears}년간 수령

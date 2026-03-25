@@ -123,6 +123,16 @@ function WhyPathSection({
 
 // ── 3층: 전략 비교 ─────────────────────────────────────────────────────────────
 function ComparisonRows({ options }: { options: PropertyOptionResult[] }) {
+  // 좋은 순서로 정렬: 기대수명 달성 → failureAge 내림차순 → monthly 내림차순
+  const sorted = [...options].sort((a, b) => {
+    if (a.survivesToLifeExpectancy !== b.survivesToLifeExpectancy)
+      return a.survivesToLifeExpectancy ? -1 : 1;
+    const aFail = a.failureAge ?? Infinity;
+    const bFail = b.failureAge ?? Infinity;
+    if (aFail !== bFail) return bFail - aFail;
+    return b.sustainableMonthly - a.sustainableMonthly;
+  });
+
   return (
     <div
       style={{
@@ -142,9 +152,9 @@ function ComparisonRows({ options }: { options: PropertyOptionResult[] }) {
           borderBottom: '1px solid var(--tds-gray-100)',
         }}
       >
-        집을 어떻게 활용하느냐에 따라 결과가 달라져요
+        집 활용 방식별 비교
       </div>
-      {options.map((opt, i) => {
+      {sorted.map((opt, i) => {
         const isRec = opt.isRecommended;
 
         let statusLabel: string;
@@ -171,7 +181,7 @@ function ComparisonRows({ options }: { options: PropertyOptionResult[] }) {
               display: 'flex',
               alignItems: 'center',
               padding: '14px 20px',
-              borderBottom: i < options.length - 1 ? '1px solid var(--tds-gray-50)' : undefined,
+              borderBottom: i < sorted.length - 1 ? '1px solid var(--tds-gray-50)' : undefined,
               background: isRec ? 'var(--tds-blue-50, #EEF4FF)' : 'transparent',
               gap: 12,
             }}
@@ -248,12 +258,14 @@ type TabName = (typeof TABS)[number];
 function DetailTabsInner({
   detailYearlyAggregates,
   retirementAge,
+  strategyLabel,
   result,
   inputs,
 }: {
   detailYearlyAggregates: YearlyAggregateV2[];
   retirementAge: number;
   propertyOptions: PropertyOptionResult[];
+  strategyLabel: string;
   result: CalculationResult;
   inputs: PlannerInputs;
 }) {
@@ -261,42 +273,53 @@ function DetailTabsInner({
 
   return (
     <>
+      {/* 탭 헤더 */}
       <div
         style={{
-          display: 'flex',
-          borderBottom: '1px solid var(--tds-gray-100)',
+          padding: '10px 20px 0',
           background: 'var(--tds-gray-50)',
+          borderBottom: '1px solid var(--tds-gray-100)',
         }}
       >
-        {TABS.map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            style={{
-              flex: 1,
-              padding: '13px 6px',
-              fontSize: 12,
-              fontWeight: activeTab === tab ? 700 : 500,
-              color: activeTab === tab ? 'var(--tds-blue-600, #1A5DC2)' : 'var(--tds-gray-400)',
-              background: 'transparent',
-              border: 'none',
-              borderBottom:
-                activeTab === tab ? '2px solid var(--tds-blue-500)' : '2px solid transparent',
-              cursor: 'pointer',
-              transition: 'all 0.15s',
-              fontFamily: 'inherit',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            {tab}
-          </button>
-        ))}
+        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--tds-gray-400)', letterSpacing: 0.5, marginBottom: 10 }}>
+          세부 분석
+        </div>
+        <div style={{ display: 'flex', gap: 4 }}>
+          {TABS.map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              style={{
+                padding: '8px 14px',
+                fontSize: 12,
+                fontWeight: activeTab === tab ? 700 : 500,
+                color: activeTab === tab ? 'var(--tds-blue-600, #1A5DC2)' : 'var(--tds-gray-400)',
+                background: activeTab === tab ? 'var(--tds-white)' : 'transparent',
+                border: activeTab === tab ? '1px solid var(--tds-gray-100)' : '1px solid transparent',
+                borderBottom: activeTab === tab ? '1px solid var(--tds-white)' : '1px solid transparent',
+                borderRadius: '6px 6px 0 0',
+                cursor: 'pointer',
+                transition: 'all 0.15s',
+                fontFamily: 'inherit',
+                whiteSpace: 'nowrap',
+                marginBottom: -1,
+              }}
+            >
+              {tab}
+            </button>
+          ))}
+        </div>
       </div>
+
       <div style={{ padding: '24px 20px' }}>
         {activeTab === '요약' && <SummaryTab result={result} inputs={inputs} />}
         {activeTab === '연금' && <PensionTab result={result} inputs={inputs} />}
         {activeTab === '자산 추이' && (
-          <AssetBalanceChart rows={detailYearlyAggregates} retirementAge={retirementAge} />
+          <AssetBalanceChart
+            rows={detailYearlyAggregates}
+            retirementAge={retirementAge}
+            strategyLabel={strategyLabel}
+          />
         )}
         {activeTab === '연도별 상세' && (
           <YearlySummaryTable rows={detailYearlyAggregates} retirementAge={retirementAge} />
@@ -458,6 +481,7 @@ export default function ResultWorkbench() {
           detailYearlyAggregates={detailYearlyAggregates}
           retirementAge={inputs.goal.retirementAge}
           propertyOptions={propertyOptions}
+          strategyLabel={recommended?.label ?? ''}
           result={result}
           inputs={inputs}
         />

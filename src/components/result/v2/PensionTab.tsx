@@ -79,7 +79,7 @@ export default function PensionTab({ result, inputs }: Props) {
             은퇴 직후
           </div>
           <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--tds-gray-700)' }}>
-            월 {result.monthlyPensionAtRetirementStart.toLocaleString()}만원
+            월 {Math.round(result.monthlyPensionAtRetirementStart).toLocaleString()}만원
           </div>
           <div style={{ fontSize: 11, color: 'var(--tds-gray-400)', marginTop: 2 }}>
             지금 기준
@@ -96,7 +96,7 @@ export default function PensionTab({ result, inputs }: Props) {
             모든 연금 개시 후
           </div>
           <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--tds-gray-700)' }}>
-            월 {result.totalMonthlyPensionTodayValue.toLocaleString()}만원
+            월 {Math.round(result.totalMonthlyPensionTodayValue).toLocaleString()}만원
           </div>
           <div style={{ fontSize: 11, color: 'var(--tds-gray-400)', marginTop: 2 }}>
             지금 기준
@@ -155,7 +155,7 @@ export default function PensionTab({ result, inputs }: Props) {
                 color: enabled ? 'var(--tds-gray-800)' : 'var(--tds-gray-300)',
               }}
             >
-              {enabled ? `월 ${value.toLocaleString()}만원` : '미반영'}
+              {enabled ? `월 ${Math.round(value).toLocaleString()}만원` : '미반영'}
             </span>
           </div>
         ))}
@@ -225,7 +225,7 @@ export default function PensionTab({ result, inputs }: Props) {
                       </span>
                     </div>
                     <div style={{ fontSize: 12, color: 'var(--tds-gray-700)', marginTop: 2 }}>
-                      +월 {ev.monthlyTodayValue.toLocaleString()}만원 시작
+                      +월 {Math.round(ev.monthlyTodayValue).toLocaleString()}만원 시작
                     </div>
                     <div style={{ fontSize: 11, color: 'var(--tds-gray-400)', marginTop: 1 }}>
                       커버율 {beforePct}%

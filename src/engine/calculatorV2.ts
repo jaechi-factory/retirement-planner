@@ -106,29 +106,25 @@ function buildPropertyOption(
 }
 
 function pickRecommendedV2(options: PropertyOptionResult[]): PropertyStrategyV2 {
-  // 우선순위: keep > secured_loan > sell
-  // 동점 시: failureAge 늦은 순 → sustainableMonthly 큰 순 → finalNetWorth 큰 순
-  const sorted = [...options].sort((a, b) => {
-    // keep 우선
-    const priority = (s: PropertyStrategyV2) =>
-      s === 'keep' ? 0 : s === 'secured_loan' ? 1 : 2;
-    const pDiff = priority(a.strategy) - priority(b.strategy);
-    if (pDiff !== 0) return pDiff;
+  // 1) keep이 기대수명까지 살아남으면 keep 권장 (집 안 건드려도 되니까)
+  const keepOption = options.find((o) => o.strategy === 'keep');
+  if (keepOption && keepOption.survivesToLifeExpectancy) return 'keep';
 
-    // failureAge null(= 기대수명까지 유지)이 더 좋음
+  // 2) 기대수명까지 살아남는 전략이 있으면, 그 중 월 생활비 최대 전략 권장
+  const surviving = options.filter((o) => o.survivesToLifeExpectancy);
+  if (surviving.length > 0) {
+    return surviving.sort((a, b) => b.sustainableMonthly - a.sustainableMonthly)[0].strategy;
+  }
+
+  // 3) 모두 실패하는 경우: failureAge 늦은 순 → sustainableMonthly 큰 순으로 권장
+  const sorted = [...options].sort((a, b) => {
     const aFail = a.failureAge ?? Infinity;
     const bFail = b.failureAge ?? Infinity;
     if (aFail !== bFail) return bFail - aFail;
-
     if (a.sustainableMonthly !== b.sustainableMonthly)
       return b.sustainableMonthly - a.sustainableMonthly;
-
     return b.finalNetWorth - a.finalNetWorth;
   });
-
-  // keep이 목표 달성 가능하면 keep 권장
-  const keepOption = options.find((o) => o.strategy === 'keep');
-  if (keepOption && keepOption.survivesToLifeExpectancy) return 'keep';
 
   return sorted[0].strategy;
 }
