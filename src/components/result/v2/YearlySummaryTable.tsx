@@ -38,7 +38,7 @@ export default function YearlySummaryTable({ rows, retirementAge }: Props) {
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
           <thead>
             <tr style={{ background: 'var(--tds-gray-50)', borderBottom: '1px solid var(--tds-gray-100)' }}>
-              {['나이', '현금·예금', '주식·채권', '부동산', '대출 잔금', '월 생활비', '주요 변화'].map((h) => (
+              {['나이', '현금·예금', '주식·채권', '부동산', '담보대출', '월 생활비', '이벤트'].map((h) => (
                 <th
                   key={h}
                   style={{

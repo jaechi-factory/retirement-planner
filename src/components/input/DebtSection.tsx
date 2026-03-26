@@ -224,14 +224,14 @@ export default function DebtSection() {
                       </div>
                     </div>
                     <div style={{ padding: '8px 10px', background: 'var(--tds-gray-50)', borderRadius: 8 }}>
-                      <div style={{ fontSize: 11, color: 'var(--tds-gray-400)', marginBottom: 3 }}>총 이자 부담</div>
-                      <div style={{ fontSize: 14, fontWeight: 700, color: '#C0392B' }}>
+                      <div style={{ fontSize: 11, color: 'var(--tds-gray-400)', marginBottom: 3 }}>이자 총합</div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--tds-gray-500)' }}>
                         −{Math.round(summary.totalInterest).toLocaleString('ko-KR')}만원
                       </div>
                     </div>
                     <div style={{ padding: '8px 10px', background: 'var(--tds-gray-50)', borderRadius: 8 }}>
-                      <div style={{ fontSize: 11, color: 'var(--tds-gray-400)', marginBottom: 3 }}>가장 많이 갚는 달</div>
-                      <div style={{ fontSize: 14, fontWeight: 700, color: '#C0392B' }}>
+                      <div style={{ fontSize: 11, color: 'var(--tds-gray-400)', marginBottom: 3 }}>가장 큰 달</div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--tds-gray-500)' }}>
                         −{Math.round(summary.maxMonthPayment).toLocaleString('ko-KR')}만원
                       </div>
                       <div style={{ fontSize: 11, color: 'var(--tds-gray-400)', marginTop: 2 }}>

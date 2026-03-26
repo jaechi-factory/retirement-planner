@@ -12,11 +12,13 @@ function StatItem({
   value,
   sub,
   valueColor,
+  dominant,
 }: {
   label: string;
   value: string;
   sub?: string;
   valueColor?: string;
+  dominant?: boolean;
 }) {
   return (
     <div
@@ -29,10 +31,10 @@ function StatItem({
       <div style={{ fontSize: 11, color: 'var(--tds-gray-400)', marginBottom: 4 }}>{label}</div>
       <div
         style={{
-          fontSize: 16,
-          fontWeight: 700,
-          color: valueColor ?? 'var(--tds-gray-800)',
-          letterSpacing: '-0.3px',
+          fontSize: dominant ? 20 : 13,
+          fontWeight: dominant ? 800 : 600,
+          color: valueColor ?? (dominant ? 'var(--tds-gray-900)' : 'var(--tds-gray-600)'),
+          letterSpacing: dominant ? '-0.6px' : '-0.2px',
         }}
       >
         {value}
@@ -87,6 +89,7 @@ export default function SummaryTab({ result, inputs }: Props) {
           value={fmtKRW(netWorth)}
           sub={`총자산 ${fmtKRW(totalAsset)}`}
           valueColor={netWorthColor}
+          dominant
         />
         <StatItem
           label="총부채"

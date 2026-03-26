@@ -79,10 +79,10 @@ export default function PensionTab({ result, inputs }: Props) {
           <div style={{ fontSize: 11, color: 'var(--tds-gray-400)', marginBottom: 4 }}>
             은퇴 직후
           </div>
-          <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--tds-gray-700)' }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--tds-gray-500)' }}>
             월 {fmtKRW(result.monthlyPensionAtRetirementStart)}
           </div>
-          <div style={{ fontSize: 11, color: 'var(--tds-gray-400)', marginTop: 2 }}>
+          <div style={{ fontSize: 11, color: 'var(--tds-gray-300)', marginTop: 2 }}>
             지금 기준
           </div>
         </div>
@@ -96,7 +96,7 @@ export default function PensionTab({ result, inputs }: Props) {
           <div style={{ fontSize: 11, color: 'var(--tds-gray-400)', marginBottom: 4 }}>
             모든 연금 개시 후
           </div>
-          <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--tds-gray-700)' }}>
+          <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--tds-gray-800)' }}>
             월 {fmtKRW(result.totalMonthlyPensionTodayValue)}
           </div>
           <div style={{ fontSize: 11, color: 'var(--tds-gray-400)', marginTop: 2 }}>
