@@ -72,7 +72,6 @@ function ModeLabel({ text }: { text: string }) {
 
 function PublicPensionCard() {
   const { inputs, setPension } = usePlannerStore();
-  const [showBasis, setShowBasis] = useState(false);
   const [showDetail, setShowDetail] = useState(false);
   const { publicPension } = inputs.pension;
   const { status, goal } = inputs;
