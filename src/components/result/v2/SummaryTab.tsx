@@ -114,6 +114,23 @@ export default function SummaryTab({ result, inputs }: Props) {
         />
       )}
 
+      {/* 해석 문장 */}
+      {annualNetSavings < 0 && (
+        <div
+          style={{
+            marginTop: 12,
+            fontSize: 12,
+            color: '#8B4A00',
+            background: '#FFF8EC',
+            borderRadius: 8,
+            padding: '10px 12px',
+            lineHeight: 1.65,
+          }}
+        >
+          지금 여유자금이 적자예요. 은퇴 준비 전에 현재 생활 구조 점검이 먼저예요.
+        </div>
+      )}
+
       <div
         style={{
           marginTop: 12,

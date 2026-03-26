@@ -4,6 +4,7 @@ import {
   Tooltip, ReferenceLine, ResponsiveContainer,
 } from 'recharts';
 import type { YearlySnapshot } from '../../types/calculation';
+import { fmtKRW } from '../../utils/format';
 
 interface PensionStartAges {
   nps?: number;
@@ -18,11 +19,10 @@ interface Props {
 }
 
 function fmt만(v: number) {
-  return `${v >= 0 ? '+' : ''}${Math.round(v).toLocaleString('ko-KR')}만원`;
+  return `${v >= 0 ? '+' : ''}${fmtKRW(Math.abs(v))}`;
 }
 function fmt억(v: number) {
-  const sign = v < 0 ? '-' : '';
-  return `${sign}${Math.abs(v / 10000).toFixed(1)}억원`;
+  return fmtKRW(v);
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

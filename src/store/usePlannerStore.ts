@@ -7,7 +7,7 @@ import type { HousingPolicy } from '../engine/housingPolicy';
 import type { FundingPolicy, LiquidationPolicy } from '../engine/fundingPolicy';
 import { DEFAULT_FUNDING_POLICY, DEFAULT_LIQUIDATION_POLICY } from '../engine/fundingPolicy';
 import { DEFAULT_INFLATION_RATE, DEFAULT_INCOME_GROWTH_RATE, DEFAULT_EXPENSE_GROWTH_RATE, DEFAULT_ASSET_RETURNS } from '../utils/constants';
-import { calcTotalAsset, calcTotalDebt, calcWeightedReturn, calcTotalAnnualRepayment, precomputeDebtSchedules } from '../engine/assetWeighting';
+import { calcTotalAsset, calcTotalDebt, calcWeightedReturn, precomputeDebtSchedules, calcTotalAnnualRepaymentFromSchedules } from '../engine/assetWeighting';
 import { simulate, findDepletionAge, findFinancialStressAge } from '../engine/calculator';
 import { findMaxSustainableMonthly } from '../engine/binarySearch';
 import { judgeVerdict } from '../engine/verdictEngine';
@@ -189,7 +189,9 @@ function runCalculation(inputs: PlannerInputs, advancedHousingEnabled = false): 
   const weightedReturn = calcWeightedReturn(assets);
   const liquidAsset = totalAsset - assets.realEstate.amount;
   const liquidRatio = totalAsset > 0 ? liquidAsset / totalAsset : 1;
-  const totalAnnualRepayment = calcTotalAnnualRepayment(debts);
+  // 단일 source: 부채 스케줄을 한 번만 계산해서 이후 모든 곳에서 공유
+  const debtSchedules = precomputeDebtSchedules(debts);
+  const totalAnnualRepayment = calcTotalAnnualRepaymentFromSchedules(debtSchedules, 0);
   const annualChildExpense = children.hasChildren
     ? children.count * children.monthlyPerChild * 12
     : 0;
@@ -222,9 +224,6 @@ function runCalculation(inputs: PlannerInputs, advancedHousingEnabled = false): 
   const pensionCoverageRate = goal.targetMonthly > 0
     ? totalMonthlyPensionTodayValue / goal.targetMonthly
     : 0;
-
-  // 부채 스케줄 선계산
-  const debtSchedules = precomputeDebtSchedules(debts);
 
   // ── 메인 계산: 금융자산 기준 (keep 정책) ─────────────────────────────
   const possibleMonthly = findMaxSustainableMonthly(inputs, 'keep');
@@ -367,11 +366,13 @@ const computeState = (
   fundingPolicy: FundingPolicy = DEFAULT_FUNDING_POLICY,
   liquidationPolicy: LiquidationPolicy = DEFAULT_LIQUIDATION_POLICY,
 ): Pick<PlannerStore, 'inputs' | 'result' | 'verdict' | 'resultV2'> => {
+  // V2 single source: store 레벨에서 한 번 계산, V2에 주입
+  const debtSchedules = precomputeDebtSchedules(inputs.debts);
   const result = runCalculation(inputs, advancedHousingEnabled);
   const verdict = result.isValid
     ? judgeVerdict(inputs.goal.targetMonthly, result.possibleMonthly)
     : null;
-  const resultV2 = runCalculationV2(inputs, fundingPolicy, liquidationPolicy);
+  const resultV2 = runCalculationV2(inputs, fundingPolicy, liquidationPolicy, debtSchedules);
   return { inputs, result, verdict, resultV2 };
 };
 

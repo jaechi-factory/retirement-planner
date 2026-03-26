@@ -1,13 +1,39 @@
 /**
- * V2 월 단위 시뮬레이터
+ * V2 월 단위 시뮬레이터 (정책 확정판)
  *
- * 설계 원칙:
- * - 3버킷: cashLike(현금+예금) / financialInvestable(주식+채권+코인) / realEstate
- * - 유동성 버퍼: 목표 월 생활비 × liquidityBufferMonths 를 cashLike 최솟값으로 유지
- * - 매도 정책: LiquidationPolicy에 따라 투자자산을 필요분만 매도 (기본 = pro_rata)
- * - 부동산 전략: keep / secured_loan / sell
- * - 지속가능성: 전 기간 shortfallThisMonth === 0
- * - 모든 잔고: max(0, value) 클램핑, 음수 그래프 없음
+ * ── 확정 정책 ────────────────────────────────────────────────────────────────
+ *
+ * [P1] 6버킷 개별 수익률
+ *   cash / deposit / stock_kr / stock_us / bond / crypto 각자 수익률 적용.
+ *   realEstate는 별도 성장.
+ *
+ * [P2] 잉여 재투자 — 초기 비중 고정
+ *   새로 남는 돈은 시뮬레이션 시작 시점의 초기 비중대로 계속 배분한다.
+ *   중간에 자산 비율이 바뀌어도 자동 리밸런싱은 하지 않는다 (의도된 정책).
+ *   분배 대상: cash, deposit, stock_kr, stock_us, bond, crypto (realEstate 제외).
+ *
+ * [P3] 매도 우선순위 (생활비 부족 시)
+ *   cash → deposit → bond → stock_kr → stock_us → crypto
+ *   가장 유동적·안전한 자산부터 차감.
+ *
+ * [P4] 첫 해 처리
+ *   currentAge 연도도 일반 연도와 동일하게 처리.
+ *   소득/지출/대출/자녀비용 모두 첫 달부터 반영.
+ *   부채 스케줄 index = totalMonthIndex (offset 없음).
+ *
+ * [P5] 담보 활용 이자 정책
+ *   draw 당월에는 이자를 붙이지 않는다.
+ *   draw 다음 달부터 월 이자가 발생한다.
+ *   구현: 이자 계산을 매월 루프 최상단(수익 발생 단계)에서 처리.
+ *
+ * [P6] 과매도 방지
+ *   은퇴 후 부족 상황에서 "생활비 부족분 + 버퍼 부족분"을 합산해
+ *   한 번의 인출 로직으로 처리한다. 같은 월에 이중 인출 없음.
+ *   잉여 상황에서는 분배 후 버퍼 top-up(재배분)이 추가로 가능하다.
+ *
+ * [P7] 부동산 전략
+ *   keep / secured_loan / sell — 변경 없음.
+ * ────────────────────────────────────────────────────────────────────────────
  */
 
 import type { PlannerInputs } from '../types/inputs';
@@ -24,117 +50,210 @@ import { precomputeDebtSchedules } from './assetWeighting';
 import type { DebtSchedules } from './debtSchedule';
 import { getAnnualPensionIncomeForAge } from './pensionEstimation';
 
-// ─── 내부 헬퍼 ───────────────────────────────────────────────────────────────
+// ─── 버킷 타입 ────────────────────────────────────────────────────────────────
 
-/** 연 수익률 → 월 수익률 (복리 기준) */
+interface FinancialBuckets {
+  cash: number;
+  deposit: number;
+  stock_kr: number;
+  stock_us: number;
+  bond: number;
+  crypto: number;
+}
+
+/**
+ * [P3] 매도 우선순위: 가장 유동적·안전한 자산부터
+ * cash → deposit → bond → stock_kr → stock_us → crypto
+ */
+const LIQUIDATION_ORDER: (keyof FinancialBuckets)[] = [
+  'cash', 'deposit', 'bond', 'stock_kr', 'stock_us', 'crypto',
+];
+
+/** 투자자산 버킷 (financialInvestableEnd 집계용) */
+const FINANCIAL_KEYS: (keyof FinancialBuckets)[] = [
+  'stock_kr', 'stock_us', 'bond', 'crypto',
+];
+
+// ─── 헬퍼 함수 ───────────────────────────────────────────────────────────────
+
+/** 연 수익률(%) → 월 수익률 (복리 기준) */
 function annualToMonthlyRate(annualPercent: number): number {
   return Math.pow(1 + annualPercent / 100, 1 / 12) - 1;
 }
 
-/** cashLike / financialInvestable 각각의 월 수익률 */
-function computeMonthlyRates(assets: PlannerInputs['assets']): {
-  cashLikeMonthlyRate: number;
-  financialMonthlyRate: number;
-  propertyMonthlyRate: number;
-} {
-  const cashTotal = assets.cash.amount + assets.deposit.amount;
-  const cashWeighted =
-    cashTotal > 0
-      ? (assets.cash.amount * assets.cash.expectedReturn +
-          assets.deposit.amount * assets.deposit.expectedReturn) /
-        cashTotal
-      : 0;
-
-  const finAssets = [assets.stock_kr, assets.stock_us, assets.bond, assets.crypto];
-  const finTotal = finAssets.reduce((s, a) => s + a.amount, 0);
-  const finWeighted =
-    finTotal > 0
-      ? finAssets.reduce((s, a) => s + a.amount * a.expectedReturn, 0) / finTotal
-      : 0;
-
+/** 버킷별 월 수익률 맵 */
+function computeBucketRates(assets: PlannerInputs['assets']): FinancialBuckets {
   return {
-    cashLikeMonthlyRate: annualToMonthlyRate(cashWeighted),
-    financialMonthlyRate: annualToMonthlyRate(finWeighted),
-    propertyMonthlyRate: annualToMonthlyRate(assets.realEstate.expectedReturn),
+    cash:     annualToMonthlyRate(assets.cash.expectedReturn),
+    deposit:  annualToMonthlyRate(assets.deposit.expectedReturn),
+    stock_kr: annualToMonthlyRate(assets.stock_kr.expectedReturn),
+    stock_us: annualToMonthlyRate(assets.stock_us.expectedReturn),
+    bond:     annualToMonthlyRate(assets.bond.expectedReturn),
+    crypto:   annualToMonthlyRate(assets.crypto.expectedReturn),
   };
 }
 
-/** 월 부채 상환액 — totalMonthIndex 기준 */
-function getMonthlyDebtService(schedules: DebtSchedules, totalMonthIndex: number): number {
-  const get = (rows: { payment: number }[]) => rows[totalMonthIndex]?.payment ?? 0;
-  return get(schedules.mortgage) + get(schedules.creditLoan) + get(schedules.otherLoan);
+/**
+ * [P2] 초기 비중 계산
+ * 분배 대상: cash + deposit + stock_kr + stock_us + bond + crypto (realEstate 제외)
+ * 합이 0이면 cash 100%.
+ */
+function computeInitialRatios(assets: PlannerInputs['assets']): FinancialBuckets {
+  const total =
+    assets.cash.amount + assets.deposit.amount +
+    assets.stock_kr.amount + assets.stock_us.amount +
+    assets.bond.amount + assets.crypto.amount;
+
+  if (total <= 0) {
+    return { cash: 1, deposit: 0, stock_kr: 0, stock_us: 0, bond: 0, crypto: 0 };
+  }
+  return {
+    cash:     assets.cash.amount / total,
+    deposit:  assets.deposit.amount / total,
+    stock_kr: assets.stock_kr.amount / total,
+    stock_us: assets.stock_us.amount / total,
+    bond:     assets.bond.amount / total,
+    crypto:   assets.crypto.amount / total,
+  };
 }
 
-/** 월 잔여 부채 합계 (연도말 기준) */
-function getRemainingDebt(schedules: DebtSchedules, totalMonthIndex: number): number {
-  const get = (rows: { remainingBalance: number }[]) =>
-    rows[totalMonthIndex]?.remainingBalance ?? 0;
-  return get(schedules.mortgage) + get(schedules.creditLoan) + get(schedules.otherLoan);
+/** [P2] 잉여금을 초기 비중대로 모든 버킷에 분배 */
+function distributeSurplus(
+  buckets: FinancialBuckets,
+  amount: number,
+  ratios: FinancialBuckets,
+): void {
+  for (const key of LIQUIDATION_ORDER) {
+    buckets[key] += amount * ratios[key];
+  }
 }
 
-/** 투자자산 매도: 필요금액만 매도, LiquidationPolicy에 따라 분기 */
-function sellFromFinancial(
+/**
+ * [P3][P6] 우선순위 순서로 버킷에서 인출.
+ * 투자자산(bond/stock_kr/stock_us/crypto) 첫 매도 시 financialSellStarted 플래그.
+ * @returns 미충당 잔액 (0 = 완전 충당)
+ */
+function drawFromBuckets(
+  buckets: FinancialBuckets,
   needed: number,
-  financialInvestable: number,
-  _policy: LiquidationPolicy,
+  financialSellState: { everStarted: boolean },
+  eventFlags: SnapshotEventFlags,
 ): number {
-  // V2 첫 버전: pro_rata = 단일 버킷이므로 "필요분만 매도"와 동일
-  // high_volatility_first / low_return_first는 추후 서브버킷 분리 시 구현
-  return Math.min(needed, Math.max(0, financialInvestable));
+  let remaining = needed;
+  for (const key of LIQUIDATION_ORDER) {
+    if (remaining <= 0) break;
+    const available = Math.max(0, buckets[key]);
+    const drawn = Math.min(remaining, available);
+    if (drawn > 0) {
+      buckets[key] -= drawn;
+      remaining -= drawn;
+      if (FINANCIAL_KEYS.includes(key) && !financialSellState.everStarted) {
+        financialSellState.everStarted = true;
+        eventFlags.financialSellStarted = true;
+      }
+    }
+  }
+  return Math.max(0, remaining);
+}
+
+/**
+ * [P6] 은퇴 후 유동성 버퍼 top-up.
+ * cashLike < buffer일 때 투자자산(FINANCIAL_KEYS 순)을 팔아 cash에 보충.
+ * 잉여 상황(netFlow >= 0) 이후 호출. 부족 상황에서는 drawFromBuckets로 통합 처리.
+ */
+function topUpCashBuffer(
+  buckets: FinancialBuckets,
+  buffer: number,
+  financialSellState: { everStarted: boolean },
+  eventFlags: SnapshotEventFlags,
+): void {
+  const cashLike = buckets.cash + buckets.deposit;
+  if (cashLike >= buffer) return;
+
+  let needed = buffer - cashLike;
+  for (const key of FINANCIAL_KEYS) {
+    if (needed <= 0) break;
+    const available = Math.max(0, buckets[key]);
+    const drawn = Math.min(needed, available);
+    if (drawn > 0) {
+      buckets[key] -= drawn;
+      buckets.cash += drawn;
+      needed -= drawn;
+      if (!financialSellState.everStarted) {
+        financialSellState.everStarted = true;
+        eventFlags.financialSellStarted = true;
+      }
+    }
+  }
+}
+
+/** 월 부채 상환액 (scheduleIndex = 0-based) */
+function getMonthlyDebtService(schedules: DebtSchedules, scheduleIndex: number): number {
+  const get = (rows: { payment: number }[]) => rows[scheduleIndex]?.payment ?? 0;
+  return get(schedules.mortgage) + get(schedules.creditLoan) + get(schedules.otherLoan);
+}
+
+/** 잔여 부채 합계 */
+function getRemainingDebt(schedules: DebtSchedules, scheduleIndex: number): number {
+  const get = (rows: { remainingBalance: number }[]) =>
+    rows[scheduleIndex]?.remainingBalance ?? 0;
+  return get(schedules.mortgage) + get(schedules.creditLoan) + get(schedules.otherLoan);
 }
 
 // ─── 메인 시뮬레이터 ──────────────────────────────────────────────────────────
 
-/** V2 월별 시뮬레이션 실행 */
+/** V2 월별 시뮬레이션 */
 export function simulateMonthlyV2(
   inputs: PlannerInputs,
   testMonthlyInCurrentValue: number,
   propertyStrategy: PropertyStrategyV2,
   fundingPolicy: FundingPolicy,
-  liquidationPolicy: LiquidationPolicy,
+  _liquidationPolicy: LiquidationPolicy,
   prebuiltSchedules?: DebtSchedules,
 ): MonthlySnapshotV2[] {
   const { goal, status, assets, debts, children, pension } = inputs;
   const { retirementAge, lifeExpectancy, inflationRate } = goal;
   const { currentAge, annualIncome, incomeGrowthRate, annualExpense, expenseGrowthRate } = status;
 
-  const monthlyInflation = annualToMonthlyRate(inflationRate);
+  const monthlyInflation    = annualToMonthlyRate(inflationRate);
   const monthlyIncomeGrowth = annualToMonthlyRate(incomeGrowthRate);
   const monthlyExpenseGrowth = annualToMonthlyRate(expenseGrowthRate);
+
+  // [P5] 담보대출 월 이자율 — draw 다음 달부터 적용
   const securedLoanMonthlyRate = SECURED_LOAN_ANNUAL_RATE / 12;
+  const propertyMonthlyRate    = annualToMonthlyRate(assets.realEstate.expectedReturn);
 
-  const { cashLikeMonthlyRate, financialMonthlyRate, propertyMonthlyRate } =
-    computeMonthlyRates(assets);
-
+  const bucketRates   = computeBucketRates(assets);
+  const initialRatios = computeInitialRatios(assets); // [P2] 고정 비중
   const debtSchedules = prebuiltSchedules ?? precomputeDebtSchedules(debts);
 
-  // 버킷 초기값
-  let cashLike = assets.cash.amount + assets.deposit.amount;
-  let financialInvestable =
-    assets.stock_kr.amount +
-    assets.stock_us.amount +
-    assets.bond.amount +
-    assets.crypto.amount;
-  let propertyValue = assets.realEstate.amount;
+  // ── 버킷 초기값 ──────────────────────────────────────────────────────────
+  const buckets: FinancialBuckets = {
+    cash:     Math.max(0, assets.cash.amount),
+    deposit:  Math.max(0, assets.deposit.amount),
+    stock_kr: Math.max(0, assets.stock_kr.amount),
+    stock_us: Math.max(0, assets.stock_us.amount),
+    bond:     Math.max(0, assets.bond.amount),
+    crypto:   Math.max(0, assets.crypto.amount),
+  };
 
-  // 부동산 전략 상태
-  let securedLoanBalance = 0;
+  let propertyValue            = Math.max(0, assets.realEstate.amount);
+  let securedLoanBalance       = 0;
   let propertySaleProceedsBucket = 0;
-  let propertySold = false;
+  let propertySold             = false;
   let propertyInterventionStarted = false;
-  let baseRentalMonthlyAtSale = 0; // 매각 시점 기준 월 임대비 (이후 물가 연동)
-  let propertySaleMonthIndex = -1; // 매각 발생 월 인덱스
+  let baseRentalMonthlyAtSale  = 0;
+  let propertySaleMonthIndex   = -1;
 
-  // 이벤트 플래그 (처음 발생 여부 추적)
-  let financialSellEverStarted = false;
+  const financialSellState = { everStarted: false };
   let financialEverExhausted = false;
 
-  // 은퇴 시점 명목 월 생활비 (현재가치 → 은퇴 시점 명목화)
+  // 은퇴 시점 명목 월 생활비 (현재가치 → 은퇴 시점 명목)
   const yearsToRetirement = Math.max(0, retirementAge - currentAge);
   const retirementMonthlyNominal =
     testMonthlyInCurrentValue * Math.pow(1 + inflationRate / 100, yearsToRetirement);
 
-  // 자녀 월 지출 (현재가치 기준, 이후 물가 연동)
+  // 자녀 연 지출 (현재가치)
   const annualChildExpense =
     children.hasChildren ? children.count * children.monthlyPerChild * 12 : 0;
 
@@ -142,141 +261,136 @@ export function simulateMonthlyV2(
 
   for (let ageYear = currentAge; ageYear <= lifeExpectancy; ageYear++) {
     for (let ageMonthIndex = 0; ageMonthIndex < 12; ageMonthIndex++) {
-      // 마지막 연도 월 보정 (lifeExpectancy 연도의 12월까지만)
       if (ageYear === lifeExpectancy && ageMonthIndex > 0) break;
 
+      // [P4] totalMonthIndex = 0부터 시작, offset 없음
       const totalMonthIndex = (ageYear - currentAge) * 12 + ageMonthIndex;
       const isRetired = ageYear >= retirementAge;
-      const monthsFromNow = totalMonthIndex; // 현재로부터 경과 개월 수
+      const monthsFromNow = totalMonthIndex;
 
-      const flags: SnapshotEventFlags = {};
+      const eventFlags: SnapshotEventFlags = {};
 
-      // ── 1. 자산별 수익 발생 ─────────────────────────────────────────────
-      const cashReturn = Math.max(0, cashLike) * cashLikeMonthlyRate;
-      const financialReturn = Math.max(0, financialInvestable) * financialMonthlyRate;
+      // ── 1. 수익 발생 + [P5] 담보대출 이자 (전월 draw분) ──────────────
+      // [P5] 이자는 draw 다음 달부터 발생. 이전 달의 잔고에 이자 적용.
+      if (propertyStrategy === 'secured_loan' && securedLoanBalance > 0) {
+        securedLoanBalance *= 1 + securedLoanMonthlyRate;
+      }
 
-      cashLike += cashReturn;
-      financialInvestable += financialReturn;
-
-      // 부동산: 매각 전까지 성장 (담보대출 전략에서는 계속 성장)
+      for (const key of LIQUIDATION_ORDER) {
+        buckets[key] = Math.max(0, buckets[key]) * (1 + bucketRates[key]);
+      }
       if (!propertySold) {
         propertyValue *= 1 + propertyMonthlyRate;
       }
 
-      // ── 2. 소득 / 연금 입금 ────────────────────────────────────────────
-      let incomeThisMonth = 0;
-      if (!isRetired && ageYear > currentAge) {
-        incomeThisMonth =
-          (annualIncome / 12) * Math.pow(1 + monthlyIncomeGrowth, monthsFromNow);
-      } else if (!isRetired && ageYear === currentAge && ageMonthIndex === 0) {
-        // 첫 달은 스냅샷 기준 — 소득 없음 (V1과 동일)
-        incomeThisMonth = 0;
-      }
-
-      const pensionThisMonth =
-        ageYear > currentAge
-          ? getAnnualPensionIncomeForAge(
-              pension,
-              currentAge,
-              ageYear,
-              inflationRate,
-              annualIncome,
-              retirementAge,
-            ) / 12
-          : 0;
-
-      cashLike += incomeThisMonth + pensionThisMonth;
-
-      // ── 3. 지출 차감 ────────────────────────────────────────────────────
-      let expenseThisMonth = 0;
-      if (ageYear > currentAge) {
-        if (!isRetired) {
-          expenseThisMonth =
-            (annualExpense / 12) * Math.pow(1 + monthlyExpenseGrowth, monthsFromNow);
-        } else {
-          const monthsAfterRetirement =
-            (ageYear - retirementAge) * 12 + ageMonthIndex;
-          expenseThisMonth =
-            retirementMonthlyNominal * Math.pow(1 + monthlyInflation, monthsAfterRetirement);
-        }
-      }
-
-      const debtServiceThisMonth = ageYear > currentAge
-        ? getMonthlyDebtService(debtSchedules, totalMonthIndex - 1)
+      // ── 2. 소득 / 연금 계산 ──────────────────────────────────────────
+      // [P4] 첫 해(currentAge)도 정상 처리 — 특수 처리 없음
+      const incomeThisMonth = !isRetired
+        ? (annualIncome / 12) * Math.pow(1 + monthlyIncomeGrowth, monthsFromNow)
         : 0;
 
+      const pensionThisMonth = getAnnualPensionIncomeForAge(
+        pension, currentAge, ageYear, inflationRate, annualIncome, retirementAge,
+      ) / 12;
+
+      // ── 3. 지출 계산 ──────────────────────────────────────────────────
+      let expenseThisMonth = 0;
+      if (!isRetired) {
+        expenseThisMonth =
+          (annualExpense / 12) * Math.pow(1 + monthlyExpenseGrowth, monthsFromNow);
+      } else {
+        const monthsAfterRetirement = (ageYear - retirementAge) * 12 + ageMonthIndex;
+        expenseThisMonth =
+          retirementMonthlyNominal * Math.pow(1 + monthlyInflation, monthsAfterRetirement);
+      }
+
+      // [P4] 부채상환: schedule index = totalMonthIndex (offset 없음, 첫 달부터 적용)
+      const debtServiceThisMonth = getMonthlyDebtService(debtSchedules, totalMonthIndex);
+
       const childExpenseThisMonth =
-        children.hasChildren && ageYear > currentAge && ageYear <= children.independenceAge
+        children.hasChildren && ageYear <= children.independenceAge
           ? (annualChildExpense / 12) * Math.pow(1 + monthlyInflation, monthsFromNow)
           : 0;
 
-      // 매각 후 임대비 (매각 시점 기준액에 물가 연동)
       let rentalCostThisMonth = 0;
       if (propertySold && propertySaleMonthIndex >= 0) {
         const monthsSinceSale = totalMonthIndex - propertySaleMonthIndex;
-        rentalCostThisMonth = baseRentalMonthlyAtSale * Math.pow(1 + monthlyInflation, monthsSinceSale);
+        rentalCostThisMonth =
+          baseRentalMonthlyAtSale * Math.pow(1 + monthlyInflation, monthsSinceSale);
       }
 
-      cashLike -= expenseThisMonth + debtServiceThisMonth + childExpenseThisMonth + rentalCostThisMonth;
+      // ── 4. 순현금흐름 처리 ───────────────────────────────────────────
+      const netFlow =
+        incomeThisMonth + pensionThisMonth -
+        expenseThisMonth - debtServiceThisMonth -
+        childExpenseThisMonth - rentalCostThisMonth;
 
-      // ── 4. 투자자산 매도 (버퍼 유지) ────────────────────────────────────
-      // 목표 월 생활비 명목치 기준 버퍼
-      const monthsAfterRetirementForBuffer = isRetired
-        ? (ageYear - retirementAge) * 12 + ageMonthIndex
-        : 0;
-      const targetMonthlyNominal = isRetired
-        ? retirementMonthlyNominal * Math.pow(1 + monthlyInflation, monthsAfterRetirementForBuffer)
-        : (annualExpense / 12) * Math.pow(1 + monthlyExpenseGrowth, monthsFromNow);
-      const buffer = targetMonthlyNominal * fundingPolicy.liquidityBufferMonths;
+      let uncoveredAmount = 0;
 
-      // cashLike가 음수거나 버퍼 이하이면 투자자산 매도
-      if (cashLike < buffer && financialInvestable > 0) {
-        const needed = buffer - cashLike;
-        const sold = sellFromFinancial(needed, financialInvestable, liquidationPolicy);
+      if (!isRetired) {
+        // ── 은퇴 전: 단순 잉여/부족 처리, 버퍼 없음 ──────────────────
+        if (netFlow >= 0) {
+          distributeSurplus(buckets, netFlow, initialRatios);
+        } else {
+          uncoveredAmount = drawFromBuckets(buckets, -netFlow, financialSellState, eventFlags);
+        }
+      } else {
+        // ── 은퇴 후: [P6] 과매도 방지 — 부족 시 통합 인출 ───────────
+        const monthsAfterRetirement = (ageYear - retirementAge) * 12 + ageMonthIndex;
+        const currentExpenseNominal =
+          retirementMonthlyNominal * Math.pow(1 + monthlyInflation, monthsAfterRetirement);
+        const buffer = currentExpenseNominal * fundingPolicy.liquidityBufferMonths;
 
-        if (sold > 0) {
-          financialInvestable -= sold;
-          cashLike += sold;
+        if (netFlow >= 0) {
+          // 잉여: 버킷 분배 후, 버퍼 top-up (재배분이므로 이중 인출 아님)
+          distributeSurplus(buckets, netFlow, initialRatios);
+          topUpCashBuffer(buckets, buffer, financialSellState, eventFlags);
+        } else {
+          // 부족: [P6] 생활비 부족분 + 버퍼 부족분을 한 번에 인출
+          const deficit = -netFlow;
+          const cashLike = buckets.cash + buckets.deposit;
+          const bufferGap = Math.max(0, buffer - cashLike);
+          const totalNeeded = deficit + bufferGap;
 
-          if (!financialSellEverStarted) {
-            financialSellEverStarted = true;
-            flags.financialSellStarted = true;
+          const unmet = drawFromBuckets(buckets, totalNeeded, financialSellState, eventFlags);
+          // shortfall = 실제 생활비 중 미충당분 (버퍼 부족은 shortfall 아님)
+          uncoveredAmount = Math.max(0, unmet - bufferGap);
+          if (uncoveredAmount === 0 && unmet > 0) {
+            // 버퍼 일부만 못 채운 경우 — shortfall 없음
           }
         }
       }
 
-      if (financialInvestable <= 0 && !financialEverExhausted && financialSellEverStarted) {
+      // 투자자산 소진 이벤트
+      const financialTotal = FINANCIAL_KEYS.reduce((s, k) => s + buckets[k], 0);
+      if (financialTotal <= 0 && !financialEverExhausted && financialSellState.everStarted) {
         financialEverExhausted = true;
-        flags.financialExhausted = true;
+        eventFlags.financialExhausted = true;
       }
 
-      // ── 5. 부동산 전략 적용 ─────────────────────────────────────────────
-      if (cashLike < 0 && propertyValue > 0) {
-        const stillNeeded = -cashLike;
-
+      // ── 5. 부동산 전략 (미충당 잔액 있을 때) ─────────────────────────
+      if (uncoveredAmount > 0 && propertyValue > 0) {
         if (propertyStrategy === 'secured_loan') {
-          // 담보대출 draw
           if (!propertyInterventionStarted) {
             propertyInterventionStarted = true;
-            flags.propertyInterventionStarted = true;
+            eventFlags.propertyInterventionStarted = true;
           }
           const maxLoan = propertyValue * SECURED_LOAN_LTV;
           const availableHeadroom = Math.max(0, maxLoan - securedLoanBalance);
-          const draw = Math.min(stillNeeded, availableHeadroom);
+          const draw = Math.min(uncoveredAmount, availableHeadroom);
           if (draw > 0) {
+            // [P5] draw 당월 이자 없음. 잔고만 증가. 이자는 다음 달 스텝 1에서 발생.
             securedLoanBalance += draw;
-            cashLike += draw;
+            buckets.cash += draw;
+            uncoveredAmount -= draw;
           }
-          // 담보대출 이자 (기존 잔고 기준)
-          securedLoanBalance *= 1 + securedLoanMonthlyRate;
 
         } else if (propertyStrategy === 'sell' && !propertySold) {
-          // 집 매각 (한 번만)
           if (!propertyInterventionStarted) {
             propertyInterventionStarted = true;
-            flags.propertyInterventionStarted = true;
+            eventFlags.propertyInterventionStarted = true;
           }
-          flags.propertySold = true;
+          eventFlags.propertySold = true;
 
           const remainingMortgage = getRemainingDebt(debtSchedules, totalMonthIndex);
           const grossProceeds = propertyValue * (1 - PROPERTY_SALE_HAIRCUT);
@@ -285,44 +399,43 @@ export function simulateMonthlyV2(
           propertySaleProceedsBucket = netProceeds;
           baseRentalMonthlyAtSale = (netProceeds * POST_SALE_RENTAL_ANNUAL_YIELD) / 12;
           propertySaleMonthIndex = totalMonthIndex;
-          cashLike += netProceeds;
+          buckets.cash += netProceeds;
           propertyValue = 0;
           propertySold = true;
+          uncoveredAmount = Math.max(0, uncoveredAmount - netProceeds);
         }
-      } else if (cashLike < 0 && propertyStrategy === 'secured_loan' && securedLoanBalance > 0) {
-        // 담보대출 이자 계속 발생 (부동산 없어도 대출 잔고 있으면)
-        securedLoanBalance *= 1 + securedLoanMonthlyRate;
       }
 
-      if (cashLike < buffer && !propertyInterventionStarted) {
-        flags.cashBufferHit = true;
-      }
-
-      // ── 6. 프로씨즈 버킷 감소 ────────────────────────────────────────────
+      // ── 6. 매각 대금 버킷 추적 (시각화용) ────────────────────────────
       if (propertySold && propertySaleProceedsBucket > 0) {
-        // 매월 순지출(지출 - 수입)만큼 버킷 감소
         const netOutflow = Math.max(
           0,
-          expenseThisMonth + debtServiceThisMonth + childExpenseThisMonth + rentalCostThisMonth -
+          expenseThisMonth + debtServiceThisMonth +
+            childExpenseThisMonth + rentalCostThisMonth -
             incomeThisMonth - pensionThisMonth,
         );
         propertySaleProceedsBucket = Math.max(0, propertySaleProceedsBucket - netOutflow);
       }
 
-      // ── 7. 최종 정리 ─────────────────────────────────────────────────────
-      const shortfallThisMonth = Math.max(0, -cashLike);
-      if (shortfallThisMonth > 0) flags.failureOccurred = true;
+      // ── 7. 최종 정리 ─────────────────────────────────────────────────
+      const shortfallThisMonth = uncoveredAmount;
+      if (shortfallThisMonth > 0) eventFlags.failureOccurred = true;
 
-      cashLike = Math.max(0, cashLike);
-      financialInvestable = Math.max(0, financialInvestable);
+      for (const key of LIQUIDATION_ORDER) {
+        buckets[key] = Math.max(0, buckets[key]);
+      }
+
+      const cashLikeEnd          = buckets.cash + buckets.deposit;
+      const financialInvestableEnd = FINANCIAL_KEYS.reduce((s, k) => s + buckets[k], 0);
+      const propertyDebtEnd      = getRemainingDebt(debtSchedules, totalMonthIndex);
 
       snapshots.push({
         ageYear,
         ageMonthIndex,
-        cashLikeEnd: cashLike,
-        financialInvestableEnd: financialInvestable,
+        cashLikeEnd,
+        financialInvestableEnd,
         propertyValueEnd: propertyValue,
-        propertyDebtEnd: ageYear > currentAge ? getRemainingDebt(debtSchedules, totalMonthIndex - 1) : getRemainingDebt(debtSchedules, 0),
+        propertyDebtEnd,
         securedLoanBalanceEnd: securedLoanBalance,
         propertySaleProceedsBucketEnd: propertySaleProceedsBucket,
         shortfallThisMonth,
@@ -332,7 +445,14 @@ export function simulateMonthlyV2(
         debtServiceThisMonth,
         childExpenseThisMonth,
         rentalCostThisMonth,
-        eventFlags: flags,
+        eventFlags,
+        // 개별 버킷 잔고 — 매도 순서 검증용
+        cashEnd:    buckets.cash,
+        depositEnd: buckets.deposit,
+        bondEnd:    buckets.bond,
+        stockKrEnd: buckets.stock_kr,
+        stockUsEnd: buckets.stock_us,
+        cryptoEnd:  buckets.crypto,
       });
     }
   }
@@ -342,7 +462,6 @@ export function simulateMonthlyV2(
 
 // ─── 지속가능성 판단 ──────────────────────────────────────────────────────────
 
-/** V2 지속가능성: 전 기간 shortfallThisMonth === 0 */
 export function isSustainableV2(snapshots: MonthlySnapshotV2[]): boolean {
   if (snapshots.length === 0) return false;
   return snapshots.every((s) => s.shortfallThisMonth === 0);
@@ -350,31 +469,25 @@ export function isSustainableV2(snapshots: MonthlySnapshotV2[]): boolean {
 
 // ─── 이벤트 나이 추출 ────────────────────────────────────────────────────────
 
-/** 현금성 버퍼 최초 미달 나이 (= 투자자산 매도 시작) */
-export function findCashRunoutAgeV2(snapshots: MonthlySnapshotV2[]): number | null {
-  const s = snapshots.find((m) => m.eventFlags.financialSellStarted);
-  return s ? s.ageYear : null;
-}
-
-/** 투자자산 최초 매도 나이 */
 export function findFinancialSellStartAgeV2(snapshots: MonthlySnapshotV2[]): number | null {
   const s = snapshots.find((m) => m.eventFlags.financialSellStarted);
   return s ? s.ageYear : null;
 }
 
-/** 투자자산 소진 나이 */
+export function findCashRunoutAgeV2(snapshots: MonthlySnapshotV2[]): number | null {
+  return findFinancialSellStartAgeV2(snapshots);
+}
+
 export function findFinancialExhaustionAgeV2(snapshots: MonthlySnapshotV2[]): number | null {
   const s = snapshots.find((m) => m.eventFlags.financialExhausted);
   return s ? s.ageYear : null;
 }
 
-/** 부동산 전략 개시 나이 */
 export function findPropertyInterventionAgeV2(snapshots: MonthlySnapshotV2[]): number | null {
   const s = snapshots.find((m) => m.eventFlags.propertyInterventionStarted);
   return s ? s.ageYear : null;
 }
 
-/** 최종 실패 나이 (첫 shortfall 발생) */
 export function findFailureAgeV2(snapshots: MonthlySnapshotV2[]): number | null {
   const s = snapshots.find((m) => m.shortfallThisMonth > 0);
   return s ? s.ageYear : null;
@@ -382,26 +495,22 @@ export function findFailureAgeV2(snapshots: MonthlySnapshotV2[]): number | null 
 
 // ─── 연도별 집계 ──────────────────────────────────────────────────────────────
 
-/** 월별 스냅샷 → 연도별 집계 변환 */
 export function aggregateToYearly(snapshots: MonthlySnapshotV2[]): YearlyAggregateV2[] {
   const byYear = new Map<number, MonthlySnapshotV2[]>();
-
   for (const s of snapshots) {
     if (!byYear.has(s.ageYear)) byYear.set(s.ageYear, []);
     byYear.get(s.ageYear)!.push(s);
   }
 
   const result: YearlyAggregateV2[] = [];
-
   for (const [ageYear, months] of byYear) {
     const last = months[months.length - 1];
-
     const eventSummary: string[] = [];
-    if (months.some((m) => m.eventFlags.financialSellStarted)) eventSummary.push('주식·채권 팔기 시작');
-    if (months.some((m) => m.eventFlags.financialExhausted)) eventSummary.push('주식·채권 소진');
+    if (months.some((m) => m.eventFlags.financialSellStarted))    eventSummary.push('주식·채권 팔기 시작');
+    if (months.some((m) => m.eventFlags.financialExhausted))      eventSummary.push('주식·채권 소진');
     if (months.some((m) => m.eventFlags.propertyInterventionStarted)) eventSummary.push('집 활용 시작');
-    if (months.some((m) => m.eventFlags.propertySold)) eventSummary.push('집 팔기');
-    if (months.some((m) => m.eventFlags.failureOccurred)) eventSummary.push('자금 부족');
+    if (months.some((m) => m.eventFlags.propertySold))            eventSummary.push('집 팔기');
+    if (months.some((m) => m.eventFlags.failureOccurred))         eventSummary.push('자금 부족');
 
     result.push({
       ageYear,
@@ -410,11 +519,11 @@ export function aggregateToYearly(snapshots: MonthlySnapshotV2[]): YearlyAggrega
       propertyValueEnd: last.propertyValueEnd,
       securedLoanBalanceEnd: last.securedLoanBalanceEnd,
       propertySaleProceedsBucketEnd: last.propertySaleProceedsBucketEnd,
-      totalShortfall: months.reduce((s, m) => s + m.shortfallThisMonth, 0),
-      totalIncome: months.reduce((s, m) => s + m.incomeThisMonth, 0),
-      totalPension: months.reduce((s, m) => s + m.pensionThisMonth, 0),
-      totalExpense: months.reduce((s, m) => s + m.expenseThisMonth, 0),
-      totalDebtService: months.reduce((s, m) => s + m.debtServiceThisMonth, 0),
+      totalShortfall:    months.reduce((s, m) => s + m.shortfallThisMonth, 0),
+      totalIncome:       months.reduce((s, m) => s + m.incomeThisMonth, 0),
+      totalPension:      months.reduce((s, m) => s + m.pensionThisMonth, 0),
+      totalExpense:      months.reduce((s, m) => s + m.expenseThisMonth, 0),
+      totalDebtService:  months.reduce((s, m) => s + m.debtServiceThisMonth, 0),
       totalChildExpense: months.reduce((s, m) => s + m.childExpenseThisMonth, 0),
       eventSummary,
       months,

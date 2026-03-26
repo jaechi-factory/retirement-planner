@@ -27,6 +27,13 @@ export interface MonthlySnapshotV2 {
   childExpenseThisMonth: number;         // 자녀지출 (만원)
   rentalCostThisMonth: number;           // 매각 후 임대비 (만원, sell 전략)
   eventFlags: SnapshotEventFlags;
+  // 개별 버킷 잔고 — 매도 순서 검증용 (테스트/디버그)
+  cashEnd: number;
+  depositEnd: number;
+  bondEnd: number;
+  stockKrEnd: number;
+  stockUsEnd: number;
+  cryptoEnd: number;
 }
 
 /** 월별 스냅샷을 연도별로 집계한 요약 */

@@ -1,0 +1,998 @@
+/**
+ * simulatorV2.ts 엔진 검증 테스트 (정책 확정판)
+ *
+ * ── 정책 검증 항목 ────────────────────────────────────────────────────────────
+ * [P1] 버킷별 개별 수익률 — 현금(1%) vs 주식(8%) 성장 비율 차이
+ * [P2] 잉여 재투자 비중 고정 — initialRatios 불변, realEstate 제외
+ * [P3] 매도 우선순위 — cash → deposit → bond → stock_kr → stock_us → crypto
+ *       bond 먼저 소진 후 stock_kr 소진
+ * [P4] 첫 해 정상 처리 — 첫 달(month=0)부터 소득·부채 반영, isFirstYear 없음
+ * [P5] 담보대출 이자 타이밍 — draw 당월 이자 없음, 다음 달부터 이자 발생
+ * [P6] 과매도 방지 — 부족 상황에서 생활비 부족분+버퍼 부족분을 단 1번 인출
+ *
+ * ── 시나리오 검증 ────────────────────────────────────────────────────────────
+ * - 연봉별: 6000 / 8000 / 1억 / 1.5억 / 2억
+ * - 금융자산별: 5000 / 1억 / 3억 / 10억
+ * - 생활비별: 월 200 / 400 / 600
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
+
+import { describe, it, expect } from 'vitest';
+import type { PlannerInputs } from '../types/inputs';
+import type { FundingPolicy, LiquidationPolicy } from './fundingPolicy';
+import {
+  simulateMonthlyV2,
+  isSustainableV2,
+  findFinancialSellStartAgeV2,
+} from './simulatorV2';
+import { findMaxSustainableMonthlyV2 } from './binarySearchV2';
+import { calcHousingAnnuityMonthly } from './housingAnnuity';
+import { precomputeDebtSchedules } from './assetWeighting';
+import { runCalculationV2 } from './calculatorV2';
+import { DEFAULT_FUNDING_POLICY as CALC_FUNDING_POLICY, DEFAULT_LIQUIDATION_POLICY as CALC_LIQUIDATION_POLICY } from './fundingPolicy';
+
+// ─── 기본 입력 픽스처 ─────────────────────────────────────────────────────────
+
+const DEFAULT_FUNDING_POLICY: FundingPolicy = { liquidityBufferMonths: 6 };
+const DEFAULT_LIQUIDATION: LiquidationPolicy = { strategy: 'pro_rata' };
+
+/** 기본 입력 템플릿 (값은 테스트별로 override) */
+function makeInputs(overrides: Partial<PlannerInputs> = {}): PlannerInputs {
+  const base: PlannerInputs = {
+    goal: {
+      retirementAge: 65,
+      lifeExpectancy: 90,
+      targetMonthly: 300,
+      inflationRate: 2.5,
+    },
+    status: {
+      currentAge: 40,
+      annualIncome: 6000,
+      incomeGrowthRate: 2.0,
+      annualExpense: 3600,
+      expenseGrowthRate: 2.0,
+    },
+    assets: {
+      cash:       { amount: 1000,  expectedReturn: 1.0 },
+      deposit:    { amount: 2000,  expectedReturn: 2.0 },
+      stock_kr:   { amount: 3000,  expectedReturn: 6.0 },
+      stock_us:   { amount: 4000,  expectedReturn: 8.0 },
+      bond:       { amount: 1000,  expectedReturn: 3.5 },
+      crypto:     { amount: 0,     expectedReturn: 0   },
+      realEstate: { amount: 50000, expectedReturn: 3.0 },
+    },
+    debts: {
+      mortgage:   { balance: 0, interestRate: 0, repaymentType: 'equal_payment',  repaymentYears: 0 },
+      creditLoan: { balance: 0, interestRate: 0, repaymentType: 'balloon_payment', repaymentYears: 0 },
+      otherLoan:  { balance: 0, interestRate: 0, repaymentType: 'balloon_payment', repaymentYears: 0 },
+    },
+    children: {
+      hasChildren: false,
+      count: 0,
+      monthlyPerChild: 0,
+      independenceAge: 0,
+    },
+    pension: {
+      publicPension: {
+        enabled: false,
+        mode: 'auto',
+        startAge: 65,
+        manualMonthlyTodayValue: 0,
+      },
+      retirementPension: {
+        enabled: false,
+        mode: 'auto',
+        startAge: 60,
+        payoutYears: 20,
+        currentBalance: 0,
+        accumulationReturnRate: 3.5,
+        payoutReturnRate: 2.0,
+        manualMonthlyTodayValue: 0,
+      },
+      privatePension: {
+        enabled: false,
+        mode: 'auto',
+        startAge: 65,
+        payoutYears: 20,
+        currentBalance: 0,
+        monthlyContribution: 0,
+        expectedReturnRate: 3.5,
+        accumulationReturnRate: 3.5,
+        payoutReturnRate: 2.0,
+        manualMonthlyTodayValue: 0,
+        detailMode: false,
+        products: [],
+      },
+    },
+  };
+
+  return { ...base, ...overrides };
+}
+
+// ─── [P1] 버킷별 개별 수익률 ─────────────────────────────────────────────────
+
+describe('[P1] 버킷별 개별 수익률', () => {
+  it('주식(8%) 버킷이 현금(1%) 버킷보다 빠르게 성장해야 함', () => {
+    const inputs = makeInputs({
+      status: {
+        currentAge: 40,
+        annualIncome: 0,
+        incomeGrowthRate: 0,
+        annualExpense: 0,
+        expenseGrowthRate: 0,
+      },
+      assets: {
+        cash:       { amount: 10000, expectedReturn: 1.0 },
+        deposit:    { amount: 0,     expectedReturn: 2.0 },
+        stock_kr:   { amount: 0,     expectedReturn: 6.0 },
+        stock_us:   { amount: 10000, expectedReturn: 8.0 },
+        bond:       { amount: 0,     expectedReturn: 3.5 },
+        crypto:     { amount: 0,     expectedReturn: 0   },
+        realEstate: { amount: 0,     expectedReturn: 0   },
+      },
+      goal: { retirementAge: 65, lifeExpectancy: 90, targetMonthly: 0, inflationRate: 2.5 },
+    });
+
+    const snapshots = simulateMonthlyV2(inputs, 0, 'keep', DEFAULT_FUNDING_POLICY, DEFAULT_LIQUIDATION);
+    const last = snapshots[snapshots.length - 1];
+
+    // 주식(8%)이 현금(1%)보다 커야 함
+    expect(last.financialInvestableEnd).toBeGreaterThan(last.cashLikeEnd);
+  });
+});
+
+// ─── [P2] 잉여 재투자 비중 고정 ──────────────────────────────────────────────
+
+describe('[P2] 잉여 재투자 — initialRatios 고정, realEstate 제외', () => {
+  it('소득 > 지출이면 은퇴 전 투자자산이 현금보다 훨씬 많아야 함 (초기 비중 유지)', () => {
+    const inputs = makeInputs({
+      status: {
+        currentAge: 40,
+        annualIncome: 8000,
+        incomeGrowthRate: 2.0,
+        annualExpense: 3000,
+        expenseGrowthRate: 2.0,
+      },
+      assets: {
+        cash:       { amount: 500,  expectedReturn: 1.0 },
+        deposit:    { amount: 500,  expectedReturn: 2.0 },
+        stock_kr:   { amount: 2000, expectedReturn: 6.0 },
+        stock_us:   { amount: 3000, expectedReturn: 8.0 },
+        bond:       { amount: 1000, expectedReturn: 3.5 },
+        crypto:     { amount: 0,    expectedReturn: 0   },
+        realEstate: { amount: 0,    expectedReturn: 0   },
+      },
+    });
+
+    const snapshots = simulateMonthlyV2(
+      inputs, inputs.goal.targetMonthly, 'keep',
+      DEFAULT_FUNDING_POLICY, DEFAULT_LIQUIDATION,
+    );
+    // 은퇴 직전 (64세 말)
+    const atRetirementEve = snapshots.find(s => s.ageYear === 64 && s.ageMonthIndex === 11);
+    expect(atRetirementEve).toBeDefined();
+
+    // 초기 비중: 투자자산(3000+2000+1000=6000) >> 현금성(500+500=1000)
+    // 잉여 재투자 시에도 이 비중이 유지돼야 함
+    expect(atRetirementEve!.financialInvestableEnd).toBeGreaterThan(atRetirementEve!.cashLikeEnd * 3);
+  });
+
+  it('부동산(realEstate)은 잉여 분배 대상에서 제외돼야 함 (기대수명 내내 propertyValueEnd 독립 성장)', () => {
+    const inputs = makeInputs({
+      status: {
+        currentAge: 40,
+        annualIncome: 8000,
+        incomeGrowthRate: 2.0,
+        annualExpense: 3000,
+        expenseGrowthRate: 2.0,
+      },
+      assets: {
+        cash:       { amount: 1000,  expectedReturn: 1.0 },
+        deposit:    { amount: 0,     expectedReturn: 2.0 },
+        stock_kr:   { amount: 1000,  expectedReturn: 6.0 },
+        stock_us:   { amount: 0,     expectedReturn: 8.0 },
+        bond:       { amount: 0,     expectedReturn: 3.5 },
+        crypto:     { amount: 0,     expectedReturn: 0   },
+        realEstate: { amount: 10000, expectedReturn: 3.0 },
+      },
+    });
+
+    const snapshots = simulateMonthlyV2(
+      inputs, inputs.goal.targetMonthly, 'keep',
+      DEFAULT_FUNDING_POLICY, DEFAULT_LIQUIDATION,
+    );
+
+    // keep 전략이면 부동산은 계속 성장 (잉여 재투자 없음)
+    const month1 = snapshots[0];
+    const month24 = snapshots.find(s => s.ageYear === 42 && s.ageMonthIndex === 0);
+    if (month24) {
+      // 2년 후 부동산은 3% 복리 성장 (잉여 분배로 인위적으로 올라가면 안 됨)
+      const expected = 10000 * Math.pow(1.03, 2);
+      expect(month24.propertyValueEnd).toBeGreaterThan(10000);
+      expect(month24.propertyValueEnd).toBeLessThan(expected * 1.05); // 5% 이상 차이나면 이상
+    }
+    expect(month1.propertyValueEnd).toBeGreaterThan(10000); // 최소 성장
+  });
+});
+
+// ─── [P3] 매도 우선순위 ───────────────────────────────────────────────────────
+
+describe('[P3] 매도 우선순위 (cash → deposit → bond → stock_kr → stock_us → crypto)', () => {
+  it('현금이 있으면 투자자산 매도 전에 현금을 먼저 소진해야 함', () => {
+    const inputs = makeInputs({
+      status: {
+        currentAge: 40,
+        annualIncome: 0,
+        incomeGrowthRate: 0,
+        annualExpense: 0,
+        expenseGrowthRate: 0,
+      },
+      assets: {
+        cash:       { amount: 50000, expectedReturn: 0   },
+        deposit:    { amount: 0,     expectedReturn: 2.0 },
+        stock_kr:   { amount: 1000,  expectedReturn: 6.0 },
+        stock_us:   { amount: 1000,  expectedReturn: 8.0 },
+        bond:       { amount: 0,     expectedReturn: 3.5 },
+        crypto:     { amount: 0,     expectedReturn: 0   },
+        realEstate: { amount: 0,     expectedReturn: 0   },
+      },
+      goal: { retirementAge: 41, lifeExpectancy: 90, targetMonthly: 200, inflationRate: 2.5 },
+    });
+
+    const snapshots = simulateMonthlyV2(inputs, 200, 'keep', DEFAULT_FUNDING_POLICY, DEFAULT_LIQUIDATION);
+
+    // 처음 10년은 투자자산 매도 없어야 함 (현금 50억으로 충당)
+    const earlyFinancialSell = snapshots.filter(s => s.ageYear <= 50)
+      .some(s => s.eventFlags.financialSellStarted);
+    expect(earlyFinancialSell).toBe(false);
+
+    // 투자자산은 수익률로 성장해야 함
+    const atAge50 = snapshots.find(s => s.ageYear === 50 && s.ageMonthIndex === 11);
+    expect(atAge50?.financialInvestableEnd).toBeGreaterThan(2000); // 초기 2000 이상
+  });
+
+  it('bond는 투자자산이므로 현금성 소진 직후 bond부터 매도해야 함 (financialSellStarted 트리거)', () => {
+    // cash=0, deposit=0, bond만 있는 경우: retirement 시작 직후 financialSellStarted 발생해야 함
+    const inputs = makeInputs({
+      status: {
+        currentAge: 40,
+        annualIncome: 0,
+        incomeGrowthRate: 0,
+        annualExpense: 0,
+        expenseGrowthRate: 0,
+      },
+      assets: {
+        cash:       { amount: 0,    expectedReturn: 0   },
+        deposit:    { amount: 0,    expectedReturn: 2.0 },
+        bond:       { amount: 5000, expectedReturn: 3.5 },
+        stock_kr:   { amount: 0,    expectedReturn: 6.0 },
+        stock_us:   { amount: 0,    expectedReturn: 8.0 },
+        crypto:     { amount: 0,    expectedReturn: 0   },
+        realEstate: { amount: 0,    expectedReturn: 0   },
+      },
+      goal: { retirementAge: 41, lifeExpectancy: 90, targetMonthly: 100, inflationRate: 2.5 },
+    });
+
+    const snapshots = simulateMonthlyV2(inputs, 100, 'keep', DEFAULT_FUNDING_POLICY, DEFAULT_LIQUIDATION);
+
+    // retirement 시작(ageYear=41)에 bond에서 바로 인출 → financialSellStarted 발생
+    const sellAge = findFinancialSellStartAgeV2(snapshots);
+    expect(sellAge).toBe(41); // 은퇴 직후 투자자산(bond) 매도 시작
+  });
+
+  it('cash만 있는 경우 은퇴 후에도 financialSellStarted가 바로 발생하면 안 됨', () => {
+    const inputs = makeInputs({
+      status: {
+        currentAge: 40,
+        annualIncome: 0,
+        incomeGrowthRate: 0,
+        annualExpense: 0,
+        expenseGrowthRate: 0,
+      },
+      assets: {
+        cash:       { amount: 5000, expectedReturn: 0   },
+        deposit:    { amount: 0,    expectedReturn: 2.0 },
+        bond:       { amount: 0,    expectedReturn: 3.5 },
+        stock_kr:   { amount: 0,    expectedReturn: 6.0 },
+        stock_us:   { amount: 0,    expectedReturn: 8.0 },
+        crypto:     { amount: 0,    expectedReturn: 0   },
+        realEstate: { amount: 0,    expectedReturn: 0   },
+      },
+      goal: { retirementAge: 41, lifeExpectancy: 90, targetMonthly: 100, inflationRate: 2.5 },
+    });
+
+    const snapshots = simulateMonthlyV2(inputs, 100, 'keep', DEFAULT_FUNDING_POLICY, DEFAULT_LIQUIDATION);
+
+    // 현금만 있으므로 financialSellStarted 절대 없어야 함
+    const anyFinancialSell = snapshots.some(s => s.eventFlags.financialSellStarted);
+    expect(anyFinancialSell).toBe(false);
+  });
+
+  /**
+   * [P3] 개별 버킷 잔고 노출로 실제 차감 순서 검증
+   * 시나리오: cash=200, deposit=100, bond=5000, stock_kr=5000 → 수익률=0, 생활비=350/월
+   * 첫 은퇴 달에 needed = 350 + bufferGap 인데,
+   * 순서 보장: cash(200) → deposit(100) → bond(나머지) 순으로 차감
+   */
+  it('[P3 강화] 개별 버킷 잔고로 cash → deposit → bond 차감 순서를 직접 검증', () => {
+    const inputs = makeInputs({
+      goal: { retirementAge: 65, lifeExpectancy: 90, targetMonthly: 350, inflationRate: 0 },
+      status: { currentAge: 65, annualIncome: 0, incomeGrowthRate: 0, annualExpense: 0, expenseGrowthRate: 0 },
+      assets: {
+        cash:       { amount: 200,  expectedReturn: 0 },
+        deposit:    { amount: 100,  expectedReturn: 0 },
+        bond:       { amount: 5000, expectedReturn: 0 },
+        stock_kr:   { amount: 5000, expectedReturn: 0 },
+        stock_us:   { amount: 0,    expectedReturn: 0 },
+        crypto:     { amount: 0,    expectedReturn: 0 },
+        realEstate: { amount: 0,    expectedReturn: 0 },
+      },
+    });
+
+    // 소액 버퍼(6개월)로 설정: buffer = 350 * 1 = 350으로 테스트 단순화
+    const fundingPolicy: FundingPolicy = { liquidityBufferMonths: 1 };
+
+    const snapshots = simulateMonthlyV2(inputs, 350, 'keep', fundingPolicy, DEFAULT_LIQUIDATION);
+    const m0 = snapshots[0]; // ageYear=65, ageMonthIndex=0
+
+    // buffer=350, cashLike=200+100=300, bufferGap=50, deficit=350
+    // totalNeeded = 350 + 50 = 400
+    // 차감 순서: cash(200) → deposit(100) → bond(100) → 합계 400
+    // 결과: cashEnd=0, depositEnd=0, bondEnd=4900
+
+    expect(m0.cashEnd).toBe(0);        // cash 완전 소진
+    expect(m0.depositEnd).toBe(0);     // deposit 완전 소진
+    expect(m0.bondEnd).toBeCloseTo(4900, 0);  // bond에서 100 차감
+    expect(m0.stockKrEnd).toBeCloseTo(5000, 0); // stock_kr 미차감
+    expect(m0.shortfallThisMonth).toBe(0); // 완전 충당
+  });
+
+  it('[P3 강화] bond 소진 후에만 stock_kr이 차감되어야 함', () => {
+    // bond=300, stock_kr=10000, 필요 인출 > 300 인 상황
+    const inputs = makeInputs({
+      goal: { retirementAge: 65, lifeExpectancy: 90, targetMonthly: 500, inflationRate: 0 },
+      status: { currentAge: 65, annualIncome: 0, incomeGrowthRate: 0, annualExpense: 0, expenseGrowthRate: 0 },
+      assets: {
+        cash:       { amount: 0,     expectedReturn: 0 },
+        deposit:    { amount: 0,     expectedReturn: 0 },
+        bond:       { amount: 300,   expectedReturn: 0 }, // 1달치보다 적음
+        stock_kr:   { amount: 10000, expectedReturn: 0 },
+        stock_us:   { amount: 0,     expectedReturn: 0 },
+        crypto:     { amount: 0,     expectedReturn: 0 },
+        realEstate: { amount: 0,     expectedReturn: 0 },
+      },
+    });
+
+    const fundingPolicy: FundingPolicy = { liquidityBufferMonths: 0 }; // 버퍼 없음
+
+    const snapshots = simulateMonthlyV2(inputs, 500, 'keep', fundingPolicy, DEFAULT_LIQUIDATION);
+    const m0 = snapshots[0];
+
+    // needed=500, bond=300(전부 차감), stock_kr에서 200 추가 차감
+    expect(m0.bondEnd).toBe(0);                          // bond 완전 소진
+    expect(m0.stockKrEnd).toBeCloseTo(9800, 0);          // stock_kr에서 200 차감
+    expect(m0.shortfallThisMonth).toBe(0);               // 완전 충당
+  });
+});
+
+// ─── [P4] 첫 해 정상 처리 (isFirstYear 없음) ──────────────────────────────────
+
+describe('[P4] 첫 해 정상 처리 — 첫 달(month=0)부터 소득·부채 반영', () => {
+  it('첫 달(ageMonthIndex=0) 부채 상환이 0보다 커야 함 (부채 있는 경우)', () => {
+    const inputs = makeInputs({
+      debts: {
+        mortgage: {
+          balance: 30000,
+          interestRate: 4.0,
+          repaymentType: 'equal_payment',
+          repaymentYears: 20,
+        },
+        creditLoan: { balance: 0, interestRate: 0, repaymentType: 'balloon_payment', repaymentYears: 0 },
+        otherLoan:  { balance: 0, interestRate: 0, repaymentType: 'balloon_payment', repaymentYears: 0 },
+      },
+    });
+
+    const snapshots = simulateMonthlyV2(
+      inputs, inputs.goal.targetMonthly, 'keep',
+      DEFAULT_FUNDING_POLICY, DEFAULT_LIQUIDATION,
+    );
+
+    // 첫 달 (ageYear=currentAge=40, ageMonthIndex=0)
+    const firstMonth = snapshots[0];
+    expect(firstMonth.ageYear).toBe(40);
+    expect(firstMonth.ageMonthIndex).toBe(0);
+    expect(firstMonth.debtServiceThisMonth).toBeGreaterThan(0);
+  });
+
+  it('첫 달 소득이 0보다 커야 함 (소득 있는 경우)', () => {
+    const inputs = makeInputs({
+      status: {
+        currentAge: 40,
+        annualIncome: 6000,
+        incomeGrowthRate: 2.0,
+        annualExpense: 3600,
+        expenseGrowthRate: 2.0,
+      },
+    });
+
+    const snapshots = simulateMonthlyV2(
+      inputs, inputs.goal.targetMonthly, 'keep',
+      DEFAULT_FUNDING_POLICY, DEFAULT_LIQUIDATION,
+    );
+
+    const firstMonth = snapshots[0];
+    expect(firstMonth.incomeThisMonth).toBeGreaterThan(0); // 6000/12 = 500
+    expect(firstMonth.incomeThisMonth).toBeCloseTo(500, 0); // 월 500만원 (± 반올림)
+  });
+
+  it('부채 스케줄 index=0이 첫 달에 적용되어야 함 (부채 없으면 0)', () => {
+    const inputs = makeInputs(); // 기본 = 부채 없음
+
+    const schedules = precomputeDebtSchedules(inputs.debts);
+    const firstPayment = (schedules.mortgage[0]?.payment ?? 0)
+      + (schedules.creditLoan[0]?.payment ?? 0)
+      + (schedules.otherLoan[0]?.payment ?? 0);
+
+    const snapshots = simulateMonthlyV2(
+      inputs, inputs.goal.targetMonthly, 'keep',
+      DEFAULT_FUNDING_POLICY, DEFAULT_LIQUIDATION,
+    );
+
+    expect(snapshots[0].debtServiceThisMonth).toBe(firstPayment); // 단일 source와 일치
+    expect(snapshots[0].debtServiceThisMonth).toBe(0); // 부채 없으면 0
+  });
+});
+
+// ─── [P5] 담보대출 이자 타이밍 ───────────────────────────────────────────────
+
+describe('[P5] 담보대출 이자 — draw 당월 이자 없음, 다음 달부터 이자 발생', () => {
+  it('처음 대출 발생 전 securedLoanBalanceEnd = 0이어야 함', () => {
+    const inputs = makeInputs({
+      goal: { retirementAge: 41, lifeExpectancy: 90, targetMonthly: 100, inflationRate: 0 },
+      status: { currentAge: 40, annualIncome: 0, incomeGrowthRate: 0, annualExpense: 0, expenseGrowthRate: 0 },
+      assets: {
+        cash:       { amount: 0,      expectedReturn: 0 },
+        deposit:    { amount: 0,      expectedReturn: 0 },
+        bond:       { amount: 0,      expectedReturn: 0 },
+        stock_kr:   { amount: 0,      expectedReturn: 0 },
+        stock_us:   { amount: 0,      expectedReturn: 0 },
+        crypto:     { amount: 0,      expectedReturn: 0 },
+        realEstate: { amount: 100000, expectedReturn: 0 }, // 10억 부동산
+      },
+    });
+
+    const snapshots = simulateMonthlyV2(inputs, 100, 'secured_loan', DEFAULT_FUNDING_POLICY, DEFAULT_LIQUIDATION);
+
+    // 최초 대출 발생 인덱스 찾기 (propertyInterventionStarted는 첫 번째 draw 월에만 설정됨)
+    const firstIdx = snapshots.findIndex(s => s.eventFlags.propertyInterventionStarted);
+    expect(firstIdx).toBeGreaterThan(-1); // 대출이 실제로 발생해야 함
+
+    // 대출 발생 전 모든 스냅샷: securedLoanBalanceEnd = 0
+    const preIntervention = snapshots.slice(0, firstIdx);
+    expect(preIntervention.every(s => s.securedLoanBalanceEnd === 0)).toBe(true);
+  });
+
+  it('대출 발생 이후 잔고가 단조 증가해야 함 (이자 + draw 누적)', () => {
+    const inputs = makeInputs({
+      goal: { retirementAge: 41, lifeExpectancy: 90, targetMonthly: 100, inflationRate: 0 },
+      status: { currentAge: 40, annualIncome: 0, incomeGrowthRate: 0, annualExpense: 0, expenseGrowthRate: 0 },
+      assets: {
+        cash:       { amount: 0,      expectedReturn: 0 },
+        deposit:    { amount: 0,      expectedReturn: 0 },
+        bond:       { amount: 0,      expectedReturn: 0 },
+        stock_kr:   { amount: 0,      expectedReturn: 0 },
+        stock_us:   { amount: 0,      expectedReturn: 0 },
+        crypto:     { amount: 0,      expectedReturn: 0 },
+        realEstate: { amount: 100000, expectedReturn: 0 },
+      },
+    });
+
+    const snapshots = simulateMonthlyV2(inputs, 100, 'secured_loan', DEFAULT_FUNDING_POLICY, DEFAULT_LIQUIDATION);
+
+    const postIntervention = snapshots.filter(s => s.securedLoanBalanceEnd > 0);
+    if (postIntervention.length < 2) return;
+
+    // 이자 + draw 누적으로 잔고는 단조 증가
+    for (let i = 1; i < postIntervention.length; i++) {
+      expect(postIntervention[i].securedLoanBalanceEnd).toBeGreaterThanOrEqual(
+        postIntervention[i - 1].securedLoanBalanceEnd,
+      );
+    }
+  });
+
+  it('대출 첫 달 잔고 = draw 금액 (이자 붙기 전)', () => {
+    const inputs = makeInputs({
+      goal: { retirementAge: 41, lifeExpectancy: 90, targetMonthly: 100, inflationRate: 0 },
+      status: { currentAge: 40, annualIncome: 0, incomeGrowthRate: 0, annualExpense: 0, expenseGrowthRate: 0 },
+      assets: {
+        cash:       { amount: 0,      expectedReturn: 0 },
+        deposit:    { amount: 0,      expectedReturn: 0 },
+        bond:       { amount: 0,      expectedReturn: 0 },
+        stock_kr:   { amount: 0,      expectedReturn: 0 },
+        stock_us:   { amount: 0,      expectedReturn: 0 },
+        crypto:     { amount: 0,      expectedReturn: 0 },
+        realEstate: { amount: 100000, expectedReturn: 0 },
+      },
+    });
+
+    const snapshots = simulateMonthlyV2(inputs, 100, 'secured_loan', DEFAULT_FUNDING_POLICY, DEFAULT_LIQUIDATION);
+
+    // 대출 최초 발생 월 찾기
+    const firstDrawIdx = snapshots.findIndex(s => s.eventFlags.propertyInterventionStarted);
+    if (firstDrawIdx < 0) return; // 대출 발생 안 하면 스킵
+
+    const firstDrawMonth = snapshots[firstDrawIdx];
+    const drawBalance = firstDrawMonth.securedLoanBalanceEnd;
+
+    // 직전 달은 0 (대출 전)
+    const prevBalance = firstDrawIdx > 0 ? snapshots[firstDrawIdx - 1].securedLoanBalanceEnd : 0;
+    expect(prevBalance).toBe(0);
+
+    // 다음 달: drawBalance * (1 + 4.5%/12) + 추가 draw ≥ drawBalance * (1 + rate)
+    if (firstDrawIdx + 1 < snapshots.length) {
+      const nextBalance = snapshots[firstDrawIdx + 1].securedLoanBalanceEnd;
+      const monthlyRate = 4.5 / 100 / 12;
+      // 이자만 붙으면: drawBalance * (1+rate). 추가 draw가 있으면 더 높음.
+      expect(nextBalance).toBeGreaterThanOrEqual(drawBalance * (1 + monthlyRate) - 1);
+    }
+  });
+});
+
+// ─── [P6] 과매도 방지 — 단일 인출 ───────────────────────────────────────────
+
+describe('[P6] 과매도 방지 — 부족 상황에서 단 1번 인출', () => {
+  it('은퇴 후 부족 달의 shortfall이 0이어야 함 (자산 충분히 있으면)', () => {
+    // 자산이 충분하면 drawFromBuckets 1번으로 모든 부족분 해결 → shortfall=0
+    const inputs = makeInputs({
+      goal: { retirementAge: 41, lifeExpectancy: 90, targetMonthly: 100, inflationRate: 0 },
+      status: { currentAge: 40, annualIncome: 0, incomeGrowthRate: 0, annualExpense: 0, expenseGrowthRate: 0 },
+      assets: {
+        cash:       { amount: 100000, expectedReturn: 0 }, // 충분한 현금
+        deposit:    { amount: 0,      expectedReturn: 0 },
+        bond:       { amount: 0,      expectedReturn: 0 },
+        stock_kr:   { amount: 0,      expectedReturn: 0 },
+        stock_us:   { amount: 0,      expectedReturn: 0 },
+        crypto:     { amount: 0,      expectedReturn: 0 },
+        realEstate: { amount: 0,      expectedReturn: 0 },
+      },
+    });
+
+    const snapshots = simulateMonthlyV2(inputs, 100, 'keep', DEFAULT_FUNDING_POLICY, DEFAULT_LIQUIDATION);
+
+    // 충분한 자산 → 모든 달 shortfall = 0
+    const anyShortfall = snapshots.some(s => s.shortfallThisMonth > 0);
+    expect(anyShortfall).toBe(false);
+  });
+
+  it('모든 자산 소진 시 shortfallThisMonth > 0이어야 함 (failureOccurred)', () => {
+    const inputs = makeInputs({
+      goal: { retirementAge: 41, lifeExpectancy: 90, targetMonthly: 1000, inflationRate: 0 },
+      status: { currentAge: 40, annualIncome: 0, incomeGrowthRate: 0, annualExpense: 0, expenseGrowthRate: 0 },
+      assets: {
+        cash:       { amount: 100, expectedReturn: 0 }, // 매우 적은 자산
+        deposit:    { amount: 0,   expectedReturn: 0 },
+        bond:       { amount: 0,   expectedReturn: 0 },
+        stock_kr:   { amount: 0,   expectedReturn: 0 },
+        stock_us:   { amount: 0,   expectedReturn: 0 },
+        crypto:     { amount: 0,   expectedReturn: 0 },
+        realEstate: { amount: 0,   expectedReturn: 0 },
+      },
+    });
+
+    const snapshots = simulateMonthlyV2(inputs, 1000, 'keep', DEFAULT_FUNDING_POLICY, DEFAULT_LIQUIDATION);
+
+    const failureMonth = snapshots.find(s => s.shortfallThisMonth > 0);
+    expect(failureMonth).toBeDefined();
+    expect(failureMonth!.eventFlags.failureOccurred).toBe(true);
+  });
+
+  it('cashLikeEnd가 음수가 되면 안 됨 (이중 인출 방지)', () => {
+    // 부족 상황에서 이중 인출이면 음수가 될 수 있음
+    const inputs = makeInputs({
+      goal: { retirementAge: 65, lifeExpectancy: 90, targetMonthly: 200, inflationRate: 2.5 },
+    });
+
+    const snapshots = simulateMonthlyV2(
+      inputs, 200, 'keep', DEFAULT_FUNDING_POLICY, DEFAULT_LIQUIDATION,
+    );
+
+    for (const s of snapshots) {
+      expect(s.cashLikeEnd).toBeGreaterThanOrEqual(0);
+      expect(s.financialInvestableEnd).toBeGreaterThanOrEqual(0);
+    }
+  });
+
+  /**
+   * [P6 강화] deficit > 0 AND bufferGap > 0 상황에서 단 1번 인출 검증
+   *
+   * 시나리오:
+   *   - currentAge = retirementAge = 65 (즉시 은퇴)
+   *   - 소득·연금 = 0, 생활비 = 100/월, inflationRate = 0
+   *   - 자산: cash=300, bond=100000 (수익률=0)
+   *   - buffer = 100 * 6 = 600 (liquidityBufferMonths=6)
+   *
+   * 계산:
+   *   cashLike = 300, buffer = 600 → bufferGap = 300
+   *   netFlow = -100 → deficit = 100
+   *   totalNeeded = 100 + 300 = 400 (단 1번 인출)
+   *
+   * 검증:
+   *   actualWithdrawal = (초기 현금+채권) - (월말 현금+채권) = 400
+   *   shortfallThisMonth = 0 (완전 충당)
+   *   cashEnd = 0 (cash 300 전부 차감)
+   *   bondEnd = 99900 (bond에서 100 차감)
+   *   이중 인출이었다면 actualWithdrawal > 400
+   */
+  it('[P6 강화] deficit(100) + bufferGap(300) = totalNeeded(400)가 단 1번 인출로 처리됨', () => {
+    const inputs = makeInputs({
+      goal: { retirementAge: 65, lifeExpectancy: 90, targetMonthly: 100, inflationRate: 0 },
+      status: { currentAge: 65, annualIncome: 0, incomeGrowthRate: 0, annualExpense: 0, expenseGrowthRate: 0 },
+      assets: {
+        cash:       { amount: 300,    expectedReturn: 0 }, // cashLike=300 < buffer(600) → bufferGap=300
+        deposit:    { amount: 0,      expectedReturn: 0 },
+        bond:       { amount: 100000, expectedReturn: 0 }, // 충분한 자산
+        stock_kr:   { amount: 0,      expectedReturn: 0 },
+        stock_us:   { amount: 0,      expectedReturn: 0 },
+        crypto:     { amount: 0,      expectedReturn: 0 },
+        realEstate: { amount: 0,      expectedReturn: 0 },
+      },
+    });
+
+    const fundingPolicy: FundingPolicy = { liquidityBufferMonths: 6 };
+    const snapshots = simulateMonthlyV2(inputs, 100, 'keep', fundingPolicy, DEFAULT_LIQUIDATION);
+    const m0 = snapshots[0]; // ageYear=65, ageMonthIndex=0
+
+    // 초기 총자산 (수익률 0이므로 성장 없음)
+    const initialTotal = 300 + 100000; // cash + bond
+    const finalTotal = m0.cashEnd + m0.depositEnd + m0.bondEnd + m0.stockKrEnd + m0.stockUsEnd + m0.cryptoEnd;
+    const actualWithdrawal = initialTotal - finalTotal;
+
+    // 단 1번 인출: actualWithdrawal = deficit(100) + bufferGap(300) = 400
+    expect(actualWithdrawal).toBeCloseTo(400, 0);
+    // 이중 인출이면 > 400, 미충당이면 < 400
+
+    // 개별 버킷 검증: cash(300) 전부 → bond에서 100 추가
+    expect(m0.cashEnd).toBe(0);
+    expect(m0.bondEnd).toBeCloseTo(99900, 0);
+
+    // shortfall 없음 (완전 충당)
+    expect(m0.shortfallThisMonth).toBe(0);
+  });
+});
+
+// ─── D. 주택연금 상한 ────────────────────────────────────────────────────────
+
+describe('D. 주택연금 상한 (12억 = 120,000만원)', () => {
+  it('15억 주택도 12억 상한 적용으로 12억과 동일한 연금액', () => {
+    const result15 = calcHousingAnnuityMonthly(150_000, 65, 2.5, 25);
+    const result12 = calcHousingAnnuityMonthly(120_000, 65, 2.5, 25);
+    expect(result15).toBeCloseTo(result12, 0);
+    expect(result12).toBeGreaterThan(100);
+    expect(result12).toBeLessThan(300);
+  });
+});
+
+// ─── E. 부채상환 타이밍 ─────────────────────────────────────────────────────
+
+describe('E. 부채상환 타이밍', () => {
+  it('부채 있는 경우 연간 총 상환액이 대출 규모에 부합해야 함', () => {
+    const inputs = makeInputs({
+      debts: {
+        mortgage: {
+          balance: 30000,
+          interestRate: 4.0,
+          repaymentType: 'equal_payment',
+          repaymentYears: 20,
+        },
+        creditLoan: { balance: 0, interestRate: 0, repaymentType: 'balloon_payment', repaymentYears: 0 },
+        otherLoan:  { balance: 0, interestRate: 0, repaymentType: 'balloon_payment', repaymentYears: 0 },
+      },
+    });
+
+    const snapshots = simulateMonthlyV2(
+      inputs, inputs.goal.targetMonthly, 'keep',
+      DEFAULT_FUNDING_POLICY, DEFAULT_LIQUIDATION,
+    );
+
+    // 2년차 연간 상환액
+    const year2 = snapshots.filter(s => s.ageYear === inputs.status.currentAge + 1);
+    const totalDebtYear2 = year2.reduce((s, m) => s + m.debtServiceThisMonth, 0);
+
+    // 3억, 4%, 20년 원리금균등 → 월 약 181.9만원 × 12 ≈ 2182만원/년
+    expect(totalDebtYear2).toBeGreaterThan(1800);
+    expect(totalDebtYear2).toBeLessThan(2500);
+  });
+
+  it('부채 없으면 상환액 0', () => {
+    const inputs = makeInputs();
+    const snapshots = simulateMonthlyV2(
+      inputs, inputs.goal.targetMonthly, 'keep',
+      DEFAULT_FUNDING_POLICY, DEFAULT_LIQUIDATION,
+    );
+    const totalDebt = snapshots.reduce((s, m) => s + m.debtServiceThisMonth, 0);
+    expect(totalDebt).toBe(0);
+  });
+});
+
+// ─── F. 매각 후 임대비 물가 연동 ─────────────────────────────────────────────
+
+describe('F. 매각 후 임대비 물가 연동', () => {
+  it('집 팔고 나서 임대비가 시간이 갈수록 증가해야 함', () => {
+    const inputs = makeInputs({
+      goal: { retirementAge: 65, lifeExpectancy: 90, targetMonthly: 400, inflationRate: 2.5 },
+      status: {
+        currentAge: 40, annualIncome: 6000, incomeGrowthRate: 2.0,
+        annualExpense: 4800, expenseGrowthRate: 2.0,
+      },
+      assets: {
+        cash:       { amount: 100,   expectedReturn: 1.0 },
+        deposit:    { amount: 100,   expectedReturn: 2.0 },
+        stock_kr:   { amount: 200,   expectedReturn: 6.0 },
+        stock_us:   { amount: 200,   expectedReturn: 8.0 },
+        bond:       { amount: 0,     expectedReturn: 3.5 },
+        crypto:     { amount: 0,     expectedReturn: 0   },
+        realEstate: { amount: 50000, expectedReturn: 3.0 },
+      },
+    });
+
+    const snapshots = simulateMonthlyV2(inputs, 400, 'sell', DEFAULT_FUNDING_POLICY, DEFAULT_LIQUIDATION);
+
+    const saleMonth = snapshots.find(s => s.eventFlags.propertySold);
+    if (!saleMonth) return;
+
+    const saleIndex = snapshots.indexOf(saleMonth);
+    const saleRental = snapshots[saleIndex + 1]?.rentalCostThisMonth ?? 0;
+
+    const laterIndex = saleIndex + 120;
+    if (laterIndex >= snapshots.length) return;
+    const laterRental = snapshots[laterIndex].rentalCostThisMonth;
+
+    if (saleRental > 0 && laterRental > 0) {
+      expect(laterRental).toBeGreaterThan(saleRental);
+    }
+  });
+});
+
+// ─── 연봉별 시나리오 ──────────────────────────────────────────────────────────
+
+describe('연봉별 시나리오 (고소득일수록 은퇴 자산·지속가능 생활비 더 높아야 함)', () => {
+  const incomes = [6000, 8000, 10000, 15000, 20000];
+
+  it('연봉이 높을수록 은퇴 시점 자산이 더 많아야 함', () => {
+    const assetsAtRetirement = incomes.map((income) => {
+      const inputs = makeInputs({
+        status: { currentAge: 40, annualIncome: income, incomeGrowthRate: 2.0, annualExpense: 3600, expenseGrowthRate: 2.0 },
+      });
+      const snapshots = simulateMonthlyV2(inputs, inputs.goal.targetMonthly, 'keep', DEFAULT_FUNDING_POLICY, DEFAULT_LIQUIDATION);
+      const atRetirement = snapshots.find(s => s.ageYear === 65 && s.ageMonthIndex === 0);
+      return atRetirement ? atRetirement.cashLikeEnd + atRetirement.financialInvestableEnd : 0;
+    });
+
+    for (let i = 0; i < assetsAtRetirement.length - 1; i++) {
+      expect(assetsAtRetirement[i + 1]).toBeGreaterThan(assetsAtRetirement[i]);
+    }
+  });
+
+  it('연봉이 높을수록 지속가능 월 생활비가 더 높아야 함', () => {
+    const sustainables = incomes.map((income) => {
+      const inputs = makeInputs({
+        status: { currentAge: 40, annualIncome: income, incomeGrowthRate: 2.0, annualExpense: 3600, expenseGrowthRate: 2.0 },
+      });
+      return findMaxSustainableMonthlyV2(inputs, 'keep', DEFAULT_FUNDING_POLICY, DEFAULT_LIQUIDATION);
+    });
+
+    for (let i = 0; i < sustainables.length - 1; i++) {
+      expect(sustainables[i + 1]).toBeGreaterThanOrEqual(sustainables[i]);
+    }
+  });
+});
+
+// ─── 금융자산별 시나리오 ──────────────────────────────────────────────────────
+
+describe('금융자산별 시나리오 (자산 많을수록 지속가능 생활비 높아야 함)', () => {
+  const financialAssets = [5000, 10000, 30000, 100000];
+
+  it('금융자산이 많을수록 지속가능 월 생활비가 더 높아야 함', () => {
+    const sustainables = financialAssets.map((total) => {
+      const inputs = makeInputs({
+        assets: {
+          cash:       { amount: total * 0.1, expectedReturn: 1.0 },
+          deposit:    { amount: total * 0.1, expectedReturn: 2.0 },
+          stock_kr:   { amount: total * 0.3, expectedReturn: 6.0 },
+          stock_us:   { amount: total * 0.5, expectedReturn: 8.0 },
+          bond:       { amount: 0,           expectedReturn: 3.5 },
+          crypto:     { amount: 0,           expectedReturn: 0   },
+          realEstate: { amount: 50000,       expectedReturn: 3.0 },
+        },
+      });
+      return findMaxSustainableMonthlyV2(inputs, 'keep', DEFAULT_FUNDING_POLICY, DEFAULT_LIQUIDATION);
+    });
+
+    for (let i = 0; i < sustainables.length - 1; i++) {
+      expect(sustainables[i + 1]).toBeGreaterThan(sustainables[i]);
+    }
+  });
+});
+
+// ─── 생활비별 시나리오 ────────────────────────────────────────────────────────
+
+describe('생활비별 시나리오 (높을수록 결과 나빠져야 함)', () => {
+  const monthlies = [200, 400, 600];
+
+  it('목표 생활비가 높을수록 자금 부족이 더 일찍 발생하거나 최종 자산이 적어야 함', () => {
+    const getResultScore = (monthly: number): number => {
+      const inputs = makeInputs({
+        goal: { retirementAge: 65, lifeExpectancy: 90, targetMonthly: monthly, inflationRate: 2.5 },
+      });
+      const snapshots = simulateMonthlyV2(inputs, monthly, 'keep', DEFAULT_FUNDING_POLICY, DEFAULT_LIQUIDATION);
+      const failureMonth = snapshots.find(s => s.shortfallThisMonth > 0);
+      if (failureMonth) {
+        // 실패 나이(낮을수록 나쁨)를 점수로 사용
+        return failureMonth.ageYear;
+      }
+      // 실패 없으면 최종 잔고를 점수로 (높을수록 좋음)
+      const last = snapshots[snapshots.length - 1];
+      return last.cashLikeEnd + last.financialInvestableEnd + 10000; // 실패 없음은 항상 실패보다 높은 점수
+    };
+
+    const scores = monthlies.map(getResultScore);
+    // 생활비가 낮을수록 점수(지속성)가 높거나 같아야 함
+    for (let i = 0; i < scores.length - 1; i++) {
+      expect(scores[i]).toBeGreaterThanOrEqual(scores[i + 1]);
+    }
+  });
+
+  it('생활비가 높을수록 지속가능 vs 목표 gap이 줄거나 부족해야 함', () => {
+    const gaps = monthlies.map((monthly) => {
+      const inputs = makeInputs({
+        goal: { retirementAge: 65, lifeExpectancy: 90, targetMonthly: monthly, inflationRate: 2.5 },
+      });
+      const sustainable = findMaxSustainableMonthlyV2(inputs, 'keep', DEFAULT_FUNDING_POLICY, DEFAULT_LIQUIDATION);
+      return sustainable - monthly;
+    });
+
+    for (let i = 0; i < gaps.length - 1; i++) {
+      expect(gaps[i]).toBeGreaterThanOrEqual(gaps[i + 1]);
+    }
+  });
+});
+
+// ─── 기본 동작 검증 ──────────────────────────────────────────────────────────
+
+describe('기본 동작', () => {
+  it('스냅샷 개수가 (lifeExpectancy - currentAge + 1) × 12 - 11 이어야 함', () => {
+    const inputs = makeInputs();
+    const snapshots = simulateMonthlyV2(inputs, inputs.goal.targetMonthly, 'keep', DEFAULT_FUNDING_POLICY, DEFAULT_LIQUIDATION);
+    // currentAge 40, lifeExpectancy 90 → 51년 × 12 - 11 = 601개
+    expect(snapshots.length).toBe(601);
+  });
+
+  it('모든 스냅샷의 cashLikeEnd / financialInvestableEnd는 음수가 없어야 함', () => {
+    const inputs = makeInputs();
+    const snapshots = simulateMonthlyV2(inputs, inputs.goal.targetMonthly, 'keep', DEFAULT_FUNDING_POLICY, DEFAULT_LIQUIDATION);
+    for (const s of snapshots) {
+      expect(s.cashLikeEnd).toBeGreaterThanOrEqual(0);
+      expect(s.financialInvestableEnd).toBeGreaterThanOrEqual(0);
+    }
+  });
+
+  it('isSustainableV2: 여유 있는 케이스는 true를 반환해야 함', () => {
+    const inputs = makeInputs({
+      goal: { retirementAge: 65, lifeExpectancy: 90, targetMonthly: 50, inflationRate: 2.5 },
+    });
+    const snapshots = simulateMonthlyV2(inputs, 50, 'keep', DEFAULT_FUNDING_POLICY, DEFAULT_LIQUIDATION);
+    expect(isSustainableV2(snapshots)).toBe(true);
+  });
+
+  it('isSustainableV2: 자산 없이 지출이 많으면 false를 반환해야 함', () => {
+    const inputs = makeInputs({
+      goal: { retirementAge: 41, lifeExpectancy: 90, targetMonthly: 1000, inflationRate: 2.5 },
+      status: { currentAge: 40, annualIncome: 0, incomeGrowthRate: 0, annualExpense: 0, expenseGrowthRate: 0 },
+      assets: {
+        cash:       { amount: 100, expectedReturn: 0 },
+        deposit:    { amount: 0,   expectedReturn: 0 },
+        stock_kr:   { amount: 0,   expectedReturn: 0 },
+        stock_us:   { amount: 0,   expectedReturn: 0 },
+        bond:       { amount: 0,   expectedReturn: 0 },
+        crypto:     { amount: 0,   expectedReturn: 0 },
+        realEstate: { amount: 0,   expectedReturn: 0 },
+      },
+    });
+    const snapshots = simulateMonthlyV2(inputs, 1000, 'keep', DEFAULT_FUNDING_POLICY, DEFAULT_LIQUIDATION);
+    expect(isSustainableV2(snapshots)).toBe(false);
+  });
+
+  it('은퇴 전 incomeThisMonth > 0, 은퇴 후 incomeThisMonth = 0이어야 함', () => {
+    const inputs = makeInputs({
+      status: { currentAge: 40, annualIncome: 6000, incomeGrowthRate: 2.0, annualExpense: 3600, expenseGrowthRate: 2.0 },
+      goal: { retirementAge: 65, lifeExpectancy: 90, targetMonthly: 300, inflationRate: 2.5 },
+    });
+
+    const snapshots = simulateMonthlyV2(inputs, inputs.goal.targetMonthly, 'keep', DEFAULT_FUNDING_POLICY, DEFAULT_LIQUIDATION);
+
+    const preRetirement = snapshots.filter(s => s.ageYear < 65 && s.ageYear > 40);
+    const postRetirement = snapshots.filter(s => s.ageYear >= 65);
+
+    expect(preRetirement.every(s => s.incomeThisMonth > 0)).toBe(true);
+    expect(postRetirement.every(s => s.incomeThisMonth === 0)).toBe(true);
+  });
+});
+
+// ─── C. V2 Debt Schedule Single Source ──────────────────────────────────────
+//
+// 검증 목표:
+//   1) simulateMonthlyV2에 prebuiltSchedules를 주입하면 내부 재계산과 동일한 결과
+//   2) runCalculationV2도 주입된 schedules를 사용해 동일한 결과를 냄
+//
+// 이 두 테스트를 통해 "주입된 단일 인스턴스" vs "내부 계산 인스턴스"가
+// 동일한 debt service 값을 생성함을 확인한다.
+// ────────────────────────────────────────────────────────────────────────────
+
+describe('C. V2 debt schedule single source', () => {
+  const DEBT_INPUTS = makeInputs({
+    debts: {
+      mortgage:   { balance: 30000, interestRate: 4.0, repaymentType: 'equal_payment', repaymentYears: 20 },
+      creditLoan: { balance: 0, interestRate: 0, repaymentType: 'balloon_payment', repaymentYears: 0 },
+      otherLoan:  { balance: 0, interestRate: 0, repaymentType: 'balloon_payment', repaymentYears: 0 },
+    },
+  });
+
+  it('simulateMonthlyV2에 prebuiltSchedules 주입 결과 = 내부 계산 결과', () => {
+    const debtSchedules = precomputeDebtSchedules(DEBT_INPUTS.debts);
+
+    // 주입된 schedules 사용
+    const snapshots1 = simulateMonthlyV2(
+      DEBT_INPUTS, DEBT_INPUTS.goal.targetMonthly, 'keep',
+      DEFAULT_FUNDING_POLICY, DEFAULT_LIQUIDATION, debtSchedules,
+    );
+    // 내부에서 재계산 (prebuiltSchedules 미전달)
+    const snapshots2 = simulateMonthlyV2(
+      DEBT_INPUTS, DEBT_INPUTS.goal.targetMonthly, 'keep',
+      DEFAULT_FUNDING_POLICY, DEFAULT_LIQUIDATION,
+    );
+
+    // 첫 달 부채 상환액이 동일해야 함
+    expect(snapshots1[0].debtServiceThisMonth).toBeGreaterThan(0);
+    expect(snapshots1[0].debtServiceThisMonth).toBeCloseTo(snapshots2[0].debtServiceThisMonth, 1);
+
+    // 12달치 모두 동일
+    for (let i = 0; i < 12; i++) {
+      expect(snapshots1[i].debtServiceThisMonth).toBeCloseTo(snapshots2[i].debtServiceThisMonth, 1);
+    }
+  });
+
+  it('runCalculationV2에 prebuiltSchedules 주입 결과 = 내부 계산 결과', () => {
+    const debtSchedules = precomputeDebtSchedules(DEBT_INPUTS.debts);
+
+    // 주입된 schedules 사용
+    const result1 = runCalculationV2(
+      DEBT_INPUTS, CALC_FUNDING_POLICY, CALC_LIQUIDATION_POLICY, debtSchedules,
+    );
+    // 내부에서 재계산
+    const result2 = runCalculationV2(
+      DEBT_INPUTS, CALC_FUNDING_POLICY, CALC_LIQUIDATION_POLICY,
+    );
+
+    expect(result1).not.toBeNull();
+    expect(result2).not.toBeNull();
+
+    // 권장 전략의 첫 달 부채 상환액이 동일해야 함
+    const debt1 = result1!.detailYearlyAggregates[0]?.months[0]?.debtServiceThisMonth ?? -1;
+    const debt2 = result2!.detailYearlyAggregates[0]?.months[0]?.debtServiceThisMonth ?? -1;
+
+    expect(debt1).toBeGreaterThan(0);
+    expect(debt1).toBeCloseTo(debt2, 1);
+
+    // 외부에서 직접 계산한 첫 달 상환액과도 일치해야 함
+    const expectedDebt = debtSchedules.mortgage[0]?.payment ?? 0;
+    expect(debt1).toBeCloseTo(expectedDebt, 1);
+  });
+
+  it('주입된 debtSchedules의 첫 달 상환액이 실제로 0보다 크다', () => {
+    const debtSchedules = precomputeDebtSchedules(DEBT_INPUTS.debts);
+    // 3억, 4%, 20년 원리금균등 → 월 약 181.9만원
+    const firstPayment = debtSchedules.mortgage[0]?.payment ?? 0;
+    expect(firstPayment).toBeGreaterThan(150);
+    expect(firstPayment).toBeLessThan(220);
+  });
+});

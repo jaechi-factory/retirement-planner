@@ -14,6 +14,7 @@ import type {
   WarningItem,
 } from '../types/calculationV2';
 import type { FundingPolicy, LiquidationPolicy } from './fundingPolicy';
+import type { DebtSchedules } from './debtSchedule';
 import { PROPERTY_STRATEGY_LABELS } from './propertyStrategiesV2';
 import type { PropertyStrategyV2 } from './propertyStrategiesV2';
 import {
@@ -25,7 +26,7 @@ import {
   findFailureAgeV2,
 } from './simulatorV2';
 import { findMaxSustainableMonthlyV2 } from './binarySearchV2';
-import { precomputeDebtSchedules, calcTotalAnnualRepayment } from './assetWeighting';
+import { precomputeDebtSchedules, calcTotalAnnualRepaymentFromSchedules } from './assetWeighting';
 import {
   getTotalMonthlyPensionTodayValue,
 } from './pensionEstimation';
@@ -37,14 +38,16 @@ function buildPropertyOption(
   strategy: PropertyStrategyV2,
   fundingPolicy: FundingPolicy,
   liquidationPolicy: LiquidationPolicy,
-  debtSchedules: ReturnType<typeof precomputeDebtSchedules>,
+  debtSchedules: DebtSchedules,
   _lifeExpectancy: number,
 ): PropertyOptionResult {
+  // 단일 source: 같은 debtSchedules를 binary search와 detail simulation에 공유
   const sustainableMonthly = findMaxSustainableMonthlyV2(
     inputs,
     strategy,
     fundingPolicy,
     liquidationPolicy,
+    debtSchedules,
   );
 
   const snapshots = simulateMonthlyV2(
@@ -235,12 +238,14 @@ function buildAssumptions(inputs: PlannerInputs, fundingPolicy: FundingPolicy): 
 function buildWarnings(
   inputs: PlannerInputs,
   options: PropertyOptionResult[],
+  debtSchedules: DebtSchedules,
 ): WarningItem[] {
   const warnings: WarningItem[] = [];
 
   // 은퇴 전 유동성 위기: 현재 수입으로 지출+대출을 감당 못할 때
+  // 단일 source: 외부에서 받은 debtSchedules 사용
   if (inputs.status.annualIncome > 0) {
-    const totalAnnualRepayment = calcTotalAnnualRepayment(inputs.debts);
+    const totalAnnualRepayment = calcTotalAnnualRepaymentFromSchedules(debtSchedules, 0);
     const childExpense = inputs.children.hasChildren &&
       inputs.status.currentAge <= inputs.children.independenceAge
         ? inputs.children.count * inputs.children.monthlyPerChild * 12
@@ -300,6 +305,7 @@ export function runCalculationV2(
   inputs: PlannerInputs,
   fundingPolicy: FundingPolicy,
   liquidationPolicy: LiquidationPolicy,
+  prebuiltSchedules?: DebtSchedules,
 ): CalculationResultV2 | null {
   const { goal, status } = inputs;
 
@@ -314,7 +320,8 @@ export function runCalculationV2(
 
   if (requiredMissing) return null;
 
-  const debtSchedules = precomputeDebtSchedules(inputs.debts);
+  // 단일 source: 외부에서 주입받거나 없으면 1회 계산
+  const debtSchedules = prebuiltSchedules ?? precomputeDebtSchedules(inputs.debts);
 
   // 3가지 전략 병렬 계산
   const propertyOptions: PropertyOptionResult[] = STRATEGIES.map((strategy) =>
@@ -344,7 +351,7 @@ export function runCalculationV2(
 
   const fundingTimeline = buildFundingTimeline(detailYearlyAggregates, goal.retirementAge);
   const assumptions = buildAssumptions(inputs, fundingPolicy);
-  const warnings = buildWarnings(inputs, propertyOptions);
+  const warnings = buildWarnings(inputs, propertyOptions, debtSchedules);
 
   return {
     summary: {

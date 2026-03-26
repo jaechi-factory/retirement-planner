@@ -1,10 +1,9 @@
 /**
- * 권장 전략 기준 — 버킷별 연말 잔고 추이 차트
- * cashLike / financialInvestable / propertyValue (담보대출 차감 후)
+ * 차트 B — 집 자산 변화 (집 가치 / 대출 잔금 / 순주택가치)
  */
 import {
-  AreaChart,
-  Area,
+  LineChart,
+  Line,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -21,48 +20,45 @@ interface Props {
   strategyLabel?: string;
 }
 
-export default function AssetBalanceChart({ rows, retirementAge, strategyLabel }: Props) {
+export default function PropertyAssetChart({ rows, retirementAge, strategyLabel }: Props) {
   if (rows.length === 0) return null;
 
-  const data = rows.map((r) => ({
-    age: r.ageYear,
-    '현금·예금': r.cashLikeEnd,
-    '주식·채권': r.financialInvestableEnd,
-    shortfall: r.totalShortfall,
-  }));
+  const hasLoan = rows.some((r) => r.securedLoanBalanceEnd > 0);
+
+  const data = rows.map((r) => {
+    const netProperty = Math.max(0, r.propertyValueEnd - r.securedLoanBalanceEnd);
+    const point: Record<string, number> = {
+      age: r.ageYear,
+      '집 가치': r.propertyValueEnd,
+      '순주택가치': netProperty,
+    };
+    if (hasLoan) point['대출 잔금'] = r.securedLoanBalanceEnd;
+    return point;
+  });
 
   return (
     <div
       style={{
-        background: 'var(--tds-white)',
-        borderRadius: 16,
-        padding: '20px 20px 12px',
+        background: 'var(--tds-gray-50)',
+        borderRadius: 12,
+        padding: '16px 18px 10px',
         marginBottom: 20,
-        border: '1px solid var(--tds-gray-100)',
+        border: 'none',
       }}
     >
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 12 }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--tds-gray-700)' }}>
-          생활비로 쓸 수 있는 돈 변화
+        <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--tds-gray-400)' }}>
+          집 자산 변화
         </div>
+        <span style={{ fontSize: 10, color: 'var(--tds-gray-300)', marginLeft: 4 }}>참고</span>
         {strategyLabel && (
-          <span style={{ fontSize: 11, color: 'var(--tds-gray-400)' }}>
-            {strategyLabel} 기준
+          <span style={{ fontSize: 10, color: 'var(--tds-gray-300)', marginLeft: 4 }}>
+            · {strategyLabel} 기준
           </span>
         )}
       </div>
-      <ResponsiveContainer width="100%" height={220}>
-        <AreaChart data={data} margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
-          <defs>
-            <linearGradient id="cashGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#1565C0" stopOpacity={0.15} />
-              <stop offset="95%" stopColor="#1565C0" stopOpacity={0.02} />
-            </linearGradient>
-            <linearGradient id="finGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#4527A0" stopOpacity={0.15} />
-              <stop offset="95%" stopColor="#4527A0" stopOpacity={0.02} />
-            </linearGradient>
-          </defs>
+      <ResponsiveContainer width="100%" height={175}>
+        <LineChart data={data} margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="var(--tds-gray-100)" />
           <XAxis
             dataKey="age"
@@ -85,22 +81,31 @@ export default function AssetBalanceChart({ rows, retirementAge, strategyLabel }
             contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid var(--tds-gray-100)' }}
           />
           <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
-          {/* 은퇴 시점 수직선 */}
-          <Area
+          <Line
             type="monotone"
-            dataKey="현금·예금"
-            stroke="#1565C0"
+            dataKey="집 가치"
+            stroke="#E65100"
             strokeWidth={1.5}
-            fill="url(#cashGrad)"
+            dot={false}
           />
-          <Area
+          <Line
             type="monotone"
-            dataKey="주식·채권"
-            stroke="#4527A0"
+            dataKey="순주택가치"
+            stroke="#F57C00"
             strokeWidth={1.5}
-            fill="url(#finGrad)"
+            strokeDasharray="4 2"
+            dot={false}
           />
-        </AreaChart>
+          {hasLoan && (
+            <Line
+              type="monotone"
+              dataKey="대출 잔금"
+              stroke="#B71C1C"
+              strokeWidth={1.5}
+              dot={false}
+            />
+          )}
+        </LineChart>
       </ResponsiveContainer>
       {retirementAge > 0 && (
         <div style={{ fontSize: 10, color: 'var(--tds-gray-400)', textAlign: 'right', padding: '0 16px', marginTop: 4 }}>

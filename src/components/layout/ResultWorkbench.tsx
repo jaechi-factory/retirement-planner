@@ -4,21 +4,55 @@ import { fmtKRW } from '../../utils/format';
 import FundingTimeline from '../result/v2/FundingTimeline';
 import YearlySummaryTable from '../result/v2/YearlySummaryTable';
 import AssetBalanceChart from '../charts/AssetBalanceChart';
+import PropertyAssetChart from '../charts/PropertyAssetChart';
 import SummaryTab from '../result/v2/SummaryTab';
 import PensionTab from '../result/v2/PensionTab';
-import type { YearlyAggregateV2, FundingStage } from '../../types/calculationV2';
+import type { YearlyAggregateV2, FundingStage, PropertyOptionResult } from '../../types/calculationV2';
 import type { CalculationResult } from '../../types/calculation';
 import type { PlannerInputs } from '../../types/inputs';
+
+// ── 전략 표시 레이블 ────────────────────────────────────────────────────────────
+const STRATEGY_DISPLAY_LABELS: Record<string, string> = {
+  keep: '집 안 건드리기',
+  secured_loan: '집에서 생활비 받기',
+  sell: '집 팔고 생활비 늘리기',
+};
+
+// ── 해석 문장 생성 ──────────────────────────────────────────────────────────────
+function buildInsightLine(
+  propertyOptions: PropertyOptionResult[],
+  targetGap: number,
+  pensionCoverageRate: number,
+): string | null {
+  const allFail = propertyOptions.every((o) => !o.survivesToLifeExpectancy);
+  const keepOpt = propertyOptions.find((o) => o.strategy === 'keep');
+
+  if (allFail) {
+    return '지금 조건에선 어떤 전략을 써도 기대수명까지 자금을 유지하기 어려워요. 목표 생활비나 저축 구조를 점검해보세요.';
+  }
+  if (keepOpt && !keepOpt.survivesToLifeExpectancy) {
+    return '집을 안 건드리면 기대수명까지 버티기 어려워요. 집을 활용하는 전략이 필요해요.';
+  }
+  if (targetGap < 0) {
+    return '추천 전략으로도 목표 생활비를 채우기는 어렵지만, 지출을 조금 낮추면 기대수명까지 유지할 수 있어요.';
+  }
+  if (pensionCoverageRate < 0.5) {
+    return '연금만으로는 생활비의 절반도 충당되지 않아요. 자산 운용 계획이 중요해요.';
+  }
+  return null;
+}
 
 // ── 1층: Hero ─────────────────────────────────────────────────────────────────
 function HeroSection({
   sustainableMonthly,
   targetGap,
   recommendedLabel,
+  keyReason,
 }: {
   sustainableMonthly: number;
   targetGap: number;
   recommendedLabel: string;
+  keyReason?: string;
 }) {
   const positive = targetGap >= 0;
   return (
@@ -56,6 +90,20 @@ function HeroSection({
           ? `목표보다 월 ${fmtKRW(targetGap)} 더 가능 ✓`
           : `목표보다 월 ${fmtKRW(Math.abs(targetGap))} 부족`}
       </div>
+      {keyReason && (
+        <div
+          style={{
+            fontSize: 12,
+            color: 'var(--tds-gray-500)',
+            marginTop: 8,
+            lineHeight: 1.6,
+            paddingTop: 8,
+            borderTop: '1px solid var(--tds-gray-100)',
+          }}
+        >
+          {keyReason}
+        </div>
+      )}
     </div>
   );
 }
@@ -80,7 +128,7 @@ function WhyPathSection({
         borderRadius: 16,
         border: '1px solid var(--tds-gray-100)',
         padding: '22px 24px 20px',
-        marginBottom: 20,
+        marginBottom: 16,
       }}
     >
       <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--tds-gray-700)', marginBottom: 14, letterSpacing: 0.1 }}>
@@ -121,6 +169,137 @@ function WhyPathSection({
   );
 }
 
+// ── 해석 문장 블록 ──────────────────────────────────────────────────────────────
+function InsightLine({ text }: { text: string }) {
+  return (
+    <div
+      style={{
+        fontSize: 13,
+        color: 'var(--tds-gray-600)',
+        padding: '12px 16px',
+        background: 'var(--tds-gray-50)',
+        borderRadius: 10,
+        borderLeft: '3px solid var(--tds-gray-200)',
+        marginBottom: 16,
+        lineHeight: 1.65,
+      }}
+    >
+      {text}
+    </div>
+  );
+}
+
+// ── 3층: 집 전략 비교 ──────────────────────────────────────────────────────────
+function HomeOptionsSection({
+  propertyOptions,
+  lifeExpectancy,
+}: {
+  propertyOptions: PropertyOptionResult[];
+  lifeExpectancy: number;
+}) {
+  function statusLabel(opt: PropertyOptionResult): { text: string; positive: boolean } {
+    if (opt.survivesToLifeExpectancy) return { text: `${lifeExpectancy}세까지 가능`, positive: true };
+    if (opt.failureAge !== null) return { text: `${opt.failureAge}세부터 부족`, positive: false };
+    return { text: '지속 불가', positive: false };
+  }
+
+  return (
+    <div
+      style={{
+        borderRadius: 16,
+        border: '1px solid var(--tds-gray-100)',
+        padding: '20px 24px',
+        marginBottom: 16,
+      }}
+    >
+      <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--tds-gray-700)', marginBottom: 14 }}>
+        집을 어떻게 다룰지에 따라 달라져요
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {propertyOptions.map((opt) => {
+          const status = statusLabel(opt);
+          const hasAmount = opt.sustainableMonthly > 0;
+
+          return (
+            <div
+              key={opt.strategy}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 12,
+                padding: '12px 14px',
+                borderRadius: 10,
+                background: opt.isRecommended ? '#F0F7FF' : 'var(--tds-gray-50)',
+                border: `1px solid ${opt.isRecommended ? '#C8DEFF' : 'var(--tds-gray-100)'}`,
+              }}
+            >
+              {/* 전략 이름 */}
+              <div style={{ width: 116, flexShrink: 0 }}>
+                <div
+                  style={{
+                    fontSize: 12,
+                    fontWeight: opt.isRecommended ? 700 : 500,
+                    color: opt.isRecommended ? '#1565C0' : 'var(--tds-gray-500)',
+                    lineHeight: 1.4,
+                  }}
+                >
+                  {STRATEGY_DISPLAY_LABELS[opt.strategy] ?? opt.label}
+                </div>
+                {opt.isRecommended && (
+                  <div style={{ fontSize: 10, color: '#1565C0', marginTop: 2, fontWeight: 600 }}>추천</div>
+                )}
+              </div>
+
+              {/* 월 생활비 + 설명 */}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                {hasAmount ? (
+                  <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--tds-gray-900)' }}>
+                    월 {fmtKRW(opt.sustainableMonthly)}
+                  </div>
+                ) : (
+                  <div style={{ fontSize: 12, fontWeight: 600, color: '#C0392B' }}>
+                    {opt.failureAge !== null
+                      ? `${opt.failureAge}세부터 자금 부족`
+                      : '이 전략으로는 생활비를 만들기 어려워요'}
+                  </div>
+                )}
+                <div
+                  style={{
+                    fontSize: 11,
+                    color: 'var(--tds-gray-400)',
+                    marginTop: 2,
+                    lineHeight: 1.4,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {opt.headline}
+                </div>
+              </div>
+
+              {/* 판정 뱃지 */}
+              <div
+                style={{
+                  flexShrink: 0,
+                  fontSize: 11,
+                  fontWeight: 600,
+                  padding: '4px 8px',
+                  borderRadius: 6,
+                  background: status.positive ? '#E8F5E9' : '#FFF3E0',
+                  color: status.positive ? '#1B7F3A' : '#E65100',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {status.text}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 // ── 4층: 세부 탭 ──────────────────────────────────────────────────────────────
 const TABS = ['요약', '연금', '자산 추이', '연도별 상세'] as const;
@@ -140,39 +319,46 @@ function DetailTabsInner({
   inputs: PlannerInputs;
 }) {
   const [activeTab, setActiveTab] = useState<TabName>('요약');
+  const hasRealEstate = inputs.assets.realEstate.amount > 0;
 
   return (
     <>
-      {/* 탭 헤더 */}
       <div
         style={{
-          padding: '10px 20px 0',
-          background: 'var(--tds-gray-50)',
+          padding: '16px 20px 14px',
           borderBottom: '1px solid var(--tds-gray-100)',
+          background: 'var(--tds-white)',
         }}
       >
-        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--tds-gray-400)', letterSpacing: 0.5, marginBottom: 10 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--tds-gray-400)', letterSpacing: 0.8, marginBottom: 12, textTransform: 'uppercase' }}>
           세부 분석
         </div>
-        <div style={{ display: 'flex', gap: 4 }}>
+        <div
+          style={{
+            display: 'inline-flex',
+            background: 'var(--tds-gray-100)',
+            borderRadius: 10,
+            padding: 3,
+            gap: 2,
+          }}
+        >
           {TABS.map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
               style={{
-                padding: '8px 14px',
+                padding: '7px 16px',
                 fontSize: 12,
                 fontWeight: activeTab === tab ? 700 : 500,
-                color: activeTab === tab ? 'var(--tds-blue-600, #1A5DC2)' : 'var(--tds-gray-400)',
+                color: activeTab === tab ? 'var(--tds-gray-900)' : 'var(--tds-gray-400)',
                 background: activeTab === tab ? 'var(--tds-white)' : 'transparent',
-                border: activeTab === tab ? '1px solid var(--tds-gray-100)' : '1px solid transparent',
-                borderBottom: activeTab === tab ? '1px solid var(--tds-white)' : '1px solid transparent',
-                borderRadius: '6px 6px 0 0',
+                border: 'none',
+                borderRadius: 7,
                 cursor: 'pointer',
                 transition: 'all 0.15s',
                 fontFamily: 'inherit',
                 whiteSpace: 'nowrap',
-                marginBottom: -1,
+                boxShadow: activeTab === tab ? '0 1px 3px rgba(0,0,0,0.10)' : 'none',
               }}
             >
               {tab}
@@ -181,15 +367,24 @@ function DetailTabsInner({
         </div>
       </div>
 
-      <div style={{ padding: '24px 20px' }}>
+      <div style={{ padding: '28px 22px' }}>
         {activeTab === '요약' && <SummaryTab result={result} inputs={inputs} />}
         {activeTab === '연금' && <PensionTab result={result} inputs={inputs} />}
         {activeTab === '자산 추이' && (
-          <AssetBalanceChart
-            rows={detailYearlyAggregates}
-            retirementAge={retirementAge}
-            strategyLabel={strategyLabel}
-          />
+          <>
+            <AssetBalanceChart
+              rows={detailYearlyAggregates}
+              retirementAge={retirementAge}
+              strategyLabel={strategyLabel}
+            />
+            {hasRealEstate && (
+              <PropertyAssetChart
+                rows={detailYearlyAggregates}
+                retirementAge={retirementAge}
+                strategyLabel={strategyLabel}
+              />
+            )}
+          </>
         )}
         {activeTab === '연도별 상세' && (
           <YearlySummaryTable rows={detailYearlyAggregates} retirementAge={retirementAge} />
@@ -240,6 +435,7 @@ export default function ResultWorkbench() {
   const { summary, propertyOptions, warnings, fundingTimeline, detailYearlyAggregates } = resultV2;
   const recommended = propertyOptions.find((o) => o.isRecommended);
 
+  // Why/Path 텍스트
   const pathLines: Array<{ text: string; positive?: boolean }> = [];
 
   if (summary.financialExhaustionAge) {
@@ -268,7 +464,19 @@ export default function ResultWorkbench() {
     pathLines.push({ text: '기대수명까지 자금이 유지돼요', positive: true });
   }
 
-  const allWarnings = warnings.filter((w) => w.severity !== 'critical');
+  // 해석 문장
+  const insightLine = buildInsightLine(
+    propertyOptions,
+    summary.targetGap,
+    result.pensionCoverageRate,
+  );
+
+  // 경고 메시지: 행동 가능한 것(warning)을 메인으로, critical은 보조 문구로
+  const actionableWarning = warnings.find((w) => w.severity === 'warning') ?? null;
+  const criticalWarning = warnings.find((w) => w.severity === 'critical') ?? null;
+  const mainWarning = actionableWarning ?? criticalWarning;
+  // critical을 보조로 보여주는 경우: actionable이 이미 메인일 때만
+  const supplementaryNote = actionableWarning && criticalWarning ? criticalWarning : null;
 
   return (
     <div
@@ -286,7 +494,8 @@ export default function ResultWorkbench() {
       <HeroSection
         sustainableMonthly={summary.sustainableMonthly}
         targetGap={summary.targetGap}
-        recommendedLabel={recommended?.label ?? '추천 전략'}
+        recommendedLabel={STRATEGY_DISPLAY_LABELS[recommended?.strategy ?? ''] ?? (recommended?.label ?? '추천 전략')}
+        keyReason={recommended?.headline}
       />
 
       {/* 2층: Why/Path */}
@@ -297,24 +506,46 @@ export default function ResultWorkbench() {
         lifeExpectancy={inputs.goal.lifeExpectancy}
       />
 
+      {/* 해석 문장 (WhyPath → HomeOptions 사이) */}
+      {insightLine && <InsightLine text={insightLine} />}
 
-      {/* 경고/안내 */}
-      {allWarnings.map((w, i) => (
+      {/* 3층: 집 전략 비교 */}
+      <HomeOptionsSection
+        propertyOptions={propertyOptions}
+        lifeExpectancy={inputs.goal.lifeExpectancy}
+      />
+
+      {/* 경고: 행동 가능한 메인 경고 1개 */}
+      {mainWarning && (
         <div
-          key={i}
           style={{
             fontSize: 12,
             lineHeight: 1.6,
-            color: w.severity === 'warning' ? '#8B6914' : 'var(--tds-gray-400)',
+            color: mainWarning.severity === 'warning' ? '#8B6914' : mainWarning.severity === 'critical' ? '#8B1A1A' : 'var(--tds-gray-400)',
             padding: '10px 14px',
-            marginBottom: 10,
-            background: w.severity === 'warning' ? '#FFFBE6' : 'var(--tds-gray-50)',
+            background: mainWarning.severity === 'warning' ? '#FFFBE6' : mainWarning.severity === 'critical' ? '#FFF0F0' : 'var(--tds-gray-50)',
             borderRadius: 8,
+            marginBottom: supplementaryNote ? 6 : 24,
           }}
         >
-          {w.severity === 'warning' ? '⚠ ' : 'ℹ '}{w.message}
+          {mainWarning.severity === 'critical' ? '🚨 ' : mainWarning.severity === 'warning' ? '⚠ ' : 'ℹ '}{mainWarning.message}
         </div>
-      ))}
+      )}
+
+      {/* 보조 문구: 구조적 최종 리스크 (약하게) */}
+      {supplementaryNote && (
+        <div
+          style={{
+            fontSize: 11,
+            color: 'var(--tds-gray-400)',
+            padding: '0 4px',
+            marginBottom: 24,
+            lineHeight: 1.5,
+          }}
+        >
+          ※ {supplementaryNote.message}
+        </div>
+      )}
 
       {/* 4층: 세부 분석 탭 */}
       <div
@@ -322,13 +553,12 @@ export default function ResultWorkbench() {
           borderRadius: 16,
           border: '1px solid var(--tds-gray-100)',
           overflow: 'hidden',
-          marginTop: 8,
         }}
       >
         <DetailTabsInner
           detailYearlyAggregates={detailYearlyAggregates}
           retirementAge={inputs.goal.retirementAge}
-          strategyLabel={recommended?.label ?? ''}
+          strategyLabel={STRATEGY_DISPLAY_LABELS[recommended?.strategy ?? ''] ?? (recommended?.label ?? '')}
           result={result}
           inputs={inputs}
         />
