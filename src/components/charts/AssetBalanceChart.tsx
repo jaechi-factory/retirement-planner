@@ -18,10 +18,9 @@ import { fmtKRW, fmtKRWAxis } from '../../utils/format';
 interface Props {
   rows: YearlyAggregateV2[];
   retirementAge: number;
-  strategyLabel?: string;
 }
 
-export default function AssetBalanceChart({ rows, retirementAge, strategyLabel }: Props) {
+export default function AssetBalanceChart({ rows, retirementAge }: Props) {
   if (rows.length === 0) return null;
 
   const data = rows.map((r) => ({
@@ -32,27 +31,15 @@ export default function AssetBalanceChart({ rows, retirementAge, strategyLabel }
   }));
 
   return (
-    <div
-      style={{
-        background: 'var(--tds-white)',
-        borderRadius: 16,
-        padding: '20px 20px 12px',
-        marginBottom: 20,
-        border: '1px solid var(--tds-gray-100)',
-      }}
-    >
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 12 }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--tds-gray-700)' }}>
-          생활비로 쓸 수 있는 돈 변화
-        </div>
-        {strategyLabel && (
-          <span style={{ fontSize: 11, color: 'var(--tds-gray-400)' }}>
-            {strategyLabel} 기준
-          </span>
-        )}
+    <div style={{ marginBottom: 24 }}>
+      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--tds-gray-600)', marginBottom: 10 }}>
+        유동자산 추이
       </div>
-      <ResponsiveContainer width="100%" height={220}>
-        <AreaChart data={data} margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
+      <div style={{ fontSize: 11, color: 'var(--tds-gray-400)', marginBottom: 10, lineHeight: 1.4 }}>
+        현금·예금과 주식·채권이 시간에 따라 어떻게 변하는지 보여줘요.{retirementAge > 0 && ` 은퇴 시점: ${retirementAge}세`}
+      </div>
+      <ResponsiveContainer width="100%" height={210}>
+        <AreaChart data={data} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
           <defs>
             <linearGradient id="cashGrad" x1="0" y1="0" x2="0" y2="1">
               <stop offset="5%" stopColor="#1565C0" stopOpacity={0.15} />
@@ -84,29 +71,11 @@ export default function AssetBalanceChart({ rows, retirementAge, strategyLabel }
             labelFormatter={(label) => `${label}세`}
             contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid var(--tds-gray-100)' }}
           />
-          <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
-          {/* 은퇴 시점 수직선 */}
-          <Area
-            type="monotone"
-            dataKey="현금·예금"
-            stroke="#1565C0"
-            strokeWidth={1.5}
-            fill="url(#cashGrad)"
-          />
-          <Area
-            type="monotone"
-            dataKey="주식·채권"
-            stroke="#4527A0"
-            strokeWidth={1.5}
-            fill="url(#finGrad)"
-          />
+          <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 11, paddingTop: 6 }} />
+          <Area type="monotone" dataKey="현금·예금" stroke="#1565C0" strokeWidth={1.5} fill="url(#cashGrad)" />
+          <Area type="monotone" dataKey="주식·채권" stroke="#4527A0" strokeWidth={1.5} fill="url(#finGrad)" />
         </AreaChart>
       </ResponsiveContainer>
-      {retirementAge > 0 && (
-        <div style={{ fontSize: 10, color: 'var(--tds-gray-400)', textAlign: 'right', padding: '0 16px', marginTop: 4 }}>
-          은퇴 시점: {retirementAge}세
-        </div>
-      )}
     </div>
   );
 }

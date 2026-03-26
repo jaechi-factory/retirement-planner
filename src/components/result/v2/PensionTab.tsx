@@ -46,9 +46,9 @@ export default function PensionTab({ result, inputs }: Props) {
         </div>
         <div
           style={{
-            fontSize: 32,
+            fontSize: 24,
             fontWeight: 800,
-            letterSpacing: '-1px',
+            letterSpacing: '-0.5px',
             color: coveragePct >= 50 ? '#1A5DC2' : '#E65100',
             marginBottom: 4,
           }}
@@ -106,7 +106,7 @@ export default function PensionTab({ result, inputs }: Props) {
       </div>
 
       {/* 연금별 상세 */}
-      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--tds-gray-500)', marginBottom: 8 }}>
+      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--tds-gray-600)', marginBottom: 8 }}>
         연금별 상세
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 16 }}>
@@ -165,7 +165,7 @@ export default function PensionTab({ result, inputs }: Props) {
       {/* 연금 개시 타임라인 */}
       {timeline.length > 0 && (
         <>
-          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--tds-gray-500)', marginBottom: 10 }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--tds-gray-600)', marginBottom: 10 }}>
             연금 개시 타임라인
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>

@@ -7,7 +7,7 @@ export default function ChildrenSection() {
   const { children } = inputs;
 
   return (
-    <SectionCard title="자녀 정보">
+    <SectionCard title="자녀 정보" subtitle="자녀 지출이 자산과 저축 여력에 미치는 영향을 반영해요">
       {/* 라디오 버튼 */}
       <div style={{ display: 'flex', gap: 8 }}>
         {[

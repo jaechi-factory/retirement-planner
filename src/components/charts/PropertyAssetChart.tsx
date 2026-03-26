@@ -17,10 +17,9 @@ import { fmtKRW, fmtKRWAxis } from '../../utils/format';
 interface Props {
   rows: YearlyAggregateV2[];
   retirementAge: number;
-  strategyLabel?: string;
 }
 
-export default function PropertyAssetChart({ rows, retirementAge, strategyLabel }: Props) {
+export default function PropertyAssetChart({ rows, retirementAge }: Props) {
   if (rows.length === 0) return null;
 
   const hasLoan = rows.some((r) => r.securedLoanBalanceEnd > 0);
@@ -46,16 +45,11 @@ export default function PropertyAssetChart({ rows, retirementAge, strategyLabel 
         border: 'none',
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 12 }}>
-        <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--tds-gray-400)' }}>
-          집 자산 변화
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+        <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--tds-gray-400)' }}>
+          집 자산 추이
         </div>
-        <span style={{ fontSize: 10, color: 'var(--tds-gray-300)', marginLeft: 4 }}>참고</span>
-        {strategyLabel && (
-          <span style={{ fontSize: 10, color: 'var(--tds-gray-300)', marginLeft: 4 }}>
-            · {strategyLabel} 기준
-          </span>
-        )}
+        <span style={{ fontSize: 10, color: 'var(--tds-gray-300)' }}>· 참고용</span>
       </div>
       <ResponsiveContainer width="100%" height={175}>
         <LineChart data={data} margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
@@ -108,8 +102,8 @@ export default function PropertyAssetChart({ rows, retirementAge, strategyLabel 
         </LineChart>
       </ResponsiveContainer>
       {retirementAge > 0 && (
-        <div style={{ fontSize: 10, color: 'var(--tds-gray-400)', textAlign: 'right', padding: '0 16px', marginTop: 4 }}>
-          은퇴 시점: {retirementAge}세
+        <div style={{ fontSize: 10, color: 'var(--tds-gray-300)', textAlign: 'right', marginTop: 4 }}>
+          은퇴 {retirementAge}세
         </div>
       )}
     </div>

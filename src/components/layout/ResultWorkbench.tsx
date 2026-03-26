@@ -308,13 +308,11 @@ type TabName = (typeof TABS)[number];
 function DetailTabsInner({
   detailYearlyAggregates,
   retirementAge,
-  strategyLabel,
   result,
   inputs,
 }: {
   detailYearlyAggregates: YearlyAggregateV2[];
   retirementAge: number;
-  strategyLabel: string;
   result: CalculationResult;
   inputs: PlannerInputs;
 }) {
@@ -375,14 +373,15 @@ function DetailTabsInner({
             <AssetBalanceChart
               rows={detailYearlyAggregates}
               retirementAge={retirementAge}
-              strategyLabel={strategyLabel}
             />
             {hasRealEstate && (
-              <PropertyAssetChart
-                rows={detailYearlyAggregates}
-                retirementAge={retirementAge}
-                strategyLabel={strategyLabel}
-              />
+              <>
+                <div style={{ height: 1, background: 'var(--tds-gray-100)', margin: '0 0 20px' }} />
+                <PropertyAssetChart
+                  rows={detailYearlyAggregates}
+                  retirementAge={retirementAge}
+                />
+              </>
             )}
           </>
         )}
@@ -558,7 +557,6 @@ export default function ResultWorkbench() {
         <DetailTabsInner
           detailYearlyAggregates={detailYearlyAggregates}
           retirementAge={inputs.goal.retirementAge}
-          strategyLabel={STRATEGY_DISPLAY_LABELS[recommended?.strategy ?? ''] ?? (recommended?.label ?? '')}
           result={result}
           inputs={inputs}
         />

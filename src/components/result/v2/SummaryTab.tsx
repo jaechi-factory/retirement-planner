@@ -67,9 +67,8 @@ export default function SummaryTab({ result, inputs }: Props) {
         style={{
           fontSize: 12,
           fontWeight: 700,
-          color: 'var(--tds-gray-500)',
-          marginBottom: 12,
-          letterSpacing: 0.2,
+          color: 'var(--tds-gray-600)',
+          marginBottom: 10,
         }}
       >
         현재 자산 현황
@@ -81,7 +80,7 @@ export default function SummaryTab({ result, inputs }: Props) {
           display: 'grid',
           gridTemplateColumns: '1fr 1fr',
           gap: 8,
-          marginBottom: 8,
+          marginBottom: 10,
         }}
       >
         <StatItem
