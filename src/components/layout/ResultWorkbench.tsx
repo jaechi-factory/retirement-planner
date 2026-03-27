@@ -252,19 +252,24 @@ function PropertySummaryBar({
   interventionAge,
   strategy,
   finalNetValue,
+  finalFinancialAssets,
 }: {
   interventionAge: number;
   strategy: string;
   finalNetValue: number;
+  finalFinancialAssets: number;
 }) {
   const isSell = strategy === 'sell';
   const startLabel = isSell ? '집 매각 시점' : '집 생활비 보충 시작';
-  const netLabel = isSell ? '집 매각 금액' : '기대수명까지 남는 집 가치';
-  const netValue = isSell
-    ? '금융자산에 합산'
-    : finalNetValue > 0
-    ? `약 ${fmtKRW(finalNetValue)}`
-    : '없음';
+
+  const finalTotal = finalNetValue + finalFinancialAssets;
+  const netValue = finalTotal > 0 ? fmtKRW(finalTotal) : '없음';
+  const netSub =
+    finalTotal > 0
+      ? finalNetValue > 0
+        ? `집 ${fmtKRW(finalNetValue)} + 금융 ${fmtKRW(finalFinancialAssets)}`
+        : `금융자산 ${fmtKRW(finalFinancialAssets)}`
+      : null;
 
   return (
     <div
@@ -284,8 +289,11 @@ function PropertySummaryBar({
       </div>
       <div style={{ width: 1, background: '#DDE8FF', alignSelf: 'stretch' }} />
       <div style={{ flex: 2, padding: '10px 14px' }}>
-        <div style={{ fontSize: 10, color: 'var(--tds-gray-400)', marginBottom: 3 }}>{netLabel}</div>
+        <div style={{ fontSize: 10, color: 'var(--tds-gray-400)', marginBottom: 3 }}>기대수명까지 남는 자산</div>
         <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--tds-gray-800)' }}>{netValue}</div>
+        {netSub && (
+          <div style={{ fontSize: 10, color: 'var(--tds-gray-400)', marginTop: 2 }}>{netSub}</div>
+        )}
       </div>
     </div>
   );
@@ -814,6 +822,9 @@ export default function ResultWorkbench() {
   const finalPropertyNetValue = lastAggRow
     ? Math.max(0, lastAggRow.propertyValueEnd - lastAggRow.securedLoanBalanceEnd)
     : 0;
+  const finalFinancialAssets = lastAggRow
+    ? (lastAggRow.cashLikeEnd ?? 0) + (lastAggRow.financialInvestableEnd ?? 0)
+    : 0;
 
   // 해석 문장
   const hasRealEstate = inputs.assets.realEstate.amount > 0;
@@ -871,6 +882,7 @@ export default function ResultWorkbench() {
           interventionAge={summary.propertyInterventionAge}
           strategy={recommended.strategy}
           finalNetValue={finalPropertyNetValue}
+          finalFinancialAssets={finalFinancialAssets}
         />
       )}
 
