@@ -258,8 +258,8 @@ function PropertySummaryBar({
   finalNetValue: number;
 }) {
   const isSell = strategy === 'sell';
-  const startLabel = isSell ? '집 매각 시점' : '집 활용 시작';
-  const netLabel = isSell ? '매각 후 처리' : '기대수명 시점 남는 집 가치';
+  const startLabel = isSell ? '집 매각 시점' : '집 담보대출 시작';
+  const netLabel = isSell ? '매각대금' : '기대수명까지 남는 집 가치';
   const netValue = isSell
     ? '금융자산에 합산'
     : finalNetValue > 0
@@ -304,6 +304,9 @@ function PropertyUsageCard({
 }) {
   const isLoan = strategy === 'secured_loan';
 
+  // sell 전략은 메인 바에서 이미 모든 정보가 표현됨 — 상세 카드 불필요
+  if (!isLoan) return null;
+
   return (
     <div
       style={{
@@ -315,20 +318,11 @@ function PropertyUsageCard({
       }}
     >
       <div style={{ fontSize: 12, fontWeight: 700, color: '#1565C0', marginBottom: 12 }}>
-        집 활용 시나리오
+        집 활용 수치 상세
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        {/* 시작 시점 */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-          <span style={{ fontSize: 12, color: 'var(--tds-gray-500)' }}>
-            {isLoan ? '집 담보 생활비 시작' : '집 매각 시점'}
-          </span>
-          <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--tds-gray-800)' }}>
-            {interventionAge}세
-          </span>
-        </div>
         {/* 집에서 받은 누적 생활비 — secured_loan만 */}
-        {isLoan && totalDraw > 0 && (
+        {totalDraw > 0 && (
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
             <span style={{ fontSize: 12, color: 'var(--tds-gray-500)' }}>집으로 보탠 생활비 총액</span>
             <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--tds-gray-800)' }}>
@@ -337,26 +331,18 @@ function PropertyUsageCard({
           </div>
         )}
         {/* 기대수명 시점 남는 집 가치 */}
-        {isLoan && (
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-            <span style={{ fontSize: 12, color: 'var(--tds-gray-500)' }}>기대수명 시점 남는 집 가치</span>
-            <span
-              style={{
-                fontSize: 13,
-                fontWeight: 700,
-                color: finalNetValue > 0 ? 'var(--tds-gray-800)' : 'var(--tds-gray-400)',
-              }}
-            >
-              {finalNetValue > 0 ? fmtKRW(finalNetValue) : '0'}
-            </span>
-          </div>
-        )}
-        {/* sell: 매각 대금은 금융자산에 합산 안내 */}
-        {!isLoan && (
-          <div style={{ fontSize: 11, color: 'var(--tds-gray-400)', lineHeight: 1.5 }}>
-            집을 팔아 마련한 금액은 금융자산에 합산돼 이후 생활비로 쓰여요.
-          </div>
-        )}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+          <span style={{ fontSize: 12, color: 'var(--tds-gray-500)' }}>기대수명 시점 남는 집 가치</span>
+          <span
+            style={{
+              fontSize: 13,
+              fontWeight: 700,
+              color: finalNetValue > 0 ? 'var(--tds-gray-800)' : 'var(--tds-gray-400)',
+            }}
+          >
+            {finalNetValue > 0 ? fmtKRW(finalNetValue) : '0'}
+          </span>
+        </div>
       </div>
     </div>
   );
@@ -723,7 +709,7 @@ function DetailTabsInner({
               <>
                 <div style={{ height: 1, background: 'var(--tds-gray-100)', margin: '4px 0 20px' }} />
                 <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--tds-gray-500)', marginBottom: 10 }}>
-                  집 활용 상세
+                  집 활용 수치 확인
                 </div>
                 <PropertyUsageCard
                   interventionAge={propertyInterventionAge}
