@@ -259,7 +259,7 @@ function PropertySummaryBar({
 }) {
   const isSell = strategy === 'sell';
   const startLabel = isSell ? '집 매각 시점' : '집 생활비 보충 시작';
-  const netLabel = isSell ? '매각대금' : '기대수명까지 남는 집 가치';
+  const netLabel = isSell ? '집 매각 금액' : '기대수명까지 남는 집 가치';
   const netValue = isSell
     ? '금융자산에 합산'
     : finalNetValue > 0
@@ -318,7 +318,7 @@ function PropertyUsageCard({
       }}
     >
       <div style={{ fontSize: 12, fontWeight: 700, color: '#1565C0', marginBottom: 12 }}>
-        집 활용 수치 상세
+        집 활용 수치 확인
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         {/* 집에서 받은 누적 생활비 — secured_loan만 */}
@@ -709,7 +709,7 @@ function DetailTabsInner({
               <>
                 <div style={{ height: 1, background: 'var(--tds-gray-100)', margin: '4px 0 20px' }} />
                 <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--tds-gray-500)', marginBottom: 10 }}>
-                  집 활용 수치 확인
+                  집 활용 자세히 보기
                 </div>
                 <PropertyUsageCard
                   interventionAge={propertyInterventionAge}
