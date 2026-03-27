@@ -383,19 +383,19 @@ function HomeOptionsSection({
       style={{
         borderRadius: 16,
         border: '1px solid var(--tds-gray-100)',
-        padding: '20px 24px',
+        padding: '14px 18px',
         marginBottom: 16,
       }}
     >
-      <div style={{ marginBottom: 14 }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--tds-gray-700)' }}>
+      <div style={{ marginBottom: 10 }}>
+        <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--tds-gray-400)' }}>
           집을 어떻게 다룰지에 따라 달라져요
         </div>
         <div style={{ fontSize: 11, color: 'var(--tds-gray-400)', marginTop: 3 }}>
           금액: 전략별 최대 월생활비 · 판정: 목표 {targetMonthly}만원 기준
         </div>
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
         {propertyOptions.map((opt) => {
           const status = statusLabel(opt);
           const hasAmount = opt.sustainableMonthly > 0;
@@ -407,7 +407,7 @@ function HomeOptionsSection({
                 display: 'flex',
                 alignItems: 'center',
                 gap: 12,
-                padding: '12px 14px',
+                padding: '9px 12px',
                 borderRadius: 10,
                 background: opt.isRecommended ? '#F0F7FF' : 'var(--tds-gray-50)',
                 border: `1px solid ${opt.isRecommended ? '#C8DEFF' : 'var(--tds-gray-100)'}`,
@@ -434,7 +434,7 @@ function HomeOptionsSection({
               <div style={{ flex: 1, minWidth: 0 }}>
                 {hasAmount ? (
                   <>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--tds-gray-900)' }}>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--tds-gray-900)' }}>
                       월 {fmtKRW(opt.sustainableMonthly)}
                     </div>
                     <div style={{ fontSize: 10, color: 'var(--tds-gray-300)', marginTop: 1 }}>
