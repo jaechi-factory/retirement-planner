@@ -272,6 +272,7 @@ function PropertySummaryBar({
         display: 'flex',
         gap: 0,
         background: '#F5F8FF',
+        border: '1px solid #C8DEFF',
         borderRadius: 10,
         marginBottom: 16,
         overflow: 'hidden',
