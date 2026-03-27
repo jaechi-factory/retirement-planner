@@ -23,6 +23,7 @@ function buildInsightLine(
   propertyOptions: PropertyOptionResult[],
   targetGap: number,
   pensionCoverageRate: number,
+  hasRealEstate: boolean,
 ): string | null {
   const allFail = propertyOptions.every((o) => !o.survivesToLifeExpectancy);
   const keepOpt = propertyOptions.find((o) => o.strategy === 'keep');
@@ -30,7 +31,7 @@ function buildInsightLine(
   if (allFail) {
     return '지금 조건에선 어떤 전략을 써도 기대수명까지 자금을 유지하기 어려워요. 목표 생활비나 저축 구조를 점검해보세요.';
   }
-  if (keepOpt && !keepOpt.survivesToLifeExpectancy) {
+  if (hasRealEstate && keepOpt && !keepOpt.survivesToLifeExpectancy) {
     return '집을 안 건드리면 기대수명까지 버티기 어려워요. 집을 활용하는 전략이 필요해요.';
   }
   if (targetGap < 0) {
@@ -444,6 +445,8 @@ function DetailTabsInner({
             <AssetBalanceChart
               rows={detailYearlyAggregates}
               retirementAge={retirementAge}
+              targetMonthly={inputs.goal.targetMonthly}
+              strategyLabel={recommendedStrategyLabel}
             />
             {hasRealEstate && (
               <>
@@ -552,10 +555,12 @@ export default function ResultWorkbench() {
   }
 
   // 해석 문장
+  const hasRealEstate = inputs.assets.realEstate.amount > 0;
   const insightLine = buildInsightLine(
     propertyOptions,
     summary.targetGap,
     result.pensionCoverageRate,
+    hasRealEstate,
   );
 
   // 경고 메시지: 행동 가능한 것(warning)을 메인으로, critical은 보조 문구로
@@ -599,12 +604,14 @@ export default function ResultWorkbench() {
       {/* 해석 문장 (WhyPath → HomeOptions 사이) */}
       {insightLine && <InsightLine text={insightLine} />}
 
-      {/* 3층: 집 전략 비교 */}
-      <HomeOptionsSection
-        propertyOptions={propertyOptions}
-        lifeExpectancy={inputs.goal.lifeExpectancy}
-        targetMonthly={inputs.goal.targetMonthly}
-      />
+      {/* 3층: 집 전략 비교 — 부동산 자산이 있을 때만 */}
+      {hasRealEstate && (
+        <HomeOptionsSection
+          propertyOptions={propertyOptions}
+          lifeExpectancy={inputs.goal.lifeExpectancy}
+          targetMonthly={inputs.goal.targetMonthly}
+        />
+      )}
 
       {/* 경고: 행동 가능한 메인 경고 1개 */}
       {mainWarning && (
