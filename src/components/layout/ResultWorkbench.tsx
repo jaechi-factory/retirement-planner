@@ -563,15 +563,31 @@ function DetailTabsInner({
   result,
   inputs,
   recommendedStrategyLabel,
+  recommendedStrategy,
 }: {
   detailYearlyAggregates: YearlyAggregateV2[];
   retirementAge: number;
   result: CalculationResult;
   inputs: PlannerInputs;
   recommendedStrategyLabel: string;
+  recommendedStrategy: string;
 }) {
   const [activeTab, setActiveTab] = useState<TabName>('요약');
   const hasRealEstate = inputs.assets.realEstate.amount > 0;
+
+  // 집 활용 상세 계산 (연도별 상세 탭용)
+  const lastRow = detailYearlyAggregates[detailYearlyAggregates.length - 1];
+  const propertyTotalDraw = lastRow?.securedLoanBalanceEnd ?? 0;
+  const finalPropertyNetValue = lastRow
+    ? Math.max(0, lastRow.propertyValueEnd - lastRow.securedLoanBalanceEnd)
+    : 0;
+  let propertyInterventionAge: number | null = null;
+  for (const row of detailYearlyAggregates) {
+    if (row.eventSummary.includes('집 활용 시작') || row.eventSummary.includes('집 팔기')) {
+      propertyInterventionAge = row.ageYear;
+      break;
+    }
+  }
 
   return (
     <>
@@ -643,6 +659,7 @@ function DetailTabsInner({
         )}
         {activeTab === '연도별 상세' && (
           <>
+            {/* 1) 마일스톤 요약 */}
             <MilestoneBar
               milestones={buildMilestones(
                 detailYearlyAggregates,
@@ -651,12 +668,28 @@ function DetailTabsInner({
                 inputs,
               )}
             />
+            {/* 2) 금융 흐름 기본 표 */}
             <YearlySummaryTable
               rows={detailYearlyAggregates}
               retirementAge={retirementAge}
               strategyLabel={recommendedStrategyLabel}
               targetMonthly={inputs.goal.targetMonthly}
             />
+            {/* 3) 집 활용 상세 — 유주택 + 실제 집 활용 케이스만 */}
+            {hasRealEstate && propertyInterventionAge !== null && (
+              <>
+                <div style={{ height: 1, background: 'var(--tds-gray-100)', margin: '4px 0 20px' }} />
+                <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--tds-gray-500)', marginBottom: 10 }}>
+                  집 활용 상세
+                </div>
+                <PropertyUsageCard
+                  interventionAge={propertyInterventionAge}
+                  strategy={recommendedStrategy}
+                  totalDraw={propertyTotalDraw}
+                  finalNetValue={finalPropertyNetValue}
+                />
+              </>
+            )}
           </>
         )}
       </div>
@@ -746,13 +779,6 @@ export default function ResultWorkbench() {
     pathLines.push({ text: '기대수명까지 자금이 유지돼요', positive: true });
   }
 
-  // 집 활용 시나리오 카드 계산값
-  const lastRow = detailYearlyAggregates[detailYearlyAggregates.length - 1];
-  const propertyTotalDraw = lastRow?.securedLoanBalanceEnd ?? 0;
-  const finalPropertyNetValue = lastRow
-    ? Math.max(0, lastRow.propertyValueEnd - lastRow.securedLoanBalanceEnd)
-    : 0;
-
   // 해석 문장
   const hasRealEstate = inputs.assets.realEstate.amount > 0;
   const insightLine = buildInsightLine(
@@ -812,16 +838,6 @@ export default function ResultWorkbench() {
         />
       )}
 
-      {/* 집 활용 시나리오 카드 — 실제 집 활용이 발생하는 케이스만 */}
-      {hasRealEstate && summary.propertyInterventionAge !== null && recommended?.strategy && (
-        <PropertyUsageCard
-          interventionAge={summary.propertyInterventionAge}
-          strategy={recommended.strategy}
-          totalDraw={propertyTotalDraw}
-          finalNetValue={finalPropertyNetValue}
-        />
-      )}
-
       {/* 경고: 행동 가능한 메인 경고 1개 */}
       {mainWarning && (
         <div
@@ -868,6 +884,7 @@ export default function ResultWorkbench() {
           result={result}
           inputs={inputs}
           recommendedStrategyLabel={recommendedStrategyLabel}
+          recommendedStrategy={recommended?.strategy ?? 'keep'}
         />
       </div>
     </div>
