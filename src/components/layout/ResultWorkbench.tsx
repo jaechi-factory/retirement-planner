@@ -247,6 +247,78 @@ function InsightLine({ text }: { text: string }) {
   );
 }
 
+// ── 집 활용 시나리오 카드 ─────────────────────────────────────────────────────
+function PropertyUsageCard({
+  interventionAge,
+  strategy,
+  totalDraw,
+  finalNetValue,
+}: {
+  interventionAge: number;
+  strategy: string;
+  totalDraw: number;
+  finalNetValue: number;
+}) {
+  const isLoan = strategy === 'secured_loan';
+
+  return (
+    <div
+      style={{
+        borderRadius: 12,
+        background: '#F5F8FF',
+        border: '1px solid #C8DEFF',
+        padding: '16px 18px',
+        marginBottom: 16,
+      }}
+    >
+      <div style={{ fontSize: 12, fontWeight: 700, color: '#1565C0', marginBottom: 12 }}>
+        집 활용 시나리오
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {/* 시작 시점 */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+          <span style={{ fontSize: 12, color: 'var(--tds-gray-500)' }}>
+            {isLoan ? '집 담보 생활비 시작' : '집 매각 시점'}
+          </span>
+          <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--tds-gray-800)' }}>
+            {interventionAge}세
+          </span>
+        </div>
+        {/* 집에서 받은 누적 생활비 — secured_loan만 */}
+        {isLoan && totalDraw > 0 && (
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+            <span style={{ fontSize: 12, color: 'var(--tds-gray-500)' }}>집으로 보탠 생활비 총액</span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--tds-gray-800)' }}>
+              {fmtKRW(totalDraw)}
+            </span>
+          </div>
+        )}
+        {/* 기대수명 시점 남는 집 가치 */}
+        {isLoan && (
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+            <span style={{ fontSize: 12, color: 'var(--tds-gray-500)' }}>기대수명 시점 남는 집 가치</span>
+            <span
+              style={{
+                fontSize: 13,
+                fontWeight: 700,
+                color: finalNetValue > 0 ? 'var(--tds-gray-800)' : 'var(--tds-gray-400)',
+              }}
+            >
+              {finalNetValue > 0 ? fmtKRW(finalNetValue) : '0'}
+            </span>
+          </div>
+        )}
+        {/* sell: 매각 대금은 금융자산에 합산 안내 */}
+        {!isLoan && (
+          <div style={{ fontSize: 11, color: 'var(--tds-gray-400)', lineHeight: 1.5 }}>
+            집을 팔아 마련한 금액은 금융자산에 합산돼 이후 생활비로 쓰여요.
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ── 3층: 집 전략 비교 ──────────────────────────────────────────────────────────
 function HomeOptionsSection({
   propertyOptions,
@@ -554,6 +626,13 @@ export default function ResultWorkbench() {
     pathLines.push({ text: '기대수명까지 자금이 유지돼요', positive: true });
   }
 
+  // 집 활용 시나리오 카드 계산값
+  const lastRow = detailYearlyAggregates[detailYearlyAggregates.length - 1];
+  const propertyTotalDraw = lastRow?.securedLoanBalanceEnd ?? 0;
+  const finalPropertyNetValue = lastRow
+    ? Math.max(0, lastRow.propertyValueEnd - lastRow.securedLoanBalanceEnd)
+    : 0;
+
   // 해석 문장
   const hasRealEstate = inputs.assets.realEstate.amount > 0;
   const insightLine = buildInsightLine(
@@ -610,6 +689,16 @@ export default function ResultWorkbench() {
           propertyOptions={propertyOptions}
           lifeExpectancy={inputs.goal.lifeExpectancy}
           targetMonthly={inputs.goal.targetMonthly}
+        />
+      )}
+
+      {/* 집 활용 시나리오 카드 — 실제 집 활용이 발생하는 케이스만 */}
+      {hasRealEstate && summary.propertyInterventionAge !== null && recommended?.strategy && (
+        <PropertyUsageCard
+          interventionAge={summary.propertyInterventionAge}
+          strategy={recommended.strategy}
+          totalDraw={propertyTotalDraw}
+          finalNetValue={finalPropertyNetValue}
         />
       )}
 

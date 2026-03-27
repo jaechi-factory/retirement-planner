@@ -11,7 +11,6 @@ interface Props {
 
 export default function YearlySummaryTable({ rows, retirementAge, strategyLabel, targetMonthly }: Props) {
   const [expandedYear, setExpandedYear] = useState<number | null>(null);
-  const hasLoanActivity = rows.some((r) => r.securedLoanBalanceEnd > 0);
 
   if (rows.length === 0) return null;
 
@@ -43,18 +42,12 @@ export default function YearlySummaryTable({ rows, retirementAge, strategyLabel,
         <div style={{ fontSize: 10, color: 'var(--tds-gray-300)', marginTop: 2 }}>
           생활비 금액은 물가를 반영한 명목 기준이에요
         </div>
-        {/* 집 활용 누적액이 있을 때: 차트와 동일한 용어임을 연결 */}
-        {hasLoanActivity && (
-          <div style={{ fontSize: 10, color: 'var(--tds-gray-300)', marginTop: 2 }}>
-            집 가치 − 집 활용 누적액 = 순주택가치 (위 차트에서 확인)
-          </div>
-        )}
       </div>
       <div style={{ overflowX: 'auto' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
           <thead>
             <tr style={{ background: 'var(--tds-gray-50)', borderBottom: '1px solid var(--tds-gray-100)' }}>
-              {['나이', '현금·예금', '주식·채권', '집 가치', '집 활용 누적액', '연평균 월생활비', '이벤트'].map((h) => (
+              {['나이', '현금·예금', '주식·채권', '연평균 월생활비', '이벤트'].map((h) => (
                 <th
                   key={h}
                   style={{
@@ -98,12 +91,6 @@ export default function YearlySummaryTable({ rows, retirementAge, strategyLabel,
                       {fmtKRW(row.financialInvestableEnd)}
                     </td>
                     <td style={{ padding: '7px 12px', textAlign: 'right', color: 'var(--tds-gray-700)' }}>
-                      {fmtKRW(row.propertyValueEnd)}
-                    </td>
-                    <td style={{ padding: '7px 12px', textAlign: 'right', color: row.securedLoanBalanceEnd > 0 ? '#C0392B' : 'var(--tds-gray-700)' }}>
-                      {row.securedLoanBalanceEnd > 0 ? `-${fmtKRW(row.securedLoanBalanceEnd)}` : '-'}
-                    </td>
-                    <td style={{ padding: '7px 12px', textAlign: 'right', color: 'var(--tds-gray-700)' }}>
                       {fmtKRW(row.totalExpense / 12)}
                     </td>
                     <td style={{ padding: '7px 12px', textAlign: 'right', fontSize: 11, color: hasShortfall ? '#C0392B' : 'var(--tds-gray-400)' }}>
@@ -132,12 +119,6 @@ export default function YearlySummaryTable({ rows, retirementAge, strategyLabel,
                       </td>
                       <td style={{ padding: '5px 12px', textAlign: 'right', fontSize: 11, color: 'var(--tds-gray-600)' }}>
                         {fmtKRW(m.financialInvestableEnd)}
-                      </td>
-                      <td style={{ padding: '5px 12px', textAlign: 'right', fontSize: 11, color: 'var(--tds-gray-600)' }}>
-                        {fmtKRW(m.propertyValueEnd)}
-                      </td>
-                      <td style={{ padding: '5px 12px', textAlign: 'right', fontSize: 11, color: m.securedLoanBalanceEnd > 0 ? '#C0392B' : 'var(--tds-gray-400)' }}>
-                        {m.securedLoanBalanceEnd > 0 ? `-${fmtKRW(m.securedLoanBalanceEnd)}` : '-'}
                       </td>
                       <td style={{ padding: '5px 12px', textAlign: 'right', fontSize: 11, color: 'var(--tds-gray-600)' }}>
                         {fmtKRW(m.expenseThisMonth)}
