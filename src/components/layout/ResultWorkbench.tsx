@@ -258,7 +258,7 @@ function PropertySummaryBar({
   finalNetValue: number;
 }) {
   const isSell = strategy === 'sell';
-  const startLabel = isSell ? '집 매각 시점' : '집 담보대출 시작';
+  const startLabel = isSell ? '집 매각 시점' : '집 생활비 보충 시작';
   const netLabel = isSell ? '매각대금' : '기대수명까지 남는 집 가치';
   const netValue = isSell
     ? '금융자산에 합산'
