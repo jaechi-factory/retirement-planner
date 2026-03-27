@@ -340,7 +340,6 @@ export function runCalculationV2(
 
   // 이벤트 나이: yearlyAggregates 안의 months에서 추출 (기준 통일)
   const allMonths = detailYearlyAggregates.flatMap((a) => a.months);
-  const cashRunoutAge = findFinancialSellStartAgeV2(allMonths);
   const financialSellStartAge = findFinancialSellStartAgeV2(allMonths);
   const financialExhaustionAge = findFinancialExhaustionAgeV2(allMonths);
   const propertyInterventionAge = findPropertyInterventionAgeV2(allMonths);
@@ -357,7 +356,6 @@ export function runCalculationV2(
     summary: {
       sustainableMonthly,
       targetGap,
-      cashRunoutAge,
       financialSellStartAge,
       financialExhaustionAge,
       propertyInterventionAge,

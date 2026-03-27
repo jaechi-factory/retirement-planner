@@ -47,14 +47,19 @@ function HeroSection({
   sustainableMonthly,
   targetGap,
   recommendedLabel,
+  isKeepRecommended,
+  keepMonthly,
   keyReason,
 }: {
   sustainableMonthly: number;
   targetGap: number;
   recommendedLabel: string;
+  isKeepRecommended: boolean;
+  keepMonthly?: number;
   keyReason?: string;
 }) {
   const positive = targetGap >= 0;
+  const showKeepCompare = !isKeepRecommended && keepMonthly !== undefined;
   return (
     <div
       style={{
@@ -64,8 +69,22 @@ function HeroSection({
         marginBottom: 16,
       }}
     >
-      <div style={{ fontSize: 11, color: 'var(--tds-gray-400)', marginBottom: 6 }}>
-        {recommendedLabel} 기준
+      {/* 전략 기준 뱃지 — 이 숫자가 어떤 전략을 가정한 결과인지 */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+        <span
+          style={{
+            fontSize: 11,
+            fontWeight: 700,
+            color: '#1565C0',
+            background: '#EEF4FF',
+            borderRadius: 4,
+            padding: '2px 7px',
+            lineHeight: 1.5,
+          }}
+        >
+          {recommendedLabel}
+        </span>
+        <span style={{ fontSize: 11, color: 'var(--tds-gray-500)' }}>전략 기준 최대 금액</span>
       </div>
       <div
         style={{
@@ -90,18 +109,31 @@ function HeroSection({
           ? `목표보다 월 ${fmtKRW(targetGap)} 더 가능 ✓`
           : `목표보다 월 ${fmtKRW(Math.abs(targetGap))} 부족`}
       </div>
-      {keyReason && (
+      {(showKeepCompare || keyReason) && (
         <div
           style={{
-            fontSize: 12,
-            color: 'var(--tds-gray-500)',
             marginTop: 8,
-            lineHeight: 1.6,
             paddingTop: 8,
             borderTop: '1px solid var(--tds-gray-100)',
           }}
         >
-          {keyReason}
+          {/* 집 안 건드릴 경우 비교값 — 추천 전략이 keep이 아닐 때만 표시 */}
+          {showKeepCompare && (
+            <div
+              style={{
+                fontSize: 11,
+                color: 'var(--tds-gray-400)',
+                marginBottom: keyReason ? 6 : 0,
+              }}
+            >
+              집을 활용하지 않으면 월 {fmtKRW(keepMonthly!)}만원만 가능해요
+            </div>
+          )}
+          {keyReason && (
+            <div style={{ fontSize: 12, color: 'var(--tds-gray-500)', lineHeight: 1.6 }}>
+              {keyReason}
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -114,11 +146,13 @@ function WhyPathSection({
   fundingTimeline,
   retirementAge,
   lifeExpectancy,
+  targetMonthly,
 }: {
   pathLines: Array<{ text: string; positive?: boolean }>;
   fundingTimeline: FundingStage[];
   retirementAge: number;
   lifeExpectancy: number;
+  targetMonthly: number;
 }) {
   if (pathLines.length === 0 && fundingTimeline.length < 2) return null;
 
@@ -131,8 +165,13 @@ function WhyPathSection({
         marginBottom: 16,
       }}
     >
-      <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--tds-gray-700)', marginBottom: 14, letterSpacing: 0.1 }}>
-        이런 흐름으로 자금이 움직여요
+      <div style={{ marginBottom: 14 }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--tds-gray-700)', letterSpacing: 0.1 }}>
+          이런 흐름으로 자금이 움직여요
+        </div>
+        <div style={{ fontSize: 11, color: 'var(--tds-gray-400)', marginTop: 2 }}>
+          목표 {targetMonthly}만원 기준 흐름이에요
+        </div>
       </div>
 
       {pathLines.length > 0 && (
@@ -169,6 +208,24 @@ function WhyPathSection({
   );
 }
 
+// ── 은퇴 전 적자 전환 나이 계산 ────────────────────────────────────────────────
+// 소득 성장률 < 생활비 성장률일 때 교차하는 나이 (은퇴 전 구간만 반환)
+function findPreRetirementDeficitAge(inputs: PlannerInputs): number | null {
+  const { annualIncome, annualExpense, incomeGrowthRate, expenseGrowthRate, currentAge } = inputs.status;
+  const { retirementAge } = inputs.goal;
+
+  if (annualIncome <= annualExpense) return null; // 이미 적자
+  if (expenseGrowthRate <= incomeGrowthRate) return null; // 교차 없음
+
+  const i = incomeGrowthRate / 100;
+  const e = expenseGrowthRate / 100;
+  const t = Math.log(annualIncome / annualExpense) / Math.log((1 + e) / (1 + i));
+  const age = Math.floor(currentAge + t); // 교차가 일어나는 나이 (해당 나이 중에 역전)
+
+  if (age <= currentAge || age >= retirementAge) return null;
+  return age;
+}
+
 // ── 해석 문장 블록 ──────────────────────────────────────────────────────────────
 function InsightLine({ text }: { text: string }) {
   return (
@@ -193,9 +250,11 @@ function InsightLine({ text }: { text: string }) {
 function HomeOptionsSection({
   propertyOptions,
   lifeExpectancy,
+  targetMonthly,
 }: {
   propertyOptions: PropertyOptionResult[];
   lifeExpectancy: number;
+  targetMonthly: number;
 }) {
   function statusLabel(opt: PropertyOptionResult): { text: string; positive: boolean } {
     if (opt.survivesToLifeExpectancy) return { text: `${lifeExpectancy}세까지 가능`, positive: true };
@@ -212,8 +271,13 @@ function HomeOptionsSection({
         marginBottom: 16,
       }}
     >
-      <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--tds-gray-700)', marginBottom: 14 }}>
-        집을 어떻게 다룰지에 따라 달라져요
+      <div style={{ marginBottom: 14 }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--tds-gray-700)' }}>
+          집을 어떻게 다룰지에 따라 달라져요
+        </div>
+        <div style={{ fontSize: 11, color: 'var(--tds-gray-400)', marginTop: 3 }}>
+          금액: 전략별 최대 월생활비 · 판정: 목표 {targetMonthly}만원 기준
+        </div>
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {propertyOptions.map((opt) => {
@@ -253,9 +317,14 @@ function HomeOptionsSection({
               {/* 월 생활비 + 설명 */}
               <div style={{ flex: 1, minWidth: 0 }}>
                 {hasAmount ? (
-                  <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--tds-gray-900)' }}>
-                    월 {fmtKRW(opt.sustainableMonthly)}
-                  </div>
+                  <>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--tds-gray-900)' }}>
+                      월 {fmtKRW(opt.sustainableMonthly)}
+                    </div>
+                    <div style={{ fontSize: 10, color: 'var(--tds-gray-300)', marginTop: 1 }}>
+                      최대 가능 금액
+                    </div>
+                  </>
                 ) : (
                   <div style={{ fontSize: 12, fontWeight: 600, color: '#C0392B' }}>
                     {opt.failureAge !== null
@@ -310,11 +379,13 @@ function DetailTabsInner({
   retirementAge,
   result,
   inputs,
+  recommendedStrategyLabel,
 }: {
   detailYearlyAggregates: YearlyAggregateV2[];
   retirementAge: number;
   result: CalculationResult;
   inputs: PlannerInputs;
+  recommendedStrategyLabel: string;
 }) {
   const [activeTab, setActiveTab] = useState<TabName>('요약');
   const hasRealEstate = inputs.assets.realEstate.amount > 0;
@@ -386,7 +457,12 @@ function DetailTabsInner({
           </>
         )}
         {activeTab === '연도별 상세' && (
-          <YearlySummaryTable rows={detailYearlyAggregates} retirementAge={retirementAge} />
+          <YearlySummaryTable
+            rows={detailYearlyAggregates}
+            retirementAge={retirementAge}
+            strategyLabel={recommendedStrategyLabel}
+            targetMonthly={inputs.goal.targetMonthly}
+          />
         )}
       </div>
     </>
@@ -433,14 +509,26 @@ export default function ResultWorkbench() {
 
   const { summary, propertyOptions, warnings, fundingTimeline, detailYearlyAggregates } = resultV2;
   const recommended = propertyOptions.find((o) => o.isRecommended);
+  const keepOpt = propertyOptions.find((o) => o.strategy === 'keep');
+  const recommendedStrategyLabel = STRATEGY_DISPLAY_LABELS[recommended?.strategy ?? ''] ?? (recommended?.label ?? '추천 전략');
 
   // Why/Path 텍스트
   const pathLines: Array<{ text: string; positive?: boolean }> = [];
 
-  if (summary.financialExhaustionAge) {
-    pathLines.push({ text: `${summary.financialExhaustionAge}세에 주식·채권이 소진돼요` });
-  } else if (summary.financialSellStartAge) {
-    pathLines.push({ text: `${summary.financialSellStartAge}세부터 주식·채권을 팔기 시작해요` });
+  // 은퇴 전 적자 전환점 (소득 증가율 < 생활비 증가율이고 은퇴 전 교차가 있을 때만)
+  const deficitStartAge = findPreRetirementDeficitAge(inputs);
+  if (deficitStartAge !== null) {
+    pathLines.push({ text: `${deficitStartAge}세부터 생활비가 소득보다 빠르게 늘어 자산이 줄기 시작해요` });
+  }
+
+  if (summary.financialSellStartAge) {
+    // 버퍼 정책 이유를 함께 표시: 현금이 6개월치 생활비 미만으로 줄면 투자자산 매도 발동
+    pathLines.push({
+      text: `${summary.financialSellStartAge}세부터 생활비 6개월치 현금 버퍼를 채우기 위해 주식·채권을 팔기 시작해요`,
+    });
+    if (summary.financialExhaustionAge) {
+      pathLines.push({ text: `${summary.financialExhaustionAge}세에 주식·채권이 소진돼요` });
+    }
   } else {
     pathLines.push({ text: '주식·채권은 기대수명까지 유지돼요', positive: true });
   }
@@ -493,7 +581,9 @@ export default function ResultWorkbench() {
       <HeroSection
         sustainableMonthly={summary.sustainableMonthly}
         targetGap={summary.targetGap}
-        recommendedLabel={STRATEGY_DISPLAY_LABELS[recommended?.strategy ?? ''] ?? (recommended?.label ?? '추천 전략')}
+        recommendedLabel={recommendedStrategyLabel}
+        isKeepRecommended={recommended?.strategy === 'keep'}
+        keepMonthly={recommended?.strategy !== 'keep' ? keepOpt?.sustainableMonthly : undefined}
         keyReason={recommended?.headline}
       />
 
@@ -503,6 +593,7 @@ export default function ResultWorkbench() {
         fundingTimeline={fundingTimeline}
         retirementAge={inputs.goal.retirementAge}
         lifeExpectancy={inputs.goal.lifeExpectancy}
+        targetMonthly={inputs.goal.targetMonthly}
       />
 
       {/* 해석 문장 (WhyPath → HomeOptions 사이) */}
@@ -512,6 +603,7 @@ export default function ResultWorkbench() {
       <HomeOptionsSection
         propertyOptions={propertyOptions}
         lifeExpectancy={inputs.goal.lifeExpectancy}
+        targetMonthly={inputs.goal.targetMonthly}
       />
 
       {/* 경고: 행동 가능한 메인 경고 1개 */}
@@ -559,6 +651,7 @@ export default function ResultWorkbench() {
           retirementAge={inputs.goal.retirementAge}
           result={result}
           inputs={inputs}
+          recommendedStrategyLabel={recommendedStrategyLabel}
         />
       </div>
     </div>

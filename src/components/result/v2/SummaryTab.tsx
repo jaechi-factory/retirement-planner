@@ -63,15 +63,19 @@ export default function SummaryTab({ result, inputs }: Props) {
 
   return (
     <div>
-      <div
-        style={{
-          fontSize: 12,
-          fontWeight: 700,
-          color: 'var(--tds-gray-600)',
-          marginBottom: 10,
-        }}
-      >
-        현재 자산 현황
+      <div style={{ marginBottom: 10 }}>
+        <div
+          style={{
+            fontSize: 12,
+            fontWeight: 700,
+            color: 'var(--tds-gray-600)',
+          }}
+        >
+          현재 자산 현황
+        </div>
+        <div style={{ fontSize: 11, color: 'var(--tds-gray-400)', marginTop: 2 }}>
+          지금 시점 자산·현금흐름 스냅샷
+        </div>
       </div>
 
       {/* 2x2 그리드 */}
@@ -141,7 +145,7 @@ export default function SummaryTab({ result, inputs }: Props) {
           lineHeight: 1.5,
         }}
       >
-        * 보유자산 평균 수익률은 자산별 비중을 반영한 가중평균 기준이에요.
+        * 보유자산 평균 수익률은 부동산을 포함한 전체 자산의 비중 가중평균이에요. 시뮬레이션은 금융자산별 수익률을 따로 적용해요.
       </div>
     </div>
   );
