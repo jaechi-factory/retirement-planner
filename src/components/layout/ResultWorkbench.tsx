@@ -247,6 +247,49 @@ function InsightLine({ text }: { text: string }) {
   );
 }
 
+// ── 집 활용 메인 요약 바 (2-item compact) ────────────────────────────────────
+function PropertySummaryBar({
+  interventionAge,
+  strategy,
+  finalNetValue,
+}: {
+  interventionAge: number;
+  strategy: string;
+  finalNetValue: number;
+}) {
+  const isSell = strategy === 'sell';
+  const startLabel = isSell ? '집 매각 시점' : '집 활용 시작';
+  const netLabel = isSell ? '매각 후 처리' : '기대수명 시점 남는 집 가치';
+  const netValue = isSell
+    ? '금융자산에 합산'
+    : finalNetValue > 0
+    ? `약 ${fmtKRW(finalNetValue)}`
+    : '없음';
+
+  return (
+    <div
+      style={{
+        display: 'flex',
+        gap: 0,
+        background: '#F5F8FF',
+        borderRadius: 10,
+        marginBottom: 16,
+        overflow: 'hidden',
+      }}
+    >
+      <div style={{ flex: 1, padding: '10px 14px' }}>
+        <div style={{ fontSize: 10, color: 'var(--tds-gray-400)', marginBottom: 3 }}>{startLabel}</div>
+        <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--tds-gray-800)' }}>{interventionAge}세</div>
+      </div>
+      <div style={{ width: 1, background: '#DDE8FF', alignSelf: 'stretch' }} />
+      <div style={{ flex: 2, padding: '10px 14px' }}>
+        <div style={{ fontSize: 10, color: 'var(--tds-gray-400)', marginBottom: 3 }}>{netLabel}</div>
+        <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--tds-gray-800)' }}>{netValue}</div>
+      </div>
+    </div>
+  );
+}
+
 // ── 집 활용 시나리오 카드 ─────────────────────────────────────────────────────
 function PropertyUsageCard({
   interventionAge,
@@ -779,6 +822,12 @@ export default function ResultWorkbench() {
     pathLines.push({ text: '기대수명까지 자금이 유지돼요', positive: true });
   }
 
+  // 집 활용 메인 요약용 계산값
+  const lastAggRow = detailYearlyAggregates[detailYearlyAggregates.length - 1];
+  const finalPropertyNetValue = lastAggRow
+    ? Math.max(0, lastAggRow.propertyValueEnd - lastAggRow.securedLoanBalanceEnd)
+    : 0;
+
   // 해석 문장
   const hasRealEstate = inputs.assets.realEstate.amount > 0;
   const insightLine = buildInsightLine(
@@ -835,6 +884,15 @@ export default function ResultWorkbench() {
           propertyOptions={propertyOptions}
           lifeExpectancy={inputs.goal.lifeExpectancy}
           targetMonthly={inputs.goal.targetMonthly}
+        />
+      )}
+
+      {/* 집 활용 시나리오 요약 바 — 실제 집 활용 케이스만 */}
+      {hasRealEstate && summary.propertyInterventionAge !== null && recommended?.strategy && (
+        <PropertySummaryBar
+          interventionAge={summary.propertyInterventionAge}
+          strategy={recommended.strategy}
+          finalNetValue={finalPropertyNetValue}
         />
       )}
 
