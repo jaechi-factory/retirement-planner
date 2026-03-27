@@ -443,6 +443,116 @@ function HomeOptionsSection({
   );
 }
 
+// ── 마일스톤 바 (연도별 상세 탭 상단) ────────────────────────────────────────────
+
+type MilestoneType = 'neutral' | 'positive' | 'warning';
+interface Milestone { age: number; label: string; type: MilestoneType; }
+
+function buildMilestones(
+  rows: YearlyAggregateV2[],
+  retirementAge: number,
+  lifeExpectancy: number,
+  inputs: PlannerInputs,
+): Milestone[] {
+  const ms: Milestone[] = [];
+
+  // 은퇴 전 적자 전환
+  const deficitAge = findPreRetirementDeficitAge(inputs);
+  if (deficitAge !== null) {
+    ms.push({ age: deficitAge, label: '적자 전환', type: 'warning' });
+  }
+
+  // 은퇴
+  ms.push({ age: retirementAge, label: '은퇴', type: 'neutral' });
+
+  // 퇴직연금
+  if (inputs.pension.retirementPension.enabled) {
+    ms.push({ age: inputs.pension.retirementPension.startAge, label: '퇴직연금 시작', type: 'positive' });
+  }
+  // 개인연금
+  if (inputs.pension.privatePension.enabled) {
+    ms.push({ age: inputs.pension.privatePension.startAge, label: '개인연금 시작', type: 'positive' });
+  }
+  // 국민연금
+  if (inputs.pension.publicPension.enabled) {
+    ms.push({ age: inputs.pension.publicPension.startAge, label: '국민연금 시작', type: 'positive' });
+  }
+
+  // 주식·채권 매도 시작
+  for (const row of rows) {
+    if (row.eventSummary.includes('주식·채권 팔기 시작')) {
+      ms.push({ age: row.ageYear, label: '주식·채권 매도 시작', type: 'warning' });
+      break;
+    }
+  }
+
+  // 집 활용 시작 / 집 매각
+  for (const row of rows) {
+    if (row.eventSummary.includes('집 팔기')) {
+      ms.push({ age: row.ageYear, label: '집 매각', type: 'neutral' });
+      break;
+    }
+    if (row.eventSummary.includes('집 활용 시작')) {
+      ms.push({ age: row.ageYear, label: '집 활용 시작', type: 'neutral' });
+      break;
+    }
+  }
+
+  // 자금 부족
+  for (const row of rows) {
+    if (row.totalShortfall > 0) {
+      ms.push({ age: row.ageYear, label: '자금 부족', type: 'warning' });
+      break;
+    }
+  }
+
+  // 기대수명
+  ms.push({ age: lifeExpectancy, label: '기대수명', type: 'neutral' });
+
+  return ms.sort((a, b) => a.age - b.age);
+}
+
+function MilestoneBar({ milestones }: { milestones: Milestone[] }) {
+  if (milestones.length === 0) return null;
+
+  const bg: Record<MilestoneType, string> = {
+    neutral: 'var(--tds-gray-100)',
+    positive: '#E8F5E9',
+    warning: '#FFF3E0',
+  };
+  const color: Record<MilestoneType, string> = {
+    neutral: 'var(--tds-gray-600)',
+    positive: '#1B7F3A',
+    warning: '#E65100',
+  };
+
+  return (
+    <div style={{ marginBottom: 16 }}>
+      <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--tds-gray-400)', marginBottom: 8, letterSpacing: 0.3 }}>
+        핵심 사건
+      </div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+        {milestones.map((m, i) => (
+          <div
+            key={i}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 4,
+              background: bg[m.type],
+              borderRadius: 20,
+              padding: '4px 10px',
+            }}
+          >
+            <span style={{ fontSize: 11, fontWeight: 700, color: color[m.type] }}>{m.age}세</span>
+            <span style={{ fontSize: 11, color: color[m.type] }}>{m.label}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ── 4층: 세부 탭 ──────────────────────────────────────────────────────────────
 const TABS = ['요약', '연금', '자산 추이', '연도별 상세'] as const;
 type TabName = (typeof TABS)[number];
@@ -532,12 +642,22 @@ function DetailTabsInner({
           </>
         )}
         {activeTab === '연도별 상세' && (
-          <YearlySummaryTable
-            rows={detailYearlyAggregates}
-            retirementAge={retirementAge}
-            strategyLabel={recommendedStrategyLabel}
-            targetMonthly={inputs.goal.targetMonthly}
-          />
+          <>
+            <MilestoneBar
+              milestones={buildMilestones(
+                detailYearlyAggregates,
+                retirementAge,
+                inputs.goal.lifeExpectancy,
+                inputs,
+              )}
+            />
+            <YearlySummaryTable
+              rows={detailYearlyAggregates}
+              retirementAge={retirementAge}
+              strategyLabel={recommendedStrategyLabel}
+              targetMonthly={inputs.goal.targetMonthly}
+            />
+          </>
         )}
       </div>
     </>
