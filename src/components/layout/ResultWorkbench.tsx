@@ -878,21 +878,21 @@ export default function ResultWorkbench() {
       {/* 해석 문장 (WhyPath → HomeOptions 사이) */}
       {insightLine && <InsightLine text={insightLine} />}
 
+      {/* 집 활용 시나리오 요약 바 — 전략 비교 전에 결과 먼저 */}
+      {hasRealEstate && summary.propertyInterventionAge !== null && recommended?.strategy && (
+        <PropertySummaryBar
+          interventionAge={summary.propertyInterventionAge}
+          strategy={recommended.strategy}
+          finalNetValue={finalPropertyNetValue}
+        />
+      )}
+
       {/* 3층: 집 전략 비교 — 부동산 자산이 있을 때만 */}
       {hasRealEstate && (
         <HomeOptionsSection
           propertyOptions={propertyOptions}
           lifeExpectancy={inputs.goal.lifeExpectancy}
           targetMonthly={inputs.goal.targetMonthly}
-        />
-      )}
-
-      {/* 집 활용 시나리오 요약 바 — 실제 집 활용 케이스만 */}
-      {hasRealEstate && summary.propertyInterventionAge !== null && recommended?.strategy && (
-        <PropertySummaryBar
-          interventionAge={summary.propertyInterventionAge}
-          strategy={recommended.strategy}
-          finalNetValue={finalPropertyNetValue}
         />
       )}
 
