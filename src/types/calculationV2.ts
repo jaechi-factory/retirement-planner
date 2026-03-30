@@ -101,8 +101,7 @@ export interface CalculationResultV2 {
   summary: {
     sustainableMonthly: number;           // 끝까지 유지 가능한 월 생활비
     targetGap: number;                    // 목표 대비 차이 (음수 = 부족)
-    cashRunoutAge: number | null;         // 현금성 고갈 나이
-    financialSellStartAge: number | null; // 투자자산 매도 시작 나이
+    financialSellStartAge: number | null; // 투자자산 매도 시작 나이 (현금 버퍼 부족 시점)
     financialExhaustionAge: number | null;// 투자자산 소진 나이
     propertyInterventionAge: number | null; // 집 건드려야 하는 나이 (권장 전략)
     failureAge: number | null;            // 최종 자금 고갈 나이

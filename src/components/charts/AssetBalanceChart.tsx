@@ -18,9 +18,11 @@ import { fmtKRW, fmtKRWAxis } from '../../utils/format';
 interface Props {
   rows: YearlyAggregateV2[];
   retirementAge: number;
+  targetMonthly: number;
+  strategyLabel: string;
 }
 
-export default function AssetBalanceChart({ rows, retirementAge }: Props) {
+export default function AssetBalanceChart({ rows, retirementAge, targetMonthly, strategyLabel }: Props) {
   if (rows.length === 0) return null;
 
   const data = rows.map((r) => ({
@@ -35,8 +37,11 @@ export default function AssetBalanceChart({ rows, retirementAge }: Props) {
       <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--tds-gray-600)', marginBottom: 10 }}>
         유동자산 추이
       </div>
-      <div style={{ fontSize: 11, color: 'var(--tds-gray-400)', marginBottom: 10, lineHeight: 1.4 }}>
+      <div style={{ fontSize: 11, color: 'var(--tds-gray-400)', marginBottom: 4, lineHeight: 1.4 }}>
         현금·예금과 주식·채권이 시간에 따라 어떻게 변하는지 보여줘요.{retirementAge > 0 && ` 은퇴 시점: ${retirementAge}세`}
+      </div>
+      <div style={{ fontSize: 11, color: 'var(--tds-gray-400)', marginBottom: 10 }}>
+        월 {targetMonthly}만원 생활 시나리오 ({strategyLabel} 전략 적용)
       </div>
       <ResponsiveContainer width="100%" height={210}>
         <AreaChart data={data} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>

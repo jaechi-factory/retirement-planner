@@ -474,10 +474,6 @@ export function findFinancialSellStartAgeV2(snapshots: MonthlySnapshotV2[]): num
   return s ? s.ageYear : null;
 }
 
-export function findCashRunoutAgeV2(snapshots: MonthlySnapshotV2[]): number | null {
-  return findFinancialSellStartAgeV2(snapshots);
-}
-
 export function findFinancialExhaustionAgeV2(snapshots: MonthlySnapshotV2[]): number | null {
   const s = snapshots.find((m) => m.eventFlags.financialExhausted);
   return s ? s.ageYear : null;
