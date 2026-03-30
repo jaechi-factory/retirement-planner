@@ -7,40 +7,17 @@ import AssetBalanceChart from '../charts/AssetBalanceChart';
 import PropertyAssetChart from '../charts/PropertyAssetChart';
 import SummaryTab from '../result/v2/SummaryTab';
 import PensionTab from '../result/v2/PensionTab';
+import TransitionSection from '../result/TransitionSection';
 import type { YearlyAggregateV2, FundingStage, PropertyOptionResult } from '../../types/calculationV2';
 import type { CalculationResult } from '../../types/calculation';
 import type { PlannerInputs } from '../../types/inputs';
 
-// ── 전략 표시 레이블 ────────────────────────────────────────────────────────────
-const STRATEGY_DISPLAY_LABELS: Record<string, string> = {
-  keep: '집 안 건드리기',
-  secured_loan: '집에서 생활비 받기',
-  sell: '집 팔고 생활비 늘리기',
+// ── 시나리오 비교 행동 레이블 ────────────────────────────────────────────────────
+const SCENARIO_ACTION_LABELS: Record<string, string> = {
+  keep: '집을 그대로 두면',
+  secured_loan: '집에서 생활비를 받으면',
+  sell: '집을 팔면',
 };
-
-// ── 해석 문장 생성 ──────────────────────────────────────────────────────────────
-function buildInsightLine(
-  propertyOptions: PropertyOptionResult[],
-  targetGap: number,
-  pensionCoverageRate: number,
-): string | null {
-  const allFail = propertyOptions.every((o) => !o.survivesToLifeExpectancy);
-  const keepOpt = propertyOptions.find((o) => o.strategy === 'keep');
-
-  if (allFail) {
-    return '지금 조건에선 어떤 전략을 써도 기대수명까지 자금을 유지하기 어려워요. 목표 생활비나 저축 구조를 점검해보세요.';
-  }
-  if (keepOpt && !keepOpt.survivesToLifeExpectancy) {
-    return '집을 안 건드리면 기대수명까지 버티기 어려워요. 집을 활용하는 전략이 필요해요.';
-  }
-  if (targetGap < 0) {
-    return '추천 전략으로도 목표 생활비를 채우기는 어렵지만, 지출을 조금 낮추면 기대수명까지 유지할 수 있어요.';
-  }
-  if (pensionCoverageRate < 0.5) {
-    return '연금만으로는 생활비의 절반도 충당되지 않아요. 자산 운용 계획이 중요해요.';
-  }
-  return null;
-}
 
 // ── 1층: Hero ─────────────────────────────────────────────────────────────────
 function HeroSection({
@@ -169,28 +146,9 @@ function WhyPathSection({
   );
 }
 
-// ── 해석 문장 블록 ──────────────────────────────────────────────────────────────
-function InsightLine({ text }: { text: string }) {
-  return (
-    <div
-      style={{
-        fontSize: 13,
-        color: 'var(--tds-gray-600)',
-        padding: '12px 16px',
-        background: 'var(--tds-gray-50)',
-        borderRadius: 10,
-        borderLeft: '3px solid var(--tds-gray-200)',
-        marginBottom: 16,
-        lineHeight: 1.65,
-      }}
-    >
-      {text}
-    </div>
-  );
-}
-
-// ── 3층: 집 전략 비교 ──────────────────────────────────────────────────────────
-function HomeOptionsSection({
+// ── 3층: 시나리오 비교 (집 활용 경로 비교) ────────────────────────────────────
+// financialExhaustionAge !== null일 때만 렌더
+function ScenarioSection({
   propertyOptions,
   lifeExpectancy,
 }: {
@@ -213,12 +171,12 @@ function HomeOptionsSection({
       }}
     >
       <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--tds-gray-700)', marginBottom: 14 }}>
-        집을 어떻게 다룰지에 따라 달라져요
+        집을 어떻게 활용하느냐에 따라 결과가 달라져요
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {propertyOptions.map((opt) => {
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+        {propertyOptions.map((opt, idx) => {
           const status = statusLabel(opt);
-          const hasAmount = opt.sustainableMonthly > 0;
+          const isLast = idx === propertyOptions.length - 1;
 
           return (
             <div
@@ -227,64 +185,66 @@ function HomeOptionsSection({
                 display: 'flex',
                 alignItems: 'center',
                 gap: 12,
-                padding: '12px 14px',
-                borderRadius: 10,
-                background: opt.isRecommended ? '#F0F7FF' : 'var(--tds-gray-50)',
-                border: `1px solid ${opt.isRecommended ? '#C8DEFF' : 'var(--tds-gray-100)'}`,
+                padding: '11px 0',
+                borderBottom: isLast ? 'none' : '1px solid var(--tds-gray-100)',
               }}
             >
-              {/* 전략 이름 */}
-              <div style={{ width: 116, flexShrink: 0 }}>
+              {/* 행동 레이블 + 추천 배지 */}
+              <div style={{ width: 130, flexShrink: 0 }}>
                 <div
                   style={{
-                    fontSize: 12,
-                    fontWeight: opt.isRecommended ? 700 : 500,
-                    color: opt.isRecommended ? '#1565C0' : 'var(--tds-gray-500)',
+                    fontSize: 13,
+                    fontWeight: opt.isRecommended ? 700 : 400,
+                    color: opt.isRecommended ? 'var(--tds-gray-900)' : 'var(--tds-gray-500)',
                     lineHeight: 1.4,
                   }}
                 >
-                  {STRATEGY_DISPLAY_LABELS[opt.strategy] ?? opt.label}
+                  {SCENARIO_ACTION_LABELS[opt.strategy] ?? opt.label}
                 </div>
                 {opt.isRecommended && (
-                  <div style={{ fontSize: 10, color: '#1565C0', marginTop: 2, fontWeight: 600 }}>추천</div>
+                  <div
+                    style={{
+                      display: 'inline-block',
+                      fontSize: 10,
+                      fontWeight: 600,
+                      color: '#1565C0',
+                      background: '#EBF3FF',
+                      padding: '1px 6px',
+                      borderRadius: 4,
+                      marginTop: 3,
+                    }}
+                  >
+                    추천
+                  </div>
                 )}
               </div>
 
-              {/* 월 생활비 + 설명 */}
+              {/* 월 생활비 */}
               <div style={{ flex: 1, minWidth: 0 }}>
-                {hasAmount ? (
-                  <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--tds-gray-900)' }}>
+                {opt.sustainableMonthly > 0 ? (
+                  <div
+                    style={{
+                      fontSize: 14,
+                      fontWeight: opt.isRecommended ? 700 : 500,
+                      color: opt.isRecommended ? 'var(--tds-gray-900)' : 'var(--tds-gray-600)',
+                    }}
+                  >
                     월 {fmtKRW(opt.sustainableMonthly)}
                   </div>
                 ) : (
-                  <div style={{ fontSize: 12, fontWeight: 600, color: '#C0392B' }}>
-                    {opt.failureAge !== null
-                      ? `${opt.failureAge}세부터 자금 부족`
-                      : '이 전략으로는 생활비를 만들기 어려워요'}
+                  <div style={{ fontSize: 12, color: '#C0392B', fontWeight: 500 }}>
+                    {opt.failureAge !== null ? `${opt.failureAge}세부터 자금 부족` : '유지 불가'}
                   </div>
                 )}
-                <div
-                  style={{
-                    fontSize: 11,
-                    color: 'var(--tds-gray-400)',
-                    marginTop: 2,
-                    lineHeight: 1.4,
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  {opt.headline}
-                </div>
               </div>
 
-              {/* 판정 뱃지 */}
+              {/* 판정 배지 */}
               <div
                 style={{
                   flexShrink: 0,
                   fontSize: 11,
                   fontWeight: 600,
-                  padding: '4px 8px',
+                  padding: '3px 8px',
                   borderRadius: 6,
                   background: status.positive ? '#E8F5E9' : '#FFF3E0',
                   color: status.positive ? '#1B7F3A' : '#E65100',
@@ -433,6 +393,7 @@ export default function ResultWorkbench() {
 
   const { summary, propertyOptions, warnings, fundingTimeline, detailYearlyAggregates } = resultV2;
   const recommended = propertyOptions.find((o) => o.isRecommended);
+  const hasRealEstate = inputs.assets.realEstate.amount > 0;
 
   // Why/Path 텍스트
   const pathLines: Array<{ text: string; positive?: boolean }> = [];
@@ -453,7 +414,7 @@ export default function ResultWorkbench() {
     } else {
       pathLines.push({ text: `${summary.propertyInterventionAge}세부터 집을 활용해야 해요` });
     }
-  } else if (inputs.assets.realEstate.amount > 0) {
+  } else if (hasRealEstate) {
     pathLines.push({ text: '집을 건드리지 않아도 기대수명까지 가능해요', positive: true });
   }
 
@@ -463,19 +424,16 @@ export default function ResultWorkbench() {
     pathLines.push({ text: '기대수명까지 자금이 유지돼요', positive: true });
   }
 
-  // 해석 문장
-  const insightLine = buildInsightLine(
-    propertyOptions,
-    summary.targetGap,
-    result.pensionCoverageRate,
+  // Warnings: 행동 촉구 메시지만 남김 (상황 설명은 TransitionSection 담당)
+  // "집을 건드리지 않으면 ~" 경고는 TransitionSection에서 맥락으로 이미 설명됨 → 제외
+  const actionWarnings = warnings.filter((w) =>
+    w.severity === 'warning' &&
+    !w.message.includes('집을 건드리지 않으면'),
   );
+  const criticalWarnings = warnings.filter((w) => w.severity === 'critical');
 
-  // 경고 메시지: 행동 가능한 것(warning)을 메인으로, critical은 보조 문구로
-  const actionableWarning = warnings.find((w) => w.severity === 'warning') ?? null;
-  const criticalWarning = warnings.find((w) => w.severity === 'critical') ?? null;
-  const mainWarning = actionableWarning ?? criticalWarning;
-  // critical을 보조로 보여주는 경우: actionable이 이미 메인일 때만
-  const supplementaryNote = actionableWarning && criticalWarning ? criticalWarning : null;
+  // 노출 우선순위: critical 1개 → actionable warning 1개 → info는 생략 (TransitionSection이 커버)
+  const primaryWarning = criticalWarnings[0] ?? actionWarnings[0] ?? null;
 
   return (
     <div
@@ -493,7 +451,7 @@ export default function ResultWorkbench() {
       <HeroSection
         sustainableMonthly={summary.sustainableMonthly}
         targetGap={summary.targetGap}
-        recommendedLabel={STRATEGY_DISPLAY_LABELS[recommended?.strategy ?? ''] ?? (recommended?.label ?? '추천 전략')}
+        recommendedLabel={SCENARIO_ACTION_LABELS[recommended?.strategy ?? ''] ?? (recommended?.label ?? '추천 전략')}
         keyReason={recommended?.headline}
       />
 
@@ -505,48 +463,43 @@ export default function ResultWorkbench() {
         lifeExpectancy={inputs.goal.lifeExpectancy}
       />
 
-      {/* 해석 문장 (WhyPath → HomeOptions 사이) */}
-      {insightLine && <InsightLine text={insightLine} />}
-
-      {/* 3층: 집 전략 비교 */}
-      <HomeOptionsSection
-        propertyOptions={propertyOptions}
+      {/* 3층: TransitionSection — 항상 렌더, 케이스별 톤 분기 */}
+      <TransitionSection
+        financialExhaustionAge={summary.financialExhaustionAge}
+        propertyInterventionAge={summary.propertyInterventionAge}
+        failureAge={summary.failureAge}
         lifeExpectancy={inputs.goal.lifeExpectancy}
+        hasRealEstate={hasRealEstate}
+        pensionCoverageRate={result.pensionCoverageRate}
+        targetMonthly={inputs.goal.targetMonthly}
       />
 
-      {/* 경고: 행동 가능한 메인 경고 1개 */}
-      {mainWarning && (
+      {/* 4층: ScenarioSection — 금융자산 소진이 있고 집도 있을 때만 */}
+      {summary.financialExhaustionAge !== null && hasRealEstate && (
+        <ScenarioSection
+          propertyOptions={propertyOptions}
+          lifeExpectancy={inputs.goal.lifeExpectancy}
+        />
+      )}
+
+      {/* Warnings: 행동 촉구 1개만 (상황 설명 중복 없음) */}
+      {primaryWarning && (
         <div
           style={{
             fontSize: 12,
             lineHeight: 1.6,
-            color: mainWarning.severity === 'warning' ? '#8B6914' : mainWarning.severity === 'critical' ? '#8B1A1A' : 'var(--tds-gray-400)',
+            color: primaryWarning.severity === 'critical' ? '#8B1A1A' : '#8B6914',
             padding: '10px 14px',
-            background: mainWarning.severity === 'warning' ? '#FFFBE6' : mainWarning.severity === 'critical' ? '#FFF0F0' : 'var(--tds-gray-50)',
+            background: primaryWarning.severity === 'critical' ? '#FFF0F0' : '#FFFBE6',
             borderRadius: 8,
-            marginBottom: supplementaryNote ? 6 : 24,
-          }}
-        >
-          {mainWarning.severity === 'critical' ? '🚨 ' : mainWarning.severity === 'warning' ? '⚠ ' : 'ℹ '}{mainWarning.message}
-        </div>
-      )}
-
-      {/* 보조 문구: 구조적 최종 리스크 (약하게) */}
-      {supplementaryNote && (
-        <div
-          style={{
-            fontSize: 11,
-            color: 'var(--tds-gray-400)',
-            padding: '0 4px',
             marginBottom: 24,
-            lineHeight: 1.5,
           }}
         >
-          ※ {supplementaryNote.message}
+          {primaryWarning.severity === 'critical' ? '🚨 ' : '⚠ '}{primaryWarning.message}
         </div>
       )}
 
-      {/* 4층: 세부 분석 탭 */}
+      {/* 세부 분석 탭 */}
       <div
         style={{
           borderRadius: 16,
@@ -561,6 +514,7 @@ export default function ResultWorkbench() {
           inputs={inputs}
         />
       </div>
+
     </div>
   );
 }
