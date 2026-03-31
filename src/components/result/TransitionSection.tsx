@@ -137,14 +137,7 @@ export default function TransitionSection({
       <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
         <BulletLine text={`현금과 투자자산은 ${financialExhaustionAge}세에 모두 소진돼요`} />
         <BulletLine text="주택 자산이 남아 있어 이후 경로를 선택할 수 있어요" />
-        {propertyInterventionAge && (
-          <BulletLine
-            text={`집을 어떻게 활용하느냐에 따라 ${propertyInterventionAge}세 이후 생활비 흐름이 달라져요`}
-          />
-        )}
-        {!propertyInterventionAge && (
-          <BulletLine text="집을 어떻게 활용하느냐에 따라 이후 생활비 흐름이 달라져요" />
-        )}
+        <BulletLine text="집을 어떻게 활용하느냐에 따라 이후 생활비 흐름이 달라져요" />
       </div>
 
       {/* 54→55 급변 보조 설명: 집 있음 + 개입 시점 있을 때만 */}

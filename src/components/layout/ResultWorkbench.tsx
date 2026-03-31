@@ -171,7 +171,7 @@ function ScenarioSection({
       }}
     >
       <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--tds-gray-700)', marginBottom: 14 }}>
-        집을 어떻게 활용하느냐에 따라 결과가 달라져요
+        집 활용 방식별 결과 비교
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
         {propertyOptions.map((opt, idx) => {
@@ -461,7 +461,6 @@ export default function ResultWorkbench() {
         sustainableMonthly={summary.sustainableMonthly}
         targetGap={summary.targetGap}
         recommendedLabel={SCENARIO_ACTION_LABELS[recommended?.strategy ?? ''] ?? (recommended?.label ?? '추천 전략')}
-        keyReason={recommended?.headline}
       />
 
       {/* 2층: Why/Path */}
