@@ -56,7 +56,7 @@ export default function PensionTab({ result, inputs }: Props) {
           {coveragePct}%
         </div>
         <div style={{ fontSize: 12, color: 'var(--tds-gray-600)' }}>
-          생활비 목표의 {coveragePct}%를 메워줘요
+          나머지 {100 - coveragePct}%는 금융자산으로 충당해야 해요
         </div>
       </div>
 

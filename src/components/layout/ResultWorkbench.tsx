@@ -42,7 +42,7 @@ function HeroSection({
       }}
     >
       <div style={{ fontSize: 11, color: 'var(--tds-gray-400)', marginBottom: 6 }}>
-        {recommendedLabel} 기준
+        추천: {recommendedLabel}
       </div>
       <div
         style={{
@@ -64,8 +64,8 @@ function HeroSection({
         }}
       >
         {positive
-          ? `목표보다 월 ${fmtKRW(targetGap)} 더 가능 ✓`
-          : `목표보다 월 ${fmtKRW(Math.abs(targetGap))} 부족`}
+          ? `은퇴 후 목표보다 월 ${fmtKRW(targetGap)} 더 가능해요 ✓`
+          : `은퇴 후 목표보다 월 ${fmtKRW(Math.abs(targetGap))} 부족해요`}
       </div>
       {keyReason && (
         <div
@@ -262,7 +262,7 @@ function ScenarioSection({
 }
 
 // ── 4층: 세부 탭 ──────────────────────────────────────────────────────────────
-const TABS = ['요약', '연금', '자산 추이', '연도별 상세'] as const;
+const TABS = ['현황', '연금', '자산 추이', '연도별 상세'] as const;
 type TabName = (typeof TABS)[number];
 
 function DetailTabsInner({
@@ -278,7 +278,7 @@ function DetailTabsInner({
   inputs: PlannerInputs;
   strategyLabel: string;
 }) {
-  const [activeTab, setActiveTab] = useState<TabName>('요약');
+  const [activeTab, setActiveTab] = useState<TabName>('현황');
   const hasRealEstate = inputs.assets.realEstate.amount > 0;
 
   return (
@@ -290,9 +290,6 @@ function DetailTabsInner({
           background: 'var(--tds-white)',
         }}
       >
-        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--tds-gray-400)', letterSpacing: 0.8, marginBottom: 12, textTransform: 'uppercase' }}>
-          세부 분석
-        </div>
         <div
           style={{
             display: 'inline-flex',
@@ -328,7 +325,7 @@ function DetailTabsInner({
       </div>
 
       <div style={{ padding: '28px 22px' }}>
-        {activeTab === '요약' && <SummaryTab result={result} inputs={inputs} />}
+        {activeTab === '현황' && <SummaryTab result={result} inputs={inputs} />}
         {activeTab === '연금' && <PensionTab result={result} inputs={inputs} />}
         {activeTab === '자산 추이' && (
           <>
@@ -393,7 +390,7 @@ export default function ResultWorkbench() {
         >
           <div style={{ fontSize: 28, color: 'var(--tds-gray-200)' }}>—</div>
           <div style={{ fontSize: 14, color: 'var(--tds-gray-400)', textAlign: 'center', lineHeight: 1.7 }}>
-            나이, 은퇴 나이, 기대수명, 목표 생활비를 입력하면<br />분석이 시작돼요.
+            ← 왼쪽에서 나이, 은퇴 나이, 기대수명,<br />목표 생활비를 입력하면 분석이 시작돼요.
           </div>
         </div>
       </div>
@@ -407,12 +404,13 @@ export default function ResultWorkbench() {
   // Why/Path 텍스트
   const pathLines: Array<{ text: string; positive?: boolean }> = [];
 
-  if (summary.financialExhaustionAge) {
-    pathLines.push({ text: `${summary.financialExhaustionAge}세에 주식·채권이 소진돼요` });
-  } else if (summary.financialSellStartAge) {
-    pathLines.push({ text: `${summary.financialSellStartAge}세부터 주식·채권을 팔기 시작해요` });
-  } else {
-    pathLines.push({ text: '주식·채권은 기대수명까지 유지돼요', positive: true });
+  // 소진 불릿은 FundingTimeline 바가 시각적으로 대체 — TransitionSection이 첫 언급 위치
+  if (summary.financialExhaustionAge === null) {
+    if (summary.financialSellStartAge) {
+      pathLines.push({ text: `${summary.financialSellStartAge}세부터 주식·채권을 팔기 시작해요` });
+    } else {
+      pathLines.push({ text: '주식·채권은 기대수명까지 유지돼요', positive: true });
+    }
   }
 
   if (summary.propertyInterventionAge) {

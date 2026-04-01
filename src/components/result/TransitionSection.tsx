@@ -20,7 +20,7 @@ interface TransitionSectionProps {
  */
 export default function TransitionSection({
   financialExhaustionAge,
-  propertyInterventionAge,
+  propertyInterventionAge: _propertyInterventionAge,
   failureAge,
   lifeExpectancy,
   hasRealEstate,
@@ -140,21 +140,19 @@ export default function TransitionSection({
         <BulletLine text="집을 어떻게 활용하느냐에 따라 이후 생활비 흐름이 달라져요" />
       </div>
 
-      {/* 54→55 급변 보조 설명: 집 있음 + 개입 시점 있을 때만 */}
-      {propertyInterventionAge && (
-        <div
-          style={{
-            marginTop: 12,
-            paddingTop: 12,
-            borderTop: '1px solid var(--tds-gray-100)',
-            fontSize: 11,
-            color: 'var(--tds-gray-400)',
-            lineHeight: 1.65,
-          }}
-        >
-          아래 차트에서 특정 나이에 자산이 크게 변하는 구간이 보일 수 있어요. 계산 오류가 아니라, 그 시점부터 자산을 쓰는 방식이 바뀌기 때문이에요.
-        </div>
-      )}
+      {/* Case B 연결: 아래 ScenarioSection으로 자연스럽게 이어지도록 */}
+      <div
+        style={{
+          marginTop: 12,
+          paddingTop: 12,
+          borderTop: '1px solid var(--tds-gray-100)',
+          fontSize: 12,
+          color: 'var(--tds-gray-400)',
+          lineHeight: 1.65,
+        }}
+      >
+        아래에서 방식별로 비교해볼 수 있어요.
+      </div>
     </div>
   );
 }
