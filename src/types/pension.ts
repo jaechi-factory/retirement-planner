@@ -5,6 +5,7 @@ export interface PublicPensionInput {
   mode: PensionInputMode;
   startAge: number;                  // default 65
   manualMonthlyTodayValue: number;   // 0 = 미입력, 단위: 만원
+  workStartAge?: number;             // 국민연금 납부 시작 나이 (default 26)
 }
 
 export interface RetirementPensionInput {

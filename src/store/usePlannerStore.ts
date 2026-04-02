@@ -20,6 +20,7 @@ const defaultPension: PensionInputs = {
     mode: 'auto',
     startAge: 65,
     manualMonthlyTodayValue: 0,
+    workStartAge: 26,
   },
   retirementPension: {
     enabled: true,

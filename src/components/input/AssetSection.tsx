@@ -63,7 +63,7 @@ export default function AssetSection() {
             </div>
             {key === 'realEstate' && (
               <p style={{ fontSize: 11, color: 'var(--tds-gray-400)', margin: '4px 0 0', lineHeight: 1.5 }}>
-                투자·임대 부동산을 포함해요. 실거주 집 전략은 결과 화면에서 따로 확인할 수 있어요.
+                실거주 집을 포함한 전체 부동산 가치를 입력해요. 집을 어떻게 활용할지(유지·담보·매각)는 결과 화면에서 따로 확인할 수 있어요.
               </p>
             )}
           </div>

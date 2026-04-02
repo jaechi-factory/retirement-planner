@@ -76,7 +76,8 @@ function PublicPensionCard() {
   const { publicPension } = inputs.pension;
   const { status, goal } = inputs;
 
-  const meta = estimatePublicPensionWithMeta(status.annualIncome, status.currentAge, goal.retirementAge);
+  const workStartAge = publicPension.workStartAge ?? 26;
+  const meta = estimatePublicPensionWithMeta(status.annualIncome, status.currentAge, goal.retirementAge, workStartAge);
   const isAuto = publicPension.mode === 'auto';
   const displayValue = isAuto
     ? meta.base
@@ -109,7 +110,9 @@ function PublicPensionCard() {
           )}
         </div>
         <div style={{ fontSize: 12, color: 'var(--tds-gray-400)', marginTop: 2 }}>
-          {publicPension.startAge}세부터 수령 · 실제값은 차이가 있을 수 있어요
+          {isAuto
+            ? `${publicPension.startAge}세부터 수령 · ${workStartAge}세 취업 기준 추정`
+            : `${publicPension.startAge}세부터 수령 · 실제값은 차이가 있을 수 있어요`}
         </div>
       </div>
 
@@ -138,6 +141,15 @@ function PublicPensionCard() {
               내가 직접 입력
             </button>
           </div>
+          {isAuto && (
+            <NumberInput
+              label="취업 시작 나이"
+              value={workStartAge}
+              onChange={v => setPension({ publicPension: { ...publicPension, workStartAge: v } })}
+              unit="세"
+              hint="국민연금 납부 시작 나이 — 이 나이부터 가입한 것으로 계산해요"
+            />
+          )}
           <Row>
             <NumberInput
               label="받기 시작할 나이"

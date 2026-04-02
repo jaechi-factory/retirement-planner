@@ -24,14 +24,14 @@ export function getNPSStartAgeByBirthYear(birthYear: number): number {
 }
 
 /** 2026년 연금개혁 전/후 기여 기간 분리 기반 소득대체율 계산 */
-function computeNPSReplacement(currentAge: number, retirementAge: number): {
+function computeNPSReplacement(currentAge: number, retirementAge: number, workStartAge: number = ASSUMED_CAREER_START_AGE): {
   pre2026Years: number;
   post2026Years: number;
   contributionYears: number;
   replacementRate: number;
 } {
   const birthYear = CURRENT_YEAR - currentAge;
-  const careerStartYear = birthYear + ASSUMED_CAREER_START_AGE;
+  const careerStartYear = birthYear + workStartAge;
   const contributionEndAge = Math.min(60, retirementAge);
   const contributionEndYear = birthYear + contributionEndAge;
 
@@ -75,11 +75,12 @@ export function estimatePublicPension(
   annualNetIncome: number,
   currentAge: number,
   retirementAge: number,
+  workStartAge: number = ASSUMED_CAREER_START_AGE,
 ): number {
   const grossAnnualIncome = annualNetIncome / DEFAULT_NET_TO_GROSS_RATIO;
   const grossMonthlyIncome = grossAnnualIncome / 12;
   const pensionableMonthly = Math.min(Math.max(grossMonthlyIncome, NPS_MIN_MONTHLY), NPS_MAX_MONTHLY);
-  const { replacementRate } = computeNPSReplacement(currentAge, retirementAge);
+  const { replacementRate } = computeNPSReplacement(currentAge, retirementAge, workStartAge);
   return Math.round(pensionableMonthly * replacementRate);
 }
 
@@ -126,6 +127,7 @@ export function estimatePublicPensionWithMeta(
   annualNetIncome: number,
   currentAge: number,
   retirementAge: number,
+  workStartAge: number = ASSUMED_CAREER_START_AGE,
 ): PublicPensionEstimate {
   const grossAnnualIncome = annualNetIncome / DEFAULT_NET_TO_GROSS_RATIO;
   const grossMonthlyIncome = grossAnnualIncome / 12;
@@ -133,7 +135,7 @@ export function estimatePublicPensionWithMeta(
   const pensionableMonthly = Math.min(Math.max(grossMonthlyIncome, NPS_MIN_MONTHLY), NPS_MAX_MONTHLY);
 
   const { pre2026Years, post2026Years, contributionYears, replacementRate } =
-    computeNPSReplacement(currentAge, retirementAge);
+    computeNPSReplacement(currentAge, retirementAge, workStartAge);
   const contributionEndAge = Math.min(60, retirementAge);
 
   const base = Math.round(pensionableMonthly * replacementRate);
@@ -142,8 +144,8 @@ export function estimatePublicPensionWithMeta(
 
   const assumptions: string[] = [
     `세후 소득을 세전으로 역산했어요 (역산 비율 ${Math.round(DEFAULT_NET_TO_GROSS_RATIO * 100)}%)`,
-    `국민연금 가입 시작 나이를 만 ${ASSUMED_CAREER_START_AGE}세로 가정했어요`,
-    `예상 가입기간 ${contributionYears}년 (만 ${ASSUMED_CAREER_START_AGE}세~${contributionEndAge}세)`,
+    `국민연금 가입 시작 나이를 만 ${workStartAge}세로 가정했어요`,
+    `예상 가입기간 ${contributionYears}년 (만 ${workStartAge}세~${contributionEndAge}세)`,
     ...(pre2026Years > 0 && post2026Years > 0
       ? [`2026년 개혁 전 ${pre2026Years}년(소득대체율 41.5%) + 이후 ${post2026Years}년(43%) 분리 적용`]
       : pre2026Years > 0
@@ -205,7 +207,7 @@ function resolvePublicMonthly(
   const p = pension.publicPension;
   if (!p.enabled) return 0;
   if (p.mode === 'manual' && p.manualMonthlyTodayValue > 0) return p.manualMonthlyTodayValue;
-  return estimatePublicPension(annualNetIncome, currentAge, retirementAge);
+  return estimatePublicPension(annualNetIncome, currentAge, retirementAge, p.workStartAge ?? ASSUMED_CAREER_START_AGE);
 }
 
 /**

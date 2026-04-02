@@ -8,7 +8,8 @@ import PropertyAssetChart from '../charts/PropertyAssetChart';
 import SummaryTab from '../result/v2/SummaryTab';
 import PensionTab from '../result/v2/PensionTab';
 import TransitionSection from '../result/TransitionSection';
-import type { YearlyAggregateV2, FundingStage, PropertyOptionResult } from '../../types/calculationV2';
+import PropertyDecisionSection from '../result/PropertyDecisionSection';
+import type { YearlyAggregateV2, FundingStage } from '../../types/calculationV2';
 import type { CalculationResult } from '../../types/calculation';
 import type { PlannerInputs } from '../../types/inputs';
 
@@ -71,7 +72,7 @@ function HeroSection({
         <div
           style={{
             fontSize: 12,
-            color: 'var(--tds-gray-500)',
+            color: 'var(--tds-gray-600)',
             marginTop: 8,
             lineHeight: 1.6,
             paddingTop: 8,
@@ -146,122 +147,7 @@ function WhyPathSection({
   );
 }
 
-// ── 3층: 시나리오 비교 (집 활용 경로 비교) ────────────────────────────────────
-// financialExhaustionAge !== null일 때만 렌더
-function ScenarioSection({
-  propertyOptions,
-  lifeExpectancy,
-}: {
-  propertyOptions: PropertyOptionResult[];
-  lifeExpectancy: number;
-}) {
-  function statusLabel(opt: PropertyOptionResult): { text: string; positive: boolean } {
-    if (opt.survivesToLifeExpectancy) return { text: `${lifeExpectancy}세까지 가능`, positive: true };
-    if (opt.failureAge !== null) return { text: `${opt.failureAge}세부터 부족`, positive: false };
-    return { text: '지속 불가', positive: false };
-  }
-
-  return (
-    <div
-      style={{
-        borderRadius: 16,
-        border: '1px solid var(--tds-gray-100)',
-        padding: '20px 24px',
-        marginBottom: 16,
-      }}
-    >
-      <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--tds-gray-700)', marginBottom: 14 }}>
-        집 활용 방식별 결과 비교
-      </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-        {propertyOptions.map((opt, idx) => {
-          const status = statusLabel(opt);
-          const isLast = idx === propertyOptions.length - 1;
-
-          return (
-            <div
-              key={opt.strategy}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 12,
-                padding: '11px 0',
-                borderBottom: isLast ? 'none' : '1px solid var(--tds-gray-100)',
-              }}
-            >
-              {/* 행동 레이블 + 추천 배지 */}
-              <div style={{ width: 130, flexShrink: 0 }}>
-                <div
-                  style={{
-                    fontSize: 13,
-                    fontWeight: opt.isRecommended ? 700 : 400,
-                    color: opt.isRecommended ? 'var(--tds-gray-900)' : 'var(--tds-gray-500)',
-                    lineHeight: 1.4,
-                  }}
-                >
-                  {SCENARIO_ACTION_LABELS[opt.strategy] ?? opt.label}
-                </div>
-                {opt.isRecommended && (
-                  <div
-                    style={{
-                      display: 'inline-block',
-                      fontSize: 10,
-                      fontWeight: 600,
-                      color: '#1565C0',
-                      background: '#EBF3FF',
-                      padding: '1px 6px',
-                      borderRadius: 4,
-                      marginTop: 3,
-                    }}
-                  >
-                    추천
-                  </div>
-                )}
-              </div>
-
-              {/* 월 생활비 */}
-              <div style={{ flex: 1, minWidth: 0 }}>
-                {opt.sustainableMonthly > 0 ? (
-                  <div
-                    style={{
-                      fontSize: 14,
-                      fontWeight: opt.isRecommended ? 700 : 500,
-                      color: opt.isRecommended ? 'var(--tds-gray-900)' : 'var(--tds-gray-600)',
-                    }}
-                  >
-                    월 {fmtKRW(opt.sustainableMonthly)}
-                  </div>
-                ) : (
-                  <div style={{ fontSize: 12, color: '#C0392B', fontWeight: 500 }}>
-                    {opt.failureAge !== null ? `${opt.failureAge}세부터 자금 부족` : '유지 불가'}
-                  </div>
-                )}
-              </div>
-
-              {/* 판정 배지 */}
-              <div
-                style={{
-                  flexShrink: 0,
-                  fontSize: 11,
-                  fontWeight: 600,
-                  padding: '3px 8px',
-                  borderRadius: 6,
-                  background: status.positive ? '#E8F5E9' : '#FFF3E0',
-                  color: status.positive ? '#1B7F3A' : '#E65100',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                {status.text}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-// ── 4층: 세부 탭 ──────────────────────────────────────────────────────────────
+// ── 3층: 세부 탭 ──────────────────────────────────────────────────────────────
 const TABS = ['현황', '연금', '자산 추이', '연도별 상세'] as const;
 type TabName = (typeof TABS)[number];
 
@@ -354,6 +240,16 @@ function DetailTabsInner({
             targetMonthly={inputs.goal.targetMonthly}
           />
         )}
+        <div
+          style={{
+            fontSize: 11,
+            color: 'var(--tds-gray-300)',
+            lineHeight: 1.5,
+            marginTop: 12,
+          }}
+        >
+          * 이 결과는 입력한 수익률이 매년 일정하다는 가정을 기준으로 해요. 실제 시장 상황에 따라 달라질 수 있어요.
+        </div>
       </div>
     </>
   );
@@ -364,6 +260,86 @@ export default function ResultWorkbench() {
   const resultV2 = usePlannerStore((s) => s.resultV2);
   const result = usePlannerStore((s) => s.result);
   const inputs = usePlannerStore((s) => s.inputs);
+
+  // 2-1: 은퇴 후 진입 안내 (가장 먼저 체크)
+  if (inputs.status.currentAge > 0 && inputs.goal.retirementAge > 0 && inputs.status.currentAge >= inputs.goal.retirementAge) {
+    return (
+      <div
+        style={{
+          flex: 1,
+          height: 'calc(100vh - 56px)',
+          overflowY: 'auto',
+          padding: '24px 20px',
+          borderLeft: '1px solid var(--tds-gray-100)',
+        }}
+      >
+        <div
+          style={{
+            borderRadius: 16,
+            border: '1px solid var(--tds-gray-100)',
+            padding: '60px 28px',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 10,
+          }}
+        >
+          <div style={{ fontSize: 28, color: 'var(--tds-gray-200)' }}>—</div>
+          <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--tds-gray-600)', textAlign: 'center' }}>
+            이 도구는 은퇴를 준비 중인 분을 위한 계산기예요
+          </div>
+          <div style={{ fontSize: 14, color: 'var(--tds-gray-400)', textAlign: 'center', lineHeight: 1.7 }}>
+            현재 나이가 은퇴 나이 이상으로 설정되어 있어요.<br />왼쪽에서 현재 나이 또는 은퇴 나이를 조정해주세요.
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // 2-2: 금융자산 0 안내 (2-1 이후 체크)
+  const financialAssetTotal =
+    inputs.assets.cash.amount +
+    inputs.assets.deposit.amount +
+    inputs.assets.stock_kr.amount +
+    inputs.assets.stock_us.amount +
+    inputs.assets.bond.amount +
+    inputs.assets.crypto.amount;
+
+  if (result.isValid && financialAssetTotal === 0) {
+    return (
+      <div
+        style={{
+          flex: 1,
+          height: 'calc(100vh - 56px)',
+          overflowY: 'auto',
+          padding: '24px 20px',
+          borderLeft: '1px solid var(--tds-gray-100)',
+        }}
+      >
+        <div
+          style={{
+            borderRadius: 16,
+            border: '1px solid var(--tds-gray-100)',
+            padding: '60px 28px',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 10,
+          }}
+        >
+          <div style={{ fontSize: 28, color: 'var(--tds-gray-200)' }}>—</div>
+          <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--tds-gray-600)', textAlign: 'center' }}>
+            금융자산을 입력하면 분석이 시작돼요
+          </div>
+          <div style={{ fontSize: 14, color: 'var(--tds-gray-400)', textAlign: 'center', lineHeight: 1.7 }}>
+            현금, 예적금, 주식 중 하나 이상을 입력해주세요.<br />부동산만으로는 은퇴 자금 흐름을 계산하기 어려워요.
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (!resultV2 || !result.isValid) {
     return (
@@ -439,8 +415,8 @@ export default function ResultWorkbench() {
   );
   const criticalWarnings = warnings.filter((w) => w.severity === 'critical');
 
-  // 노출 우선순위: critical 1개 → actionable warning 1개 → info는 생략 (TransitionSection이 커버)
-  const primaryWarning = criticalWarnings[0] ?? actionWarnings[0] ?? null;
+  // 노출 우선순위: critical 전부 + actionWarnings 최대 2개 (info는 생략 — TransitionSection이 커버)
+  const displayWarnings = [...criticalWarnings, ...actionWarnings.slice(0, 2)];
 
   return (
     <div
@@ -459,6 +435,15 @@ export default function ResultWorkbench() {
         sustainableMonthly={summary.sustainableMonthly}
         targetGap={summary.targetGap}
         recommendedLabel={SCENARIO_ACTION_LABELS[recommended?.strategy ?? ''] ?? (recommended?.label ?? '추천 전략')}
+        keyReason={
+          recommended?.strategy === 'keep'
+            ? '금융자산이 기대수명까지 유지돼요'
+            : recommended?.strategy === 'secured_loan'
+            ? '집을 유지하며 현금흐름을 보완할 수 있어요'
+            : recommended?.strategy === 'sell'
+            ? '집 매각으로 생활비를 늘릴 수 있어요'
+            : undefined
+        }
       />
 
       {/* 2층: Why/Path */}
@@ -480,28 +465,41 @@ export default function ResultWorkbench() {
         targetMonthly={inputs.goal.targetMonthly}
       />
 
-      {/* 4층: ScenarioSection — 금융자산 소진이 있고 집도 있을 때만 */}
+      {/* 4층: PropertyDecisionSection — 금융자산 소진이 있고 집도 있을 때만 */}
       {summary.financialExhaustionAge !== null && hasRealEstate && (
-        <ScenarioSection
+        <PropertyDecisionSection
+          financialExhaustionAge={summary.financialExhaustionAge}
           propertyOptions={propertyOptions}
+          realEstateAmount={inputs.assets.realEstate.amount}
           lifeExpectancy={inputs.goal.lifeExpectancy}
         />
       )}
 
-      {/* Warnings: 행동 촉구 1개만 (상황 설명 중복 없음) */}
-      {primaryWarning && (
+      {/* Warnings: critical 전부 + actionWarnings 최대 2개 */}
+      {displayWarnings.length > 0 && (
         <div
           style={{
-            fontSize: 12,
-            lineHeight: 1.6,
-            color: primaryWarning.severity === 'critical' ? '#8B1A1A' : '#8B6914',
-            padding: '10px 14px',
-            background: primaryWarning.severity === 'critical' ? '#FFF0F0' : '#FFFBE6',
-            borderRadius: 8,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 8,
             marginBottom: 24,
           }}
         >
-          {primaryWarning.severity === 'critical' ? '🚨 ' : '⚠ '}{primaryWarning.message}
+          {displayWarnings.map((w, i) => (
+            <div
+              key={i}
+              style={{
+                fontSize: 12,
+                lineHeight: 1.6,
+                color: w.severity === 'critical' ? '#8B1A1A' : '#8B6914',
+                padding: '10px 14px',
+                background: w.severity === 'critical' ? '#FFF0F0' : '#FFFBE6',
+                borderRadius: 8,
+              }}
+            >
+              {w.severity === 'critical' ? '🚨 ' : '⚠ '}{w.message}
+            </div>
+          ))}
         </div>
       )}
 

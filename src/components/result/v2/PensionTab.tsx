@@ -169,6 +169,79 @@ export default function PensionTab({ result, inputs }: Props) {
             연금 개시 타임라인
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+            {/* 은퇴 시점 고정 노드 */}
+            <div style={{ display: 'flex', gap: 12, marginBottom: 0 }}>
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  width: 20,
+                  flexShrink: 0,
+                }}
+              >
+                <div
+                  style={{
+                    width: 10,
+                    height: 10,
+                    borderRadius: '50%',
+                    marginTop: 3,
+                    background: 'var(--tds-gray-400)',
+                    flexShrink: 0,
+                  }}
+                />
+                <div
+                  style={{
+                    width: 2,
+                    flex: 1,
+                    background: 'var(--tds-gray-100)',
+                    minHeight: 20,
+                    marginTop: 2,
+                  }}
+                />
+              </div>
+              <div style={{ paddingBottom: 14, flex: 1 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--tds-gray-600)' }}>
+                    {goal.retirementAge}세
+                  </span>
+                  <span
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 600,
+                      padding: '1px 7px',
+                      borderRadius: 20,
+                      background: 'var(--tds-gray-100)',
+                      color: 'var(--tds-gray-500)',
+                    }}
+                  >
+                    은퇴
+                  </span>
+                </div>
+              </div>
+            </div>
+            {/* 연금 공백기 배너 */}
+            {(() => {
+              const gap = timeline[0].age - goal.retirementAge;
+              if (gap <= 0) return null;
+              return (
+                <div
+                  style={{
+                    background: '#FFF8EC',
+                    border: '1px solid #FFE0B2',
+                    borderRadius: 8,
+                    padding: '10px 12px',
+                    marginLeft: 32,
+                    marginBottom: 14,
+                    fontSize: 12,
+                    color: '#8B4A00',
+                    lineHeight: 1.65,
+                  }}
+                >
+                  이 {gap}년간은 연금 없이 금융자산만으로 생활해야 해요.
+                </div>
+              );
+            })()}
             {timeline.map((ev, i) => {
               const beforePct = Math.round(ev.coverageRateBefore * 100);
               const afterPct = Math.round(ev.coverageRateAfter * 100);
