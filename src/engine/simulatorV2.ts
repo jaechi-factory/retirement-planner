@@ -346,18 +346,11 @@ export function simulateMonthlyV2(
           distributeSurplus(buckets, netFlow, initialRatios);
           topUpCashBuffer(buckets, buffer, financialSellState, eventFlags);
         } else {
-          // 부족: [P6] 생활비 부족분 + 버퍼 부족분을 한 번에 인출
+          // 부족: shortfall은 생활비(deficit)만으로 판정 → 이진탐색 단조성 보장
+          // 그 후 버퍼 top-up을 별도 수행 (shortfall 계산에 영향 없음)
           const deficit = -netFlow;
-          const cashLike = buckets.cash + buckets.deposit;
-          const bufferGap = Math.max(0, buffer - cashLike);
-          const totalNeeded = deficit + bufferGap;
-
-          const unmet = drawFromBuckets(buckets, totalNeeded, financialSellState, eventFlags);
-          // shortfall = 실제 생활비 중 미충당분 (버퍼 부족은 shortfall 아님)
-          uncoveredAmount = Math.max(0, unmet - bufferGap);
-          if (uncoveredAmount === 0 && unmet > 0) {
-            // 버퍼 일부만 못 채운 경우 — shortfall 없음
-          }
+          uncoveredAmount = drawFromBuckets(buckets, deficit, financialSellState, eventFlags);
+          topUpCashBuffer(buckets, buffer, financialSellState, eventFlags);
         }
       }
 

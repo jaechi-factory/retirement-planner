@@ -311,8 +311,11 @@ describe('[P3] 매도 우선순위 (cash → deposit → bond → stock_kr → s
   /**
    * [P3] 개별 버킷 잔고 노출로 실제 차감 순서 검증
    * 시나리오: cash=200, deposit=100, bond=5000, stock_kr=5000 → 수익률=0, 생활비=350/월
-   * 첫 은퇴 달에 needed = 350 + bufferGap 인데,
-   * 순서 보장: cash(200) → deposit(100) → bond(나머지) 순으로 차감
+   *
+   * 수정된 동작 (이진탐색 단조성 fix 이후):
+   *   Step 1: drawFromBuckets(deficit=350) — LIQUIDATION_ORDER: cash(200)→deposit(100)→bond(50)
+   *   Step 2: topUpCashBuffer(buffer=350) — FINANCIAL_KEYS: stock_kr에서 350 보충 → cash=350
+   *   결과: shortfall=0, 포트폴리오 순 감소 = 350 (생활비만)
    */
   it('[P3 강화] 개별 버킷 잔고로 cash → deposit → bond 차감 순서를 직접 검증', () => {
     const inputs = makeInputs({
@@ -329,22 +332,19 @@ describe('[P3] 매도 우선순위 (cash → deposit → bond → stock_kr → s
       },
     });
 
-    // 소액 버퍼(6개월)로 설정: buffer = 350 * 1 = 350으로 테스트 단순화
+    // buffer = 350 * 1 = 350
     const fundingPolicy: FundingPolicy = { liquidityBufferMonths: 1 };
 
     const snapshots = simulateMonthlyV2(inputs, 350, 'keep', fundingPolicy, DEFAULT_LIQUIDATION);
     const m0 = snapshots[0]; // ageYear=65, ageMonthIndex=0
 
-    // buffer=350, cashLike=200+100=300, bufferGap=50, deficit=350
-    // totalNeeded = 350 + 50 = 400
-    // 차감 순서: cash(200) → deposit(100) → bond(100) → 합계 400
-    // 결과: cashEnd=0, depositEnd=0, bondEnd=4900
-
-    expect(m0.cashEnd).toBe(0);        // cash 완전 소진
-    expect(m0.depositEnd).toBe(0);     // deposit 완전 소진
-    expect(m0.bondEnd).toBeCloseTo(4900, 0);  // bond에서 100 차감
-    expect(m0.stockKrEnd).toBeCloseTo(5000, 0); // stock_kr 미차감
-    expect(m0.shortfallThisMonth).toBe(0); // 완전 충당
+    // Step 1: drawFromBuckets(deficit=350): cash(200)→deposit(100)→bond(50)
+    // Step 2: topUpCashBuffer(buffer=350): cashLike=0 → stock_kr에서 350 → cash=350
+    expect(m0.depositEnd).toBe(0);                    // deposit 소진 (Step 1)
+    expect(m0.bondEnd).toBeCloseTo(4950, 0);          // bond에서 50만 차감 (deficit 보전)
+    expect(m0.stockKrEnd).toBeCloseTo(4650, 0);       // stock_kr에서 350 차감 (buffer top-up)
+    expect(m0.cashEnd).toBeCloseTo(350, 0);           // 버퍼 복원됨
+    expect(m0.shortfallThisMonth).toBe(0);            // 완전 충당
   });
 
   it('[P3 강화] bond 소진 후에만 stock_kr이 차감되어야 함', () => {
@@ -603,7 +603,7 @@ describe('[P6] 과매도 방지 — 부족 상황에서 단 1번 인출', () => 
   });
 
   /**
-   * [P6 강화] deficit > 0 AND bufferGap > 0 상황에서 단 1번 인출 검증
+   * [P6 강화] deficit > 0 AND bufferGap > 0 상황 — 이중 인출 방지 검증
    *
    * 시나리오:
    *   - currentAge = retirementAge = 65 (즉시 은퇴)
@@ -611,24 +611,19 @@ describe('[P6] 과매도 방지 — 부족 상황에서 단 1번 인출', () => 
    *   - 자산: cash=300, bond=100000 (수익률=0)
    *   - buffer = 100 * 6 = 600 (liquidityBufferMonths=6)
    *
-   * 계산:
-   *   cashLike = 300, buffer = 600 → bufferGap = 300
-   *   netFlow = -100 → deficit = 100
-   *   totalNeeded = 100 + 300 = 400 (단 1번 인출)
+   * 수정된 동작 (이진탐색 단조성 fix 이후):
+   *   Step 1: drawFromBuckets(deficit=100): cash에서 100 차감 → cash=200
+   *   Step 2: topUpCashBuffer(buffer=600): cashLike=200 → bond에서 400 → cash=600, bond=99600
    *
-   * 검증:
-   *   actualWithdrawal = (초기 현금+채권) - (월말 현금+채권) = 400
-   *   shortfallThisMonth = 0 (완전 충당)
-   *   cashEnd = 0 (cash 300 전부 차감)
-   *   bondEnd = 99900 (bond에서 100 차감)
-   *   이중 인출이었다면 actualWithdrawal > 400
+   * 포트폴리오 순 감소 = 100 (생활비만, buffer top-up은 내부 리밸런싱)
+   * 이중 인출이면 포트폴리오 감소 > 100
    */
-  it('[P6 강화] deficit(100) + bufferGap(300) = totalNeeded(400)가 단 1번 인출로 처리됨', () => {
+  it('[P6 강화] deficit(100)만 포트폴리오에서 차감되고 buffer top-up은 내부 리밸런싱임을 검증', () => {
     const inputs = makeInputs({
       goal: { retirementAge: 65, lifeExpectancy: 90, targetMonthly: 100, inflationRate: 0 },
       status: { currentAge: 65, annualIncome: 0, incomeGrowthRate: 0, annualExpense: 0, expenseGrowthRate: 0 },
       assets: {
-        cash:       { amount: 300,    expectedReturn: 0 }, // cashLike=300 < buffer(600) → bufferGap=300
+        cash:       { amount: 300,    expectedReturn: 0 }, // cashLike=300 < buffer(600)
         deposit:    { amount: 0,      expectedReturn: 0 },
         bond:       { amount: 100000, expectedReturn: 0 }, // 충분한 자산
         stock_kr:   { amount: 0,      expectedReturn: 0 },
@@ -642,20 +637,21 @@ describe('[P6] 과매도 방지 — 부족 상황에서 단 1번 인출', () => 
     const snapshots = simulateMonthlyV2(inputs, 100, 'keep', fundingPolicy, DEFAULT_LIQUIDATION);
     const m0 = snapshots[0]; // ageYear=65, ageMonthIndex=0
 
-    // 초기 총자산 (수익률 0이므로 성장 없음)
+    // 초기 총자산 (수익률 0)
     const initialTotal = 300 + 100000; // cash + bond
     const finalTotal = m0.cashEnd + m0.depositEnd + m0.bondEnd + m0.stockKrEnd + m0.stockUsEnd + m0.cryptoEnd;
     const actualWithdrawal = initialTotal - finalTotal;
 
-    // 단 1번 인출: actualWithdrawal = deficit(100) + bufferGap(300) = 400
-    expect(actualWithdrawal).toBeCloseTo(400, 0);
-    // 이중 인출이면 > 400, 미충당이면 < 400
+    // 포트폴리오 순 감소 = deficit(100)만 (buffer top-up은 bond→cash 내부 이동)
+    expect(actualWithdrawal).toBeCloseTo(100, 0);
 
-    // 개별 버킷 검증: cash(300) 전부 → bond에서 100 추가
-    expect(m0.cashEnd).toBe(0);
-    expect(m0.bondEnd).toBeCloseTo(99900, 0);
+    // 개별 버킷 검증:
+    // Step 1: cash(300) → cash(200) after deficit draw
+    // Step 2: bond(100000) → bond(99600), cash(200) → cash(600) after buffer top-up
+    expect(m0.cashEnd).toBeCloseTo(600, 0);    // buffer 완전 복원
+    expect(m0.bondEnd).toBeCloseTo(99600, 0);  // 400 이동됨 (buffer top-up)
 
-    // shortfall 없음 (완전 충당)
+    // shortfall 없음
     expect(m0.shortfallThisMonth).toBe(0);
   });
 });
@@ -994,5 +990,56 @@ describe('C. V2 debt schedule single source', () => {
     const firstPayment = debtSchedules.mortgage[0]?.payment ?? 0;
     expect(firstPayment).toBeGreaterThan(150);
     expect(firstPayment).toBeLessThan(220);
+  });
+});
+
+// ─── [단조성] 이진탐색 역전 버그 회귀 테스트 ────────────────────────────────────
+
+describe('[단조성] 투자자산 증가 → 지속가능 생활비 ≥ 유지 (역전 버그 방지)', () => {
+  /**
+   * 버그 재현 시나리오: 투자자산이 더 많은데 지속가능 생활비가 오히려 낮게 나오는 역전 현상.
+   * 원인: deficit 달에 bufferGap도 drawFromBuckets에 포함시켜 이진탐색 단조성 위반.
+   * 수정: deficit만 shortfall로 판정 + topUpCashBuffer를 별도 호출.
+   */
+  const makeMonotoneInputs = (stock_us_amount: number): PlannerInputs =>
+    makeInputs({
+      status: { currentAge: 45, annualIncome: 6000, annualExpense: 3600, incomeGrowthRate: 2, expenseGrowthRate: 2 },
+      goal: { retirementAge: 65, lifeExpectancy: 85, targetMonthly: 400, inflationRate: 2 },
+      assets: {
+        cash:       { amount: 0,     expectedReturn: 0 },
+        deposit:    { amount: 0,     expectedReturn: 2 },
+        stock_kr:   { amount: 3000,  expectedReturn: 6 },
+        stock_us:   { amount: stock_us_amount, expectedReturn: 8 },
+        bond:       { amount: 0,     expectedReturn: 3.5 },
+        crypto:     { amount: 0,     expectedReturn: 0 },
+        realEstate: { amount: 50000, expectedReturn: 2 },
+      },
+    });
+
+  it('stock_us=6000 지속가능액 ≥ stock_us=60 (해외주식 많을수록 생활비 ↑)', () => {
+    const schedules = precomputeDebtSchedules(makeMonotoneInputs(0).debts);
+    const result_high = findMaxSustainableMonthlyV2(makeMonotoneInputs(6000), 'keep', DEFAULT_FUNDING_POLICY, DEFAULT_LIQUIDATION, schedules);
+    const result_low  = findMaxSustainableMonthlyV2(makeMonotoneInputs(60),   'keep', DEFAULT_FUNDING_POLICY, DEFAULT_LIQUIDATION, schedules);
+    expect(result_high).toBeGreaterThanOrEqual(result_low);
+  });
+
+  it('stock_kr=5000 지속가능액 ≥ stock_kr=500 (국내주식 많을수록 생활비 ↑)', () => {
+    const makeKr = (amount: number) => makeInputs({
+      status: { currentAge: 45, annualIncome: 6000, annualExpense: 3600, incomeGrowthRate: 2, expenseGrowthRate: 2 },
+      goal: { retirementAge: 65, lifeExpectancy: 85, targetMonthly: 400, inflationRate: 2 },
+      assets: {
+        cash:       { amount: 0,     expectedReturn: 0 },
+        deposit:    { amount: 0,     expectedReturn: 2 },
+        stock_kr:   { amount: amount, expectedReturn: 6 },
+        stock_us:   { amount: 0,     expectedReturn: 8 },
+        bond:       { amount: 0,     expectedReturn: 3.5 },
+        crypto:     { amount: 0,     expectedReturn: 0 },
+        realEstate: { amount: 50000, expectedReturn: 2 },
+      },
+    });
+    const schedules = precomputeDebtSchedules(makeKr(0).debts);
+    const result_high = findMaxSustainableMonthlyV2(makeKr(5000), 'keep', DEFAULT_FUNDING_POLICY, DEFAULT_LIQUIDATION, schedules);
+    const result_low  = findMaxSustainableMonthlyV2(makeKr(500),  'keep', DEFAULT_FUNDING_POLICY, DEFAULT_LIQUIDATION, schedules);
+    expect(result_high).toBeGreaterThanOrEqual(result_low);
   });
 });
