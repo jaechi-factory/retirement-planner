@@ -39,9 +39,20 @@ function computeNPSReplacement(currentAge: number, retirementAge: number, workSt
   const rawPost = Math.max(contributionEndYear - Math.max(NPS_REFORM_YEAR, careerStartYear), 0);
   const rawTotal = rawPre + rawPost;
 
-  const contributionYears = Math.min(Math.max(rawTotal, 10), 40);
-  const scale = rawTotal > 0 ? contributionYears / rawTotal : 1;
+  // 10년 미만이면 연금 수령 불가 (일시금 반환 대상) → replacementRate = 0
+  // 상한은 40년 유지 (가입기간 40년 초과분은 연금 산정에 반영되지 않음).
+  const contributionYears = Math.min(rawTotal, 40);
 
+  if (rawTotal < 10) {
+    return {
+      pre2026Years: Math.round(rawPre),
+      post2026Years: Math.round(rawPost),
+      contributionYears,
+      replacementRate: 0,
+    };
+  }
+
+  const scale = rawTotal > 0 ? contributionYears / rawTotal : 1;
   const replacementRate =
     (rawPre * scale * NPS_PRE_2026_REPLACEMENT_RATE + rawPost * scale * NPS_POST_2026_REPLACEMENT_RATE) / 40;
 

@@ -138,10 +138,12 @@ export function buildMonthlyDebtSchedule(debt: DebtItem): MonthlyDebtRow[] {
       const yearlyPayment = M0 * Math.pow(1 + g, yearIndex);
       const interest = remaining * r;
       // 마지막 달: 잔액 전액 상환으로 반올림 오차 제거
+      // Math.max(0, ...): 이자율이 높을 경우 yearlyPayment < interest가 되어
+      // 원금이 음수가 되는 것을 방지 (음수상각 방지)
       const isLast = m === totalMonths - 1;
       const principal = isLast
         ? remaining
-        : Math.min(yearlyPayment - interest, remaining);
+        : Math.max(0, Math.min(yearlyPayment - interest, remaining));
       remaining = Math.max(remaining - principal, 0);
       rows.push({
         monthIndex: m,

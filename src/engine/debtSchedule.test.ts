@@ -162,6 +162,29 @@ describe('집계 헬퍼', () => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+describe('graduated_payment — 음수 원금 방지 (고금리 엣지 케이스)', () => {
+  it('이자율 12% 고금리에서도 모든 달 principal ≥ 0', () => {
+    const schedule = buildMonthlyDebtSchedule(base({
+      repaymentType: 'graduated_payment',
+      interestRate: 12,  // 연 12%: 현실에서 드물지만 방어 필요
+      repaymentYears: 20,
+    }));
+    schedule.forEach(r => {
+      expect(r.principal).toBeGreaterThanOrEqual(0);
+    });
+  });
+
+  it('이자율 12% 고금리에서도 마지막 달 remainingBalance ≈ 0', () => {
+    const schedule = buildMonthlyDebtSchedule(base({
+      repaymentType: 'graduated_payment',
+      interestRate: 12,
+      repaymentYears: 20,
+    }));
+    expect(Math.abs(schedule[schedule.length - 1].remainingBalance)).toBeLessThan(1);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 describe('회귀: 원리금균등 연간납입액 오차 1만원 이내', () => {
   it('3억/연4%/30년 첫해 납입액이 기존 공식과 일치', () => {
     // 기존 공식: M = P × r(1+r)^n / ((1+r)^n - 1) × 12
