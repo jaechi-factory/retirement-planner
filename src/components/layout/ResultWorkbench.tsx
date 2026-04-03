@@ -9,6 +9,9 @@ import SummaryTab from '../result/v2/SummaryTab';
 import PensionTab from '../result/v2/PensionTab';
 import TransitionSection from '../result/TransitionSection';
 import PropertyDecisionSection from '../result/PropertyDecisionSection';
+import ConclusionCard from '../result/v3/ConclusionCard';
+import ScenarioTabs from '../result/v3/ScenarioTabs';
+import LifetimeTimeline from '../result/v3/LifetimeTimeline';
 import type { YearlyAggregateV2, FundingStage } from '../../types/calculationV2';
 import type { CalculationResult } from '../../types/calculation';
 import type { PlannerInputs } from '../../types/inputs';
@@ -502,6 +505,29 @@ export default function ResultWorkbench() {
           ))}
         </div>
       )}
+
+      {/* v3 신규: 결론 카드 */}
+      <ConclusionCard
+        summary={summary}
+        propertyOptions={propertyOptions}
+        inputs={inputs}
+      />
+
+      {/* v3 신규: 시나리오 탭 (집 있을 때만) */}
+      {hasRealEstate && (
+        <ScenarioTabs
+          propertyOptions={propertyOptions}
+          lifeExpectancy={inputs.goal.lifeExpectancy}
+        />
+      )}
+
+      {/* v3 신규: 연도별 타임라인 */}
+      <LifetimeTimeline
+        detailYearlyAggregates={detailYearlyAggregates}
+        summary={summary}
+        propertyOptions={propertyOptions}
+        inputs={inputs}
+      />
 
       {/* 세부 분석 탭 */}
       <div
