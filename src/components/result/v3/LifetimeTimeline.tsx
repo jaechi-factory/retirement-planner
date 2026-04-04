@@ -1,6 +1,7 @@
 import type { YearlyAggregateV2, CalculationResultV2, PropertyOptionResult } from '../../../types/calculationV2';
 import type { PlannerInputs } from '../../../types/inputs';
 import { fmtKRW } from '../../../utils/format';
+import { getPensionBreakdown } from '../../../engine/pensionEstimation';
 
 interface LifetimeTimelineProps {
   detailYearlyAggregates: YearlyAggregateV2[];
@@ -54,6 +55,15 @@ function extractEvents(
   const events: TimelineEvent[] = [];
   const { retirementAge, lifeExpectancy } = inputs.goal;
 
+  // auto 모드 포함 정확한 연금 금액 계산
+  const pensionBreakdown = getPensionBreakdown(
+    inputs.pension,
+    inputs.status.currentAge,
+    retirementAge,
+    inputs.status.annualIncome,
+    inputs.goal.inflationRate
+  );
+
   // 1. 은퇴 + 연금 공백기 경고
   const pensionStartAges = [
     inputs.pension.publicPension.enabled ? inputs.pension.publicPension.startAge : Infinity,
@@ -78,7 +88,7 @@ function extractEvents(
   if (inputs.pension.publicPension.enabled) {
     const startAge = inputs.pension.publicPension.startAge;
     if (startAge > retirementAge) {
-      const monthly = inputs.pension.publicPension.manualMonthlyTodayValue;
+      const monthly = pensionBreakdown.publicMonthly;
       const description =
         monthly > 0
           ? `이 달부터 매달 ${fmtKRW(monthly)}의 국민연금이 들어와요.`
@@ -96,7 +106,7 @@ function extractEvents(
   if (inputs.pension.retirementPension.enabled) {
     const startAge = inputs.pension.retirementPension.startAge;
     if (startAge > retirementAge) {
-      const monthly = inputs.pension.retirementPension.manualMonthlyTodayValue;
+      const monthly = pensionBreakdown.retirementMonthly;
       const description =
         monthly > 0
           ? `이 달부터 매달 ${fmtKRW(monthly)}의 퇴직연금이 추가돼요.`
