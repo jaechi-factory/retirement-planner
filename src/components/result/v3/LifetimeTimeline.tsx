@@ -15,6 +15,7 @@ type EventType =
   | 'retirement'
   | 'pension_public'
   | 'pension_retirement'
+  | 'pension_retirement_end'
   | 'pension_private'
   | 'financial_exhaustion'
   | 'property_sell'
@@ -105,6 +106,19 @@ function extractEvents(
         type: 'pension_retirement',
         header: `${startAge}세 — 퇴직연금 시작`,
         description,
+      });
+    }
+  }
+
+  // 3-1. 퇴직연금 종료
+  if (inputs.pension.retirementPension.enabled) {
+    const endAge = inputs.pension.retirementPension.startAge + inputs.pension.retirementPension.payoutYears;
+    if (endAge <= lifeExpectancy) {
+      events.push({
+        age: endAge,
+        type: 'pension_retirement_end',
+        header: `${endAge}세 — 퇴직연금 수령 종료`,
+        description: '퇴직연금 수령이 끝나요. 이후 생활비를 연금 수입이 덜 커버하게 돼, 매각대금 인출이 늘어날 수 있어요.',
       });
     }
   }
@@ -346,6 +360,8 @@ function getEventStyle(type: EventType): { dotColor: string; headerColor: string
     case 'pension_retirement':
     case 'pension_private':
       return { dotColor: 'var(--tds-gray-400)', headerColor: 'var(--tds-gray-800)' };
+    case 'pension_retirement_end':
+      return { dotColor: 'var(--tds-gray-300)', headerColor: 'var(--tds-gray-600)' };
     case 'financial_exhaustion':
     case 'property_sell':
     case 'property_loan':

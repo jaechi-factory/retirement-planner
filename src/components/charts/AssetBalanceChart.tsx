@@ -272,7 +272,9 @@ export default function AssetBalanceChart({ rows, retirementAge, targetMonthly, 
         {hasSaleProceeds && (
           <>
             <br />
-            집 매각 후 가정: 월세 200만원(현재가치·물가연동) · 매각대금 연 4% 운용
+            집 매각 후 가정: 월세 200만원(현재가치·물가연동) · 매각대금 연 4% 복리 운용
+            <br />
+            생활비 인출이 연 4% 수익을 초과하는 시점부터 매각대금 잔고가 줄어들 수 있어요
           </>
         )}
       </div>
