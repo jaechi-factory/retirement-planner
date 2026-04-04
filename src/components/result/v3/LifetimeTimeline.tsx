@@ -25,6 +25,7 @@ interface TimelineEvent {
   type: EventType;
   header: string;
   description: string;
+  warning?: string;
   propertyData?: {
     estimatedPrice: number;
     mortgageBalance: number;
@@ -50,12 +51,24 @@ function extractEvents(
   const events: TimelineEvent[] = [];
   const { retirementAge, lifeExpectancy } = inputs.goal;
 
-  // 1. 은퇴
+  // 1. 은퇴 + 연금 공백기 경고
+  const pensionStartAges = [
+    inputs.pension.publicPension.enabled ? inputs.pension.publicPension.startAge : Infinity,
+    inputs.pension.retirementPension.enabled ? inputs.pension.retirementPension.startAge : Infinity,
+    inputs.pension.privatePension.enabled ? inputs.pension.privatePension.startAge : Infinity,
+  ].filter((a) => a > retirementAge && a < Infinity);
+
+  const firstPensionAge = pensionStartAges.length > 0 ? Math.min(...pensionStartAges) : null;
+  const gapYears = firstPensionAge !== null ? firstPensionAge - retirementAge : 0;
+
   events.push({
     age: retirementAge,
     type: 'retirement',
     header: `${retirementAge}세 — 은퇴`,
     description: '이 해부터 근로소득이 끊기고 저축과 연금으로 생활을 시작해요.',
+    warning: gapYears > 0
+      ? `이후 ${gapYears}년간 연금이 없어요. 금융자산만으로 생활해야 하는 기간이에요.`
+      : undefined,
   });
 
   // 2. 국민연금 개시
@@ -522,6 +535,22 @@ export default function LifetimeTimeline({
                 >
                   {ev.description}
                 </div>
+                {ev.warning && (
+                  <div
+                    style={{
+                      marginTop: 8,
+                      padding: '8px 12px',
+                      background: '#FFF8EC',
+                      border: '1px solid #FFE0B2',
+                      borderRadius: 8,
+                      fontSize: 12,
+                      color: '#8B4A00',
+                      lineHeight: 1.6,
+                    }}
+                  >
+                    {ev.warning}
+                  </div>
+                )}
                 {(isSell || isLoan) && ev.propertyData && (
                   <PropertyEventCard data={ev.propertyData} isSell={isSell} />
                 )}

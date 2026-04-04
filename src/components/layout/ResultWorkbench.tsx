@@ -1,18 +1,13 @@
-import { useState } from 'react';
 import { usePlannerStore } from '../../store/usePlannerStore';
 import { fmtKRW } from '../../utils/format';
 import FundingTimeline from '../result/v2/FundingTimeline';
-import YearlySummaryTable from '../result/v2/YearlySummaryTable';
 import AssetBalanceChart from '../charts/AssetBalanceChart';
 import PropertyAssetChart from '../charts/PropertyAssetChart';
-import SummaryTab from '../result/v2/SummaryTab';
-import PensionTab from '../result/v2/PensionTab';
 import PropertyDecisionSection from '../result/PropertyDecisionSection';
 import ConclusionCard from '../result/v3/ConclusionCard';
 import ScenarioTabs from '../result/v3/ScenarioTabs';
 import LifetimeTimeline from '../result/v3/LifetimeTimeline';
 import type { YearlyAggregateV2, FundingStage } from '../../types/calculationV2';
-import type { CalculationResult } from '../../types/calculation';
 import type { PlannerInputs } from '../../types/inputs';
 
 // ── 시나리오 비교 행동 레이블 ────────────────────────────────────────────────────
@@ -149,111 +144,57 @@ function WhyPathSection({
   );
 }
 
-// ── 3층: 세부 탭 ──────────────────────────────────────────────────────────────
-const TABS = ['현황', '연금', '자산 추이', '연도별 상세'] as const;
-type TabName = (typeof TABS)[number];
-
-function DetailTabsInner({
+// ── 3층: 자산 추이 인라인 섹션 ────────────────────────────────────────────────
+function AssetChartSection({
   detailYearlyAggregates,
-  retirementAge,
-  result,
   inputs,
   strategyLabel,
 }: {
   detailYearlyAggregates: YearlyAggregateV2[];
-  retirementAge: number;
-  result: CalculationResult;
   inputs: PlannerInputs;
   strategyLabel: string;
 }) {
-  const [activeTab, setActiveTab] = useState<TabName>('현황');
   const hasRealEstate = inputs.assets.realEstate.amount > 0;
-
   return (
-    <>
+    <div
+      style={{
+        borderRadius: 14,
+        border: '1px solid var(--tds-gray-100)',
+        padding: '20px 22px',
+        marginBottom: 16,
+      }}
+    >
       <div
         style={{
-          padding: '16px 20px 14px',
-          borderBottom: '1px solid var(--tds-gray-100)',
-          background: 'var(--tds-white)',
+          fontSize: 13,
+          fontWeight: 700,
+          color: 'var(--tds-gray-700)',
+          marginBottom: 16,
+          letterSpacing: 0.1,
         }}
       >
-        <div
-          style={{
-            display: 'inline-flex',
-            background: 'var(--tds-gray-100)',
-            borderRadius: 10,
-            padding: 3,
-            gap: 2,
-          }}
-        >
-          {TABS.map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              style={{
-                padding: '7px 16px',
-                fontSize: 12,
-                fontWeight: activeTab === tab ? 700 : 500,
-                color: activeTab === tab ? 'var(--tds-gray-900)' : 'var(--tds-gray-400)',
-                background: activeTab === tab ? 'var(--tds-white)' : 'transparent',
-                border: 'none',
-                borderRadius: 7,
-                cursor: 'pointer',
-                transition: 'all 0.15s',
-                fontFamily: 'inherit',
-                whiteSpace: 'nowrap',
-                boxShadow: activeTab === tab ? '0 1px 3px rgba(0,0,0,0.10)' : 'none',
-              }}
-            >
-              {tab}
-            </button>
-          ))}
-        </div>
+        자산이 어떻게 변하나요
       </div>
-
-      <div style={{ padding: '28px 22px' }}>
-        {activeTab === '현황' && <SummaryTab result={result} inputs={inputs} />}
-        {activeTab === '연금' && <PensionTab result={result} inputs={inputs} />}
-        {activeTab === '자산 추이' && (
-          <>
-            <AssetBalanceChart
-              rows={detailYearlyAggregates}
-              retirementAge={retirementAge}
-              targetMonthly={inputs.goal.targetMonthly}
-              strategyLabel={strategyLabel}
-            />
-            {hasRealEstate && (
-              <>
-                <div style={{ height: 1, background: 'var(--tds-gray-100)', margin: '0 0 20px' }} />
-                <PropertyAssetChart
-                  rows={detailYearlyAggregates}
-                  retirementAge={retirementAge}
-                />
-              </>
-            )}
-          </>
-        )}
-        {activeTab === '연도별 상세' && (
-          <YearlySummaryTable
+      <AssetBalanceChart
+        rows={detailYearlyAggregates}
+        retirementAge={inputs.goal.retirementAge}
+        targetMonthly={inputs.goal.targetMonthly}
+        strategyLabel={strategyLabel}
+        inputs={inputs}
+      />
+      {hasRealEstate && (
+        <>
+          <div style={{ height: 1, background: 'var(--tds-gray-100)', margin: '4px 0 20px' }} />
+          <PropertyAssetChart
             rows={detailYearlyAggregates}
-            retirementAge={retirementAge}
-            strategyLabel={strategyLabel}
-            targetMonthly={inputs.goal.targetMonthly}
+            retirementAge={inputs.goal.retirementAge}
           />
-        )}
-        <div
-          style={{
-            fontSize: 11,
-            color: 'var(--tds-gray-300)',
-            lineHeight: 1.5,
-            marginTop: 12,
-          }}
-        >
-          * 이 결과는 입력한 수익률이 매년 일정하다는 가정을 기준으로 해요. 실제 시장 상황에 따라 달라질 수 있어요.
-        </div>
+        </>
+      )}
+      <div style={{ fontSize: 11, color: 'var(--tds-gray-300)', lineHeight: 1.5, marginTop: 4 }}>
+        * 이 결과는 입력한 수익률이 매년 일정하다는 가정을 기준으로 해요. 실제 시장 상황에 따라 달라질 수 있어요.
       </div>
-    </>
+    </div>
   );
 }
 
@@ -262,6 +203,8 @@ export default function ResultWorkbench() {
   const resultV2 = usePlannerStore((s) => s.resultV2);
   const result = usePlannerStore((s) => s.result);
   const inputs = usePlannerStore((s) => s.inputs);
+  const netWorth = result.netWorth ?? 0;
+  const monthlySavings = Math.round((result.annualNetSavings ?? 0) / 12);
 
   // 2-1: 은퇴 후 진입 안내 (가장 먼저 체크)
   if (inputs.status.currentAge > 0 && inputs.goal.retirementAge > 0 && inputs.status.currentAge >= inputs.goal.retirementAge) {
@@ -453,6 +396,8 @@ export default function ResultWorkbench() {
         summary={summary}
         propertyOptions={propertyOptions}
         inputs={inputs}
+        netWorth={netWorth}
+        monthlySavings={monthlySavings}
       />
 
       {/* 3층: Why/Path */}
@@ -518,22 +463,12 @@ export default function ResultWorkbench() {
         inputs={inputs}
       />
 
-      {/* 세부 분석 탭 */}
-      <div
-        style={{
-          borderRadius: 16,
-          border: '1px solid var(--tds-gray-100)',
-          overflow: 'hidden',
-        }}
-      >
-        <DetailTabsInner
-          detailYearlyAggregates={detailYearlyAggregates}
-          retirementAge={inputs.goal.retirementAge}
-          result={result}
-          inputs={inputs}
-          strategyLabel={SCENARIO_ACTION_LABELS[recommended?.strategy ?? ''] ?? (recommended?.label ?? '추천 전략')}
-        />
-      </div>
+      {/* 7층: 자산 추이 차트 인라인 */}
+      <AssetChartSection
+        detailYearlyAggregates={detailYearlyAggregates}
+        inputs={inputs}
+        strategyLabel={SCENARIO_ACTION_LABELS[recommended?.strategy ?? ''] ?? (recommended?.label ?? '추천 전략')}
+      />
 
     </div>
   );

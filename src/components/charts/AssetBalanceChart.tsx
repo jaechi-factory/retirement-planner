@@ -13,6 +13,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import type { YearlyAggregateV2 } from '../../types/calculationV2';
+import type { PlannerInputs } from '../../types/inputs';
 import { fmtKRW, fmtKRWAxis } from '../../utils/format';
 
 interface Props {
@@ -20,10 +21,121 @@ interface Props {
   retirementAge: number;
   targetMonthly: number;
   strategyLabel: string;
+  inputs: PlannerInputs;
 }
 
-export default function AssetBalanceChart({ rows, retirementAge, targetMonthly, strategyLabel }: Props) {
+interface PensionEvent {
+  name: string;
+  monthly: number;
+}
+
+// 연금 개시 나이 → 이벤트 맵
+function buildPensionStartMap(inputs: PlannerInputs): Map<number, PensionEvent[]> {
+  const map = new Map<number, PensionEvent[]>();
+
+  const add = (age: number, name: string, monthly: number) => {
+    if (!map.has(age)) map.set(age, []);
+    map.get(age)!.push({ name, monthly });
+  };
+
+  if (inputs.pension.publicPension.enabled) {
+    add(
+      inputs.pension.publicPension.startAge,
+      '국민연금',
+      inputs.pension.publicPension.manualMonthlyTodayValue,
+    );
+  }
+  if (inputs.pension.retirementPension.enabled) {
+    add(
+      inputs.pension.retirementPension.startAge,
+      '퇴직연금',
+      inputs.pension.retirementPension.manualMonthlyTodayValue,
+    );
+  }
+  if (inputs.pension.privatePension.enabled) {
+    add(
+      inputs.pension.privatePension.startAge,
+      '개인연금',
+      inputs.pension.privatePension.manualMonthlyTodayValue,
+    );
+  }
+
+  return map;
+}
+
+// 커스텀 툴팁
+function CustomTooltip({
+  active,
+  payload,
+  label,
+  pensionStartMap,
+  retirementAge,
+}: {
+  active?: boolean;
+  payload?: Array<{ name: string; value: number; color: string }>;
+  label?: number;
+  pensionStartMap: Map<number, PensionEvent[]>;
+  retirementAge: number;
+}) {
+  if (!active || !payload || label === undefined) return null;
+
+  const pensions = pensionStartMap.get(label) ?? [];
+  const isRetirementYear = label === retirementAge;
+
+  return (
+    <div
+      style={{
+        background: 'white',
+        border: '1px solid var(--tds-gray-100)',
+        borderRadius: 8,
+        padding: '10px 12px',
+        fontSize: 12,
+        minWidth: 160,
+      }}
+    >
+      <div style={{ fontWeight: 700, marginBottom: 6, color: 'var(--tds-gray-800)' }}>
+        {label}세
+        {isRetirementYear && (
+          <span style={{ marginLeft: 6, fontSize: 10, color: 'var(--tds-gray-400)', fontWeight: 500 }}>
+            은퇴
+          </span>
+        )}
+      </div>
+      {payload.map((p) => (
+        <div
+          key={p.name}
+          style={{ display: 'flex', justifyContent: 'space-between', gap: 16, color: 'var(--tds-gray-600)', marginBottom: 2 }}
+        >
+          <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: p.color, display: 'inline-block' }} />
+            {p.name}
+          </span>
+          <span style={{ fontWeight: 600, color: 'var(--tds-gray-800)' }}>{fmtKRW(Number(p.value))}</span>
+        </div>
+      ))}
+      {pensions.length > 0 && (
+        <div
+          style={{
+            marginTop: 8,
+            paddingTop: 8,
+            borderTop: '1px solid var(--tds-gray-100)',
+          }}
+        >
+          {pensions.map((p, i) => (
+            <div key={i} style={{ color: '#1B7F3A', fontWeight: 600, marginBottom: 2 }}>
+              + {p.name} 월 {fmtKRW(p.monthly)} 수령 시작
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default function AssetBalanceChart({ rows, retirementAge, targetMonthly, strategyLabel, inputs }: Props) {
   if (rows.length === 0) return null;
+
+  const pensionStartMap = buildPensionStartMap(inputs);
 
   const data = rows.map((r) => ({
     age: r.ageYear,
@@ -81,9 +193,15 @@ export default function AssetBalanceChart({ rows, retirementAge, targetMonthly, 
             width={44}
           />
           <Tooltip
-            formatter={(value, name) => [fmtKRW(Number(value)), name as string]}
-            labelFormatter={(label) => `${label}세`}
-            contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid var(--tds-gray-100)' }}
+            content={(props) => (
+              <CustomTooltip
+                active={props.active}
+                payload={props.payload as Array<{ name: string; value: number; color: string }> | undefined}
+                label={props.label as number | undefined}
+                pensionStartMap={pensionStartMap}
+                retirementAge={retirementAge}
+              />
+            )}
           />
           <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 11, paddingTop: 6 }} />
           <Area type="monotone" dataKey="현금·예금" stroke="#2196F3" strokeWidth={1.5} fill="url(#cashGrad)" />
@@ -93,8 +211,7 @@ export default function AssetBalanceChart({ rows, retirementAge, targetMonthly, 
 
       {/* 메타 1줄 — 차트 아래 */}
       <div style={{ fontSize: 11, color: 'var(--tds-gray-400)', marginTop: 8 }}>
-        전략: {strategyLabel} / 월 {targetMonthly}만원 기준
-        {retirementAge > 0 && ` / 은퇴: ${retirementAge}세`}
+        전략: {strategyLabel} / 월 {targetMonthly}만원 기준 / 은퇴: {retirementAge}세
       </div>
     </div>
   );

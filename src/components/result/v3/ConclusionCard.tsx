@@ -6,9 +6,11 @@ interface ConclusionCardProps {
   summary: CalculationResultV2['summary'];
   propertyOptions: CalculationResultV2['propertyOptions'];
   inputs: PlannerInputs;
+  netWorth: number;
+  monthlySavings: number;
 }
 
-export default function ConclusionCard({ summary, propertyOptions, inputs }: ConclusionCardProps) {
+export default function ConclusionCard({ summary, propertyOptions, inputs, netWorth, monthlySavings }: ConclusionCardProps) {
   const { lifeExpectancy, retirementAge } = inputs.goal;
   const { failureAge, financialExhaustionAge } = summary;
 
@@ -67,6 +69,8 @@ export default function ConclusionCard({ summary, propertyOptions, inputs }: Con
 
   const bg = isPositive ? '#F6FBF7' : '#FFF8F8';
   const borderColor = isPositive ? '#D4EDDA' : '#FFDADA';
+  const chipBg = isPositive ? 'rgba(27,127,58,0.07)' : 'rgba(192,57,43,0.06)';
+  const dividerColor = isPositive ? '#D4EDDA' : '#FFDADA';
 
   return (
     <div
@@ -99,6 +103,56 @@ export default function ConclusionCard({ summary, propertyOptions, inputs }: Con
         }}
       >
         {subText}
+      </div>
+
+      {/* 순자산 / 월 여유자금 칩 */}
+      <div
+        style={{
+          display: 'flex',
+          gap: 8,
+          marginTop: 16,
+          paddingTop: 14,
+          borderTop: `1px solid ${dividerColor}`,
+        }}
+      >
+        <div
+          style={{
+            flex: 1,
+            background: chipBg,
+            borderRadius: 8,
+            padding: '8px 12px',
+          }}
+        >
+          <div style={{ fontSize: 10, color: 'var(--tds-gray-400)', marginBottom: 2 }}>순자산</div>
+          <div
+            style={{
+              fontSize: 13,
+              fontWeight: 700,
+              color: netWorth < 0 ? '#C0392B' : 'var(--tds-gray-800)',
+            }}
+          >
+            {fmtKRW(netWorth)}
+          </div>
+        </div>
+        <div
+          style={{
+            flex: 1,
+            background: chipBg,
+            borderRadius: 8,
+            padding: '8px 12px',
+          }}
+        >
+          <div style={{ fontSize: 10, color: 'var(--tds-gray-400)', marginBottom: 2 }}>월 여유자금</div>
+          <div
+            style={{
+              fontSize: 13,
+              fontWeight: 700,
+              color: monthlySavings < 0 ? '#C0392B' : 'var(--tds-gray-800)',
+            }}
+          >
+            {monthlySavings >= 0 ? '+' : ''}{fmtKRW(Math.abs(monthlySavings))}
+          </div>
+        </div>
       </div>
     </div>
   );
