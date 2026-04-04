@@ -14,6 +14,7 @@ import {
 } from 'recharts';
 import type { YearlyAggregateV2 } from '../../types/calculationV2';
 import type { PlannerInputs } from '../../types/inputs';
+import { getPensionBreakdown } from '../../engine/pensionEstimation';
 import { fmtKRW, fmtKRWAxis } from '../../utils/format';
 
 interface Props {
@@ -29,8 +30,8 @@ interface PensionEvent {
   monthly: number;
 }
 
-// 연금 개시 나이 → 이벤트 맵
-function buildPensionStartMap(inputs: PlannerInputs): Map<number, PensionEvent[]> {
+// 연금 개시 나이 → 이벤트 맵 (getPensionBreakdown 사용으로 auto 모드 포함 정확한 금액)
+function buildPensionStartMap(inputs: PlannerInputs, retirementAge: number): Map<number, PensionEvent[]> {
   const map = new Map<number, PensionEvent[]>();
 
   const add = (age: number, name: string, monthly: number) => {
@@ -38,26 +39,18 @@ function buildPensionStartMap(inputs: PlannerInputs): Map<number, PensionEvent[]
     map.get(age)!.push({ name, monthly });
   };
 
-  if (inputs.pension.publicPension.enabled) {
-    add(
-      inputs.pension.publicPension.startAge,
-      '국민연금',
-      inputs.pension.publicPension.manualMonthlyTodayValue,
-    );
+  const { currentAge, annualIncome } = inputs.status;
+  const inflationRate = inputs.goal.inflationRate;
+  const breakdown = getPensionBreakdown(inputs.pension, currentAge, retirementAge, annualIncome, inflationRate);
+
+  if (inputs.pension.publicPension.enabled && breakdown.publicMonthly > 0) {
+    add(inputs.pension.publicPension.startAge, '국민연금', breakdown.publicMonthly);
   }
-  if (inputs.pension.retirementPension.enabled) {
-    add(
-      inputs.pension.retirementPension.startAge,
-      '퇴직연금',
-      inputs.pension.retirementPension.manualMonthlyTodayValue,
-    );
+  if (inputs.pension.retirementPension.enabled && breakdown.retirementMonthly > 0) {
+    add(inputs.pension.retirementPension.startAge, '퇴직연금', breakdown.retirementMonthly);
   }
-  if (inputs.pension.privatePension.enabled) {
-    add(
-      inputs.pension.privatePension.startAge,
-      '개인연금',
-      inputs.pension.privatePension.manualMonthlyTodayValue,
-    );
+  if (inputs.pension.privatePension.enabled && breakdown.privateMonthly > 0) {
+    add(inputs.pension.privatePension.startAge, '개인연금', breakdown.privateMonthly);
   }
 
   return map;
@@ -70,17 +63,20 @@ function CustomTooltip({
   label,
   pensionStartMap,
   retirementAge,
+  pensionByAge,
 }: {
   active?: boolean;
   payload?: Array<{ name: string; value: number; color: string }>;
   label?: number;
   pensionStartMap: Map<number, PensionEvent[]>;
   retirementAge: number;
+  pensionByAge: Map<number, number>;
 }) {
   if (!active || !payload || label === undefined) return null;
 
   const pensions = pensionStartMap.get(label) ?? [];
   const isRetirementYear = label === retirementAge;
+  const totalPensionThisYear = pensionByAge.get(label) ?? 0;
 
   return (
     <div
@@ -108,7 +104,7 @@ function CustomTooltip({
         >
           <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
             <span style={{ width: 6, height: 6, borderRadius: '50%', background: p.color, display: 'inline-block' }} />
-            {p.name}
+            {p.name === '현금·예금' && totalPensionThisYear > 0 ? '현금·예금 (연금 포함)' : p.name}
           </span>
           <span style={{ fontWeight: 600, color: 'var(--tds-gray-800)' }}>{fmtKRW(Number(p.value))}</span>
         </div>
@@ -135,7 +131,12 @@ function CustomTooltip({
 export default function AssetBalanceChart({ rows, retirementAge, targetMonthly, strategyLabel, inputs }: Props) {
   if (rows.length === 0) return null;
 
-  const pensionStartMap = buildPensionStartMap(inputs);
+  const pensionStartMap = buildPensionStartMap(inputs, retirementAge);
+
+  // 나이별 연금 수입 맵 (연금 포함 라벨 표시용)
+  const pensionByAge = new Map<number, number>(
+    rows.map((r) => [r.ageYear, r.totalPension])
+  );
 
   const data = rows.map((r) => ({
     age: r.ageYear,
@@ -144,9 +145,15 @@ export default function AssetBalanceChart({ rows, retirementAge, targetMonthly, 
     shortfall: r.totalShortfall,
   }));
 
-  // 소진 나이 계산
+  // 소진 여부 및 연금 의존 여부 계산
   const depletionRow = rows.find((r) => r.totalShortfall > 0);
   const depletionAge = depletionRow?.ageYear ?? null;
+  const lastRow = rows[rows.length - 1];
+  const isPensionDependent =
+    depletionAge === null &&
+    lastRow !== undefined &&
+    lastRow.financialInvestableEnd < 100 &&  // 금융투자자산 거의 소진
+    lastRow.totalPension > 0;                // 연금 수입이 있음
 
   return (
     <div style={{ marginBottom: 24 }}>
@@ -155,12 +162,14 @@ export default function AssetBalanceChart({ rows, retirementAge, targetMonthly, 
         style={{
           fontSize: 15,
           fontWeight: 700,
-          color: depletionAge !== null ? '#C0392B' : '#1B7F3A',
+          color: depletionAge !== null ? '#C0392B' : isPensionDependent ? '#D4700A' : '#1B7F3A',
           marginBottom: 12,
         }}
       >
         {depletionAge !== null
           ? `${depletionAge}세에 금융자산이 소진돼요`
+          : isPensionDependent
+          ? '연금으로 기대수명까지 생활비를 충당해요'
           : '기대수명까지 금융자산을 유지해요'}
       </div>
 
@@ -200,6 +209,7 @@ export default function AssetBalanceChart({ rows, retirementAge, targetMonthly, 
                 label={props.label as number | undefined}
                 pensionStartMap={pensionStartMap}
                 retirementAge={retirementAge}
+                pensionByAge={pensionByAge}
               />
             )}
           />
