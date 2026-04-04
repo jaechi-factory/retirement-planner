@@ -4,7 +4,6 @@ import { fmtKRW } from '../../utils/format';
 interface PropertyDecisionSectionProps {
   financialExhaustionAge: number;
   propertyOptions: PropertyOptionResult[];  // keep, secured_loan, sell
-  realEstateAmount: number;  // 월세 계산용
   lifeExpectancy: number;
   selectedStrategy: 'sell' | 'secured_loan';
 }
@@ -12,7 +11,6 @@ interface PropertyDecisionSectionProps {
 export default function PropertyDecisionSection({
   financialExhaustionAge,
   propertyOptions,
-  realEstateAmount,
   lifeExpectancy,
   selectedStrategy,
 }: PropertyDecisionSectionProps) {
@@ -48,9 +46,6 @@ export default function PropertyDecisionSection({
     marginLeft: 6,
     verticalAlign: 'middle',
   };
-
-  // 월세 추정: 매각가 × 95% × 연 4% / 12
-  const rentalMonthly = Math.round(realEstateAmount * 0.95 * 0.04 / 12);
 
   return (
     <div
@@ -147,7 +142,7 @@ export default function PropertyDecisionSection({
             </span>
           </div>
           <div style={{ fontSize: 11, color: 'var(--tds-gray-400)', marginTop: 4 }}>
-            단, 이후 월세 약 {fmtKRW(rentalMonthly)}/월이 추가돼요 (매각가 × 연 4%)
+            단, 이후 월세 약 200만원/월(현재가치·물가연동)이 추가돼요
           </div>
         </div>
       )}

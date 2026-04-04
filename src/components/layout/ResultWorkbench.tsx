@@ -437,7 +437,6 @@ export default function ResultWorkbench() {
         <PropertyDecisionSection
           financialExhaustionAge={summary.financialExhaustionAge}
           propertyOptions={propertyOptions}
-          realEstateAmount={inputs.assets.realEstate.amount}
           lifeExpectancy={inputs.goal.lifeExpectancy}
           selectedStrategy={selectedStrategy}
         />
