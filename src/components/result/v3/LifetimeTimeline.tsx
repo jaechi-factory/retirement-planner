@@ -285,12 +285,38 @@ function buildGroupedRows(
   return groups;
 }
 
-// ── 집 이벤트 카드 3종 세트 ───────────────────────────────────────────────────
+// ── 집 이벤트 카드 ───────────────────────────────────────────────────────────
 function PropertyEventCard({ data, isSell }: {
   data: NonNullable<TimelineEvent['propertyData']>;
   isSell: boolean;
 }) {
   const { estimatedPrice, mortgageBalance, netProceeds, lifeExpectancy } = data;
+
+  // 담보대출 카드: 집 유지, 대출로 생활비 보완
+  if (!isSell) {
+    return (
+      <div
+        style={{
+          background: '#F8F9FA',
+          borderRadius: 8,
+          padding: '12px 14px',
+          marginTop: 10,
+          fontSize: 13,
+          color: 'var(--tds-gray-600)',
+          lineHeight: 1.7,
+        }}
+      >
+        집은 그대로 유지하면서, 집을 담보로 대출을 받아 부족한 생활비를 충당해요.
+        {lifeExpectancy > 0 && (
+          <div style={{ fontSize: 12, color: 'var(--tds-gray-400)', marginTop: 6 }}>
+            이 방법으로 {lifeExpectancy}세까지 이어질 수 있어요.
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // 매각 카드
   return (
     <div
       style={{
@@ -302,7 +328,7 @@ function PropertyEventCard({ data, isSell }: {
       }}
     >
       <div style={{ color: 'var(--tds-gray-600)', marginBottom: 10, lineHeight: 1.6 }}>
-        {isSell ? '이 해에 집을 팔면 아래와 같이 돼요.' : '이 해에 담보대출을 받으면 아래와 같이 돼요.'}
+        이 해에 집을 팔면 아래와 같이 돼요.
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -313,9 +339,7 @@ function PropertyEventCard({ data, isSell }: {
         </div>
         {mortgageBalance > 0 && (
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span style={{ color: 'var(--tds-gray-500)' }}>
-              {isSell ? '남은 주담대' : '담보대출 잔액'}
-            </span>
+            <span style={{ color: 'var(--tds-gray-500)' }}>남은 주담대</span>
             <span style={{ fontWeight: 600, color: 'var(--tds-gray-800)' }}>
               {fmtKRW(mortgageBalance)}
             </span>
