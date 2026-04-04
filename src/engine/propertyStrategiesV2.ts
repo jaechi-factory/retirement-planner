@@ -7,8 +7,11 @@ export type PropertyStrategyV2 = 'keep' | 'secured_loan' | 'sell';
 /** 집 매각 시 거래비용·세금 헤어컷 (매각가 대비 비율) */
 export const PROPERTY_SALE_HAIRCUT = 0.05;
 
-/** 매각 후 임차 주거비 연 비율 (매각 순수익 대비) */
-export const POST_SALE_RENTAL_ANNUAL_YIELD = 0.04;
+/** 집 매각 후 월세 — 현재가치 기준 (만원/월) */
+export const RENTAL_BASE_MONTHLY_TODAY = 200;
+
+/** 집 매각 대금 운용 연 수익률 */
+export const SALE_PROCEEDS_ANNUAL_RETURN = 0.04;
 
 /** 담보대출 LTV (부동산 평가액 대비 최대 대출 비율) */
 export const SECURED_LOAN_LTV = 0.60;

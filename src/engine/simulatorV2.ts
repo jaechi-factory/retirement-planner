@@ -42,7 +42,8 @@ import type { FundingPolicy, LiquidationPolicy } from './fundingPolicy';
 import type { PropertyStrategyV2 } from './propertyStrategiesV2';
 import {
   PROPERTY_SALE_HAIRCUT,
-  POST_SALE_RENTAL_ANNUAL_YIELD,
+  RENTAL_BASE_MONTHLY_TODAY,
+  SALE_PROCEEDS_ANNUAL_RETURN,
   SECURED_LOAN_LTV,
   SECURED_LOAN_ANNUAL_RATE,
 } from './propertyStrategiesV2';
@@ -244,7 +245,8 @@ export function simulateMonthlyV2(
 
   let propertyValue            = Math.max(0, assets.realEstate.amount);
   let securedLoanBalance       = 0;
-  let propertySaleProceedsBucket = 0;
+  let propertySaleProceedsBucket = 0;   // 시각화 전용 추적
+  let saleInvestBalance        = 0;     // 매각 대금 운용 잔액 (이자 붙는 실제 잔고)
   let propertySold             = false;
   let propertyInterventionStarted = false;
   let baseRentalMonthlyAtSale  = 0;
@@ -286,6 +288,9 @@ export function simulateMonthlyV2(
       }
       if (!propertySold) {
         propertyValue *= 1 + propertyMonthlyRate;
+      } else if (saleInvestBalance > 0) {
+        // 매각 대금 운용: 연 4% 복리 (draw 이전 잔고에 적용)
+        saleInvestBalance *= 1 + SALE_PROCEEDS_ANNUAL_RETURN / 12;
       }
 
       // ── 2. 소득 / 연금 계산 ──────────────────────────────────────────
@@ -342,6 +347,12 @@ export function simulateMonthlyV2(
           distributeSurplus(buckets, netFlow, initialRatios);
         } else {
           uncoveredAmount = drawFromBuckets(buckets, -netFlow, financialSellState, eventFlags);
+          // 금융 버킷 소진 후에도 부족하면 매각 대금 운용 잔액에서 추가 인출
+          if (uncoveredAmount > 0 && propertySold && saleInvestBalance > 0) {
+            const drawFromSale = Math.min(uncoveredAmount, saleInvestBalance);
+            saleInvestBalance -= drawFromSale;
+            uncoveredAmount -= drawFromSale;
+          }
         }
       } else {
         // ── 은퇴 후: [P6] 과매도 방지 — 부족 시 통합 인출 ───────────
@@ -359,6 +370,12 @@ export function simulateMonthlyV2(
           // 그 후 버퍼 top-up을 별도 수행 (shortfall 계산에 영향 없음)
           const deficit = -netFlow;
           uncoveredAmount = drawFromBuckets(buckets, deficit, financialSellState, eventFlags);
+          // 금융 버킷 소진 후에도 부족하면 매각 대금 운용 잔액에서 추가 인출
+          if (uncoveredAmount > 0 && propertySold && saleInvestBalance > 0) {
+            const drawFromSale = Math.min(uncoveredAmount, saleInvestBalance);
+            saleInvestBalance -= drawFromSale;
+            uncoveredAmount -= drawFromSale;
+          }
           topUpCashBuffer(buckets, buffer, financialSellState, eventFlags);
         }
       }
@@ -398,25 +415,29 @@ export function simulateMonthlyV2(
           const grossProceeds = propertyValue * (1 - PROPERTY_SALE_HAIRCUT);
           const netProceeds = Math.max(0, grossProceeds - remainingMortgage);
 
-          propertySaleProceedsBucket = netProceeds;
-          baseRentalMonthlyAtSale = (netProceeds * POST_SALE_RENTAL_ANNUAL_YIELD) / 12;
+          // 매각 대금: cash 버킷 대신 별도 운용 잔액으로 관리 (연 4% 복리)
+          saleInvestBalance = netProceeds;
+          propertySaleProceedsBucket = netProceeds;  // 시각화 초기값 동기화
+
+          // 월세: 현재가치 200만원을 매각 시점 명목가로 전환
+          // (이후 rentalCostThisMonth에서 추가 물가 연동 계속됨)
+          baseRentalMonthlyAtSale =
+            RENTAL_BASE_MONTHLY_TODAY * Math.pow(1 + monthlyInflation, totalMonthIndex);
+
           propertySaleMonthIndex = totalMonthIndex;
-          buckets.cash += netProceeds;
           propertyValue = 0;
           propertySold = true;
-          uncoveredAmount = Math.max(0, uncoveredAmount - netProceeds);
+
+          // 이번 달 부족분을 운용 잔액에서 우선 충당
+          const drawFromSale = Math.min(uncoveredAmount, saleInvestBalance);
+          saleInvestBalance -= drawFromSale;
+          uncoveredAmount = Math.max(0, uncoveredAmount - drawFromSale);
         }
       }
 
-      // ── 6. 매각 대금 버킷 추적 (시각화용) ────────────────────────────
-      if (propertySold && propertySaleProceedsBucket > 0) {
-        const netOutflow = Math.max(
-          0,
-          expenseThisMonth + debtServiceThisMonth +
-            childExpenseThisMonth + rentalCostThisMonth -
-            incomeThisMonth - pensionThisMonth,
-        );
-        propertySaleProceedsBucket = Math.max(0, propertySaleProceedsBucket - netOutflow);
+      // ── 6. 매각 대금 버킷 추적 (시각화용) — saleInvestBalance와 동기화
+      if (propertySold) {
+        propertySaleProceedsBucket = saleInvestBalance;
       }
 
       // ── 7. 최종 정리 ─────────────────────────────────────────────────

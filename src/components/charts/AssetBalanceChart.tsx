@@ -104,7 +104,11 @@ function CustomTooltip({
         >
           <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
             <span style={{ width: 6, height: 6, borderRadius: '50%', background: p.color, display: 'inline-block' }} />
-            {p.name === '현금·예금' && totalPensionThisYear > 0 ? '현금·예금 (연금 포함)' : p.name}
+            {p.name === '현금·예금' && totalPensionThisYear > 0
+              ? '현금·예금 (연금 포함)'
+              : p.name === '매각대금 운용'
+              ? '매각대금 운용 (연 4%)'
+              : p.name}
           </span>
           <span style={{ fontWeight: 600, color: 'var(--tds-gray-800)' }}>{fmtKRW(Number(p.value))}</span>
         </div>
@@ -139,12 +143,14 @@ export default function AssetBalanceChart({ rows, retirementAge, targetMonthly, 
   );
 
   const hasRealEstate = inputs.assets.realEstate.amount > 0;
+  const hasSaleProceeds = hasRealEstate && rows.some((r) => r.propertySaleProceedsBucketEnd > 0);
 
   const data = rows.map((r) => ({
     age: r.ageYear,
     ...(hasRealEstate ? { '집 자산': r.propertyValueEnd } : {}),
     '현금·예금': r.cashLikeEnd,
     '주식·채권': r.financialInvestableEnd,
+    ...(hasSaleProceeds ? { '매각대금 운용': r.propertySaleProceedsBucketEnd } : {}),
     shortfall: r.totalShortfall,
   }));
 
@@ -183,6 +189,12 @@ export default function AssetBalanceChart({ rows, retirementAge, targetMonthly, 
               <linearGradient id="propGrad" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="#E65100" stopOpacity={0.15} />
                 <stop offset="95%" stopColor="#E65100" stopOpacity={0.02} />
+              </linearGradient>
+            )}
+            {hasSaleProceeds && (
+              <linearGradient id="saleGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#2E7D32" stopOpacity={0.2} />
+                <stop offset="95%" stopColor="#2E7D32" stopOpacity={0.02} />
               </linearGradient>
             )}
             <linearGradient id="cashGrad" x1="0" y1="0" x2="0" y2="1">
@@ -226,14 +238,30 @@ export default function AssetBalanceChart({ rows, retirementAge, targetMonthly, 
           {hasRealEstate && (
             <Area type="monotone" dataKey="집 자산" stroke="#E65100" strokeWidth={1.5} fill="url(#propGrad)" />
           )}
+          {hasSaleProceeds && (
+            <Area
+              type="monotone"
+              dataKey="매각대금 운용"
+              stroke="#2E7D32"
+              strokeWidth={1.5}
+              fill="url(#saleGrad)"
+              strokeDasharray="5 3"
+            />
+          )}
           <Area type="monotone" dataKey="현금·예금" stroke="#2196F3" strokeWidth={1.5} fill="url(#cashGrad)" />
           <Area type="monotone" dataKey="주식·채권" stroke="#4527A0" strokeWidth={1.5} fill="url(#finGrad)" />
         </AreaChart>
       </ResponsiveContainer>
 
       {/* 메타 1줄 — 차트 아래 */}
-      <div style={{ fontSize: 11, color: 'var(--tds-gray-400)', marginTop: 8 }}>
+      <div style={{ fontSize: 11, color: 'var(--tds-gray-400)', marginTop: 8, lineHeight: 1.7 }}>
         전략: {strategyLabel} / 월 {targetMonthly}만원 기준 / 은퇴: {retirementAge}세
+        {hasSaleProceeds && (
+          <>
+            <br />
+            집 매각 후 가정: 월세 200만원(현재가치·물가연동) · 매각대금 연 4% 운용
+          </>
+        )}
       </div>
     </div>
   );

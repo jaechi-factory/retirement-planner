@@ -43,7 +43,7 @@ export interface YearlyAggregateV2 {
   financialInvestableEnd: number;        // 연말 투자자산 잔고
   propertyValueEnd: number;              // 연말 부동산 평가액
   securedLoanBalanceEnd: number;         // 연말 담보대출 잔고
-  propertySaleProceedsBucketEnd: number; // 연말 매각대금 버킷
+  propertySaleProceedsBucketEnd: number; // 연말 매각대금 운용 잔액 (연 4% 복리 적용)
   totalShortfall: number;                // 연간 미충당 합계
   totalIncome: number;                   // 연간 근로소득
   totalPension: number;                  // 연간 연금
