@@ -270,9 +270,15 @@ function buildWarnings(
 
   const allFail = options.every((o) => !o.survivesToLifeExpectancy);
   if (allFail) {
+    const bestSustainable = Math.max(...options.map((o) => o.sustainableMonthly));
+    const targetMonthly = inputs.goal.targetMonthly;
+    const gapPart =
+      bestSustainable > 0 && targetMonthly > 0
+        ? ` 지금 자산 기준으로 가능한 생활비는 최대 월 ${bestSustainable.toLocaleString()}만원이에요 (목표 대비 ${(targetMonthly - bestSustainable).toLocaleString()}만원 부족).`
+        : '';
     warnings.push({
       severity: 'critical',
-      message: '어떤 전략을 써도 기대수명까지 자금이 부족해요. 목표 생활비를 낮추거나 저축을 늘려보세요.',
+      message: `목표 생활비 월 ${targetMonthly.toLocaleString()}만원으로는 기대수명까지 자금을 유지하기 어려워요.${gapPart} 저축을 늘리거나 투자 수익률을 높이는 방법을 검토해보세요.`,
     });
   }
 

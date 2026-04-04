@@ -41,7 +41,11 @@ export default function ConclusionCard({ summary, propertyOptions, inputs }: Con
   } else {
     // 케이스 3: 어떤 전략도 기대수명까지 생존 못 함
     isPositive = false;
-    headline = `당신은 ${failureAge}세에 돈이 바닥납니다`;
+    headline = `이 계획대로라면 ${failureAge}세에 돈이 바닥납니다`;
+
+    const { targetMonthly } = inputs.goal;
+    const { sustainableMonthly } = summary;
+    const shortfall = targetMonthly > 0 ? targetMonthly - sustainableMonthly : 0;
 
     // 연금 수령액 합산 (국민연금 + 퇴직연금 + 개인연금)
     const totalPensionMonthly =
@@ -49,10 +53,15 @@ export default function ConclusionCard({ summary, propertyOptions, inputs }: Con
       (inputs.pension.retirementPension.enabled ? inputs.pension.retirementPension.manualMonthlyTodayValue : 0) +
       (inputs.pension.privatePension.enabled ? inputs.pension.privatePension.manualMonthlyTodayValue : 0);
 
-    if (totalPensionMonthly > 0) {
-      subText = `${failureAge}세 이후에는 연금만 남아 월 ${fmtKRW(totalPensionMonthly)}으로 생활해야 해요.`;
+    if (sustainableMonthly > 0 && shortfall > 0) {
+      const pensionNote = totalPensionMonthly > 0
+        ? ` ${failureAge}세 이후에는 연금 ${fmtKRW(totalPensionMonthly)}만 남아요.`
+        : '';
+      subText = `목표 생활비 ${fmtKRW(targetMonthly)} 기준으로 ${lifeExpectancy}세까지 버티기 어렵고, 지금 자산으로는 월 ${fmtKRW(sustainableMonthly)}까지만 가능해요. 저축을 늘리거나 수익률을 높여야 해요.${pensionNote}`;
+    } else if (totalPensionMonthly > 0) {
+      subText = `${failureAge}세 이후에는 연금 ${fmtKRW(totalPensionMonthly)}만 남아요. 지금부터 저축을 늘리거나 수익률을 높이는 방법을 검토해보세요.`;
     } else {
-      subText = `${failureAge}세 이후에는 수입이 없어져요. 지금부터 대비가 필요해요.`;
+      subText = `${failureAge}세 이후에는 수입이 없어져요. 저축을 늘리거나 수익률을 높이는 방법을 지금 바로 검토해보세요.`;
     }
   }
 

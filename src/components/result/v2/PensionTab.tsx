@@ -1,6 +1,6 @@
 import type { CalculationResult } from '../../../types/calculation';
 import type { PlannerInputs } from '../../../types/inputs';
-import { getPensionBreakdown, getPensionTimeline } from '../../../engine/pensionEstimation';
+import { getPensionTimeline } from '../../../engine/pensionEstimation';
 import { fmtKRW } from '../../../utils/format';
 
 interface Props {
@@ -10,14 +10,6 @@ interface Props {
 
 export default function PensionTab({ result, inputs }: Props) {
   const { goal, status, pension } = inputs;
-
-  const pensionBreakdown = getPensionBreakdown(
-    pension,
-    status.currentAge,
-    goal.retirementAge,
-    status.annualIncome,
-    goal.inflationRate,
-  );
 
   const timeline = getPensionTimeline(
     pension,
@@ -30,8 +22,49 @@ export default function PensionTab({ result, inputs }: Props) {
 
   const coveragePct = Math.round(result.pensionCoverageRate * 100);
 
+  // 공백기 계산
+  const gapYears = timeline.length > 0 ? timeline[0].age - goal.retirementAge : 0;
+  const firstPensionAge = timeline.length > 0 ? timeline[0].age : null;
+
+  // 커버율 평가 텍스트
+  const coverageColor = coveragePct >= 50 ? '#1A5DC2' : '#E65100';
+  let coverageEvalText = '';
+  if (coveragePct >= 80) {
+    coverageEvalText = '연금만으로 생활비 대부분 해결돼요';
+  } else if (coveragePct >= 50) {
+    coverageEvalText = '절반 이상은 연금으로 커버돼요';
+  } else {
+    coverageEvalText = '절반도 안 돼요. 금융자산 의존도가 높아요';
+  }
+
+  // 미반영 연금 목록
+  const unreflectedPensions: string[] = [];
+  if (!pension.privatePension.enabled) unreflectedPensions.push('개인연금');
+
   return (
     <div>
+      {/* 공백기 배너 — 최상단 */}
+      {gapYears > 0 && (
+        <div
+          style={{
+            background: '#FFF8EC',
+            border: '1px solid #FFE0B2',
+            borderRadius: 10,
+            padding: '14px 16px',
+            marginBottom: 14,
+          }}
+        >
+          <div style={{ fontSize: 13, fontWeight: 700, color: '#8B4A00', marginBottom: 4 }}>
+            은퇴 후 {gapYears}년간 연금이 없어요
+          </div>
+          {firstPensionAge !== null && (
+            <div style={{ fontSize: 12, color: '#8B4A00', opacity: 0.8 }}>
+              {goal.retirementAge + gapYears}세에 퇴직연금이 시작돼요
+            </div>
+          )}
+        </div>
+      )}
+
       {/* 커버율 요약 */}
       <div
         style={{
@@ -46,21 +79,31 @@ export default function PensionTab({ result, inputs }: Props) {
         </div>
         <div
           style={{
-            fontSize: 24,
+            fontSize: 32,
             fontWeight: 800,
             letterSpacing: '-0.5px',
-            color: coveragePct >= 50 ? '#1A5DC2' : '#E65100',
+            color: coverageColor,
             marginBottom: 4,
           }}
         >
           {coveragePct}%
         </div>
-        <div style={{ fontSize: 12, color: 'var(--tds-gray-600)' }}>
+        <div style={{ fontSize: 12, fontWeight: 600, color: coverageColor, marginTop: 4 }}>
+          {coverageEvalText}
+        </div>
+        <div style={{ fontSize: 12, color: 'var(--tds-gray-600)', marginTop: 6 }}>
           나머지 {100 - coveragePct}%는 금융자산으로 충당해야 해요
         </div>
       </div>
 
-      {/* 은퇴 직후 / 모든 연금 개시 후 */}
+      {/* 공백기 = 0일 때 안내 */}
+      {gapYears === 0 && timeline.length > 0 && (
+        <div style={{ fontSize: 12, color: 'var(--tds-gray-500)', marginBottom: 14 }}>
+          은퇴 시점부터 연금이 바로 시작돼요
+        </div>
+      )}
+
+      {/* 연금 공백기 월 수령액 / 모든 연금 개시 후 */}
       <div
         style={{
           display: 'grid',
@@ -77,10 +120,12 @@ export default function PensionTab({ result, inputs }: Props) {
           }}
         >
           <div style={{ fontSize: 11, color: 'var(--tds-gray-400)', marginBottom: 4 }}>
-            은퇴 직후
+            연금 공백기 월 수령액
           </div>
           <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--tds-gray-500)' }}>
-            월 {fmtKRW(result.monthlyPensionAtRetirementStart)}
+            {result.monthlyPensionAtRetirementStart === 0
+              ? '연금 없음'
+              : `월 ${fmtKRW(result.monthlyPensionAtRetirementStart)}`}
           </div>
           <div style={{ fontSize: 11, color: 'var(--tds-gray-300)', marginTop: 2 }}>
             지금 기준
@@ -103,63 +148,6 @@ export default function PensionTab({ result, inputs }: Props) {
             지금 기준
           </div>
         </div>
-      </div>
-
-      {/* 연금별 상세 */}
-      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--tds-gray-600)', marginBottom: 8 }}>
-        연금별 상세
-      </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 16 }}>
-        {[
-          {
-            label: '국민연금',
-            value: pensionBreakdown.publicMonthly,
-            enabled: pension.publicPension.enabled,
-            startAge: pension.publicPension.startAge,
-          },
-          {
-            label: '퇴직연금',
-            value: pensionBreakdown.retirementMonthly,
-            enabled: pension.retirementPension.enabled,
-            startAge: pension.retirementPension.startAge,
-          },
-          {
-            label: '개인연금',
-            value: pensionBreakdown.privateMonthly,
-            enabled: pension.privatePension.enabled,
-            startAge: pension.privatePension.startAge,
-          },
-        ].map(({ label, value, enabled, startAge }) => (
-          <div
-            key={label}
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              padding: '8px 12px',
-              background: 'var(--tds-gray-50)',
-              borderRadius: 8,
-            }}
-          >
-            <span style={{ fontSize: 12, color: 'var(--tds-gray-600)' }}>
-              {label}
-              {enabled && (
-                <span style={{ fontSize: 11, color: 'var(--tds-gray-400)', marginLeft: 4 }}>
-                  ({startAge}세부터)
-                </span>
-              )}
-            </span>
-            <span
-              style={{
-                fontSize: 13,
-                fontWeight: 600,
-                color: enabled ? 'var(--tds-gray-800)' : 'var(--tds-gray-300)',
-              }}
-            >
-              {enabled ? `월 ${fmtKRW(value)}` : '미반영'}
-            </span>
-          </div>
-        ))}
       </div>
 
       {/* 연금 개시 타임라인 */}
@@ -220,28 +208,6 @@ export default function PensionTab({ result, inputs }: Props) {
                 </div>
               </div>
             </div>
-            {/* 연금 공백기 배너 */}
-            {(() => {
-              const gap = timeline[0].age - goal.retirementAge;
-              if (gap <= 0) return null;
-              return (
-                <div
-                  style={{
-                    background: '#FFF8EC',
-                    border: '1px solid #FFE0B2',
-                    borderRadius: 8,
-                    padding: '10px 12px',
-                    marginLeft: 32,
-                    marginBottom: 14,
-                    fontSize: 12,
-                    color: '#8B4A00',
-                    lineHeight: 1.65,
-                  }}
-                >
-                  이 {gap}년간은 연금 없이 금융자산만으로 생활해야 해요.
-                </div>
-              );
-            })()}
             {timeline.map((ev, i) => {
               const beforePct = Math.round(ev.coverageRateBefore * 100);
               const afterPct = Math.round(ev.coverageRateAfter * 100);
@@ -315,6 +281,13 @@ export default function PensionTab({ result, inputs }: Props) {
               );
             })}
           </div>
+
+          {/* 미반영 연금 안내 */}
+          {unreflectedPensions.length > 0 && (
+            <div style={{ fontSize: 12, color: 'var(--tds-gray-400)', marginTop: 12 }}>
+              {unreflectedPensions.join(', ')} 미반영 — 추후 입력 가능해요
+            </div>
+          )}
         </>
       )}
 

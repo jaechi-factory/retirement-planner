@@ -12,35 +12,33 @@ function StatItem({
   value,
   sub,
   valueColor,
-  dominant,
 }: {
   label: string;
   value: string;
   sub?: string;
   valueColor?: string;
-  dominant?: boolean;
 }) {
   return (
     <div
       style={{
         background: 'var(--tds-gray-50)',
         borderRadius: 10,
-        padding: '12px 14px',
+        padding: '10px 12px',
       }}
     >
       <div style={{ fontSize: 11, color: 'var(--tds-gray-400)', marginBottom: 4 }}>{label}</div>
       <div
         style={{
-          fontSize: dominant ? 20 : 13,
-          fontWeight: dominant ? 800 : 600,
-          color: valueColor ?? (dominant ? 'var(--tds-gray-900)' : 'var(--tds-gray-600)'),
-          letterSpacing: dominant ? '-0.6px' : '-0.2px',
+          fontSize: 14,
+          fontWeight: 700,
+          color: valueColor ?? 'var(--tds-gray-700)',
+          letterSpacing: '-0.2px',
         }}
       >
         {value}
       </div>
       {sub && (
-        <div style={{ fontSize: 11, color: 'var(--tds-gray-400)', marginTop: 2 }}>{sub}</div>
+        <div style={{ fontSize: 11, color: 'var(--tds-gray-300)', marginTop: 2 }}>{sub}</div>
       )}
     </div>
   );
@@ -56,29 +54,41 @@ export default function SummaryTab({ result, inputs }: Props) {
     annualChildExpense,
   } = result;
 
-  const netWorthColor = netWorth < 0 ? '#C0392B' : 'var(--tds-gray-800)';
-  const savingsColor = annualNetSavings < 0 ? '#C0392B' : 'var(--tds-gray-800)';
+  const netWorthColor = netWorth < 0 ? '#C0392B' : 'var(--tds-gray-900)';
+  const savingsColor = annualNetSavings < 0 ? '#C0392B' : 'var(--tds-gray-700)';
 
   const monthlySavings = Math.round(annualNetSavings / 12);
 
   return (
     <div>
-      <div style={{ marginBottom: 10 }}>
+      {/* 순자산 Hero 블록 */}
+      <div
+        style={{
+          background: netWorth < 0 ? '#FFF0F0' : '#EEF4FF',
+          borderRadius: 12,
+          padding: '16px 18px',
+          marginBottom: 10,
+        }}
+      >
+        <div style={{ fontSize: 11, fontWeight: 500, color: 'var(--tds-gray-400)', marginBottom: 6 }}>
+          순자산
+        </div>
         <div
           style={{
-            fontSize: 12,
-            fontWeight: 700,
-            color: 'var(--tds-gray-600)',
+            fontSize: 28,
+            fontWeight: 800,
+            letterSpacing: '-1px',
+            color: netWorthColor,
           }}
         >
-          현재 자산 현황
+          {fmtKRW(netWorth)}
         </div>
-        <div style={{ fontSize: 11, color: 'var(--tds-gray-400)', marginTop: 2 }}>
-          지금 시점 자산·현금흐름 스냅샷
+        <div style={{ fontSize: 12, color: 'var(--tds-gray-400)', marginTop: 4 }}>
+          총자산 {fmtKRW(totalAsset)}
         </div>
       </div>
 
-      {/* 2x2 그리드 */}
+      {/* 4개 카드 2열 그리드 */}
       <div
         style={{
           display: 'grid',
@@ -88,11 +98,8 @@ export default function SummaryTab({ result, inputs }: Props) {
         }}
       >
         <StatItem
-          label="순자산"
-          value={fmtKRW(netWorth)}
-          sub={`총자산 ${fmtKRW(totalAsset)}`}
-          valueColor={netWorthColor}
-          dominant
+          label="총자산"
+          value={fmtKRW(totalAsset)}
         />
         <StatItem
           label="총부채"
@@ -104,8 +111,8 @@ export default function SummaryTab({ result, inputs }: Props) {
           value={`연 ${weightedReturn.toFixed(1)}%`}
         />
         <StatItem
-          label="올해 기준 여유자금"
-          value={`월 ${monthlySavings >= 0 ? '+' : ''}${fmtKRW(Math.abs(monthlySavings))}`}
+          label="월 여유자금"
+          value={`${monthlySavings >= 0 ? '+' : ''}${fmtKRW(Math.abs(monthlySavings))}`}
           sub="세후소득 - 지출 - 부채상환"
           valueColor={savingsColor}
         />
