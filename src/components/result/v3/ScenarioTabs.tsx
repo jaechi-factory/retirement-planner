@@ -1,25 +1,15 @@
-import { useState } from 'react';
 import type { PropertyOptionResult } from '../../../types/calculationV2';
 
 interface ScenarioTabsProps {
   propertyOptions: PropertyOptionResult[];
   lifeExpectancy: number;
-  onStrategyChange?: (strategy: 'secured_loan' | 'sell') => void;
+  activeStrategy: 'sell' | 'secured_loan';
+  onStrategyChange: (strategy: 'sell' | 'secured_loan') => void;
 }
 
-export default function ScenarioTabs({ propertyOptions, lifeExpectancy, onStrategyChange }: ScenarioTabsProps) {
+export default function ScenarioTabs({ propertyOptions, lifeExpectancy, activeStrategy, onStrategyChange }: ScenarioTabsProps) {
   const sellOption = propertyOptions.find((o) => o.strategy === 'sell');
   const loanOption = propertyOptions.find((o) => o.strategy === 'secured_loan');
-
-  // 추천 전략(survivesToLifeExpectancy === true)을 초기 탭으로. 둘 다 true/false이면 'sell' 기본값
-  const recommendedStrategy = (() => {
-    const sellSurvives = sellOption?.survivesToLifeExpectancy === true;
-    const loanSurvives = loanOption?.survivesToLifeExpectancy === true;
-    if (sellSurvives && !loanSurvives) return 'sell' as const;
-    if (loanSurvives && !sellSurvives) return 'secured_loan' as const;
-    return 'sell' as const;
-  })();
-  const [activeStrategy, setActiveStrategy] = useState<'sell' | 'secured_loan'>(recommendedStrategy);
 
   if (!sellOption && !loanOption) return null;
 
@@ -30,8 +20,7 @@ export default function ScenarioTabs({ propertyOptions, lifeExpectancy, onStrate
   if (tabs.length === 0) return null;
 
   const handleTabClick = (strategy: 'sell' | 'secured_loan') => {
-    setActiveStrategy(strategy);
-    onStrategyChange?.(strategy);
+    onStrategyChange(strategy);
   };
 
   const activeTab = tabs.find((t) => t.strategy === activeStrategy) ?? tabs[0];
@@ -55,6 +44,7 @@ export default function ScenarioTabs({ propertyOptions, lifeExpectancy, onStrate
       >
         {tabs.map(({ strategy, label, option }) => {
           const isActive = activeStrategy === strategy;
+
           const survives = option.survivesToLifeExpectancy;
           const badgeAge = survives ? lifeExpectancy : (option.failureAge ?? lifeExpectancy);
 

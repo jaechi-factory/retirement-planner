@@ -6,6 +6,7 @@ interface PropertyDecisionSectionProps {
   propertyOptions: PropertyOptionResult[];  // keep, secured_loan, sell
   realEstateAmount: number;  // 월세 계산용
   lifeExpectancy: number;
+  selectedStrategy: 'sell' | 'secured_loan';
 }
 
 export default function PropertyDecisionSection({
@@ -13,6 +14,7 @@ export default function PropertyDecisionSection({
   propertyOptions,
   realEstateAmount,
   lifeExpectancy,
+  selectedStrategy,
 }: PropertyDecisionSectionProps) {
   const keepOpt = propertyOptions.find((o) => o.strategy === 'keep');
   const loanOpt = propertyOptions.find((o) => o.strategy === 'secured_loan');
@@ -98,7 +100,7 @@ export default function PropertyDecisionSection({
       )}
 
       {/* secured_loan 행 */}
-      {loanOpt && (
+      {loanOpt && selectedStrategy === 'secured_loan' && (
         <div
           style={{
             padding: '12px 14px',
@@ -124,7 +126,7 @@ export default function PropertyDecisionSection({
       )}
 
       {/* sell 행 */}
-      {sellOpt && (
+      {sellOpt && selectedStrategy === 'sell' && (
         <div
           style={{
             padding: '12px 14px',

@@ -7,6 +7,7 @@ interface LifetimeTimelineProps {
   summary: CalculationResultV2['summary'];
   propertyOptions: PropertyOptionResult[];
   inputs: PlannerInputs;
+  selectedStrategy?: 'sell' | 'secured_loan';
 }
 
 // ── 이벤트 타입 정의 ──────────────────────────────────────────────────────────
@@ -46,7 +47,8 @@ function extractEvents(
   aggregates: YearlyAggregateV2[],
   summary: CalculationResultV2['summary'],
   propertyOptions: PropertyOptionResult[],
-  inputs: PlannerInputs
+  inputs: PlannerInputs,
+  selectedStrategy?: 'sell' | 'secured_loan'
 ): TimelineEvent[] {
   const events: TimelineEvent[] = [];
   const { retirementAge, lifeExpectancy } = inputs.goal;
@@ -140,8 +142,9 @@ function extractEvents(
   if (hasRealEstate) {
     const sellOption = propertyOptions.find((o) => o.strategy === 'sell');
     const loanOption = propertyOptions.find((o) => o.strategy === 'secured_loan');
-    const recommendedProperty = propertyOptions.find((o) => o.isRecommended && o.strategy !== 'keep');
-    const propertyOption = recommendedProperty ?? sellOption ?? loanOption;
+    const propertyOption = selectedStrategy
+      ? (propertyOptions.find((o) => o.strategy === selectedStrategy) ?? null)
+      : (propertyOptions.find((o) => o.isRecommended && o.strategy !== 'keep') ?? sellOption ?? loanOption);
 
     if (propertyOption && propertyOption.interventionAge !== null) {
       const isSell = propertyOption.strategy === 'sell';
@@ -358,12 +361,13 @@ export default function LifetimeTimeline({
   summary,
   propertyOptions,
   inputs,
+  selectedStrategy,
 }: LifetimeTimelineProps) {
   if (detailYearlyAggregates.length === 0) return null;
 
   const { retirementAge, lifeExpectancy } = inputs.goal;
 
-  const events = extractEvents(detailYearlyAggregates, summary, propertyOptions, inputs);
+  const events = extractEvents(detailYearlyAggregates, summary, propertyOptions, inputs, selectedStrategy);
   const eventAges = new Set(events.map((e) => e.age));
   const groupedRows = buildGroupedRows(detailYearlyAggregates, eventAges, retirementAge);
 

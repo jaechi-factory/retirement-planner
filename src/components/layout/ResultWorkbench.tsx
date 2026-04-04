@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { usePlannerStore } from '../../store/usePlannerStore';
 import { fmtKRW } from '../../utils/format';
 import FundingTimeline from '../result/v2/FundingTimeline';
@@ -322,6 +323,19 @@ export default function ResultWorkbench() {
   const recommended = propertyOptions.find((o) => o.isRecommended);
   const hasRealEstate = inputs.assets.realEstate.amount > 0;
 
+  // 집 전략 탭 선택 상태 (ScenarioTabs와 공유)
+  const initialStrategy = (() => {
+    if (!hasRealEstate) return 'sell' as const;
+    const sell = propertyOptions.find((o) => o.strategy === 'sell');
+    const loan = propertyOptions.find((o) => o.strategy === 'secured_loan');
+    const sellSurvives = sell?.survivesToLifeExpectancy === true;
+    const loanSurvives = loan?.survivesToLifeExpectancy === true;
+    if (sellSurvives && !loanSurvives) return 'sell' as const;
+    if (loanSurvives && !sellSurvives) return 'secured_loan' as const;
+    return 'sell' as const;
+  })();
+  const [selectedStrategy, setSelectedStrategy] = useState<'sell' | 'secured_loan'>(initialStrategy);
+
   // Why/Path 텍스트
   const pathLines: Array<{ text: string; positive?: boolean }> = [];
 
@@ -413,6 +427,8 @@ export default function ResultWorkbench() {
         <ScenarioTabs
           propertyOptions={propertyOptions}
           lifeExpectancy={inputs.goal.lifeExpectancy}
+          activeStrategy={selectedStrategy}
+          onStrategyChange={setSelectedStrategy}
         />
       )}
 
@@ -423,6 +439,7 @@ export default function ResultWorkbench() {
           propertyOptions={propertyOptions}
           realEstateAmount={inputs.assets.realEstate.amount}
           lifeExpectancy={inputs.goal.lifeExpectancy}
+          selectedStrategy={selectedStrategy}
         />
       )}
 
@@ -461,6 +478,7 @@ export default function ResultWorkbench() {
         summary={summary}
         propertyOptions={propertyOptions}
         inputs={inputs}
+        selectedStrategy={hasRealEstate ? selectedStrategy : undefined}
       />
 
       {/* 7층: 자산 추이 차트 인라인 */}
