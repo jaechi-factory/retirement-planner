@@ -104,15 +104,28 @@ function CustomTooltip({
         >
           <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
             <span style={{ width: 6, height: 6, borderRadius: '50%', background: p.color, display: 'inline-block' }} />
-            {p.name === '현금·예금' && totalPensionThisYear > 0
-              ? '현금·예금 (연금 포함)'
-              : p.name === '매각대금 운용'
-              ? '매각대금 운용 (연 4%)'
-              : p.name}
+            {p.name === '매각대금 운용' ? '매각대금 운용 (연 4%)' : p.name}
           </span>
           <span style={{ fontWeight: 600, color: 'var(--tds-gray-800)' }}>{fmtKRW(Number(p.value))}</span>
         </div>
       ))}
+      {totalPensionThisYear > 0 && (
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            gap: 16,
+            marginTop: 4,
+            paddingTop: 4,
+            borderTop: '1px solid var(--tds-gray-100)',
+            color: '#1B7F3A',
+            fontWeight: 600,
+          }}
+        >
+          <span>연금 수입</span>
+          <span>월 {fmtKRW(Math.round(totalPensionThisYear / 12))}</span>
+        </div>
+      )}
       {pensions.length > 0 && (
         <div
           style={{
