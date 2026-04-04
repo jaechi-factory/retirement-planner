@@ -56,7 +56,7 @@ function extractEvents(
     inputs.pension.publicPension.enabled ? inputs.pension.publicPension.startAge : Infinity,
     inputs.pension.retirementPension.enabled ? inputs.pension.retirementPension.startAge : Infinity,
     inputs.pension.privatePension.enabled ? inputs.pension.privatePension.startAge : Infinity,
-  ].filter((a) => a > retirementAge && a < Infinity);
+  ].filter((a) => a >= retirementAge && a < Infinity);
 
   const firstPensionAge = pensionStartAges.length > 0 ? Math.min(...pensionStartAges) : null;
   const gapYears = firstPensionAge !== null ? firstPensionAge - retirementAge : 0;
