@@ -193,6 +193,11 @@ function getMonthlyDebtService(schedules: DebtSchedules, scheduleIndex: number):
   return get(schedules.mortgage) + get(schedules.creditLoan) + get(schedules.otherLoan);
 }
 
+/** 주담대 월 납입액만 반환 (집 매각 후 이중 상환 방지용) */
+function getMortgagePayment(schedules: DebtSchedules, scheduleIndex: number): number {
+  return schedules.mortgage[scheduleIndex]?.payment ?? 0;
+}
+
 /** 잔여 부채 합계 */
 function getRemainingDebt(schedules: DebtSchedules, scheduleIndex: number): number {
   const get = (rows: { remainingBalance: number }[]) =>
@@ -305,7 +310,11 @@ export function simulateMonthlyV2(
       }
 
       // [P4] 부채상환: schedule index = totalMonthIndex (offset 없음, 첫 달부터 적용)
-      const debtServiceThisMonth = getMonthlyDebtService(debtSchedules, totalMonthIndex);
+      // sell 전략: 집 매각 시 netProceeds = grossProceeds - remainingMortgage 로 주담대를 일괄 상환.
+      // 이후 월 주담대 납입금을 계속 차감하면 이중 상환이 되므로 0으로 처리.
+      const debtServiceThisMonth = propertySold
+        ? getMonthlyDebtService(debtSchedules, totalMonthIndex) - getMortgagePayment(debtSchedules, totalMonthIndex)
+        : getMonthlyDebtService(debtSchedules, totalMonthIndex);
 
       const childExpenseThisMonth =
         children.hasChildren && ageYear <= children.independenceAge
