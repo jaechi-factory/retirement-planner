@@ -196,7 +196,7 @@ export default function AssetBalanceChart({ rows, retirementAge, targetMonthly, 
             content={(props) => (
               <CustomTooltip
                 active={props.active}
-                payload={props.payload as Array<{ name: string; value: number; color: string }> | undefined}
+                payload={props.payload as unknown as Array<{ name: string; value: number; color: string }> | undefined}
                 label={props.label as number | undefined}
                 pensionStartMap={pensionStartMap}
                 retirementAge={retirementAge}
