@@ -326,18 +326,16 @@ function PropertyEventCard({ data, isSell }: {
 function getEventStyle(type: EventType): { dotColor: string; headerColor: string } {
   switch (type) {
     case 'retirement':
-      return { dotColor: '#3B82F6', headerColor: 'var(--tds-gray-800)' };
     case 'pension_public':
     case 'pension_retirement':
     case 'pension_private':
-      return { dotColor: '#10B981', headerColor: 'var(--tds-gray-800)' };
+      return { dotColor: 'var(--tds-gray-400)', headerColor: 'var(--tds-gray-800)' };
     case 'financial_exhaustion':
-      return { dotColor: '#F59E0B', headerColor: '#92400E' };
     case 'property_sell':
     case 'property_loan':
-      return { dotColor: '#6366F1', headerColor: 'var(--tds-gray-800)' };
+      return { dotColor: '#E09400', headerColor: 'var(--tds-gray-800)' };
     case 'failure':
-      return { dotColor: '#EF4444', headerColor: '#7F1D1D' };
+      return { dotColor: '#C0392B', headerColor: 'var(--tds-gray-800)' };
   }
 }
 

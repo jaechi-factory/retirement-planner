@@ -7,7 +7,6 @@ import AssetBalanceChart from '../charts/AssetBalanceChart';
 import PropertyAssetChart from '../charts/PropertyAssetChart';
 import SummaryTab from '../result/v2/SummaryTab';
 import PensionTab from '../result/v2/PensionTab';
-import TransitionSection from '../result/TransitionSection';
 import PropertyDecisionSection from '../result/PropertyDecisionSection';
 import ConclusionCard from '../result/v3/ConclusionCard';
 import ScenarioTabs from '../result/v3/ScenarioTabs';
@@ -107,12 +106,12 @@ function WhyPathSection({
     <div
       style={{
         borderRadius: 16,
-        border: '1px solid var(--tds-gray-100)',
-        padding: '22px 24px 20px',
+        border: '1px dashed var(--tds-gray-100)',
+        padding: '16px 20px',
         marginBottom: 16,
       }}
     >
-      <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--tds-gray-700)', marginBottom: 14, letterSpacing: 0.1 }}>
+      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--tds-gray-400)', marginBottom: 14, letterSpacing: 0.1 }}>
         이런 흐름으로 자금이 움직여요
       </div>
 
@@ -449,7 +448,14 @@ export default function ResultWorkbench() {
         }
       />
 
-      {/* 2층: Why/Path */}
+      {/* 2층: 결론 카드 (HeroSection 바로 다음) */}
+      <ConclusionCard
+        summary={summary}
+        propertyOptions={propertyOptions}
+        inputs={inputs}
+      />
+
+      {/* 3층: Why/Path */}
       <WhyPathSection
         pathLines={pathLines}
         fundingTimeline={fundingTimeline}
@@ -457,18 +463,15 @@ export default function ResultWorkbench() {
         lifeExpectancy={inputs.goal.lifeExpectancy}
       />
 
-      {/* 3층: TransitionSection — 항상 렌더, 케이스별 톤 분기 */}
-      <TransitionSection
-        financialExhaustionAge={summary.financialExhaustionAge}
-        propertyInterventionAge={summary.propertyInterventionAge}
-        failureAge={summary.failureAge}
-        lifeExpectancy={inputs.goal.lifeExpectancy}
-        hasRealEstate={hasRealEstate}
-        pensionCoverageRate={result.pensionCoverageRate}
-        targetMonthly={inputs.goal.targetMonthly}
-      />
+      {/* 4층: 시나리오 탭 (집 있을 때만) */}
+      {hasRealEstate && (
+        <ScenarioTabs
+          propertyOptions={propertyOptions}
+          lifeExpectancy={inputs.goal.lifeExpectancy}
+        />
+      )}
 
-      {/* 4층: PropertyDecisionSection — 금융자산 소진이 있고 집도 있을 때만 */}
+      {/* PropertyDecisionSection — 금융자산 소진이 있고 집도 있을 때만, 현재 위치 유지 */}
       {summary.financialExhaustionAge !== null && hasRealEstate && (
         <PropertyDecisionSection
           financialExhaustionAge={summary.financialExhaustionAge}
@@ -478,7 +481,7 @@ export default function ResultWorkbench() {
         />
       )}
 
-      {/* Warnings: critical 전부 + actionWarnings 최대 2개 */}
+      {/* 5층: Warnings 통합 블록 — critical 전부 + actionWarnings 최대 2개 */}
       {displayWarnings.length > 0 && (
         <div
           style={{
@@ -494,9 +497,10 @@ export default function ResultWorkbench() {
               style={{
                 fontSize: 12,
                 lineHeight: 1.6,
-                color: w.severity === 'critical' ? '#8B1A1A' : '#8B6914',
+                color: 'var(--tds-gray-800)',
                 padding: '10px 14px',
-                background: w.severity === 'critical' ? '#FFF0F0' : '#FFFBE6',
+                background: '#FAFAFA',
+                borderLeft: `3px solid ${w.severity === 'critical' ? '#C0392B' : '#E09400'}`,
                 borderRadius: 8,
               }}
             >
@@ -506,22 +510,7 @@ export default function ResultWorkbench() {
         </div>
       )}
 
-      {/* v3 신규: 결론 카드 */}
-      <ConclusionCard
-        summary={summary}
-        propertyOptions={propertyOptions}
-        inputs={inputs}
-      />
-
-      {/* v3 신규: 시나리오 탭 (집 있을 때만) */}
-      {hasRealEstate && (
-        <ScenarioTabs
-          propertyOptions={propertyOptions}
-          lifeExpectancy={inputs.goal.lifeExpectancy}
-        />
-      )}
-
-      {/* v3 신규: 연도별 타임라인 */}
+      {/* 6층: 연도별 타임라인 */}
       <LifetimeTimeline
         detailYearlyAggregates={detailYearlyAggregates}
         summary={summary}

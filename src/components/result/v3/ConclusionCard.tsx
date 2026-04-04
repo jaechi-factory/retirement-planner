@@ -63,15 +63,16 @@ export default function ConclusionCard({ summary, propertyOptions, inputs }: Con
     <div
       style={{
         background: bg,
-        border: `1px solid ${borderColor}`,
+        border: `1.5px solid ${borderColor}`,
+        borderLeft: `4px solid ${isPositive ? '#1B7F3A' : '#C0392B'}`,
         borderRadius: 14,
-        padding: '20px 22px',
-        marginBottom: 16,
+        padding: '28px 24px',
+        marginBottom: 24,
       }}
     >
       <div
         style={{
-          fontSize: 24,
+          fontSize: 28,
           fontWeight: 800,
           color: isPositive ? '#1B5E20' : '#8B1A1A',
           lineHeight: 1.3,
