@@ -464,11 +464,18 @@ export default function ResultWorkbench() {
       />
 
       {/* 7층: 자산 추이 차트 인라인 */}
-      <AssetChartSection
-        detailYearlyAggregates={detailYearlyAggregates}
-        inputs={inputs}
-        strategyLabel={SCENARIO_ACTION_LABELS[recommended?.strategy ?? ''] ?? (recommended?.label ?? '추천 전략')}
-      />
+      {(() => {
+        const sellOption = propertyOptions.find((o) => o.strategy === 'sell');
+        const chartRows = hasRealEstate && sellOption ? sellOption.yearlyAggregates : detailYearlyAggregates;
+        const chartLabel = hasRealEstate ? '집을 팔면' : (SCENARIO_ACTION_LABELS[recommended?.strategy ?? ''] ?? (recommended?.label ?? '추천 전략'));
+        return (
+          <AssetChartSection
+            detailYearlyAggregates={chartRows}
+            inputs={inputs}
+            strategyLabel={chartLabel}
+          />
+        );
+      })()}
 
     </div>
   );

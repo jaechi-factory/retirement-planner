@@ -138,8 +138,11 @@ export default function AssetBalanceChart({ rows, retirementAge, targetMonthly, 
     rows.map((r) => [r.ageYear, r.totalPension])
   );
 
+  const hasRealEstate = inputs.assets.realEstate.amount > 0;
+
   const data = rows.map((r) => ({
     age: r.ageYear,
+    ...(hasRealEstate ? { '집 자산': r.propertyValueEnd } : {}),
     '현금·예금': r.cashLikeEnd,
     '주식·채권': r.financialInvestableEnd,
     shortfall: r.totalShortfall,
@@ -176,6 +179,12 @@ export default function AssetBalanceChart({ rows, retirementAge, targetMonthly, 
       <ResponsiveContainer width="100%" height={210}>
         <AreaChart data={data} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
           <defs>
+            {hasRealEstate && (
+              <linearGradient id="propGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#E65100" stopOpacity={0.15} />
+                <stop offset="95%" stopColor="#E65100" stopOpacity={0.02} />
+              </linearGradient>
+            )}
             <linearGradient id="cashGrad" x1="0" y1="0" x2="0" y2="1">
               <stop offset="5%" stopColor="#2196F3" stopOpacity={0.15} />
               <stop offset="95%" stopColor="#2196F3" stopOpacity={0.02} />
@@ -214,6 +223,9 @@ export default function AssetBalanceChart({ rows, retirementAge, targetMonthly, 
             )}
           />
           <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 11, paddingTop: 6 }} />
+          {hasRealEstate && (
+            <Area type="monotone" dataKey="집 자산" stroke="#E65100" strokeWidth={1.5} fill="url(#propGrad)" />
+          )}
           <Area type="monotone" dataKey="현금·예금" stroke="#2196F3" strokeWidth={1.5} fill="url(#cashGrad)" />
           <Area type="monotone" dataKey="주식·채권" stroke="#4527A0" strokeWidth={1.5} fill="url(#finGrad)" />
         </AreaChart>
