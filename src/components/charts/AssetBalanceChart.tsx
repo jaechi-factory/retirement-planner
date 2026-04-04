@@ -167,15 +167,23 @@ export default function AssetBalanceChart({ rows, retirementAge, targetMonthly, 
     shortfall: r.totalShortfall,
   }));
 
-  // 소진 여부 및 연금 의존 여부 계산
+  // 소진 여부 및 결론 분기 계산
   const depletionRow = rows.find((r) => r.totalShortfall > 0);
   const depletionAge = depletionRow?.ageYear ?? null;
   const lastRow = rows[rows.length - 1];
+  // 매각대금 운용 잔고가 기대수명 말 시점에 남아있으면 → 매각대금으로 버티는 케이스
+  const isSaleProceedsDependent =
+    depletionAge === null &&
+    hasSaleProceeds &&
+    lastRow !== undefined &&
+    lastRow.propertySaleProceedsBucketEnd > 0;
+  // 매각대금 없이 연금 수입만으로 버티는 케이스
   const isPensionDependent =
     depletionAge === null &&
+    !isSaleProceedsDependent &&
     lastRow !== undefined &&
-    lastRow.financialInvestableEnd < 100 &&  // 금융투자자산 거의 소진
-    lastRow.totalPension > 0;                // 연금 수입이 있음
+    lastRow.financialInvestableEnd < 100 &&
+    lastRow.totalPension > 0;
 
   return (
     <div style={{ marginBottom: 24 }}>
@@ -190,6 +198,8 @@ export default function AssetBalanceChart({ rows, retirementAge, targetMonthly, 
       >
         {depletionAge !== null
           ? `${depletionAge}세에 금융자산이 소진돼요`
+          : isSaleProceedsDependent
+          ? '매각대금 운용으로 기대수명까지 생활비를 충당해요'
           : isPensionDependent
           ? '연금으로 기대수명까지 생활비를 충당해요'
           : '기대수명까지 금융자산을 유지해요'}
