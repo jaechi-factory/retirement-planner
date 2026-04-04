@@ -177,10 +177,17 @@ export default function AssetBalanceChart({ rows, retirementAge, targetMonthly, 
     hasSaleProceeds &&
     lastRow !== undefined &&
     lastRow.propertySaleProceedsBucketEnd > 0;
-  // 매각대금 없이 연금 수입만으로 버티는 케이스
+  // 담보대출 잔고가 기대수명 말 시점에 있으면 → 담보대출로 버티는 케이스
+  const isSecuredLoanDependent =
+    depletionAge === null &&
+    !isSaleProceedsDependent &&
+    lastRow !== undefined &&
+    lastRow.securedLoanBalanceEnd > 0;
+  // 매각대금·담보대출 없이 연금 수입만으로 버티는 케이스
   const isPensionDependent =
     depletionAge === null &&
     !isSaleProceedsDependent &&
+    !isSecuredLoanDependent &&
     lastRow !== undefined &&
     lastRow.financialInvestableEnd < 100 &&
     lastRow.totalPension > 0;
@@ -200,6 +207,8 @@ export default function AssetBalanceChart({ rows, retirementAge, targetMonthly, 
           ? `${depletionAge}세에 금융자산이 소진돼요`
           : isSaleProceedsDependent
           ? '매각대금 운용으로 기대수명까지 생활비를 충당해요'
+          : isSecuredLoanDependent
+          ? '담보대출로 기대수명까지 생활비를 충당해요'
           : isPensionDependent
           ? '연금으로 기대수명까지 생활비를 충당해요'
           : '기대수명까지 금융자산을 유지해요'}
