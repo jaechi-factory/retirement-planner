@@ -4,7 +4,6 @@ import { fmtKRW } from '../../utils/format';
 import FundingTimeline from '../result/v2/FundingTimeline';
 import AssetBalanceChart from '../charts/AssetBalanceChart';
 import PropertyAssetChart from '../charts/PropertyAssetChart';
-import PropertyDecisionSection from '../result/PropertyDecisionSection';
 import ConclusionCard from '../result/v3/ConclusionCard';
 import ScenarioTabs from '../result/v3/ScenarioTabs';
 import LifetimeTimeline from '../result/v3/LifetimeTimeline';
@@ -432,15 +431,6 @@ export default function ResultWorkbench() {
         />
       )}
 
-      {/* PropertyDecisionSection — 금융자산 소진이 있고 집도 있을 때만, 현재 위치 유지 */}
-      {summary.financialExhaustionAge !== null && hasRealEstate && (
-        <PropertyDecisionSection
-          financialExhaustionAge={summary.financialExhaustionAge}
-          propertyOptions={propertyOptions}
-          lifeExpectancy={inputs.goal.lifeExpectancy}
-          selectedStrategy={selectedStrategy}
-        />
-      )}
 
       {/* 5층: Warnings 통합 블록 — critical 전부 + actionWarnings 최대 2개 */}
       {displayWarnings.length > 0 && (
