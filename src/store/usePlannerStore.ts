@@ -81,6 +81,8 @@ const defaultInputs: PlannerInputs = {
     count: 0,
     monthlyPerChild: 0,
     independenceAge: 0,
+    costGrowthMode: 'inflation',
+    customGrowthRate: DEFAULT_INFLATION_RATE,
   },
   pension: defaultPension,
 };

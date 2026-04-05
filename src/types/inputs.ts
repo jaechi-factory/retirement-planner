@@ -52,6 +52,8 @@ export interface ChildrenInfo {
   count: number;
   monthlyPerChild: number;     // 1인당 월 지출 (만원)
   independenceAge: number;     // 자녀 독립 시 사용자 나이
+  costGrowthMode?: 'inflation' | 'fixed' | 'custom';
+  customGrowthRate?: number;    // costGrowthMode=custom일 때 연 증가율(%)
 }
 
 import type { PensionInputs } from './pension';
