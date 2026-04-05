@@ -30,6 +30,7 @@ import { precomputeDebtSchedules, calcTotalAnnualRepaymentFromSchedules } from '
 import {
   getTotalMonthlyPensionTodayValue,
 } from './pensionEstimation';
+import { getPlannerPolicy } from '../policy/policyTable';
 
 const STRATEGIES: PropertyStrategyV2[] = ['keep', 'secured_loan', 'sell'];
 
@@ -225,13 +226,14 @@ function buildFundingTimeline(
 }
 
 function buildAssumptions(inputs: PlannerInputs, fundingPolicy: FundingPolicy): AssumptionItem[] {
+  const policy = getPlannerPolicy();
   return [
     { label: '물가상승률', value: `${inputs.goal.inflationRate}%` },
     { label: '수입 증가율', value: `${inputs.status.incomeGrowthRate}%` },
     { label: '비상금 여유분', value: `목표 생활비 ${fundingPolicy.liquidityBufferMonths}개월치` },
-    { label: '집 팔 때 드는 비용', value: '매각가의 5%' },
-    { label: '집 담보 대출 금리', value: '연 4.5%' },
-    { label: '집 담보 대출 한도', value: '집 시세의 60%' },
+    { label: '집 팔 때 드는 비용', value: `매각가의 ${(policy.property.propertySaleHaircut * 100).toFixed(1).replace('.0', '')}%` },
+    { label: '집 담보 대출 금리', value: `연 ${(policy.property.securedLoanAnnualRate * 100).toFixed(1)}%` },
+    { label: '집 담보 대출 한도', value: `집 시세의 ${(policy.property.securedLoanLtv * 100).toFixed(0)}%` },
   ];
 }
 
