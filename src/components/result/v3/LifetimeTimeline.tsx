@@ -2,6 +2,7 @@ import type { YearlyAggregateV2, CalculationResultV2, PropertyOptionResult } fro
 import type { PlannerInputs } from '../../../types/inputs';
 import { fmtKRW } from '../../../utils/format';
 import { getPensionBreakdown } from '../../../engine/pensionEstimation';
+import { getPlannerPolicy } from '../../../policy/policyTable';
 
 interface LifetimeTimelineProps {
   detailYearlyAggregates: YearlyAggregateV2[];
@@ -137,7 +138,7 @@ function extractEvents(
   if (inputs.pension.privatePension.enabled) {
     const startAge = inputs.pension.privatePension.startAge;
     if (startAge > retirementAge) {
-      const monthly = inputs.pension.privatePension.manualMonthlyTodayValue;
+      const monthly = pensionBreakdown.privateMonthly;
       const description =
         monthly > 0
           ? `이 달부터 매달 ${fmtKRW(monthly)}의 개인연금이 추가돼요.`
@@ -182,7 +183,8 @@ function extractEvents(
       const lastMonth = yearRow?.months?.[yearRow.months.length - 1];
       const existingMortgage = lastMonth?.propertyDebtEnd ?? 0;
       const mortgageBalance = (yearRow?.securedLoanBalanceEnd ?? 0) + existingMortgage;
-      const netProceeds = Math.max(0, estimatedPrice - mortgageBalance);
+      const policy = getPlannerPolicy();
+      const netProceeds = Math.max(0, estimatedPrice * (1 - policy.property.propertySaleHaircut) - mortgageBalance);
 
       if (isSell) {
         events.push({

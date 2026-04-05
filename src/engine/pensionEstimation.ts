@@ -324,7 +324,7 @@ export function getAnnualPensionIncomeForAge(
   // 퇴직연금: manual은 현재가치이므로 inflate, auto는 이미 명목값
   const ret = pension.retirementPension;
   const retEndAge = ret.startAge + ret.payoutYears;
-  if (ret.enabled && targetAge >= ret.startAge && targetAge < retEndAge) {
+  if (ret.enabled && targetAge >= ret.startAge && targetAge <= retEndAge) {
     const base = resolveRetirementMonthlyNominal(pension, annualNetIncome, currentAge, retirementAge);
     const nominal = ret.mode === 'manual'
       ? base * Math.pow(1 + inflation, targetAge - currentAge)

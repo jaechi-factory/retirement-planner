@@ -7,6 +7,7 @@ import PropertyAssetChart from '../charts/PropertyAssetChart';
 import ConclusionCard from '../result/v3/ConclusionCard';
 import ScenarioTabs from '../result/v3/ScenarioTabs';
 import LifetimeTimeline from '../result/v3/LifetimeTimeline';
+import { calcFinancialTotalAsset } from '../../engine/assetWeighting';
 import type { YearlyAggregateV2, FundingStage } from '../../types/calculationV2';
 import type { PlannerInputs } from '../../types/inputs';
 
@@ -243,13 +244,7 @@ export default function ResultWorkbench() {
   }
 
   // 2-2: 금융자산 0 안내 (2-1 이후 체크)
-  const financialAssetTotal =
-    inputs.assets.cash.amount +
-    inputs.assets.deposit.amount +
-    inputs.assets.stock_kr.amount +
-    inputs.assets.stock_us.amount +
-    inputs.assets.bond.amount +
-    inputs.assets.crypto.amount;
+  const financialAssetTotal = calcFinancialTotalAsset(inputs.assets);
 
   if (result.isValid && financialAssetTotal === 0) {
     return (

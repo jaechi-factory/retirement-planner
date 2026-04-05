@@ -2,14 +2,13 @@ import { create } from 'zustand';
 import type { PlannerInputs, AssetAllocation, DebtAllocation } from '../types/inputs';
 import type { PensionInputs } from '../types/pension';
 import type { CalculationResult, HousingScenarioResult, HousingScenarioSet, Verdict } from '../types/calculation';
-import type { CalculationResultV2 } from '../types/calculationV2';
+import type { CalculationResultV2, YearlyAggregateV2, PropertyOptionResult } from '../types/calculationV2';
 import type { HousingPolicy } from '../engine/housingPolicy';
 import type { FundingPolicy, LiquidationPolicy } from '../engine/fundingPolicy';
+import type { DebtSchedules } from '../engine/debtSchedule';
 import { DEFAULT_FUNDING_POLICY, DEFAULT_LIQUIDATION_POLICY } from '../engine/fundingPolicy';
 import { DEFAULT_INFLATION_RATE, DEFAULT_INCOME_GROWTH_RATE, DEFAULT_EXPENSE_GROWTH_RATE, DEFAULT_ASSET_RETURNS } from '../utils/constants';
 import { calcTotalAsset, calcTotalDebt, calcWeightedReturn, precomputeDebtSchedules, calcTotalAnnualRepaymentFromSchedules } from '../engine/assetWeighting';
-import { simulate, findDepletionAge, findFinancialStressAge } from '../engine/calculator';
-import { findMaxSustainableMonthly } from '../engine/binarySearch';
 import { judgeVerdict } from '../engine/verdictEngine';
 import { getTotalMonthlyPensionTodayValue, getPensionMonthlyAtRetirementStart, getNPSStartAgeByBirthYear } from '../engine/pensionEstimation';
 import { runCalculationV2 } from '../engine/calculatorV2';
@@ -87,196 +86,121 @@ const defaultInputs: PlannerInputs = {
   pension: defaultPension,
 };
 
-// ── 주택 활용 시나리오 헬퍼 ────────────────────────────────────────────
-function runScenario(inputs: PlannerInputs, policy: HousingPolicy): HousingScenarioResult {
-  const { goal } = inputs;
-  const possibleMonthly = findMaxSustainableMonthly(inputs, policy);
-  const debtSchedules = precomputeDebtSchedules(inputs.debts);
-  const targetYearlySnapshots = simulate(inputs, goal.targetMonthly, policy, debtSchedules);
-  const netDepletionAge = findDepletionAge(targetYearlySnapshots);
-  const financialDepletionAge = findFinancialStressAge(targetYearlySnapshots);
-
+// ── V2 집계를 V1 차트 호환 스냅샷으로 변환 ────────────────────────────
+function toYearlySnapshot(agg: YearlyAggregateV2, retirementAge: number) {
+  const financialAssetEnd = agg.cashLikeEnd + agg.financialInvestableEnd + agg.propertySaleProceedsBucketEnd;
+  const housingAssetEnd = agg.propertyValueEnd;
+  const grossAssetEnd = financialAssetEnd + housingAssetEnd;
+  const remainingDebtEnd = agg.securedLoanBalanceEnd;
+  const netAssetEnd = grossAssetEnd - remainingDebtEnd;
   return {
-    policy,
-    possibleMonthly,
-    survivesToLifeExpectancy: netDepletionAge === null,
-    cashDepletionAge: null,
-    financialDepletionAge,
-    netDepletionAge,
-    housingAnnuityStartAge: null,
-    housingAnnuityMonthlyNominal: 0,
-    housingAnnuityMonthlyTodayValue: 0,
-    housingLiquidationAge: null,
-    liquidationNetProceeds: 0,
-    postSaleAnnualHousingCost: 0,
-    targetYearlySnapshots,
+    age: agg.ageYear,
+    isRetired: agg.ageYear >= retirementAge,
+    financialAssetEnd,
+    housingAssetEnd,
+    grossAssetEnd,
+    remainingDebtEnd,
+    netAssetEnd,
+    totalAsset: netAssetEnd,
+    annualInvestmentReturn: 0,
+    annualIncomeThisYear: agg.totalIncome,
+    annualPensionIncomeThisYear: agg.totalPension,
+    annualExpenseThisYear: agg.totalExpense,
+    annualDebtRepaymentThisYear: agg.totalDebtService,
+    annualChildExpenseThisYear: agg.totalChildExpense,
+    annualNetCashflow: agg.totalIncome + agg.totalPension - agg.totalExpense - agg.totalDebtService - agg.totalChildExpense,
   };
 }
 
-function pickRecommendedScenario(
-  keep: HousingScenarioResult,
-  annuity: HousingScenarioResult,
-  liquidate: HousingScenarioResult,
-): { recommendedScenario: 'keep' | 'annuity' | 'liquidate'; recommendationReason: string } {
-  if (keep.possibleMonthly >= annuity.possibleMonthly && keep.possibleMonthly >= liquidate.possibleMonthly) {
-    return { recommendedScenario: 'keep', recommendationReason: '집을 유지해도 은퇴 자금이 충분해요.' };
-  }
-  if (annuity.possibleMonthly >= liquidate.possibleMonthly) {
-    return { recommendedScenario: 'annuity', recommendationReason: '주택연금이 생활비를 효과적으로 보완해요.' };
-  }
-  return { recommendedScenario: 'liquidate', recommendationReason: '집을 매각하면 더 많은 생활비가 가능해요.' };
+// ── V2 PropertyOptionResult를 V1 HousingScenarioResult로 변환 ─────────
+function toHousingScenario(opt: PropertyOptionResult, retirementAge: number): HousingScenarioResult {
+  const policy: HousingPolicy =
+    opt.strategy === 'keep' ? 'keep' :
+    opt.strategy === 'secured_loan' ? 'annuity' : 'liquidate';
+  return {
+    policy,
+    possibleMonthly: opt.sustainableMonthly,
+    survivesToLifeExpectancy: opt.survivesToLifeExpectancy,
+    cashDepletionAge: null,
+    financialDepletionAge: null,
+    netDepletionAge: opt.failureAge,
+    housingAnnuityStartAge: opt.strategy === 'secured_loan' ? opt.interventionAge : null,
+    housingAnnuityMonthlyNominal: 0,
+    housingAnnuityMonthlyTodayValue: 0,
+    housingLiquidationAge: opt.strategy === 'sell' ? opt.interventionAge : null,
+    liquidationNetProceeds: 0,
+    postSaleAnnualHousingCost: 0,
+    targetYearlySnapshots: opt.yearlyAggregates.map(agg => toYearlySnapshot(agg, retirementAge)),
+  };
 }
 
-function runCalculation(inputs: PlannerInputs, advancedHousingEnabled = false): CalculationResult {
-  const { goal, status, assets, debts, children, pension } = inputs;
-
-  const requiredFieldsMissing =
-    status.currentAge <= 0 ||
-    goal.retirementAge <= 0 ||
-    goal.lifeExpectancy <= 0 ||
-    goal.targetMonthly <= 0;
-
-  const earlyTotalAsset = calcTotalAsset(assets);
-  const earlyLiquidRatio = earlyTotalAsset > 0
-    ? (earlyTotalAsset - assets.realEstate.amount) / earlyTotalAsset
-    : 1;
-
-  if (requiredFieldsMissing) {
-    return {
-      totalAsset: earlyTotalAsset,
-      totalDebt: calcTotalDebt(debts),
-      netWorth: earlyTotalAsset - calcTotalDebt(debts),
-      weightedReturn: 0, annualNetSavings: 0,
-      annualChildExpense: 0, requiredMonthlyAtRetirement: 0,
-      liquidRatio: earlyLiquidRatio,
-      totalMonthlyPensionTodayValue: 0,
-      monthlyPensionAtRetirementStart: 0,
-      pensionCoverageRate: 0,
-      possibleMonthly: 0, yearlySnapshots: [],
-      depletionAge: null, financialStressAge: null,
-      targetYearlySnapshots: [],
-      firstYearMonthlyDebt: 0,
-      housingScenarios: null,
-      isValid: false,
-      errorMessage: null,
-    };
-  }
-
-  if (
-    goal.retirementAge <= status.currentAge ||
-    goal.lifeExpectancy <= goal.retirementAge
-  ) {
-    return {
-      totalAsset: earlyTotalAsset,
-      totalDebt: calcTotalDebt(debts),
-      netWorth: earlyTotalAsset - calcTotalDebt(debts),
-      weightedReturn: 0, annualNetSavings: 0,
-      annualChildExpense: 0, requiredMonthlyAtRetirement: 0,
-      liquidRatio: earlyLiquidRatio,
-      totalMonthlyPensionTodayValue: 0,
-      monthlyPensionAtRetirementStart: 0,
-      pensionCoverageRate: 0,
-      possibleMonthly: 0, yearlySnapshots: [],
-      depletionAge: null, financialStressAge: null,
-      targetYearlySnapshots: [],
-      firstYearMonthlyDebt: 0,
-      housingScenarios: null,
-      isValid: false,
-      errorMessage: '은퇴 나이는 현재 나이보다, 기대수명은 은퇴 나이보다 커야 해요.',
-    };
-  }
+// ── V2 결과로부터 V1 호환 CalculationResult 생성 ─────────────────────���
+function buildCompatResult(
+  inputs: PlannerInputs,
+  resultV2: CalculationResultV2,
+  debtSchedules: DebtSchedules,
+): CalculationResult {
+  const { goal, status, assets, children, pension } = inputs;
 
   const totalAsset = calcTotalAsset(assets);
-  const totalDebt = calcTotalDebt(debts);
+  const totalDebt = calcTotalDebt(inputs.debts);
   const netWorth = totalAsset - totalDebt;
   const weightedReturn = calcWeightedReturn(assets);
-  const liquidAsset = totalAsset - assets.realEstate.amount;
-  const liquidRatio = totalAsset > 0 ? liquidAsset / totalAsset : 1;
-  // 단일 source: 부채 스케줄을 한 번만 계산해서 이후 모든 곳에서 공유
-  const debtSchedules = precomputeDebtSchedules(debts);
+  const liquidRatio = totalAsset > 0 ? (totalAsset - assets.realEstate.amount) / totalAsset : 1;
+
   const totalAnnualRepayment = calcTotalAnnualRepaymentFromSchedules(debtSchedules, 0);
-  const annualChildExpense = children.hasChildren
-    ? children.count * children.monthlyPerChild * 12
-    : 0;
-
-  const yearsToRetirement = goal.retirementAge - status.currentAge;
-  const inflationDecimal = goal.inflationRate / 100;
-  const requiredMonthlyAtRetirement =
-    goal.targetMonthly * Math.pow(1 + inflationDecimal, yearsToRetirement);
-
-  const childExpenseForSavings =
-    children.hasChildren && status.currentAge <= children.independenceAge
-      ? annualChildExpense
-      : 0;
+  const annualChildExpense = children.hasChildren ? children.count * children.monthlyPerChild * 12 : 0;
+  const childExpenseForSavings = children.hasChildren && status.currentAge <= children.independenceAge
+    ? annualChildExpense : 0;
   const annualNetSavings = status.annualIncome - status.annualExpense - totalAnnualRepayment - childExpenseForSavings;
 
+  const yearsToRetirement = goal.retirementAge - status.currentAge;
+  const requiredMonthlyAtRetirement = goal.targetMonthly * Math.pow(1 + goal.inflationRate / 100, yearsToRetirement);
+
   const totalMonthlyPensionTodayValue = getTotalMonthlyPensionTodayValue(
-    pension,
-    status.currentAge,
-    goal.retirementAge,
-    status.annualIncome,
-    goal.inflationRate,
+    pension, status.currentAge, goal.retirementAge, status.annualIncome, goal.inflationRate,
   );
   const monthlyPensionAtRetirementStart = getPensionMonthlyAtRetirementStart(
-    pension,
-    status.currentAge,
-    goal.retirementAge,
-    status.annualIncome,
-    goal.inflationRate,
+    pension, status.currentAge, goal.retirementAge, status.annualIncome, goal.inflationRate,
   );
-  const pensionCoverageRate = goal.targetMonthly > 0
-    ? totalMonthlyPensionTodayValue / goal.targetMonthly
-    : 0;
+  const pensionCoverageRate = goal.targetMonthly > 0 ? totalMonthlyPensionTodayValue / goal.targetMonthly : 0;
 
-  // ── 메인 계산: 금융자산 기준 (keep 정책) ─────────────────────────────
-  const possibleMonthly = findMaxSustainableMonthly(inputs, 'keep');
-  const targetYearlySnapshots = simulate(inputs, goal.targetMonthly, 'keep', debtSchedules);
-  const yearlySnapshots = simulate(inputs, possibleMonthly, 'keep', debtSchedules);
-
-  const depletionAge = findDepletionAge(targetYearlySnapshots);
-  const financialStressAge = findFinancialStressAge(targetYearlySnapshots);
-
-  // 첫 해 월 부채 상환액 (debt schedule 첫 달 기준) — UI 표시용
   const firstYearMonthlyDebt = Math.round(
     (debtSchedules.mortgage[0]?.payment ?? 0) +
     (debtSchedules.creditLoan[0]?.payment ?? 0) +
     (debtSchedules.otherLoan[0]?.payment ?? 0),
   );
 
-  // ── 집 활용 전략 시나리오 (옵션) ─────────────────────────────────────
-  let housingScenarios: HousingScenarioSet | null = null;
-  if (advancedHousingEnabled && assets.realEstate.amount > 0) {
-    const keepResult = runScenario(inputs, 'keep');
-    const annuityResult = runScenario(inputs, 'annuity');
-    const liquidateResult = runScenario(inputs, 'liquidate');
-    const { recommendedScenario, recommendationReason } = pickRecommendedScenario(keepResult, annuityResult, liquidateResult);
-    housingScenarios = {
-      keep: keepResult,
-      annuity: annuityResult,
-      liquidate: liquidateResult,
-      recommendedScenario,
-      recommendationReason,
-    };
-  }
+  const { summary, detailYearlyAggregates, propertyOptions } = resultV2;
+  const possibleMonthly = summary.sustainableMonthly;
+  const depletionAge = summary.failureAge;
+  const financialStressAge = summary.financialExhaustionAge;
+
+  const targetYearlySnapshots = detailYearlyAggregates.map(agg => toYearlySnapshot(agg, goal.retirementAge));
+  const yearlySnapshots = targetYearlySnapshots;
+
+  const keepOpt = propertyOptions.find(o => o.strategy === 'keep')!;
+  const loanOpt = propertyOptions.find(o => o.strategy === 'secured_loan')!;
+  const sellOpt = propertyOptions.find(o => o.strategy === 'sell')!;
+  const recommended = propertyOptions.find(o => o.isRecommended)!;
+  const recommendedV1: 'keep' | 'annuity' | 'liquidate' =
+    recommended.strategy === 'keep' ? 'keep' :
+    recommended.strategy === 'secured_loan' ? 'annuity' : 'liquidate';
+
+  const housingScenarios: HousingScenarioSet = {
+    keep: toHousingScenario(keepOpt, goal.retirementAge),
+    annuity: toHousingScenario(loanOpt, goal.retirementAge),
+    liquidate: toHousingScenario(sellOpt, goal.retirementAge),
+    recommendedScenario: recommendedV1,
+    recommendationReason: recommended.headline,
+  };
 
   return {
-    totalAsset,
-    totalDebt,
-    netWorth,
-    weightedReturn,
-    annualNetSavings,
-    annualChildExpense,
-    requiredMonthlyAtRetirement,
-    liquidRatio,
-    totalMonthlyPensionTodayValue,
-    monthlyPensionAtRetirementStart,
-    pensionCoverageRate,
-    possibleMonthly,
-    yearlySnapshots,
-    depletionAge,
-    financialStressAge,
-    targetYearlySnapshots,
-    firstYearMonthlyDebt,
+    totalAsset, totalDebt, netWorth, weightedReturn,
+    annualNetSavings, annualChildExpense, requiredMonthlyAtRetirement,
+    liquidRatio, totalMonthlyPensionTodayValue, monthlyPensionAtRetirementStart,
+    pensionCoverageRate, possibleMonthly, yearlySnapshots, targetYearlySnapshots,
+    depletionAge, financialStressAge, firstYearMonthlyDebt,
     housingScenarios,
     isValid: true,
   };
@@ -365,17 +289,40 @@ interface PlannerStore {
 
 const computeState = (
   inputs: PlannerInputs,
-  advancedHousingEnabled = false,
   fundingPolicy: FundingPolicy = DEFAULT_FUNDING_POLICY,
   liquidationPolicy: LiquidationPolicy = DEFAULT_LIQUIDATION_POLICY,
 ): Pick<PlannerStore, 'inputs' | 'result' | 'verdict' | 'resultV2'> => {
-  // V2 single source: store 레벨에서 한 번 계산, V2에 주입
+  const { goal, status } = inputs;
   const debtSchedules = precomputeDebtSchedules(inputs.debts);
-  const result = runCalculation(inputs, advancedHousingEnabled);
-  const verdict = result.isValid
-    ? judgeVerdict(inputs.goal.targetMonthly, result.possibleMonthly)
-    : null;
+  const totalAsset = calcTotalAsset(inputs.assets);
+  const totalDebt = calcTotalDebt(inputs.debts);
+  const netWorth = totalAsset - totalDebt;
+  const liquidRatio = totalAsset > 0 ? (totalAsset - inputs.assets.realEstate.amount) / totalAsset : 1;
+
+  const emptyResult = (errorMessage: string | null = null): CalculationResult => ({
+    totalAsset, totalDebt, netWorth,
+    weightedReturn: 0, annualNetSavings: 0, annualChildExpense: 0,
+    requiredMonthlyAtRetirement: 0, liquidRatio,
+    totalMonthlyPensionTodayValue: 0, monthlyPensionAtRetirementStart: 0,
+    pensionCoverageRate: 0, possibleMonthly: 0,
+    yearlySnapshots: [], targetYearlySnapshots: [],
+    depletionAge: null, financialStressAge: null,
+    firstYearMonthlyDebt: 0, housingScenarios: null,
+    isValid: false, errorMessage,
+  });
+
+  const requiredMissing = status.currentAge <= 0 || goal.retirementAge <= 0 || goal.lifeExpectancy <= 0 || goal.targetMonthly <= 0;
+  if (requiredMissing) return { inputs, result: emptyResult(null), verdict: null, resultV2: null };
+
+  if (goal.retirementAge <= status.currentAge || goal.lifeExpectancy <= goal.retirementAge) {
+    return { inputs, result: emptyResult('은퇴 나이는 현재 나이보다, 기대수명은 은퇴 나이보다 커야 해요.'), verdict: null, resultV2: null };
+  }
+
   const resultV2 = runCalculationV2(inputs, fundingPolicy, liquidationPolicy, debtSchedules);
+  if (!resultV2) return { inputs, result: emptyResult(null), verdict: null, resultV2: null };
+
+  const result = buildCompatResult(inputs, resultV2, debtSchedules);
+  const verdict = judgeVerdict(goal.targetMonthly, result.possibleMonthly);
   return { inputs, result, verdict, resultV2 };
 };
 
@@ -387,16 +334,14 @@ export const usePlannerStore = create<PlannerStore>((set, get) => ({
 
   setGoal: (partial) => {
     const current = get().inputs;
-    // P0 fix: 은퇴 나이 변경이 연금 시작 나이를 자동 동기화하지 않음 (4개 나이 완전 독립)
     const inputs: PlannerInputs = { ...current, goal: { ...current.goal, ...partial } };
     saveInputsToStorage(inputs);
-    set(computeState(inputs, get().advancedHousingEnabled, get().fundingPolicy, get().liquidationPolicy));
+    set(computeState(inputs, get().fundingPolicy, get().liquidationPolicy));
   },
   setStatus: (partial) => {
     const current = get().inputs;
     let newPension = current.pension;
     if (partial.currentAge !== undefined && partial.currentAge > 0) {
-      // P0 fix: 하드코딩 2026 제거, 런타임 연도 사용
       const birthYear = new Date().getFullYear() - partial.currentAge;
       const npsStartAge = getNPSStartAgeByBirthYear(birthYear);
       newPension = {
@@ -406,7 +351,7 @@ export const usePlannerStore = create<PlannerStore>((set, get) => ({
     }
     const inputs: PlannerInputs = { ...current, status: { ...current.status, ...partial }, pension: newPension };
     saveInputsToStorage(inputs);
-    set(computeState(inputs, get().advancedHousingEnabled, get().fundingPolicy, get().liquidationPolicy));
+    set(computeState(inputs, get().fundingPolicy, get().liquidationPolicy));
   },
   setAsset: (key, partial) => {
     const inputs: PlannerInputs = {
@@ -414,7 +359,7 @@ export const usePlannerStore = create<PlannerStore>((set, get) => ({
       assets: { ...get().inputs.assets, [key]: { ...get().inputs.assets[key], ...partial } },
     };
     saveInputsToStorage(inputs);
-    set(computeState(inputs, get().advancedHousingEnabled, get().fundingPolicy, get().liquidationPolicy));
+    set(computeState(inputs, get().fundingPolicy, get().liquidationPolicy));
   },
   setDebt: (key, partial) => {
     const inputs: PlannerInputs = {
@@ -422,12 +367,12 @@ export const usePlannerStore = create<PlannerStore>((set, get) => ({
       debts: { ...get().inputs.debts, [key]: { ...get().inputs.debts[key], ...partial } },
     };
     saveInputsToStorage(inputs);
-    set(computeState(inputs, get().advancedHousingEnabled, get().fundingPolicy, get().liquidationPolicy));
+    set(computeState(inputs, get().fundingPolicy, get().liquidationPolicy));
   },
   setChildren: (partial) => {
     const inputs: PlannerInputs = { ...get().inputs, children: { ...get().inputs.children, ...partial } };
     saveInputsToStorage(inputs);
-    set(computeState(inputs, get().advancedHousingEnabled, get().fundingPolicy, get().liquidationPolicy));
+    set(computeState(inputs, get().fundingPolicy, get().liquidationPolicy));
   },
   setPension: (partial) => {
     const inputs: PlannerInputs = {
@@ -435,18 +380,17 @@ export const usePlannerStore = create<PlannerStore>((set, get) => ({
       pension: { ...get().inputs.pension, ...partial },
     };
     saveInputsToStorage(inputs);
-    set(computeState(inputs, get().advancedHousingEnabled, get().fundingPolicy, get().liquidationPolicy));
+    set(computeState(inputs, get().fundingPolicy, get().liquidationPolicy));
   },
   setFundingPolicy: (partial) => {
     const newPolicy: FundingPolicy = { ...get().fundingPolicy, ...partial };
     set({
       fundingPolicy: newPolicy,
-      ...computeState(get().inputs, get().advancedHousingEnabled, newPolicy, get().liquidationPolicy),
+      ...computeState(get().inputs, newPolicy, get().liquidationPolicy),
     });
   },
   toggleHousing: () => {
-    const newEnabled = !get().advancedHousingEnabled;
-    set({ advancedHousingEnabled: newEnabled, ...computeState(get().inputs, newEnabled, get().fundingPolicy, get().liquidationPolicy) });
+    set({ advancedHousingEnabled: !get().advancedHousingEnabled });
   },
   resetAll: () => {
     localStorage.removeItem(STORAGE_KEY);
@@ -454,7 +398,7 @@ export const usePlannerStore = create<PlannerStore>((set, get) => ({
       advancedHousingEnabled: false,
       fundingPolicy: DEFAULT_FUNDING_POLICY,
       liquidationPolicy: DEFAULT_LIQUIDATION_POLICY,
-      ...computeState(defaultInputs, false, DEFAULT_FUNDING_POLICY, DEFAULT_LIQUIDATION_POLICY),
+      ...computeState(defaultInputs, DEFAULT_FUNDING_POLICY, DEFAULT_LIQUIDATION_POLICY),
     });
   },
 }));

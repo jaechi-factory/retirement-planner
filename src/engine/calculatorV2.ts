@@ -139,16 +139,12 @@ function buildFundingTimeline(
 ): FundingStage[] {
   const stages: FundingStage[] = [];
 
-  let incomeEnd: number | null = null;
   let cashEnd: number | null = null;
   let financialEnd: number | null = null;
   let propertyStart: number | null = null;
   let failureStart: number | null = null;
 
   for (const agg of aggregates) {
-    if (agg.totalIncome > 0 && incomeEnd === null) {
-      incomeEnd = agg.ageYear;
-    }
     if (agg.eventSummary.includes('주식·채권 팔기 시작') && cashEnd === null) {
       cashEnd = agg.ageYear;
     }
