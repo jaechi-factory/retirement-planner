@@ -47,6 +47,7 @@ import {
   SECURED_LOAN_LTV,
   SECURED_LOAN_ANNUAL_RATE,
 } from './propertyStrategiesV2';
+import { getPlannerPolicy } from '../policy/policyTable';
 import { precomputeDebtSchedules } from './assetWeighting';
 import type { DebtSchedules } from './debtSchedule';
 import { getAnnualPensionIncomeForAge } from './pensionEstimation';
@@ -206,6 +207,11 @@ function getRemainingDebt(schedules: DebtSchedules, scheduleIndex: number): numb
   return get(schedules.mortgage) + get(schedules.creditLoan) + get(schedules.otherLoan);
 }
 
+/** 주담대 잔액만 반환 (집 매각 시 주담대만 상환하는 경우) */
+function getRemainingMortgageBalance(schedules: DebtSchedules, scheduleIndex: number): number {
+  return schedules.mortgage[scheduleIndex]?.remainingBalance ?? 0;
+}
+
 // ─── 메인 시뮬레이터 ──────────────────────────────────────────────────────────
 
 /** V2 월별 시뮬레이션 */
@@ -228,6 +234,8 @@ export function simulateMonthlyV2(
   // [P5] 담보대출 월 이자율 — draw 다음 달부터 적용
   const securedLoanMonthlyRate = SECURED_LOAN_ANNUAL_RATE / 12;
   const propertyMonthlyRate    = annualToMonthlyRate(assets.realEstate.expectedReturn);
+  const saleInvestMonthlyRate  = annualToMonthlyRate(SALE_PROCEEDS_ANNUAL_RETURN * 100);
+  const plannerPolicy          = getPlannerPolicy();
 
   const bucketRates   = computeBucketRates(assets);
   const initialRatios = computeInitialRatios(assets); // [P2] 고정 비중
@@ -290,7 +298,7 @@ export function simulateMonthlyV2(
         propertyValue *= 1 + propertyMonthlyRate;
       } else if (saleInvestBalance > 0) {
         // 매각 대금 운용: 연 4% 복리 (draw 이전 잔고에 적용)
-        saleInvestBalance *= 1 + SALE_PROCEEDS_ANNUAL_RETURN / 12;
+        saleInvestBalance *= 1 + saleInvestMonthlyRate;
       }
 
       // ── 2. 소득 / 연금 계산 ──────────────────────────────────────────
@@ -323,7 +331,15 @@ export function simulateMonthlyV2(
 
       const childExpenseThisMonth =
         children.hasChildren && ageYear <= children.independenceAge
-          ? (annualChildExpense / 12) * Math.pow(1 + monthlyInflation, monthsFromNow)
+          ? (() => {
+              const growthMode = children.costGrowthMode ?? 'inflation';
+              if (growthMode === 'fixed') return annualChildExpense / 12;
+              const annualGrowth = growthMode === 'custom'
+                ? (children.customGrowthRate ?? inflationRate)
+                : inflationRate;
+              const monthlyGrowth = annualToMonthlyRate(annualGrowth);
+              return (annualChildExpense / 12) * Math.pow(1 + monthlyGrowth, monthsFromNow);
+            })()
           : 0;
 
       let rentalCostThisMonth = 0;
@@ -411,7 +427,9 @@ export function simulateMonthlyV2(
           }
           eventFlags.propertySold = true;
 
-          const remainingMortgage = getRemainingDebt(debtSchedules, totalMonthIndex);
+          const remainingMortgage = plannerPolicy.property.saleDebtSettlementMode === 'all_debts'
+            ? getRemainingDebt(debtSchedules, totalMonthIndex)
+            : getRemainingMortgageBalance(debtSchedules, totalMonthIndex);
           const grossProceeds = propertyValue * (1 - PROPERTY_SALE_HAIRCUT);
           const netProceeds = Math.max(0, grossProceeds - remainingMortgage);
 

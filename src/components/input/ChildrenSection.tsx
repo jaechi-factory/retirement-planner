@@ -60,6 +60,52 @@ export default function ChildrenSection() {
             max={100}
             hint="이 나이 이후로 자녀 지출이 사라져요"
           />
+          <div style={{ display: 'grid', gap: 8 }}>
+            <div style={{ fontSize: 13, color: 'var(--tds-gray-500)' }}>자녀비 증가 방식</div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              {(
+                [
+                  { value: 'inflation', label: '물가연동' },
+                  { value: 'fixed', label: '고정금액' },
+                  { value: 'custom', label: '직접설정' },
+                ] as { value: 'inflation' | 'fixed' | 'custom'; label: string }[]
+              ).map((mode) => {
+                const isActive = (children.costGrowthMode ?? 'inflation') === mode.value;
+                return (
+                  <button
+                    key={mode.value}
+                    onClick={() => setChildren({ costGrowthMode: mode.value })}
+                    style={{
+                      flex: 1,
+                      height: 36,
+                      borderRadius: 8,
+                      border: `1.5px solid ${isActive ? 'var(--tds-blue-500)' : 'var(--tds-gray-100)'}`,
+                      background: isActive ? 'var(--tds-blue-50)' : 'var(--tds-white)',
+                      color: isActive ? 'var(--tds-blue-500)' : 'var(--tds-gray-500)',
+                      fontSize: 13,
+                      fontWeight: isActive ? 700 : 400,
+                      cursor: 'pointer',
+                      transition: 'all 0.15s',
+                      fontFamily: 'inherit',
+                    }}
+                  >
+                    {mode.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          {(children.costGrowthMode ?? 'inflation') === 'custom' && (
+            <NumberInput
+              label="자녀비 연 증가율"
+              value={children.customGrowthRate ?? 0}
+              onChange={(v) => setChildren({ customGrowthRate: v })}
+              unit="%"
+              min={0}
+              max={30}
+              hint="물가와 별개로 자녀비만 적용되는 증가율이에요"
+            />
+          )}
         </>
       )}
     </SectionCard>

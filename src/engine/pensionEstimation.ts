@@ -1,14 +1,16 @@
 import type { PensionInputs, RetirementPensionInput, PrivatePensionInput, PrivatePensionProduct } from '../types/pension';
+import { getPlannerPolicy } from '../policy/policyTable';
 
 // ─── 내부 상수 ────────────────────────────────────────────────────────────────
-const DEFAULT_NET_TO_GROSS_RATIO = 0.78;
-const ASSUMED_CAREER_START_AGE = 26;
-const NPS_MIN_MONTHLY = 40;    // 40만원 (하한)
-const NPS_MAX_MONTHLY = 637;   // 637만원 (상한)
-const NPS_PRE_2026_REPLACEMENT_RATE = 0.415;   // 2026년 개혁 이전 소득대체율
-const NPS_POST_2026_REPLACEMENT_RATE = 0.43;   // 2026년 개혁 이후 소득대체율
-const NPS_REFORM_YEAR = 2026;
-const CURRENT_YEAR = 2026;
+const pensionPolicy = getPlannerPolicy().pension;
+const DEFAULT_NET_TO_GROSS_RATIO = pensionPolicy.netToGrossRatio;
+const ASSUMED_CAREER_START_AGE = pensionPolicy.assumedCareerStartAge;
+const NPS_MIN_MONTHLY = pensionPolicy.npsMinMonthly;    // 40만원 (하한)
+const NPS_MAX_MONTHLY = pensionPolicy.npsMaxMonthly;    // 637만원 (상한)
+const NPS_PRE_2026_REPLACEMENT_RATE = pensionPolicy.npsPreReformReplacementRate;   // 2026년 개혁 이전 소득대체율
+const NPS_POST_2026_REPLACEMENT_RATE = pensionPolicy.npsPostReformReplacementRate; // 2026년 개혁 이후 소득대체율
+const NPS_REFORM_YEAR = pensionPolicy.npsReformYear;
+const CURRENT_YEAR = new Date().getFullYear();
 const RETIREMENT_CONTRIBUTION_RATE = 1 / 12;
 
 // ─── 유틸리티 ─────────────────────────────────────────────────────────────────
