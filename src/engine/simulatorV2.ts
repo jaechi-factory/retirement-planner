@@ -40,13 +40,6 @@ import type { PlannerInputs } from '../types/inputs';
 import type { MonthlySnapshotV2, SnapshotEventFlags, YearlyAggregateV2 } from '../types/calculationV2';
 import type { FundingPolicy, LiquidationPolicy } from './fundingPolicy';
 import type { PropertyStrategyV2 } from './propertyStrategiesV2';
-import {
-  PROPERTY_SALE_HAIRCUT,
-  RENTAL_BASE_MONTHLY_TODAY,
-  SALE_PROCEEDS_ANNUAL_RETURN,
-  SECURED_LOAN_LTV,
-  SECURED_LOAN_ANNUAL_RATE,
-} from './propertyStrategiesV2';
 import { getPlannerPolicy } from '../policy/policyTable';
 import { precomputeDebtSchedules } from './assetWeighting';
 import type { DebtSchedules } from './debtSchedule';
@@ -231,11 +224,13 @@ export function simulateMonthlyV2(
   const monthlyIncomeGrowth = annualToMonthlyRate(incomeGrowthRate);
   const monthlyExpenseGrowth = annualToMonthlyRate(expenseGrowthRate);
 
-  // [P5] 담보대출 월 이자율 — draw 다음 달부터 적용
-  const securedLoanMonthlyRate = SECURED_LOAN_ANNUAL_RATE / 12;
-  const propertyMonthlyRate    = annualToMonthlyRate(assets.realEstate.expectedReturn);
-  const saleInvestMonthlyRate  = annualToMonthlyRate(SALE_PROCEEDS_ANNUAL_RETURN * 100);
   const plannerPolicy          = getPlannerPolicy();
+  const propertyPolicy         = plannerPolicy.property;
+
+  // [P5] 담보대출 월 이자율 — draw 다음 달부터 적용
+  const securedLoanMonthlyRate = propertyPolicy.securedLoanAnnualRate / 12;
+  const propertyMonthlyRate    = annualToMonthlyRate(assets.realEstate.expectedReturn);
+  const saleInvestMonthlyRate  = annualToMonthlyRate(propertyPolicy.saleProceedsAnnualReturn * 100);
 
   const bucketRates   = computeBucketRates(assets);
   const initialRatios = computeInitialRatios(assets); // [P2] 고정 비중
@@ -275,6 +270,11 @@ export function simulateMonthlyV2(
   const snapshots: MonthlySnapshotV2[] = [];
 
   for (let ageYear = currentAge; ageYear <= lifeExpectancy; ageYear++) {
+    // 연금은 ageYear만 달라지고 ageMonthIndex에는 무관 → 연도별 1회만 계산
+    const annualPensionForYear = getAnnualPensionIncomeForAge(
+      pension, currentAge, ageYear, inflationRate, annualIncome, retirementAge,
+    );
+
     for (let ageMonthIndex = 0; ageMonthIndex < 12; ageMonthIndex++) {
       if (ageYear === lifeExpectancy && ageMonthIndex > 0) break;
 
@@ -307,9 +307,7 @@ export function simulateMonthlyV2(
         ? (annualIncome / 12) * Math.pow(1 + monthlyIncomeGrowth, monthsFromNow)
         : 0;
 
-      const pensionThisMonth = getAnnualPensionIncomeForAge(
-        pension, currentAge, ageYear, inflationRate, annualIncome, retirementAge,
-      ) / 12;
+      const pensionThisMonth = annualPensionForYear / 12;
 
       // ── 3. 지출 계산 ──────────────────────────────────────────────────
       let expenseThisMonth = 0;
@@ -410,7 +408,7 @@ export function simulateMonthlyV2(
             propertyInterventionStarted = true;
             eventFlags.propertyInterventionStarted = true;
           }
-          const maxLoan = propertyValue * SECURED_LOAN_LTV;
+          const maxLoan = propertyValue * propertyPolicy.securedLoanLtv;
           const availableHeadroom = Math.max(0, maxLoan - securedLoanBalance);
           const draw = Math.min(uncoveredAmount, availableHeadroom);
           if (draw > 0) {
@@ -430,7 +428,7 @@ export function simulateMonthlyV2(
           const remainingMortgage = plannerPolicy.property.saleDebtSettlementMode === 'all_debts'
             ? getRemainingDebt(debtSchedules, totalMonthIndex)
             : getRemainingMortgageBalance(debtSchedules, totalMonthIndex);
-          const grossProceeds = propertyValue * (1 - PROPERTY_SALE_HAIRCUT);
+          const grossProceeds = propertyValue * (1 - propertyPolicy.propertySaleHaircut);
           const netProceeds = Math.max(0, grossProceeds - remainingMortgage);
 
           // 매각 대금: cash 버킷 대신 별도 운용 잔액으로 관리 (연 4% 복리)
@@ -440,7 +438,7 @@ export function simulateMonthlyV2(
           // 월세: 현재가치 200만원을 매각 시점 명목가로 전환
           // (이후 rentalCostThisMonth에서 추가 물가 연동 계속됨)
           baseRentalMonthlyAtSale =
-            RENTAL_BASE_MONTHLY_TODAY * Math.pow(1 + monthlyInflation, totalMonthIndex);
+            propertyPolicy.rentalBaseMonthlyToday * Math.pow(1 + monthlyInflation, totalMonthIndex);
 
           propertySaleMonthIndex = totalMonthIndex;
           propertyValue = 0;

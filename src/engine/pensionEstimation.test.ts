@@ -10,9 +10,9 @@
 import { describe, it, expect } from 'vitest';
 import {
   estimatePublicPension,
-  estimatePublicPensionWithMeta,
   annuitize,
 } from './pensionEstimation';
+import { estimatePublicPensionWithMeta } from './pensionMeta';
 
 // ─── 국민연금 기여기간 경계값 ──────────────────────────────────────────────────
 
