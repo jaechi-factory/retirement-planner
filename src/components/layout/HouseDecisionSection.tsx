@@ -35,7 +35,7 @@ export default function HouseDecisionSection({
         marginBottom: 0,
       }}
     >
-      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--result-text-meta-color)', marginBottom: 8 }}>
+      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--result-text-body-color)', marginBottom: 8 }}>
         집 의사결정
       </div>
       <div style={{ fontSize: 'var(--result-text-meta)', color: 'var(--result-text-meta-color)', marginBottom: 'var(--result-space-2)' }}>

@@ -266,10 +266,11 @@ export default function ResultWorkbench() {
         <section
           style={{
             marginBottom: 'var(--result-space-5)',
-            padding: 'var(--result-space-2) 0',
+            padding: 'var(--result-space-2) var(--result-space-3)',
             borderTop: '1px solid var(--result-border-subtle)',
             borderBottom: '1px solid var(--result-border-subtle)',
-            background: 'transparent',
+            borderRadius: 10,
+            background: 'var(--result-surface-soft)',
           }}
         >
           <HouseDecisionSection
@@ -280,7 +281,7 @@ export default function ResultWorkbench() {
             onSelectStrategy={handleSelectStrategy}
           />
 
-          <div style={{ borderTop: '1px solid var(--result-border-subtle)', margin: 'var(--result-space-1) 0' }} />
+          <div style={{ borderTop: '1px solid var(--result-border-soft)', margin: 'var(--result-space-1) 0' }} />
 
           <VerificationSection
             hasRealEstate={hasRealEstate}

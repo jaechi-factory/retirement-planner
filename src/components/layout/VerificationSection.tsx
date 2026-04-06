@@ -61,11 +61,26 @@ export default function VerificationSection({
           fontWeight: 600,
           color: 'var(--result-text-body-color)',
           marginBottom: 'var(--result-space-1)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 'var(--result-space-2)',
         }}
       >
         {hasRealEstate ? (
           <>
-            <span style={{ color: 'var(--result-accent-muted)', fontWeight: 700 }}>{strategyLabel}</span>
+            <span
+              style={{
+                color: 'var(--result-accent-muted)',
+                fontWeight: 700,
+                background: 'var(--result-accent-soft)',
+                border: '1px solid var(--result-border-subtle)',
+                borderRadius: 999,
+                padding: '1px 7px',
+                lineHeight: 1.4,
+              }}
+            >
+              {strategyLabel}
+            </span>
             <span style={{ color: 'var(--result-text-meta-color)' }}>{sectionSuffix}</span>
           </>
         ) : (
