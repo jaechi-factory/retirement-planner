@@ -89,7 +89,7 @@ function RecommendationModeSwitch({
     borderRadius: 999,
     border: `1px solid ${active ? 'var(--result-accent-muted)' : 'var(--result-border-soft)'}`,
     background: active ? 'var(--result-accent-soft)' : 'transparent',
-    color: active ? 'var(--result-accent-muted)' : 'var(--ux-text-subtle)',
+    color: active ? 'var(--result-accent-muted)' : 'var(--result-text-meta-color)',
     fontSize: 'var(--result-text-meta)',
     fontWeight: 600,
     padding: '6px 11px',
@@ -111,7 +111,7 @@ function RecommendationModeSwitch({
 function metricToneColor(tone?: NarrativeMetric['tone']): string {
   if (tone === 'positive') return 'var(--ux-status-positive)';
   if (tone === 'negative') return 'var(--ux-status-negative)';
-  return 'var(--ux-text-strong)';
+  return 'var(--result-text-value-strong-color)';
 }
 
 function ReportConclusionSection({
@@ -133,7 +133,7 @@ function ReportConclusionSection({
         marginBottom: 'var(--result-space-4)',
       }}
     >
-      <div style={{ fontSize: 'var(--result-text-meta)', color: 'var(--ux-text-subtle)', marginBottom: 'var(--result-space-2)' }}>
+      <div style={{ fontSize: 'var(--result-text-meta)', color: 'var(--result-text-meta-color)', marginBottom: 'var(--result-space-2)' }}>
         {hasRealEstate ? '추천 전략 기준' : '무주택 기준'} · {RECOMMENDATION_MODE_LABELS[mode]}
       </div>
 
@@ -141,7 +141,7 @@ function ReportConclusionSection({
         style={{
           fontSize: 'var(--result-text-display)',
           fontWeight: 800,
-          color: 'var(--ux-text-strong)',
+          color: 'var(--result-text-strong-color)',
           lineHeight: 1.26,
           letterSpacing: '-0.02em',
           marginBottom: 'var(--result-space-5)',
@@ -169,7 +169,7 @@ function ReportConclusionSection({
               minHeight: 64,
             }}
           >
-            <div style={{ fontSize: 'var(--result-text-meta)', color: 'var(--ux-text-subtle)', marginBottom: 'var(--result-space-1)' }}>
+            <div style={{ fontSize: 'var(--result-text-meta)', color: 'var(--result-text-meta-color)', marginBottom: 'var(--result-space-1)' }}>
               {metric.label}
             </div>
             <div style={{ fontSize: 'var(--result-text-metric)', fontWeight: 700, color: metricToneColor(metric.tone), lineHeight: 1.3 }}>
@@ -181,10 +181,12 @@ function ReportConclusionSection({
 
       <div style={{ borderTop: '1px solid var(--result-border-soft)', paddingTop: 'var(--result-space-3)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--result-space-2)', marginBottom: 'var(--result-space-1)' }}>
-          <span style={{ fontSize: 'var(--result-text-meta)', color: 'var(--ux-text-subtle)' }}>권장 전략</span>
-          <span style={{ fontSize: 'var(--result-text-title)', fontWeight: 700, color: 'var(--ux-text-strong)' }}>{model.recommendedStrategyLabel}</span>
+          <span style={{ fontSize: 'var(--result-text-meta)', color: 'var(--result-text-meta-color)' }}>권장 전략</span>
+          <span style={{ fontSize: 'var(--result-text-title)', fontWeight: 700, color: 'var(--result-text-strong-color)' }}>{model.recommendedStrategyLabel}</span>
         </div>
-        <div style={{ fontSize: 'var(--result-text-body)', color: 'var(--ux-text-base)', lineHeight: 1.55 }}>{model.recommendationReasonLine}</div>
+        <div style={{ fontSize: 'var(--result-text-body)', color: 'var(--result-text-body-color)', lineHeight: 1.55 }}>
+          {model.recommendationReasonLine}
+        </div>
       </div>
     </section>
   );

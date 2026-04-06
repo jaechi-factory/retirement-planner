@@ -61,15 +61,23 @@
   --result-text-meta: 11px;
   --result-text-metric: 18px;
 
+  --result-text-strong-color: var(--ux-text-strong);
+  --result-text-body-color: var(--ux-text-base);
+  --result-text-meta-color: #7A8593;
+  --result-text-faint-color: #98A2AE;
+  --result-text-value-strong-color: #2E3744;
+  --result-text-value-muted-color: #566171;
+
   --result-surface-base: var(--ux-surface);
   --result-surface-soft: #FAFBFC;
   --result-surface-metric: #F8FAFC;
-  --result-surface-selected: #F3F7FD;
+  --result-surface-selected: #F7FAFE;
 
   --result-accent-strong: var(--ux-accent);
   --result-accent-soft: #EAF2FF;
   --result-accent-muted: #6E8BB7;
 
+  --result-border-subtle: #EEF2F6;
   --result-border-soft: #E9EDF2;
   --result-border-strong: #DDE4EC;
 }

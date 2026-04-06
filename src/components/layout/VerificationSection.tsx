@@ -43,13 +43,20 @@ export default function VerificationSection({
     <section
       style={{
         borderRadius: 12,
-        border: '1px solid var(--result-border-soft)',
+        border: '1px solid var(--result-border-subtle)',
         background: 'transparent',
-        padding: 'var(--result-space-4)',
+        padding: 'var(--result-space-3)',
         marginBottom: 'var(--result-space-5)',
       }}
     >
-      <div style={{ fontSize: 'var(--result-text-meta)', fontWeight: 600, color: 'var(--ux-text-subtle)', marginBottom: 'var(--result-space-2)' }}>
+      <div
+        style={{
+          fontSize: 'var(--result-text-meta)',
+          fontWeight: 500,
+          color: 'var(--result-text-faint-color)',
+          marginBottom: 'var(--result-space-2)',
+        }}
+      >
         검증
       </div>
 
@@ -74,8 +81,8 @@ export default function VerificationSection({
         <summary
           style={{
             fontSize: 'var(--result-text-meta)',
-            fontWeight: 600,
-            color: 'var(--ux-text-muted)',
+            fontWeight: 500,
+            color: 'var(--result-text-faint-color)',
             cursor: 'pointer',
             userSelect: 'none',
           }}
@@ -98,8 +105,8 @@ export default function VerificationSection({
         <summary
           style={{
             fontSize: 'var(--result-text-meta)',
-            fontWeight: 600,
-            color: 'var(--ux-text-muted)',
+            fontWeight: 500,
+            color: 'var(--result-text-faint-color)',
             cursor: 'pointer',
             userSelect: 'none',
           }}
@@ -107,7 +114,7 @@ export default function VerificationSection({
           가정과 주의 보기
         </summary>
 
-        <div style={{ marginTop: 'var(--result-space-2)', paddingTop: 'var(--result-space-2)', borderTop: '1px solid var(--result-border-soft)' }}>
+        <div style={{ marginTop: 'var(--result-space-2)', paddingTop: 'var(--result-space-2)', borderTop: '1px solid var(--result-border-subtle)' }}>
           {hasRealEstate && (
             <div style={{ marginBottom: 'var(--result-space-3)' }}>
               <PropertyAssetChart rows={chartRows} retirementAge={retirementAge} />
@@ -116,12 +123,22 @@ export default function VerificationSection({
 
           {assumptions.length > 0 && (
             <div style={{ marginBottom: filteredWarnings.length > 0 ? 'var(--result-space-2)' : 0 }}>
-              <div style={{ fontSize: 'var(--result-text-meta)', fontWeight: 600, color: 'var(--ux-text-subtle)', marginBottom: 'var(--result-space-2)' }}>
+              <div
+                style={{
+                  fontSize: 'var(--result-text-meta)',
+                  fontWeight: 500,
+                  color: 'var(--result-text-faint-color)',
+                  marginBottom: 'var(--result-space-2)',
+                }}
+              >
                 주요 가정
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {assumptions.map((assumption, index) => (
-                  <div key={`${assumption.label}-${index}`} style={{ fontSize: 'var(--result-text-meta)', color: 'var(--ux-text-muted)', lineHeight: 1.6 }}>
+                  <div
+                    key={`${assumption.label}-${index}`}
+                    style={{ fontSize: 'var(--result-text-meta)', color: 'var(--result-text-meta-color)', lineHeight: 1.6 }}
+                  >
                     {assumption.label}: {assumption.value}
                   </div>
                 ))}
@@ -131,7 +148,14 @@ export default function VerificationSection({
 
           {filteredWarnings.length > 0 && (
             <div>
-              <div style={{ fontSize: 'var(--result-text-meta)', fontWeight: 600, color: 'var(--ux-text-subtle)', marginBottom: 'var(--result-space-2)' }}>
+              <div
+                style={{
+                  fontSize: 'var(--result-text-meta)',
+                  fontWeight: 500,
+                  color: 'var(--result-text-faint-color)',
+                  marginBottom: 'var(--result-space-2)',
+                }}
+              >
                 주의 사항
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -142,10 +166,10 @@ export default function VerificationSection({
                       borderRadius: 8,
                       border: `1px solid ${warning.severity === 'critical' ? 'var(--ux-status-negative-soft)' : 'var(--ux-status-warning-soft)'}`,
                       background: warning.severity === 'critical' ? 'var(--ux-status-negative-bg)' : 'var(--ux-status-warning-bg)',
-                      color: 'var(--ux-text-muted)',
+                      color: 'var(--result-text-meta-color)',
                       fontSize: 'var(--result-text-meta)',
                       lineHeight: 1.6,
-                      padding: '8px 10px',
+                      padding: '7px 9px',
                     }}
                   >
                     {warning.message}

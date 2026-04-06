@@ -18,7 +18,7 @@ export default function InsightLinesSection({ lines }: InsightLinesSectionProps)
           style={{
             fontSize: 'var(--result-text-body)',
             lineHeight: 1.6,
-            color: 'var(--ux-text-base)',
+            color: 'var(--result-text-body-color)',
             padding: 'var(--result-space-2) 0',
             borderBottom: index < lines.length - 1 ? '1px solid var(--result-border-soft)' : 'none',
           }}
