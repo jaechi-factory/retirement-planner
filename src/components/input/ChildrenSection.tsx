@@ -7,7 +7,7 @@ export default function ChildrenSection() {
   const { children } = inputs;
 
   return (
-    <SectionCard title="자녀 정보" subtitle="자녀 관련 지출이 언제까지 드는지 넣어요">
+    <SectionCard title="자녀 정보" subtitle="자녀에게 들어가는 돈이 언제까지 필요한지 입력해 주세요.">
       {/* 라디오 버튼 */}
       <div style={{ display: 'flex', gap: 8 }}>
         {[
@@ -58,7 +58,7 @@ export default function ChildrenSection() {
             unit="세"
             min={inputs.status.currentAge}
             max={100}
-            hint="이 나이부터 자녀 지출을 0원으로 계산해요"
+            hint="이 나이 이후에는 자녀에게 드는 돈이 없는 것으로 계산해요."
           />
           <div style={{ display: 'grid', gap: 8 }}>
             <div style={{ fontSize: 13, color: 'var(--tds-gray-500)' }}>자녀비 증가 방식</div>

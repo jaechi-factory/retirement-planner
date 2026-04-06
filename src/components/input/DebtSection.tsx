@@ -84,7 +84,7 @@ export default function DebtSection() {
   const rows: DebtKey[] = ['mortgage', 'creditLoan', 'otherLoan'];
 
   return (
-    <SectionCard title="부채 구성" subtitle="대출 상환이 생활비에 주는 영향을 계산해요">
+    <SectionCard title="부채 구성" subtitle="대출을 갚는 데 쓰는 돈이 생활비에 얼마나 영향을 주는지 계산해요">
       {result.totalDebt > 0 && (
         <div
           style={{
@@ -222,7 +222,7 @@ export default function DebtSection() {
                   {/* 보조: 이자 총합 / 최대 월 — 읽는 순서 2순위, 인라인 텍스트 */}
                   <div style={{ padding: '2px 12px 10px', display: 'flex', gap: 14 }}>
                     <span style={{ fontSize: 11, color: 'var(--tds-gray-400)' }}>
-                      총 이자{' '}
+                      총이자{' '}
                       <span style={{ fontWeight: 600, color: 'var(--tds-gray-500)' }}>
                         −{Math.round(summary.totalInterest).toLocaleString('ko-KR')}만원
                       </span>

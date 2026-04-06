@@ -18,8 +18,8 @@ export const ASSET_LABELS: Record<string, string> = {
   stock_kr: '국내 주식',
   stock_us: '해외 주식',
   bond: '채권',
-  crypto: '코인',
-  realEstate: '보유 부동산',
+  crypto: '가상자산',
+  realEstate: '부동산',
 };
 
 export const DEBT_LABELS: Record<string, string> = {
@@ -33,9 +33,9 @@ export const MORTGAGE_REPAYMENT_TYPES = ['equal_payment', 'equal_principal', 'gr
 
 /** 버튼 1행: 일상어 (짧게) */
 export const MORTGAGE_REPAYMENT_FRIENDLY_LABELS: Record<string, string> = {
-  equal_payment:    '매달 거의 같게',
-  equal_principal:  '처음엔 많이, 점점 적게',
-  graduated_payment: '처음엔 적게, 나중에 늘어남',
+  equal_payment:    '매달 비슷하게',
+  equal_principal:  '처음엔 많고 점점 적게',
+  graduated_payment: '처음엔 적고, 나중에 늘어요',
 };
 
 /** 버튼 2행: 금융 용어 */
@@ -56,9 +56,9 @@ export const OTHER_REPAYMENT_TYPES = ['equal_payment', 'equal_principal', 'ballo
 
 /** 버튼 1행: 일상어 (짧게) */
 export const OTHER_REPAYMENT_FRIENDLY_LABELS: Record<string, string> = {
-  equal_payment:   '매달 거의 같게',
-  equal_principal: '처음엔 많이, 점점 적게',
-  balloon_payment: '마지막에 한 번에',
+  equal_payment:   '매달 비슷하게',
+  equal_principal: '처음엔 많고 점점 적게',
+  balloon_payment: '만기에 한 번에',
 };
 
 /** 버튼 2행: 금융 용어 */

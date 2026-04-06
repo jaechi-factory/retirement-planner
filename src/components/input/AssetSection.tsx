@@ -15,7 +15,7 @@ export default function AssetSection() {
   const { inputs, setAsset, result } = usePlannerStore();
 
   return (
-    <SectionCard title="자산 구성" subtitle="지금 가진 자산과 예상 수익률을 입력해요">
+    <SectionCard title="자산 구성" subtitle="지금 가진 자산을 입력하면, 은퇴 후 얼마나 버틸 수 있는지 계산해요">
       {result.totalAsset > 0 && (
         <div
           style={{
@@ -63,7 +63,8 @@ export default function AssetSection() {
             </div>
             {key === 'realEstate' && (
               <p style={{ fontSize: 11, color: 'var(--tds-gray-400)', margin: '4px 0 0', lineHeight: 1.5 }}>
-                실거주 주택 포함 전체 부동산 가치를 입력해요. 집 전략은 결과에서 비교해요.
+                실거주 집을 포함한 전체 부동산 가치를 입력해 주세요. 집을 그대로 둘지, 담보로
+                대출받을지, 팔지에 따라 결과가 달라져요.
               </p>
             )}
           </div>

@@ -17,7 +17,7 @@ export default function CurrentStatusSection() {
   const showCashflow = status.annualIncome > 0 && status.annualExpense > 0;
 
   return (
-    <SectionCard title="현재 상태" subtitle="지금 수입과 지출로 매달 얼마나 남는지 봐요">
+    <SectionCard title="현재 상태" subtitle="지금 수입과 지출로 앞으로 얼마나 모을 수 있는지 계산해요">
       <NumberInput
         label="현재 나이"
         value={status.currentAge}
@@ -31,7 +31,7 @@ export default function CurrentStatusSection() {
         value={status.annualIncome}
         onChange={(v) => setStatus({ annualIncome: v })}
         unit="만원"
-        hint="세금·4대보험을 뺀 실제 연수입이에요 (보너스 포함)"
+        hint="보너스를 포함해서, 1년 동안 통장에 들어오는 총 수입을 입력해 주세요."
       />
       <RateInput
         label="연봉 증가율"
@@ -45,7 +45,7 @@ export default function CurrentStatusSection() {
             value={status.annualExpense > 0 ? Math.round(status.annualExpense / 12) : 0}
             onChange={(v) => setStatus({ annualExpense: v * 12 })}
             unit="만원"
-            hint="주담대 상환액, 월세는 빼고 입력해요"
+            hint="주거비를 빼고, 매달 평균적으로 쓰는 돈을 입력해 주세요."
           />
           <RateInput
             label="생활비 증가율 (연)"
@@ -54,7 +54,7 @@ export default function CurrentStatusSection() {
           />
         </div>
         <p style={{ fontSize: 12, color: 'var(--tds-gray-400)', margin: 0 }}>
-          생활비 증가율은 물가(약 3%)에 맞춰 입력하면 돼요.
+          앞으로 생활비가 얼마나 오를지 예상해서 입력해 주세요. 보통은 물가상승률과 비슷하게 잡아요.
         </p>
       </div>
 

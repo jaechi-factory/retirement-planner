@@ -25,7 +25,7 @@ export default function PensionSection() {
           연금
         </h3>
         <p style={{ margin: 0, fontSize: 12, color: 'var(--tds-gray-400)' }}>
-          은퇴 후 매달 들어오는 돈을 입력해요
+          은퇴 후 매달 들어오는 연금을 입력해 주세요.
         </p>
       </div>
 
@@ -43,7 +43,7 @@ export default function PensionSection() {
         }}>
           <div>
             <div style={{ fontSize: 11, color: 'var(--tds-gray-400)', marginBottom: 2 }}>
-              추정값 · 지금 기준
+              현재 가치 기준 예상 연금
             </div>
             <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--tds-gray-600)' }}>
               월 {fmtKRW(totalPension)}이 생활비에 들어와요
