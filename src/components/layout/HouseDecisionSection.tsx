@@ -40,6 +40,9 @@ export default function HouseDecisionSection({
       <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--ux-text-muted)', marginBottom: 10 }}>
         집 의사결정
       </div>
+      <div style={{ fontSize: 'var(--result-text-meta)', color: 'var(--result-text-meta-color)', marginBottom: 'var(--result-space-2)' }}>
+        전략을 누르면 아래 결과가 바뀌어요.
+      </div>
       <HouseDecisionRows rows={rows} onSelectStrategy={onSelectStrategy} />
     </section>
   );

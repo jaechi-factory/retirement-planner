@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { HouseDecisionRowVM, HouseDecisionStrategy } from './houseDecisionVM';
 
 interface HouseDecisionRowsProps {
@@ -8,11 +9,11 @@ interface HouseDecisionRowsProps {
 function MetricCell({
   label,
   value,
-  emphasizeValue,
+  selected,
 }: {
   label: string;
   value: string;
-  emphasizeValue: boolean;
+  selected: boolean;
 }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
@@ -20,8 +21,8 @@ function MetricCell({
       <span
         style={{
           fontSize: 'var(--result-text-body)',
-          fontWeight: emphasizeValue ? 700 : 600,
-          color: emphasizeValue ? 'var(--result-text-value-strong-color)' : 'var(--result-text-value-muted-color)',
+          fontWeight: selected ? 600 : 700,
+          color: selected ? 'var(--result-text-body-color)' : 'var(--result-text-value-strong-color)',
           lineHeight: 1.35,
         }}
       >
@@ -32,6 +33,8 @@ function MetricCell({
 }
 
 export default function HouseDecisionRows({ rows, onSelectStrategy }: HouseDecisionRowsProps) {
+  const [hoveredStrategy, setHoveredStrategy] = useState<HouseDecisionStrategy | null>(null);
+
   return (
     <div
       style={{
@@ -44,18 +47,22 @@ export default function HouseDecisionRows({ rows, onSelectStrategy }: HouseDecis
       {rows.map((row, index) => {
         const selected = row.isSelected;
         const disabled = !row.isSelectable;
+        const hovered = hoveredStrategy === row.strategy && !disabled;
 
         return (
           <div
             key={row.strategy}
             style={{
               borderBottom: index < rows.length - 1 ? '1px solid var(--result-border-subtle)' : 'none',
-              background: selected ? 'var(--result-surface-selected)' : 'transparent',
+              background: selected ? 'var(--result-surface-selected)' : (hovered ? 'var(--result-surface-soft)' : 'transparent'),
+              transition: 'background-color 0.12s ease',
             }}
           >
             <button
               type="button"
               onClick={() => !disabled && onSelectStrategy(row.strategy)}
+              onMouseEnter={() => !disabled && setHoveredStrategy(row.strategy)}
+              onMouseLeave={() => setHoveredStrategy((current) => (current === row.strategy ? null : current))}
               disabled={disabled}
               style={{
                 width: '100%',
@@ -79,23 +86,41 @@ export default function HouseDecisionRows({ rows, onSelectStrategy }: HouseDecis
                         fontWeight: 600,
                         color: 'var(--result-text-faint-color)',
                         letterSpacing: '0.01em',
+                        padding: '1px 4px',
+                        borderRadius: 999,
+                        border: '1px solid var(--result-border-subtle)',
+                        background: 'var(--result-surface-soft)',
                       }}
                     >
                       추천
                     </span>
                   )}
                 </div>
-                {disabled && (
-                  <span style={{ fontSize: 'var(--result-text-meta)', color: 'var(--result-text-faint-color)' }}>
-                    계산 불가
-                  </span>
-                )}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  {disabled && (
+                    <span style={{ fontSize: 'var(--result-text-meta)', color: 'var(--result-text-faint-color)' }}>
+                      계산 불가
+                    </span>
+                  )}
+                  {!disabled && (
+                    <span
+                      aria-hidden
+                      style={{
+                        fontSize: 12,
+                        color: selected ? 'var(--result-text-meta-color)' : 'var(--result-text-faint-color)',
+                        fontWeight: 700,
+                      }}
+                    >
+                      ›
+                    </span>
+                  )}
+                </div>
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 'var(--result-space-2)' }}>
-                <MetricCell label="시작 시점" value={row.startAgeText} emphasizeValue={!selected} />
-                <MetricCell label="가능 월생활비" value={row.sustainableMonthlyText} emphasizeValue={!selected} />
-                <MetricCell label="유지 가능 나이" value={row.survivalAgeText} emphasizeValue={!selected} />
+                <MetricCell label="시작 시점" value={row.startAgeText} selected={selected} />
+                <MetricCell label="가능 월생활비" value={row.sustainableMonthlyText} selected={selected} />
+                <MetricCell label="유지 가능 나이" value={row.survivalAgeText} selected={selected} />
               </div>
             </button>
 

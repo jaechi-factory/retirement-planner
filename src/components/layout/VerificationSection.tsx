@@ -38,6 +38,12 @@ export default function VerificationSection({
   selectedPropertyStrategy,
 }: VerificationSectionProps) {
   const filteredWarnings = warnings.filter((warning) => warning.severity !== 'info');
+  const sectionTitle = hasRealEstate
+    ? `${strategyLabel}, 돈 흐름은 이렇게 바뀌어요`
+    : '입력한 조건 기준으로 돈 흐름을 확인해요';
+  const sectionDescription = hasRealEstate
+    ? '위에서 고른 전략 기준으로 계산했어요.'
+    : '입력한 조건 기준으로 계산했어요.';
 
   return (
     <section
@@ -51,13 +57,22 @@ export default function VerificationSection({
     >
       <div
         style={{
+          fontSize: 'var(--result-text-body)',
+          fontWeight: 600,
+          color: 'var(--result-text-meta-color)',
+          marginBottom: 'var(--result-space-1)',
+        }}
+      >
+        {sectionTitle}
+      </div>
+      <div
+        style={{
           fontSize: 'var(--result-text-meta)',
-          fontWeight: 500,
           color: 'var(--result-text-faint-color)',
           marginBottom: 'var(--result-space-2)',
         }}
       >
-        검증
+        {sectionDescription}
       </div>
 
       <div

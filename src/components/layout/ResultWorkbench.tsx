@@ -1,60 +1,14 @@
-import { useEffect, useMemo, useState, type CSSProperties } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { usePlannerStore } from '../../store/usePlannerStore';
 import { calcFinancialTotalAsset } from '../../engine/assetWeighting';
 import { PROPERTY_STRATEGY_LABELS } from '../../engine/propertyStrategiesV2';
-import type {
-  PropertyOptionResult,
-  RecommendationModeV2,
-} from '../../types/calculationV2';
+import type { PropertyOptionResult } from '../../types/calculationV2';
 import InsightLinesSection from './InsightLinesSection';
 import HouseDecisionSection from './HouseDecisionSection';
 import VerificationSection from './VerificationSection';
 import { buildResultNarrativeModel, type NarrativeMetric, type ResultNarrativeModel } from './resultNarrative';
 import type { HouseDecisionStrategy } from './houseDecisionVM';
-
-const RECOMMENDATION_MODE_LABELS: Record<RecommendationModeV2, string> = {
-  keep_priority: '안전 우선',
-  max_sustainable: '최대 생활비',
-};
-
-function compareBySustainableDesc(a: PropertyOptionResult, b: PropertyOptionResult): number {
-  if (a.sustainableMonthly !== b.sustainableMonthly) {
-    return b.sustainableMonthly - a.sustainableMonthly;
-  }
-  if (a.survivesToLifeExpectancy !== b.survivesToLifeExpectancy) {
-    return Number(b.survivesToLifeExpectancy) - Number(a.survivesToLifeExpectancy);
-  }
-  const aFail = a.failureAge ?? Infinity;
-  const bFail = b.failureAge ?? Infinity;
-  if (aFail !== bFail) return bFail - aFail;
-  return b.finalNetWorth - a.finalNetWorth;
-}
-
-function pickRecommendedForMode(
-  options: PropertyOptionResult[],
-  mode: RecommendationModeV2,
-): PropertyOptionResult['strategy'] {
-  if (mode === 'max_sustainable') {
-    return [...options].sort(compareBySustainableDesc)[0].strategy;
-  }
-
-  const keepOption = options.find((option) => option.strategy === 'keep');
-  if (keepOption && keepOption.survivesToLifeExpectancy) return 'keep';
-
-  const surviving = options.filter((option) => option.survivesToLifeExpectancy);
-  if (surviving.length > 0) {
-    return [...surviving].sort((a, b) => b.sustainableMonthly - a.sustainableMonthly)[0].strategy;
-  }
-
-  const sorted = [...options].sort((a, b) => {
-    const aFail = a.failureAge ?? Infinity;
-    const bFail = b.failureAge ?? Infinity;
-    if (aFail !== bFail) return bFail - aFail;
-    if (a.sustainableMonthly !== b.sustainableMonthly) return b.sustainableMonthly - a.sustainableMonthly;
-    return b.finalNetWorth - a.finalNetWorth;
-  });
-  return sorted[0].strategy;
-}
+import { resolveSelectedStrategy } from './selectedStrategy';
 
 function EmptyStateCard({ title, body }: { title: string; body: string }) {
   return (
@@ -78,36 +32,6 @@ function EmptyStateCard({ title, body }: { title: string; body: string }) {
   );
 }
 
-function RecommendationModeSwitch({
-  mode,
-  onChange,
-}: {
-  mode: RecommendationModeV2;
-  onChange: (mode: RecommendationModeV2) => void;
-}) {
-  const buttonStyle = (active: boolean): CSSProperties => ({
-    borderRadius: 999,
-    border: `1px solid ${active ? 'var(--result-accent-muted)' : 'var(--result-border-soft)'}`,
-    background: active ? 'var(--result-accent-soft)' : 'transparent',
-    color: active ? 'var(--result-accent-muted)' : 'var(--result-text-meta-color)',
-    fontSize: 'var(--result-text-meta)',
-    fontWeight: 600,
-    padding: '6px 11px',
-    cursor: 'pointer',
-  });
-
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--result-space-2)', marginBottom: 'var(--result-space-4)' }}>
-      <button type="button" style={buttonStyle(mode === 'keep_priority')} onClick={() => onChange('keep_priority')}>
-        안전 우선
-      </button>
-      <button type="button" style={buttonStyle(mode === 'max_sustainable')} onClick={() => onChange('max_sustainable')}>
-        최대 생활비
-      </button>
-    </div>
-  );
-}
-
 function metricToneColor(tone?: NarrativeMetric['tone']): string {
   if (tone === 'positive') return 'var(--ux-status-positive)';
   if (tone === 'negative') return 'var(--ux-status-negative)';
@@ -116,11 +40,9 @@ function metricToneColor(tone?: NarrativeMetric['tone']): string {
 
 function ReportConclusionSection({
   model,
-  mode,
   hasRealEstate,
 }: {
   model: ResultNarrativeModel;
-  mode: RecommendationModeV2;
   hasRealEstate: boolean;
 }) {
   return (
@@ -134,7 +56,7 @@ function ReportConclusionSection({
       }}
     >
       <div style={{ fontSize: 'var(--result-text-meta)', color: 'var(--result-text-meta-color)', marginBottom: 'var(--result-space-2)' }}>
-        {hasRealEstate ? '추천 전략 기준' : '무주택 기준'} · {RECOMMENDATION_MODE_LABELS[mode]}
+        {hasRealEstate ? '추천 전략 기준' : '무주택 기준'} · 최대 생활비
       </div>
 
       <div
@@ -202,23 +124,35 @@ export default function ResultWorkbench() {
   const hasRealEstate = inputs.assets.realEstate.amount > 0;
   const financialAssetTotal = calcFinancialTotalAsset(inputs.assets);
 
-  const preferredStrategy = useMemo<HouseDecisionStrategy>(() => {
-    if (!resultV2 || !hasRealEstate) return 'keep';
-    const recommended = resultV2.propertyOptions.find((option) => option.isRecommended);
-    return recommended?.strategy ?? resultV2.summary.recommendedStrategy;
-  }, [resultV2, hasRealEstate]);
-
-  const [selectedStrategy, setSelectedStrategy] = useState<HouseDecisionStrategy>(preferredStrategy);
-  const [isStrategyTouchedByUser, setIsStrategyTouchedByUser] = useState(false);
+  const [selectedStrategy, setSelectedStrategy] = useState<HouseDecisionStrategy>('sell');
 
   useEffect(() => {
-    setSelectedStrategy(preferredStrategy);
-    setIsStrategyTouchedByUser(false);
-  }, [preferredStrategy]);
+    if (recommendationMode !== 'max_sustainable') {
+      setRecommendationMode('max_sustainable');
+    }
+  }, [recommendationMode, setRecommendationMode]);
+
+  const recommendedStrategy = useMemo<HouseDecisionStrategy | null>(() => {
+    if (!resultV2) return null;
+    const recommendedOption = resultV2.propertyOptions.find((option) => option.isRecommended);
+    return recommendedOption?.strategy ?? resultV2.summary.recommendedStrategy;
+  }, [resultV2]);
+
+  useEffect(() => {
+    if (!resultV2 || !hasRealEstate) return;
+    const next = resolveSelectedStrategy({
+      propertyOptions: resultV2.propertyOptions,
+      currentSelected: selectedStrategy,
+      recommendedStrategy,
+    });
+
+    if (next && next !== selectedStrategy) {
+      setSelectedStrategy(next);
+    }
+  }, [resultV2, hasRealEstate, recommendedStrategy, selectedStrategy]);
 
   const handleSelectStrategy = (strategy: HouseDecisionStrategy) => {
     setSelectedStrategy(strategy);
-    setIsStrategyTouchedByUser(true);
   };
 
   if (inputs.status.currentAge > 0 && inputs.goal.retirementAge > 0 && inputs.status.currentAge >= inputs.goal.retirementAge) {
@@ -284,20 +218,17 @@ export default function ResultWorkbench() {
     ?? propertyOptions.find((option) => option.strategy === summary.recommendedStrategy)
     ?? null;
 
-  const keepPriorityPick = pickRecommendedForMode(propertyOptions, 'keep_priority');
-  const maxSustainablePick = pickRecommendedForMode(propertyOptions, 'max_sustainable');
-  const modeHasMeaningfulDifference = keepPriorityPick !== maxSustainablePick;
-
-  const timelineStrategyMode: 'recommended' | 'selected' = hasRealEstate && isStrategyTouchedByUser ? 'selected' : 'recommended';
-
-  const selectedOption = propertyOptions.find((option) => option.strategy === selectedStrategy) ?? null;
-  const verificationOption = timelineStrategyMode === 'selected' ? selectedOption : recommended;
+  const selectedOption = propertyOptions.find(
+    (option) => option.strategy === selectedStrategy && option.yearlyAggregates.length > 0,
+  ) ?? null;
+  const verificationOption = hasRealEstate ? selectedOption : recommended;
+  const timelineStrategyMode: 'recommended' | 'selected' = hasRealEstate ? 'selected' : 'recommended';
 
   const chartRows = verificationOption?.yearlyAggregates?.length
     ? verificationOption.yearlyAggregates
     : detailYearlyAggregates;
 
-  const chartStrategy: PropertyOptionResult['strategy'] = verificationOption?.strategy ?? recommended?.strategy ?? 'keep';
+  const chartStrategy: PropertyOptionResult['strategy'] = verificationOption?.strategy ?? recommended?.strategy ?? selectedStrategy;
   const chartLabel = hasRealEstate
     ? (PROPERTY_STRATEGY_LABELS[chartStrategy] ?? chartStrategy)
     : '집 없음(금융자산 기준)';
@@ -309,8 +240,8 @@ export default function ResultWorkbench() {
     hasRealEstate,
   });
 
-  const selectedPropertyStrategy = timelineStrategyMode === 'selected' && hasRealEstate
-    ? selectedStrategy
+  const selectedPropertyStrategy = hasRealEstate
+    ? chartStrategy
     : null;
 
   return (
@@ -325,11 +256,7 @@ export default function ResultWorkbench() {
         background: 'var(--ux-surface-subtle)',
       }}
     >
-      <ReportConclusionSection model={narrative} mode={summary.recommendationMode} hasRealEstate={hasRealEstate} />
-
-      {hasRealEstate && modeHasMeaningfulDifference && (
-        <RecommendationModeSwitch mode={recommendationMode} onChange={setRecommendationMode} />
-      )}
+      <ReportConclusionSection model={narrative} hasRealEstate={hasRealEstate} />
 
       <InsightLinesSection lines={narrative.insightLines} />
 

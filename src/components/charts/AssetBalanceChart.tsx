@@ -1,5 +1,5 @@
 /**
- * 권장 전략 기준 — 버킷별 연말 잔고 추이 차트
+ * 선택 전략 기준 — 버킷별 연말 잔고 추이 차트
  * cashLike / financialInvestable / propertyValue (담보대출 차감 후)
  */
 import {
@@ -393,7 +393,7 @@ export default function AssetBalanceChart({
       </ResponsiveContainer>
 
       <div style={{ fontSize: 11, color: 'var(--ux-text-subtle)', marginTop: 6, lineHeight: 1.6 }}>
-        전략: {strategyLabel} / 목표 월 {targetMonthly}만원 / 은퇴 {retirementAge}세
+        {hasRealEstate ? `선택 전략: ${strategyLabel}` : `기준: ${strategyLabel}`} / 목표 월 {targetMonthly}만원 / 은퇴 {retirementAge}세
         <br />
         점에 마우스를 올리면 그 나이의 수입·지출·자산을 볼 수 있어요.
       </div>
