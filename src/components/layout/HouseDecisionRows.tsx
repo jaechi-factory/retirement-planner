@@ -86,10 +86,11 @@ export default function HouseDecisionRows({ rows, onSelectStrategy }: HouseDecis
                 cursor: disabled ? 'not-allowed' : 'pointer',
                 opacity: disabled ? 0.65 : 1,
                 padding: '12px 12px',
+                position: 'relative',
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 9 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+              <div style={{ paddingRight: disabled ? 0 : 44 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 9 }}>
                   <span
                     style={{
                       fontSize: 'var(--result-text-title)',
@@ -117,40 +118,43 @@ export default function HouseDecisionRows({ rows, onSelectStrategy }: HouseDecis
                       추천
                     </span>
                   )}
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                   {disabled && (
                     <span style={{ fontSize: 'var(--result-text-meta)', color: 'var(--result-text-faint-color)', lineHeight: 1.4 }}>
                       계산 불가
                     </span>
                   )}
-                  {!disabled && (
-                    <span
-                      aria-hidden
-                      style={{
-                        width: 24,
-                        height: 24,
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flexShrink: 0,
-                        fontSize: 16,
-                        lineHeight: 1,
-                        color: selected ? 'var(--result-accent-strong)' : (hovered ? 'var(--result-text-meta-color)' : 'var(--result-text-faint-color)'),
-                        fontWeight: 700,
-                      }}
-                    >
-                      ›
-                    </span>
-                  )}
+                </div>
+
+                <div className="house-decision-row-metrics">
+                  <MetricCell label="시작 시점" value={row.startAgeText} selected={selected} />
+                  <MetricCell label="가능 월생활비" value={row.sustainableMonthlyText} selected={selected} />
+                  <MetricCell label="유지 가능 나이" value={row.survivalAgeText} selected={selected} />
                 </div>
               </div>
 
-              <div className="house-decision-row-metrics">
-                <MetricCell label="시작 시점" value={row.startAgeText} selected={selected} />
-                <MetricCell label="가능 월생활비" value={row.sustainableMonthlyText} selected={selected} />
-                <MetricCell label="유지 가능 나이" value={row.survivalAgeText} selected={selected} />
-              </div>
+              {!disabled && (
+                <span
+                  aria-hidden
+                  style={{
+                    position: 'absolute',
+                    right: 12,
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    width: 36,
+                    height: 36,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                    fontSize: 20,
+                    lineHeight: 1,
+                    color: selected ? 'var(--result-accent-strong)' : (hovered ? 'var(--result-text-meta-color)' : 'var(--result-text-faint-color)'),
+                    fontWeight: 700,
+                  }}
+                >
+                  ›
+                </span>
+              )}
             </button>
 
             {row.isSelectable && selected && (

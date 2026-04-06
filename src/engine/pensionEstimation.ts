@@ -224,15 +224,35 @@ export function getAnnualPensionIncomeForAge(
   annualNetIncome: number,
   retirementAge: number,
 ): number {
+  const breakdown = getPensionMonthlyBreakdownForAge(
+    pension,
+    currentAge,
+    targetAge,
+    inflationRate,
+    annualNetIncome,
+    retirementAge,
+  );
+  return breakdown.total * 12;
+}
+
+export function getPensionMonthlyBreakdownForAge(
+  pension: PensionInputs,
+  currentAge: number,
+  targetAge: number,
+  inflationRate: number,
+  annualNetIncome: number,
+  retirementAge: number,
+): { publicMonthly: number; retirementMonthly: number; privateMonthly: number; total: number } {
   const inflation = inflationRate / 100;
-  let total = 0;
+  let publicMonthly = 0;
+  let retirementMonthly = 0;
+  let privateMonthly = 0;
 
   // 국민연금: 물가 연동 — 인플레이션 적용
   const pub = pension.publicPension;
   if (pub.enabled && targetAge >= pub.startAge) {
     const monthlyBase = resolvePublicMonthly(pension, annualNetIncome, currentAge, retirementAge);
-    const nominalMonthly = monthlyBase * Math.pow(1 + inflation, targetAge - currentAge);
-    total += nominalMonthly * 12;
+    publicMonthly = monthlyBase * Math.pow(1 + inflation, targetAge - currentAge);
   }
 
   // 퇴직연금: manual은 현재가치이므로 inflate, auto는 이미 명목값
@@ -240,10 +260,9 @@ export function getAnnualPensionIncomeForAge(
   const retEndAge = ret.startAge + ret.payoutYears;
   if (ret.enabled && targetAge >= ret.startAge && targetAge < retEndAge) {
     const base = resolveRetirementMonthlyNominal(pension, annualNetIncome, currentAge, retirementAge);
-    const nominal = ret.mode === 'manual'
+    retirementMonthly = ret.mode === 'manual'
       ? base * Math.pow(1 + inflation, targetAge - currentAge)
       : base;
-    total += nominal * 12;
   }
 
   // 개인연금: manual은 현재가치이므로 inflate, auto/detail은 이미 명목값
@@ -252,7 +271,7 @@ export function getAnnualPensionIncomeForAge(
     if (priv.mode === 'manual' && priv.manualMonthlyTodayValue > 0) {
       const privEndAge = priv.startAge + priv.payoutYears;
       if (targetAge >= priv.startAge && targetAge < privEndAge) {
-        total += priv.manualMonthlyTodayValue * Math.pow(1 + inflation, targetAge - currentAge) * 12;
+        privateMonthly += priv.manualMonthlyTodayValue * Math.pow(1 + inflation, targetAge - currentAge);
       }
     } else if (priv.detailMode && priv.products.length > 0) {
       // 상세 모드: 상품별 명목값 — 인플레이션 미적용
@@ -262,18 +281,23 @@ export function getAnnualPensionIncomeForAge(
           const yearsToStart = Math.max(product.startAge - currentAge, 0);
           const annualContrib = (product.monthlyContribution || 0) * 12;
           const balance = futureValue(product.currentBalance, annualContrib, product.accumulationReturnRate, yearsToStart);
-          total += Math.round(annuitize(balance, product.payoutReturnRate, product.payoutYears)) * 12;
+          privateMonthly += Math.round(annuitize(balance, product.payoutReturnRate, product.payoutYears));
         }
       }
     } else {
       const privEndAge = priv.startAge + priv.payoutYears;
       if (targetAge >= priv.startAge && targetAge < privEndAge) {
-        total += estimatePrivatePension(priv, currentAge) * 12;
+        privateMonthly += estimatePrivatePension(priv, currentAge);
       }
     }
   }
 
-  return total;
+  return {
+    publicMonthly,
+    retirementMonthly,
+    privateMonthly,
+    total: publicMonthly + retirementMonthly + privateMonthly,
+  };
 }
 
 /** 연금 전체 합산 — 현재가치 기준 (결과 비교용) */

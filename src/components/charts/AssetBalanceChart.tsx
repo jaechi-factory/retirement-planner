@@ -14,7 +14,7 @@ import {
 } from 'recharts';
 import type { YearlyAggregateV2 } from '../../types/calculationV2';
 import type { PlannerInputs } from '../../types/inputs';
-import { getPensionBreakdown } from '../../engine/pensionEstimation';
+import { getPensionBreakdown, getPensionMonthlyBreakdownForAge } from '../../engine/pensionEstimation';
 import { fmtKRW, fmtKRWAxis } from '../../utils/format';
 import { buildCashflowByAgeMaps } from './assetBalanceMetrics';
 
@@ -29,6 +29,12 @@ interface Props {
 interface PensionEvent {
   name: string;
   monthly: number;
+}
+
+interface PensionSourceByAgeMaps {
+  monthlyPublicPensionByAge: Map<number, number>;
+  monthlyRetirementPensionByAge: Map<number, number>;
+  monthlyPrivatePensionByAge: Map<number, number>;
 }
 
 // 연금 개시 나이 → 이벤트 맵 (getPensionBreakdown 사용으로 auto 모드 포함 정확한 금액)
@@ -57,6 +63,36 @@ function buildPensionStartMap(inputs: PlannerInputs, retirementAge: number): Map
   return map;
 }
 
+function buildPensionSourceByAgeMaps(
+  rows: YearlyAggregateV2[],
+  inputs: PlannerInputs,
+  retirementAge: number,
+): PensionSourceByAgeMaps {
+  const monthlyPublicPensionByAge = new Map<number, number>();
+  const monthlyRetirementPensionByAge = new Map<number, number>();
+  const monthlyPrivatePensionByAge = new Map<number, number>();
+
+  rows.forEach((row) => {
+    const breakdown = getPensionMonthlyBreakdownForAge(
+      inputs.pension,
+      inputs.status.currentAge,
+      row.ageYear,
+      inputs.goal.inflationRate,
+      inputs.status.annualIncome,
+      retirementAge,
+    );
+    monthlyPublicPensionByAge.set(row.ageYear, breakdown.publicMonthly);
+    monthlyRetirementPensionByAge.set(row.ageYear, breakdown.retirementMonthly);
+    monthlyPrivatePensionByAge.set(row.ageYear, breakdown.privateMonthly);
+  });
+
+  return {
+    monthlyPublicPensionByAge,
+    monthlyRetirementPensionByAge,
+    monthlyPrivatePensionByAge,
+  };
+}
+
 // 커스텀 툴팁
 function CustomTooltip({
   active,
@@ -66,6 +102,9 @@ function CustomTooltip({
   retirementAge,
   monthlySalaryByAge,
   monthlyPensionByAge,
+  monthlyPublicPensionByAge,
+  monthlyRetirementPensionByAge,
+  monthlyPrivatePensionByAge,
   monthlyLivingExpenseByAge,
   monthlyRentByAge,
   monthlyDebtServiceByAge,
@@ -81,6 +120,9 @@ function CustomTooltip({
   retirementAge: number;
   monthlySalaryByAge: Map<number, number>;
   monthlyPensionByAge: Map<number, number>;
+  monthlyPublicPensionByAge: Map<number, number>;
+  monthlyRetirementPensionByAge: Map<number, number>;
+  monthlyPrivatePensionByAge: Map<number, number>;
   monthlyLivingExpenseByAge: Map<number, number>;
   monthlyRentByAge: Map<number, number>;
   monthlyDebtServiceByAge: Map<number, number>;
@@ -95,6 +137,9 @@ function CustomTooltip({
   const isRetirementYear = label === retirementAge;
   const monthlySalary = monthlySalaryByAge.get(label) ?? 0;
   const monthlyPension = monthlyPensionByAge.get(label) ?? 0;
+  const monthlyPublicPension = monthlyPublicPensionByAge.get(label) ?? 0;
+  const monthlyRetirementPension = monthlyRetirementPensionByAge.get(label) ?? 0;
+  const monthlyPrivatePension = monthlyPrivatePensionByAge.get(label) ?? 0;
   const monthlyLivingExpense = monthlyLivingExpenseByAge.get(label) ?? 0;
   const monthlyRent = monthlyRentByAge.get(label) ?? 0;
   const monthlyDebtService = monthlyDebtServiceByAge.get(label) ?? 0;
@@ -167,7 +212,10 @@ function CustomTooltip({
       <div style={{ marginTop: 10, borderTop: '1px solid var(--ux-border)', paddingTop: 10 }}>
         <div style={{ fontSize: 14, color: 'var(--ux-text-subtle)', marginBottom: 5 }}>수입 내역</div>
         <TooltipRow label="근로소득" value={monthlySalary} />
-        <TooltipRow label="연금소득" value={monthlyPension} />
+        <TooltipRow label="연금소득(합계)" value={monthlyPension} />
+        {monthlyPublicPension > 0 && <TooltipRow label="국민연금" value={monthlyPublicPension} subtle />}
+        {monthlyRetirementPension > 0 && <TooltipRow label="퇴직연금" value={monthlyRetirementPension} subtle />}
+        {monthlyPrivatePension > 0 && <TooltipRow label="개인연금" value={monthlyPrivatePension} subtle />}
 
         <div style={{ fontSize: 14, color: 'var(--ux-text-subtle)', margin: '10px 0 5px' }}>지출 내역</div>
         <TooltipRow label="생활비" value={monthlyLivingExpense} />
@@ -215,9 +263,19 @@ function CustomTooltip({
   );
 }
 
-function TooltipRow({ label, value }: { label: string; value: number }) {
+function TooltipRow({ label, value, subtle = false }: { label: string; value: number; subtle?: boolean }) {
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, color: 'var(--ux-text-base)', marginBottom: 3, lineHeight: 1.45 }}>
+    <div
+      style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        gap: 16,
+        color: subtle ? 'var(--ux-text-muted)' : 'var(--ux-text-base)',
+        marginBottom: 3,
+        lineHeight: 1.45,
+        paddingLeft: subtle ? 10 : 0,
+      }}
+    >
       <span>{label}</span>
       <span>월 {fmtKRW(Math.round(value))}</span>
     </div>
@@ -234,6 +292,11 @@ export default function AssetBalanceChart({
   if (rows.length === 0) return null;
 
   const pensionStartMap = buildPensionStartMap(inputs, retirementAge);
+  const {
+    monthlyPublicPensionByAge,
+    monthlyRetirementPensionByAge,
+    monthlyPrivatePensionByAge,
+  } = buildPensionSourceByAgeMaps(rows, inputs, retirementAge);
 
   const hasRealEstate = inputs.assets.realEstate.amount > 0;
   const hasSaleProceeds = hasRealEstate && rows.some((row) => row.propertySaleProceedsBucketEnd > 0);
@@ -366,6 +429,9 @@ export default function AssetBalanceChart({
                 retirementAge={retirementAge}
                 monthlySalaryByAge={monthlySalaryByAge}
                 monthlyPensionByAge={monthlyPensionByAge}
+                monthlyPublicPensionByAge={monthlyPublicPensionByAge}
+                monthlyRetirementPensionByAge={monthlyRetirementPensionByAge}
+                monthlyPrivatePensionByAge={monthlyPrivatePensionByAge}
                 monthlyLivingExpenseByAge={monthlyLivingExpenseByAge}
                 monthlyRentByAge={monthlyRentByAge}
                 monthlyDebtServiceByAge={monthlyDebtServiceByAge}
