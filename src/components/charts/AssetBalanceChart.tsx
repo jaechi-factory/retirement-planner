@@ -415,7 +415,7 @@ export default function AssetBalanceChart({
           />
 
           <Tooltip
-            wrapperStyle={{ zIndex: 90, pointerEvents: 'none' }}
+            wrapperStyle={{ zIndex: 9999, pointerEvents: 'none' }}
             // 기본은 커서 기준 좌상단(2사분면), 필요 시 차트 밖으로도 노출 허용
             reverseDirection={{ x: true, y: true }}
             allowEscapeViewBox={{ x: true, y: true }}

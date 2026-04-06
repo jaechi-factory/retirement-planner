@@ -58,6 +58,8 @@ function CustomTooltip({ active, payload }: { active?: boolean; payload?: Toolti
         padding: '8px 12px',
         fontSize: 13,
         lineHeight: 1.6,
+        zIndex: 9999,
+        position: 'relative',
       }}
     >
       <div style={{ fontWeight: 700, color: 'var(--result-text-strong-color)', marginBottom: 2 }}>
@@ -166,7 +168,7 @@ export default function HouseStrategyComparisonSection({
                 domain={[0, Math.ceil(maxMonthly * 1.2)]}
                 width={48}
               />
-              <Tooltip content={<CustomTooltip />} cursor={{ fill: 'var(--result-border-subtle)', opacity: 0.5 }} />
+              <Tooltip content={<CustomTooltip />} cursor={{ fill: 'var(--result-border-subtle)', opacity: 0.5 }} wrapperStyle={{ zIndex: 9999 }} />
               <Bar dataKey="sustainableMonthly" radius={[4, 4, 0, 0]}>
                 {chartData.map((entry) => (
                   <Cell
