@@ -9,7 +9,8 @@ interface LifetimeTimelineProps {
   summary: CalculationResultV2['summary'];
   propertyOptions: PropertyOptionResult[];
   inputs: PlannerInputs;
-  selectedStrategy?: 'sell' | 'secured_loan';
+  timelineStrategyMode: 'recommended' | 'selected';
+  selectedPropertyStrategy: PropertyOptionResult['strategy'] | null;
 }
 
 // ── 집 이벤트 카드 ───────────────────────────────────────────────────────────
@@ -128,13 +129,21 @@ export default function LifetimeTimeline({
   summary,
   propertyOptions,
   inputs,
-  selectedStrategy,
+  timelineStrategyMode,
+  selectedPropertyStrategy,
 }: LifetimeTimelineProps) {
   if (detailYearlyAggregates.length === 0) return null;
 
   const { retirementAge, lifeExpectancy } = inputs.goal;
 
-  const events = extractEvents(detailYearlyAggregates, summary, propertyOptions, inputs, selectedStrategy);
+  const events = extractEvents(
+    detailYearlyAggregates,
+    summary,
+    propertyOptions,
+    inputs,
+    timelineStrategyMode,
+    selectedPropertyStrategy,
+  );
   const eventAges = new Set(events.map((e) => e.age));
   const groupedRows = buildGroupedRows(detailYearlyAggregates, eventAges, retirementAge);
 

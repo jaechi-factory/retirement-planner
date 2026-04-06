@@ -1,28 +1,16 @@
 import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { usePlannerStore } from '../../store/usePlannerStore';
 import { calcFinancialTotalAsset } from '../../engine/assetWeighting';
+import { PROPERTY_STRATEGY_LABELS } from '../../engine/propertyStrategiesV2';
 import type {
-  AssumptionItem,
-  FundingStage,
   PropertyOptionResult,
   RecommendationModeV2,
-  WarningItem,
-  YearlyAggregateV2,
-  CalculationResultV2,
 } from '../../types/calculationV2';
-import type { PlannerInputs } from '../../types/inputs';
-import FundingTimeline from '../result/v2/FundingTimeline';
-import AssetBalanceChart from '../charts/AssetBalanceChart';
-import PropertyAssetChart from '../charts/PropertyAssetChart';
-import ScenarioTabs from '../result/v3/ScenarioTabs';
-import LifetimeTimeline from '../result/v3/LifetimeTimeline';
+import InsightLinesSection from './InsightLinesSection';
+import HouseDecisionSection from './HouseDecisionSection';
+import VerificationSection from './VerificationSection';
 import { buildResultNarrativeModel, type NarrativeMetric, type ResultNarrativeModel } from './resultNarrative';
-
-const SCENARIO_ACTION_LABELS: Record<string, string> = {
-  keep: '집을 그대로 둘 때',
-  secured_loan: '집을 담보로 대출받을 때',
-  sell: '집을 팔아 쓸 때',
-};
+import type { HouseDecisionStrategy } from './houseDecisionVM';
 
 const RECOMMENDATION_MODE_LABELS: Record<RecommendationModeV2, string> = {
   keep_priority: '안전 우선',
@@ -142,12 +130,13 @@ function ReportConclusionSection({
         border: '1px solid var(--ux-border-strong)',
         background: 'var(--ux-surface)',
         padding: '20px 22px',
-        marginBottom: 14,
+        marginBottom: 12,
       }}
     >
       <div style={{ fontSize: 11, color: 'var(--ux-text-subtle)', marginBottom: 6 }}>
         {hasRealEstate ? '추천 전략 기준' : '무주택 기준'} · {RECOMMENDATION_MODE_LABELS[mode]}
       </div>
+
       <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--ux-text-strong)', lineHeight: 1.4, marginBottom: 14 }}>
         {model.headline}
       </div>
@@ -155,8 +144,9 @@ function ReportConclusionSection({
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
+          gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
           gap: 10,
+          marginBottom: 12,
         }}
       >
         {model.metrics.map((metric) => (
@@ -177,213 +167,14 @@ function ReportConclusionSection({
           </div>
         ))}
       </div>
-    </section>
-  );
-}
 
-function EvidenceSection({ evidence }: { evidence: ResultNarrativeModel['evidence'] }) {
-  return (
-    <section
-      style={{
-        borderRadius: 14,
-        border: '1px solid var(--ux-border-strong)',
-        background: 'var(--ux-surface)',
-        padding: '16px 18px',
-        marginBottom: 14,
-      }}
-    >
-      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--ux-text-muted)', marginBottom: 12 }}>
-        왜 이런 결과가 나왔나요?
+      <div style={{ borderTop: '1px solid var(--ux-border)', paddingTop: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+          <span style={{ fontSize: 12, color: 'var(--ux-text-subtle)' }}>권장 전략</span>
+          <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--ux-text-strong)' }}>{model.recommendedStrategyLabel}</span>
+        </div>
+        <div style={{ fontSize: 13, color: 'var(--ux-text-base)', lineHeight: 1.6 }}>{model.recommendationReasonLine}</div>
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 8 }}>
-        {evidence.map((item) => (
-          <div
-            key={item.title}
-            style={{
-              borderRadius: 10,
-              border: '1px solid var(--ux-border)',
-              background: 'var(--ux-surface-muted)',
-              padding: '10px 12px',
-            }}
-          >
-            <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--ux-text-strong)', marginBottom: 4 }}>{item.title}</div>
-            <div style={{ fontSize: 13, lineHeight: 1.6, color: 'var(--ux-text-base)' }}>{item.body}</div>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-function SupplementPanel({
-  hasRealEstate,
-  assumptions,
-  warnings,
-  chartRows,
-  retirementAge,
-}: {
-  hasRealEstate: boolean;
-  assumptions: Array<{ label: string; value: string }>;
-  warnings: Array<{ severity: 'info' | 'warning' | 'critical'; message: string }>;
-  chartRows: Parameters<typeof PropertyAssetChart>[0]['rows'];
-  retirementAge: number;
-}) {
-  const filteredWarnings = warnings.filter((warning) => warning.severity !== 'info');
-
-  return (
-    <details style={{ marginTop: 14 }}>
-      <summary
-        style={{
-          fontSize: 12,
-          fontWeight: 700,
-          color: 'var(--ux-accent)',
-          cursor: 'pointer',
-          userSelect: 'none',
-        }}
-      >
-        가정과 참고 그래프 보기
-      </summary>
-
-      <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--ux-border)' }}>
-        {hasRealEstate && (
-          <div style={{ marginBottom: 12 }}>
-            <PropertyAssetChart rows={chartRows} retirementAge={retirementAge} />
-          </div>
-        )}
-
-        {assumptions.length > 0 && (
-          <div style={{ marginBottom: filteredWarnings.length > 0 ? 10 : 0 }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--ux-text-muted)', marginBottom: 8 }}>주요 가정</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              {assumptions.map((assumption, i) => (
-                <div key={`${assumption.label}-${i}`} style={{ fontSize: 12, color: 'var(--ux-text-base)', lineHeight: 1.6 }}>
-                  {assumption.label}: {assumption.value}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {filteredWarnings.length > 0 && (
-          <div>
-            <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--ux-text-muted)', marginBottom: 8 }}>주의 사항</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              {filteredWarnings.map((warning, i) => (
-                <div
-                  key={i}
-                  style={{
-                    borderRadius: 8,
-                    border: `1px solid ${warning.severity === 'critical' ? 'var(--ux-status-negative-soft)' : 'var(--ux-status-warning-soft)'}`,
-                    background: warning.severity === 'critical' ? 'var(--ux-status-negative-bg)' : 'var(--ux-status-warning-bg)',
-                    color: 'var(--ux-text-base)',
-                    fontSize: 12,
-                    lineHeight: 1.6,
-                    padding: '8px 10px',
-                  }}
-                >
-                  {warning.message}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-    </details>
-  );
-}
-
-function DetailSection({
-  hasRealEstate,
-  selectedStrategy,
-  onStrategyChange,
-  propertyOptions,
-  lifeExpectancy,
-  fundingTimeline,
-  retirementAge,
-  detailYearlyAggregates,
-  summary,
-  inputs,
-  strategyLabel,
-  assumptions,
-  warnings,
-}: {
-  hasRealEstate: boolean;
-  selectedStrategy: 'sell' | 'secured_loan';
-  onStrategyChange: (strategy: 'sell' | 'secured_loan') => void;
-  propertyOptions: PropertyOptionResult[];
-  lifeExpectancy: number;
-  fundingTimeline: FundingStage[];
-  retirementAge: number;
-  detailYearlyAggregates: YearlyAggregateV2[];
-  summary: CalculationResultV2['summary'];
-  inputs: PlannerInputs;
-  strategyLabel: string;
-  assumptions: AssumptionItem[];
-  warnings: WarningItem[];
-}) {
-  return (
-    <section
-      style={{
-        borderRadius: 14,
-        border: '1px solid var(--ux-border-strong)',
-        background: 'var(--ux-surface)',
-        padding: '16px 18px',
-        marginBottom: 24,
-      }}
-    >
-      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--ux-text-muted)', marginBottom: 12 }}>상세 분석</div>
-
-      {hasRealEstate && (
-        <ScenarioTabs
-          propertyOptions={propertyOptions}
-          lifeExpectancy={lifeExpectancy}
-          activeStrategy={selectedStrategy}
-          onStrategyChange={onStrategyChange}
-        />
-      )}
-
-      {fundingTimeline.length > 0 && (
-        <FundingTimeline
-          stages={fundingTimeline}
-          retirementAge={retirementAge}
-          lifeExpectancy={lifeExpectancy}
-        />
-      )}
-
-      <LifetimeTimeline
-        detailYearlyAggregates={detailYearlyAggregates}
-        summary={summary}
-        propertyOptions={propertyOptions}
-        inputs={inputs}
-        selectedStrategy={hasRealEstate ? selectedStrategy : undefined}
-      />
-
-      <div
-        style={{
-          marginTop: 14,
-          borderRadius: 12,
-          border: '1px solid var(--ux-border)',
-          background: 'var(--ux-surface-muted)',
-          padding: '12px 12px 10px',
-        }}
-      >
-        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--ux-text-muted)', marginBottom: 8 }}>핵심 자산 흐름</div>
-        <AssetBalanceChart
-          rows={detailYearlyAggregates}
-          retirementAge={retirementAge}
-          targetMonthly={inputs.goal.targetMonthly}
-          strategyLabel={strategyLabel}
-          inputs={inputs}
-        />
-      </div>
-
-      <SupplementPanel
-        hasRealEstate={hasRealEstate}
-        assumptions={assumptions}
-        warnings={warnings}
-        chartRows={detailYearlyAggregates}
-        retirementAge={retirementAge}
-      />
     </section>
   );
 }
@@ -398,17 +189,24 @@ export default function ResultWorkbench() {
   const hasRealEstate = inputs.assets.realEstate.amount > 0;
   const financialAssetTotal = calcFinancialTotalAsset(inputs.assets);
 
-  const preferredStrategy = useMemo<'sell' | 'secured_loan'>(() => {
-    if (!resultV2 || !hasRealEstate) return 'sell';
+  const preferredStrategy = useMemo<HouseDecisionStrategy>(() => {
+    if (!resultV2 || !hasRealEstate) return 'keep';
     const recommended = resultV2.propertyOptions.find((option) => option.isRecommended);
-    return recommended?.strategy === 'secured_loan' ? 'secured_loan' : 'sell';
+    return recommended?.strategy ?? resultV2.summary.recommendedStrategy;
   }, [resultV2, hasRealEstate]);
 
-  const [selectedStrategy, setSelectedStrategy] = useState<'sell' | 'secured_loan'>(preferredStrategy);
+  const [selectedStrategy, setSelectedStrategy] = useState<HouseDecisionStrategy>(preferredStrategy);
+  const [isStrategyTouchedByUser, setIsStrategyTouchedByUser] = useState(false);
 
   useEffect(() => {
     setSelectedStrategy(preferredStrategy);
+    setIsStrategyTouchedByUser(false);
   }, [preferredStrategy]);
+
+  const handleSelectStrategy = (strategy: HouseDecisionStrategy) => {
+    setSelectedStrategy(strategy);
+    setIsStrategyTouchedByUser(true);
+  };
 
   if (inputs.status.currentAge > 0 && inputs.goal.retirementAge > 0 && inputs.status.currentAge >= inputs.goal.retirementAge) {
     return (
@@ -467,21 +265,29 @@ export default function ResultWorkbench() {
     );
   }
 
-  const { summary, propertyOptions, fundingTimeline, detailYearlyAggregates, assumptions, warnings } = resultV2;
-  const recommended = propertyOptions.find((option) => option.isRecommended);
+  const { summary, propertyOptions, detailYearlyAggregates, assumptions, warnings } = resultV2;
+  const recommended =
+    propertyOptions.find((option) => option.isRecommended)
+    ?? propertyOptions.find((option) => option.strategy === summary.recommendedStrategy)
+    ?? null;
+
   const keepPriorityPick = pickRecommendedForMode(propertyOptions, 'keep_priority');
   const maxSustainablePick = pickRecommendedForMode(propertyOptions, 'max_sustainable');
   const modeHasMeaningfulDifference = keepPriorityPick !== maxSustainablePick;
 
-  const selectedOption = hasRealEstate
-    ? propertyOptions.find((option) => option.strategy === selectedStrategy)
-      ?? propertyOptions.find((option) => option.strategy === 'sell' || option.strategy === 'secured_loan')
-    : null;
+  const timelineStrategyMode: 'recommended' | 'selected' = hasRealEstate && isStrategyTouchedByUser ? 'selected' : 'recommended';
 
-  const chartRows = selectedOption ? selectedOption.yearlyAggregates : detailYearlyAggregates;
+  const selectedOption = propertyOptions.find((option) => option.strategy === selectedStrategy) ?? null;
+  const verificationOption = timelineStrategyMode === 'selected' ? selectedOption : recommended;
+
+  const chartRows = verificationOption?.yearlyAggregates?.length
+    ? verificationOption.yearlyAggregates
+    : detailYearlyAggregates;
+
+  const chartStrategy: PropertyOptionResult['strategy'] = verificationOption?.strategy ?? recommended?.strategy ?? 'keep';
   const chartLabel = hasRealEstate
-    ? (SCENARIO_ACTION_LABELS[selectedStrategy] ?? selectedStrategy)
-    : (SCENARIO_ACTION_LABELS[recommended?.strategy ?? ''] ?? '집 없음(금융자산 기준)');
+    ? (PROPERTY_STRATEGY_LABELS[chartStrategy] ?? chartStrategy)
+    : '집 없음(금융자산 기준)';
 
   const narrative = buildResultNarrativeModel({
     summary,
@@ -489,6 +295,10 @@ export default function ResultWorkbench() {
     inputs,
     hasRealEstate,
   });
+
+  const selectedPropertyStrategy = timelineStrategyMode === 'selected' && hasRealEstate
+    ? selectedStrategy
+    : null;
 
   return (
     <div
@@ -502,42 +312,34 @@ export default function ResultWorkbench() {
         background: 'var(--ux-surface-subtle)',
       }}
     >
-      {hasRealEstate && modeHasMeaningfulDifference && (
-        <RecommendationModeSwitch
-          mode={recommendationMode}
-          onChange={setRecommendationMode}
-        />
-      )}
-      {hasRealEstate && !modeHasMeaningfulDifference && (
-        <div
-          style={{
-            marginBottom: 12,
-            fontSize: 12,
-            color: 'var(--ux-text-subtle)',
-            lineHeight: 1.6,
-          }}
-        >
-          현재 입력에서는 두 모드 결과가 같아요.
-        </div>
-      )}
-
       <ReportConclusionSection model={narrative} mode={summary.recommendationMode} hasRealEstate={hasRealEstate} />
-      <EvidenceSection evidence={narrative.evidence} />
 
-      <DetailSection
+      {hasRealEstate && modeHasMeaningfulDifference && (
+        <RecommendationModeSwitch mode={recommendationMode} onChange={setRecommendationMode} />
+      )}
+
+      <InsightLinesSection lines={narrative.insightLines} />
+
+      <HouseDecisionSection
         hasRealEstate={hasRealEstate}
-        selectedStrategy={selectedStrategy}
-        onStrategyChange={setSelectedStrategy}
         propertyOptions={propertyOptions}
+        selectedStrategy={selectedStrategy}
         lifeExpectancy={inputs.goal.lifeExpectancy}
-        fundingTimeline={fundingTimeline}
+        onSelectStrategy={handleSelectStrategy}
+      />
+
+      <VerificationSection
+        hasRealEstate={hasRealEstate}
+        chartRows={chartRows}
         retirementAge={inputs.goal.retirementAge}
-        detailYearlyAggregates={chartRows}
-        summary={summary}
-        inputs={inputs}
         strategyLabel={chartLabel}
+        inputs={inputs}
+        summary={summary}
+        propertyOptions={propertyOptions}
         assumptions={assumptions}
         warnings={warnings}
+        timelineStrategyMode={timelineStrategyMode}
+        selectedPropertyStrategy={selectedPropertyStrategy}
       />
     </div>
   );

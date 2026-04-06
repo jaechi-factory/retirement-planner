@@ -92,6 +92,7 @@ describe('timelineBuilder — 매각 이벤트 데이터 정합성', () => {
       result!.summary,
       result!.propertyOptions,
       inputs,
+      'selected',
       'sell',
     );
     const sellEvent = events.find((e) => e.type === 'property_sell');

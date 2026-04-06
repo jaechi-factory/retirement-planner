@@ -1,4 +1,5 @@
 import { getTotalMonthlyPensionTodayValue } from '../../engine/pensionEstimation';
+import { PROPERTY_STRATEGY_LABELS } from '../../engine/propertyStrategiesV2';
 import type { CalculationResultV2, PropertyOptionResult } from '../../types/calculationV2';
 import type { PlannerInputs } from '../../types/inputs';
 import { fmtKRW } from '../../utils/format';
@@ -11,45 +12,31 @@ export interface NarrativeMetric {
   tone?: NarrativeTone;
 }
 
-export interface NarrativeEvidence {
-  title: '수입 흐름' | '지출 흐름' | '바뀌는 시점';
-  body: string;
-}
-
 export interface ResultNarrativeModel {
   headline: string;
-  metrics: [NarrativeMetric, NarrativeMetric, NarrativeMetric, NarrativeMetric];
-  evidence: [NarrativeEvidence, NarrativeEvidence, NarrativeEvidence];
+  metrics: [NarrativeMetric, NarrativeMetric, NarrativeMetric];
   recommendedStrategyLabel: string;
+  recommendationReasonLine: string;
+  insightLines: [string, string, string];
 }
-
-const STRATEGY_ACTION_LABELS: Record<PropertyOptionResult['strategy'], string> = {
-  keep: '집을 그대로 둘 때',
-  secured_loan: '집을 담보로 대출받을 때',
-  sell: '집을 팔아 쓸 때',
-};
 
 function buildTransitionLine(
   summary: CalculationResultV2['summary'],
   inputs: PlannerInputs,
   hasRealEstate: boolean,
 ): string {
-  const events: string[] = [];
-
-  if (summary.financialSellStartAge !== null) {
-    events.push(`${summary.financialSellStartAge}세부터 투자자산을 팔아 생활비를 메워요`);
-  }
-  if (hasRealEstate && summary.propertyInterventionAge !== null) {
-    events.push(`${summary.propertyInterventionAge}세부터는 집을 담보로 대출받거나 팔아야 해요`);
-  }
-
   if (summary.failureAge === null) {
-    events.push(`${inputs.goal.lifeExpectancy}세까지 돈이 유지돼요`);
-  } else {
-    events.push(`${summary.failureAge}세부터 생활비가 모자라요`);
+    if (hasRealEstate && summary.propertyInterventionAge !== null) {
+      return `${summary.propertyInterventionAge}세부터는 집을 담보로 대출받거나 팔아야 해요.`;
+    }
+    return `${inputs.goal.lifeExpectancy}세까지 큰 부족 없이 이어져요.`;
   }
 
-  return events.join(' · ');
+  if (hasRealEstate && summary.propertyInterventionAge !== null) {
+    return `${summary.propertyInterventionAge}세부터 집 대응이 필요하고, ${summary.failureAge}세부터는 생활비가 모자라요.`;
+  }
+
+  return `${summary.failureAge}세부터 생활비가 모자라요.`;
 }
 
 function buildHeadline(summary: CalculationResultV2['summary']): string {
@@ -62,6 +49,14 @@ function buildHeadline(summary: CalculationResultV2['summary']): string {
   return `${summary.failureAge}세부터 생활비가 모자라요.`;
 }
 
+function getRecommendedStrategyLabel(
+  recommendedStrategy: PropertyOptionResult['strategy'],
+  hasRealEstate: boolean,
+): string {
+  if (!hasRealEstate) return '집 없음(금융자산 기준)';
+  return PROPERTY_STRATEGY_LABELS[recommendedStrategy] ?? recommendedStrategy;
+}
+
 export function buildResultNarrativeModel(params: {
   summary: CalculationResultV2['summary'];
   propertyOptions: CalculationResultV2['propertyOptions'];
@@ -71,9 +66,8 @@ export function buildResultNarrativeModel(params: {
   const { summary, propertyOptions, inputs, hasRealEstate } = params;
   const recommended = propertyOptions.find((option) => option.isRecommended);
   const recommendedStrategy = recommended?.strategy ?? summary.recommendedStrategy;
-  const recommendedStrategyLabel = hasRealEstate
-    ? STRATEGY_ACTION_LABELS[recommendedStrategy]
-    : '집 없음(금융자산 기준)';
+
+  const recommendedStrategyLabel = getRecommendedStrategyLabel(recommendedStrategy, hasRealEstate);
 
   const pensionMonthly = getTotalMonthlyPensionTodayValue(
     inputs.pension,
@@ -88,11 +82,13 @@ export function buildResultNarrativeModel(params: {
 
   const incomeLine =
     inputs.status.annualIncome > 0
-      ? `은퇴 전 수입은 근로소득, 은퇴 후 수입은 연금 월 ${fmtKRW(pensionMonthly)}으로 계산했어요.`
-      : `근로소득 입력이 없어 은퇴 후 수입은 연금 월 ${fmtKRW(pensionMonthly)}으로 계산했어요.`;
+      ? `은퇴 전에는 근로소득, 은퇴 후에는 연금 월 ${fmtKRW(pensionMonthly)}이 들어와요.`
+      : `근로소득 입력이 없어 은퇴 후에는 연금 월 ${fmtKRW(pensionMonthly)}만 들어와요.`;
 
   const expenseLine =
-    `지출은 생활비·주거비·대출상환·자녀비를 합쳐 계산했어요. (목표 월 ${fmtKRW(inputs.goal.targetMonthly)})`;
+    `지출은 생활비·주거비·대출상환·자녀비를 합쳐 월 ${fmtKRW(inputs.goal.targetMonthly)} 기준으로 계산했어요.`;
+
+  const transitionLine = buildTransitionLine(summary, inputs, hasRealEstate);
 
   return {
     headline: buildHeadline(summary),
@@ -107,20 +103,13 @@ export function buildResultNarrativeModel(params: {
         tone: gapTone,
       },
       {
-        label: '돈이 버티는 나이',
+        label: '유지 가능 나이',
         value: summary.failureAge === null ? `${inputs.goal.lifeExpectancy}세까지` : `${summary.failureAge}세부터 부족`,
         tone: runwayTone,
       },
-      {
-        label: '추천 전략',
-        value: recommendedStrategyLabel,
-      },
-    ],
-    evidence: [
-      { title: '수입 흐름', body: incomeLine },
-      { title: '지출 흐름', body: expenseLine },
-      { title: '바뀌는 시점', body: buildTransitionLine(summary, inputs, hasRealEstate) },
     ],
     recommendedStrategyLabel,
+    recommendationReasonLine: recommended?.headline ?? '현재 입력 기준으로 가장 오래 유지되는 전략이에요.',
+    insightLines: [incomeLine, expenseLine, transitionLine],
   };
 }

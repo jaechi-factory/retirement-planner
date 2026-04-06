@@ -51,7 +51,8 @@ export function extractEvents(
   summary: CalculationResultV2['summary'],
   propertyOptions: PropertyOptionResult[],
   inputs: PlannerInputs,
-  selectedStrategy?: 'sell' | 'secured_loan',
+  timelineStrategyMode: 'recommended' | 'selected' = 'recommended',
+  selectedPropertyStrategy: PropertyOptionResult['strategy'] | null = null,
 ): TimelineEvent[] {
   const events: TimelineEvent[] = [];
   const { retirementAge, lifeExpectancy } = inputs.goal;
@@ -160,9 +161,18 @@ export function extractEvents(
   if (hasRealEstate) {
     const sellOption = propertyOptions.find((o) => o.strategy === 'sell');
     const loanOption = propertyOptions.find((o) => o.strategy === 'secured_loan');
-    const propertyOption = selectedStrategy
-      ? (propertyOptions.find((o) => o.strategy === selectedStrategy) ?? null)
-      : (propertyOptions.find((o) => o.isRecommended && o.strategy !== 'keep') ?? sellOption ?? loanOption);
+    const recommendedOption = propertyOptions.find((o) => o.isRecommended) ?? null;
+
+    let propertyOption: PropertyOptionResult | null = null;
+    if (timelineStrategyMode === 'selected') {
+      if (selectedPropertyStrategy && selectedPropertyStrategy !== 'keep') {
+        propertyOption = propertyOptions.find((o) => o.strategy === selectedPropertyStrategy) ?? null;
+      }
+    } else if (recommendedOption) {
+      propertyOption = recommendedOption.strategy === 'keep' ? null : recommendedOption;
+    } else {
+      propertyOption = sellOption ?? loanOption ?? null;
+    }
 
     if (propertyOption && propertyOption.interventionAge !== null) {
       const isSell = propertyOption.strategy === 'sell';

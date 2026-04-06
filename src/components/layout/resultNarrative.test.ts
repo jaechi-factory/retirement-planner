@@ -145,9 +145,11 @@ describe('buildResultNarrativeModel', () => {
     });
 
     expect(model.headline).toContain('목표 생활비');
+    expect(model.metrics).toHaveLength(3);
     expect(model.metrics[2].value).toContain('90세까지');
     expect(model.metrics[2].tone).toBe('positive');
-    expect(model.metrics[3].value).toBe('집을 그대로 둘 때');
+    expect(model.recommendedStrategyLabel).toBe('집을 그대로 둘 때');
+    expect(model.insightLines).toHaveLength(3);
   });
 
   it('집 활용 시나리오에서는 추천 전략 라벨이 담보대출 문구로 노출되어야 한다', () => {
@@ -163,8 +165,8 @@ describe('buildResultNarrativeModel', () => {
       hasRealEstate: true,
     });
 
-    expect(model.metrics[3].value).toBe('집을 담보로 대출받을 때');
-    expect(model.evidence[2].body).toContain('집을 담보로 대출받거나 팔아야');
+    expect(model.recommendedStrategyLabel).toBe('집을 담보로 대출받을 때');
+    expect(model.insightLines[2]).toContain('집을 담보로 대출받거나 팔아야');
   });
 
   it('실패 시나리오에서는 소진 나이와 음수 톤을 반환해야 한다', () => {
@@ -179,6 +181,6 @@ describe('buildResultNarrativeModel', () => {
     expect(model.headline).toContain('84세');
     expect(model.metrics[1].tone).toBe('negative');
     expect(model.metrics[2].value).toContain('84세부터 부족');
-    expect(model.metrics[3].value).toBe('집 없음(금융자산 기준)');
+    expect(model.recommendedStrategyLabel).toBe('집 없음(금융자산 기준)');
   });
 });
