@@ -113,7 +113,11 @@ function CustomTooltip({
         borderRadius: 10,
         padding: '10px 12px',
         fontSize: 14,
-        minWidth: 220,
+        width: 'min(220px, calc(100vw - 32px))',
+        maxWidth: 'calc(100vw - 32px)',
+        maxHeight: 'min(62vh, 420px)',
+        overflowY: 'auto',
+        overscrollBehavior: 'contain',
         boxShadow: '0 10px 24px rgba(25, 31, 40, 0.12)',
       }}
     >
@@ -128,8 +132,8 @@ function CustomTooltip({
 
       <div
         style={{
-          marginBottom: 4,
-          paddingBottom: 6,
+          marginBottom: 6,
+          paddingBottom: 8,
           borderBottom: '1px solid var(--ux-border)',
         }}
       >
@@ -160,18 +164,18 @@ function CustomTooltip({
         </div>
       </div>
 
-      <div style={{ marginTop: 8, borderTop: '1px solid var(--ux-border)', paddingTop: 8 }}>
-        <div style={{ fontSize: 14, color: 'var(--ux-text-subtle)', marginBottom: 4 }}>수입 내역</div>
+      <div style={{ marginTop: 10, borderTop: '1px solid var(--ux-border)', paddingTop: 10 }}>
+        <div style={{ fontSize: 14, color: 'var(--ux-text-subtle)', marginBottom: 5 }}>수입 내역</div>
         <TooltipRow label="근로소득" value={monthlySalary} />
         <TooltipRow label="연금소득" value={monthlyPension} />
 
-        <div style={{ fontSize: 14, color: 'var(--ux-text-subtle)', margin: '8px 0 4px' }}>지출 내역</div>
+        <div style={{ fontSize: 14, color: 'var(--ux-text-subtle)', margin: '10px 0 5px' }}>지출 내역</div>
         <TooltipRow label="생활비" value={monthlyLivingExpense} />
         <TooltipRow label="주거비(월세)" value={monthlyRent} />
         <TooltipRow label="부채상환" value={monthlyDebtService} />
         <TooltipRow label="자녀비" value={monthlyChildExpense} />
 
-        <div style={{ fontSize: 14, color: 'var(--ux-text-subtle)', margin: '8px 0 4px' }}>자산 내역</div>
+        <div style={{ fontSize: 14, color: 'var(--ux-text-subtle)', margin: '10px 0 5px' }}>자산 내역</div>
         {assetRows.map((row) => (
           <div
             key={row.name}
@@ -213,7 +217,7 @@ function CustomTooltip({
 
 function TooltipRow({ label, value }: { label: string; value: number }) {
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, color: 'var(--ux-text-base)', marginBottom: 2 }}>
+    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, color: 'var(--ux-text-base)', marginBottom: 3, lineHeight: 1.45 }}>
       <span>{label}</span>
       <span>월 {fmtKRW(Math.round(value))}</span>
     </div>
@@ -349,9 +353,9 @@ export default function AssetBalanceChart({
 
           <Tooltip
             wrapperStyle={{ zIndex: 90, pointerEvents: 'none' }}
-            // 기본은 커서 기준 좌상단(2사분면), 단 차트 경계를 넘어가면 내부로 고정
+            // 기본은 커서 기준 좌상단(2사분면), 필요 시 차트 밖으로도 노출 허용
             reverseDirection={{ x: true, y: true }}
-            allowEscapeViewBox={{ x: false, y: false }}
+            allowEscapeViewBox={{ x: true, y: true }}
             offset={14}
             content={(props) => (
               <CustomTooltip

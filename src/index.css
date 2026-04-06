@@ -82,6 +82,62 @@
   --result-border-strong: #DDE4EC;
 }
 
+.house-decision-row-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--result-space-2);
+}
+
+.house-decision-row-metric-label {
+  white-space: nowrap;
+}
+
+.house-decision-row-metric-value {
+  word-break: keep-all;
+}
+
+.verification-title-content {
+  display: flex;
+  align-items: center;
+  gap: var(--result-space-2);
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.verification-title-pill {
+  flex-shrink: 0;
+}
+
+.verification-title-suffix {
+  min-width: 0;
+  word-break: keep-all;
+}
+
+@media (max-width: 1200px) {
+  .house-decision-row-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    row-gap: var(--result-space-2);
+  }
+}
+
+@media (max-width: 980px) {
+  .house-decision-row-metrics {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .verification-title-content {
+    display: grid;
+    grid-template-columns: 1fr;
+    row-gap: 4px;
+    align-items: start;
+  }
+
+  .verification-title-suffix {
+    display: block;
+  }
+}
+
 * { box-sizing: border-box; }
 
 html, body {

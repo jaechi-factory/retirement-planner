@@ -16,8 +16,9 @@ function MetricCell({
   selected: boolean;
 }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
       <span
+        className="house-decision-row-metric-label"
         style={{
           fontSize: 'var(--result-text-meta)',
           color: 'var(--result-text-faint-color)',
@@ -27,6 +28,7 @@ function MetricCell({
         {label}
       </span>
       <span
+        className="house-decision-row-metric-value"
         style={{
           fontSize: 'var(--result-text-title)',
           fontWeight: selected ? 600 : 700,
@@ -45,6 +47,7 @@ export default function HouseDecisionRows({ rows, onSelectStrategy }: HouseDecis
 
   return (
     <div
+      className="house-decision-rows"
       style={{
         border: '1px solid var(--result-border-subtle)',
         borderRadius: 12,
@@ -92,6 +95,8 @@ export default function HouseDecisionRows({ rows, onSelectStrategy }: HouseDecis
                       fontSize: 'var(--result-text-title)',
                       fontWeight: selected ? 700 : 600,
                       color: selected ? 'var(--result-accent-strong)' : 'var(--result-text-body-color)',
+                      lineHeight: 1.35,
+                      wordBreak: 'keep-all',
                     }}
                   >
                     {row.strategyLabel}
@@ -123,7 +128,14 @@ export default function HouseDecisionRows({ rows, onSelectStrategy }: HouseDecis
                     <span
                       aria-hidden
                       style={{
-                        fontSize: 14,
+                        width: 24,
+                        height: 24,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                        fontSize: 16,
+                        lineHeight: 1,
                         color: selected ? 'var(--result-accent-strong)' : (hovered ? 'var(--result-text-meta-color)' : 'var(--result-text-faint-color)'),
                         fontWeight: 700,
                       }}
@@ -134,7 +146,7 @@ export default function HouseDecisionRows({ rows, onSelectStrategy }: HouseDecis
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 'var(--result-space-2)' }}>
+              <div className="house-decision-row-metrics">
                 <MetricCell label="시작 시점" value={row.startAgeText} selected={selected} />
                 <MetricCell label="가능 월생활비" value={row.sustainableMonthlyText} selected={selected} />
                 <MetricCell label="유지 가능 나이" value={row.survivalAgeText} selected={selected} />

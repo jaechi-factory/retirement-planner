@@ -65,6 +65,7 @@ export default function VerificationSection({
       }}
     >
       <div
+        className="verification-header-title"
         style={{
           fontSize: 'var(--result-text-title)',
           fontWeight: 600,
@@ -78,8 +79,9 @@ export default function VerificationSection({
         }}
       >
         {hasRealEstate ? (
-          <>
+          <div className="verification-title-content" style={{ display: 'flex', alignItems: 'center', gap: 'var(--result-space-2)', minWidth: 0 }}>
             <span
+              className="verification-title-pill"
               style={{
                 color: 'var(--result-accent-strong)',
                 fontWeight: 700,
@@ -93,8 +95,10 @@ export default function VerificationSection({
             >
               {strategyLabel}
             </span>
-            <span style={{ color: 'var(--result-text-body-color)' }}>{sectionSuffix}</span>
-          </>
+            <span className="verification-title-suffix" style={{ color: 'var(--result-text-body-color)', lineHeight: 1.45 }}>
+              {sectionSuffix}
+            </span>
+          </div>
         ) : (
           sectionTitle
         )}
@@ -128,18 +132,25 @@ export default function VerificationSection({
         />
       </div>
 
-      <details style={{ marginTop: 'var(--result-space-2)' }}>
-        <summary
+      <section
+        style={{
+          marginTop: 'var(--result-space-2)',
+          borderRadius: 10,
+          border: '1px solid var(--result-border-soft)',
+          background: 'var(--result-surface-base)',
+          padding: '10px 12px',
+        }}
+      >
+        <div
           style={{
             fontSize: 'var(--result-text-meta)',
             fontWeight: 600,
-            color: 'var(--result-text-faint-color)',
-            cursor: 'pointer',
+            color: 'var(--result-text-body-color)',
             userSelect: 'none',
           }}
         >
           나이별 주요 이벤트
-        </summary>
+        </div>
         <div
           style={{
             marginTop: 'var(--result-space-2)',
@@ -149,14 +160,14 @@ export default function VerificationSection({
         >
           <CompactLifetimeTimeline events={keyEvents} />
         </div>
-      </details>
+      </section>
 
       <details style={{ marginTop: 'var(--result-space-2)' }}>
         <summary
           style={{
             fontSize: 'var(--result-text-meta)',
-            fontWeight: 600,
-            color: 'var(--result-text-faint-color)',
+            fontWeight: 700,
+            color: 'var(--result-text-body-color)',
             cursor: 'pointer',
             userSelect: 'none',
           }}
@@ -164,7 +175,17 @@ export default function VerificationSection({
           가정과 주의 보기
         </summary>
 
-        <div style={{ marginTop: 'var(--result-space-2)', paddingTop: 'var(--result-space-2)', borderTop: '1px solid var(--result-border-subtle)' }}>
+        <div
+          style={{
+            marginTop: 'var(--result-space-2)',
+            paddingTop: 'var(--result-space-2)',
+            borderTop: '1px solid var(--result-border-subtle)',
+            borderRadius: 10,
+            border: '1px solid var(--result-border-soft)',
+            background: 'var(--result-surface-base)',
+            padding: '12px',
+          }}
+        >
           {hasRealEstate && (
             <div style={{ marginBottom: 'var(--result-space-3)' }}>
               <PropertyAssetChart rows={chartRows} retirementAge={retirementAge} />
@@ -176,20 +197,39 @@ export default function VerificationSection({
               <div
                 style={{
                   fontSize: 'var(--result-text-meta)',
-                  fontWeight: 600,
-                  color: 'var(--result-text-faint-color)',
+                  fontWeight: 700,
+                  color: 'var(--result-text-body-color)',
                   marginBottom: 'var(--result-space-2)',
                 }}
               >
                 주요 가정
               </div>
-              <ul style={{ margin: 0, paddingLeft: '1.2em', display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <ul
+                style={{
+                  margin: 0,
+                  padding: 0,
+                  listStyle: 'none',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 6,
+                }}
+              >
                 {assumptions.map((assumption, index) => (
                   <li
                     key={`${assumption.label}-${index}`}
-                    style={{ fontSize: 'var(--result-text-meta)', color: 'var(--result-text-meta-color)', lineHeight: 1.6 }}
+                    style={{
+                      fontSize: 'var(--result-text-meta)',
+                      color: 'var(--result-text-body-color)',
+                      lineHeight: 1.6,
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      gap: 'var(--result-space-2)',
+                    }}
                   >
-                    {assumption.label}: {assumption.value}
+                    <span aria-hidden style={{ fontWeight: 700, flexShrink: 0 }}>
+                      •
+                    </span>
+                    <span>{assumption.label}: {assumption.value}</span>
                   </li>
                 ))}
               </ul>
@@ -201,8 +241,8 @@ export default function VerificationSection({
               <div
                 style={{
                   fontSize: 'var(--result-text-meta)',
-                  fontWeight: 600,
-                  color: 'var(--result-text-faint-color)',
+                  fontWeight: 700,
+                  color: 'var(--result-text-body-color)',
                   marginBottom: 'var(--result-space-2)',
                 }}
               >
@@ -216,10 +256,11 @@ export default function VerificationSection({
                       borderRadius: 8,
                       border: `1px solid ${warning.severity === 'critical' ? 'var(--ux-status-negative-soft)' : 'var(--ux-status-warning-soft)'}`,
                       background: warning.severity === 'critical' ? 'var(--ux-status-negative-bg)' : 'var(--ux-status-warning-bg)',
-                      color: 'var(--result-text-meta-color)',
+                      color: 'var(--result-text-body-color)',
                       fontSize: 'var(--result-text-meta)',
+                      fontWeight: 600,
                       lineHeight: 1.6,
-                      padding: '7px 9px',
+                      padding: '8px 10px',
                     }}
                   >
                     {warning.message}

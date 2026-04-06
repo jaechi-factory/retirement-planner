@@ -12,7 +12,8 @@ export default function InsightLinesSection({ lines }: InsightLinesSectionProps)
       <ul
         style={{
           margin: 0,
-          paddingLeft: '1.2em',
+          padding: 0,
+          listStyle: 'none',
           display: 'flex',
           flexDirection: 'column',
           gap: 0,
@@ -27,9 +28,24 @@ export default function InsightLinesSection({ lines }: InsightLinesSectionProps)
               color: 'var(--result-text-body-color)',
               padding: 'var(--result-space-2) 0',
               borderBottom: index < lines.length - 1 ? '1px solid var(--result-border-soft)' : 'none',
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: 'var(--result-space-2)',
             }}
           >
-            {line}
+            <span
+              aria-hidden
+              style={{
+                fontSize: 'var(--result-text-body)',
+                lineHeight: 1.62,
+                color: 'var(--result-text-body-color)',
+                fontWeight: 700,
+                flexShrink: 0,
+              }}
+            >
+              •
+            </span>
+            <span>{line}</span>
           </li>
         ))}
       </ul>
