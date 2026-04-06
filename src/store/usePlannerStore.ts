@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import type { PlannerInputs, AssetAllocation, DebtAllocation } from '../types/inputs';
 import type { PensionInputs } from '../types/pension';
 import type { CalculationResult, HousingScenarioResult, HousingScenarioSet, Verdict } from '../types/calculation';
-import type { CalculationResultV2, YearlyAggregateV2, PropertyOptionResult } from '../types/calculationV2';
+import type { CalculationResultV2, YearlyAggregateV2, PropertyOptionResult, RecommendationModeV2 } from '../types/calculationV2';
 import type { HousingPolicy } from '../engine/housingPolicy';
 import type { FundingPolicy, LiquidationPolicy } from '../engine/fundingPolicy';
 import type { DebtSchedules } from '../engine/debtSchedule';
@@ -91,7 +91,8 @@ function toYearlySnapshot(agg: YearlyAggregateV2, retirementAge: number) {
   const financialAssetEnd = agg.cashLikeEnd + agg.financialInvestableEnd + agg.propertySaleProceedsBucketEnd;
   const housingAssetEnd = agg.propertyValueEnd;
   const grossAssetEnd = financialAssetEnd + housingAssetEnd;
-  const remainingDebtEnd = agg.securedLoanBalanceEnd;
+  const propertyDebtEnd = agg.months[agg.months.length - 1]?.propertyDebtEnd ?? 0;
+  const remainingDebtEnd = agg.securedLoanBalanceEnd + propertyDebtEnd;
   const netAssetEnd = grossAssetEnd - remainingDebtEnd;
   return {
     age: agg.ageYear,
@@ -222,7 +223,8 @@ function migrateDebtItem(
   if (repaymentType === 'interest_only') {
     repaymentType = isMortgage ? 'equal_payment' : 'balloon_payment';
   }
-  const { gracePeriodYears: _removed, ...rest } = raw as Record<string, unknown> & { gracePeriodYears?: unknown };
+  const rest = { ...(raw as Record<string, unknown>) };
+  delete rest.gracePeriodYears;
   return { ...rest, repaymentType };
 }
 
@@ -276,6 +278,7 @@ interface PlannerStore {
   resultV2: CalculationResultV2 | null;
   fundingPolicy: FundingPolicy;
   liquidationPolicy: LiquidationPolicy;
+  recommendationMode: RecommendationModeV2;
   setGoal: (partial: Partial<PlannerInputs['goal']>) => void;
   setStatus: (partial: Partial<PlannerInputs['status']>) => void;
   setAsset: (key: keyof AssetAllocation, partial: Partial<AssetAllocation[keyof AssetAllocation]>) => void;
@@ -283,6 +286,7 @@ interface PlannerStore {
   setChildren: (partial: Partial<PlannerInputs['children']>) => void;
   setPension: (partial: Partial<PensionInputs>) => void;
   setFundingPolicy: (partial: Partial<FundingPolicy>) => void;
+  setRecommendationMode: (mode: RecommendationModeV2) => void;
   toggleHousing: () => void;
   resetAll: () => void;
 }
@@ -291,6 +295,7 @@ const computeState = (
   inputs: PlannerInputs,
   fundingPolicy: FundingPolicy = DEFAULT_FUNDING_POLICY,
   liquidationPolicy: LiquidationPolicy = DEFAULT_LIQUIDATION_POLICY,
+  recommendationMode: RecommendationModeV2 = 'max_sustainable',
 ): Pick<PlannerStore, 'inputs' | 'result' | 'verdict' | 'resultV2'> => {
   const { goal, status } = inputs;
   const debtSchedules = precomputeDebtSchedules(inputs.debts);
@@ -318,7 +323,7 @@ const computeState = (
     return { inputs, result: emptyResult('은퇴 나이는 현재 나이보다, 기대수명은 은퇴 나이보다 커야 해요.'), verdict: null, resultV2: null };
   }
 
-  const resultV2 = runCalculationV2(inputs, fundingPolicy, liquidationPolicy, debtSchedules);
+  const resultV2 = runCalculationV2(inputs, fundingPolicy, liquidationPolicy, debtSchedules, recommendationMode);
   if (!resultV2) return { inputs, result: emptyResult(null), verdict: null, resultV2: null };
 
   const result = buildCompatResult(inputs, resultV2, debtSchedules);
@@ -331,12 +336,13 @@ export const usePlannerStore = create<PlannerStore>((set, get) => ({
   advancedHousingEnabled: false,
   fundingPolicy: DEFAULT_FUNDING_POLICY,
   liquidationPolicy: DEFAULT_LIQUIDATION_POLICY,
+  recommendationMode: 'max_sustainable',
 
   setGoal: (partial) => {
     const current = get().inputs;
     const inputs: PlannerInputs = { ...current, goal: { ...current.goal, ...partial } };
     saveInputsToStorage(inputs);
-    set(computeState(inputs, get().fundingPolicy, get().liquidationPolicy));
+    set(computeState(inputs, get().fundingPolicy, get().liquidationPolicy, get().recommendationMode));
   },
   setStatus: (partial) => {
     const current = get().inputs;
@@ -351,7 +357,7 @@ export const usePlannerStore = create<PlannerStore>((set, get) => ({
     }
     const inputs: PlannerInputs = { ...current, status: { ...current.status, ...partial }, pension: newPension };
     saveInputsToStorage(inputs);
-    set(computeState(inputs, get().fundingPolicy, get().liquidationPolicy));
+    set(computeState(inputs, get().fundingPolicy, get().liquidationPolicy, get().recommendationMode));
   },
   setAsset: (key, partial) => {
     const inputs: PlannerInputs = {
@@ -359,7 +365,7 @@ export const usePlannerStore = create<PlannerStore>((set, get) => ({
       assets: { ...get().inputs.assets, [key]: { ...get().inputs.assets[key], ...partial } },
     };
     saveInputsToStorage(inputs);
-    set(computeState(inputs, get().fundingPolicy, get().liquidationPolicy));
+    set(computeState(inputs, get().fundingPolicy, get().liquidationPolicy, get().recommendationMode));
   },
   setDebt: (key, partial) => {
     const inputs: PlannerInputs = {
@@ -367,12 +373,12 @@ export const usePlannerStore = create<PlannerStore>((set, get) => ({
       debts: { ...get().inputs.debts, [key]: { ...get().inputs.debts[key], ...partial } },
     };
     saveInputsToStorage(inputs);
-    set(computeState(inputs, get().fundingPolicy, get().liquidationPolicy));
+    set(computeState(inputs, get().fundingPolicy, get().liquidationPolicy, get().recommendationMode));
   },
   setChildren: (partial) => {
     const inputs: PlannerInputs = { ...get().inputs, children: { ...get().inputs.children, ...partial } };
     saveInputsToStorage(inputs);
-    set(computeState(inputs, get().fundingPolicy, get().liquidationPolicy));
+    set(computeState(inputs, get().fundingPolicy, get().liquidationPolicy, get().recommendationMode));
   },
   setPension: (partial) => {
     const inputs: PlannerInputs = {
@@ -380,13 +386,19 @@ export const usePlannerStore = create<PlannerStore>((set, get) => ({
       pension: { ...get().inputs.pension, ...partial },
     };
     saveInputsToStorage(inputs);
-    set(computeState(inputs, get().fundingPolicy, get().liquidationPolicy));
+    set(computeState(inputs, get().fundingPolicy, get().liquidationPolicy, get().recommendationMode));
   },
   setFundingPolicy: (partial) => {
     const newPolicy: FundingPolicy = { ...get().fundingPolicy, ...partial };
     set({
       fundingPolicy: newPolicy,
-      ...computeState(get().inputs, newPolicy, get().liquidationPolicy),
+      ...computeState(get().inputs, newPolicy, get().liquidationPolicy, get().recommendationMode),
+    });
+  },
+  setRecommendationMode: (mode) => {
+    set({
+      recommendationMode: mode,
+      ...computeState(get().inputs, get().fundingPolicy, get().liquidationPolicy, mode),
     });
   },
   toggleHousing: () => {
@@ -398,7 +410,8 @@ export const usePlannerStore = create<PlannerStore>((set, get) => ({
       advancedHousingEnabled: false,
       fundingPolicy: DEFAULT_FUNDING_POLICY,
       liquidationPolicy: DEFAULT_LIQUIDATION_POLICY,
-      ...computeState(defaultInputs, DEFAULT_FUNDING_POLICY, DEFAULT_LIQUIDATION_POLICY),
+      recommendationMode: 'max_sustainable',
+      ...computeState(defaultInputs, DEFAULT_FUNDING_POLICY, DEFAULT_LIQUIDATION_POLICY, 'max_sustainable'),
     });
   },
 }));

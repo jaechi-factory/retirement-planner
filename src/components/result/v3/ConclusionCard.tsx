@@ -1,6 +1,7 @@
 import type { CalculationResultV2 } from '../../../types/calculationV2';
 import type { PlannerInputs } from '../../../types/inputs';
 import { fmtKRW } from '../../../utils/format';
+import { getTotalMonthlyPensionTodayValue } from '../../../engine/pensionEstimation';
 
 interface ConclusionCardProps {
   summary: CalculationResultV2['summary'];
@@ -31,29 +32,30 @@ export default function ConclusionCard({ summary, propertyOptions, inputs, netWo
   if (failureAge === null) {
     // 케이스 1: 기대수명까지 충분
     isPositive = true;
-    headline = `당신은 ${lifeExpectancy}세까지 돈이 충분합니다`;
+    headline = `${lifeExpectancy}세까지 생활비를 유지할 수 있어요`;
     subText = `현재 전략대로라면 은퇴 후 ${lifeExpectancy - retirementAge}년을 버틸 수 있어요.`;
   } else if (financialExhaustionAge !== null && housingSurvivesOption) {
     // 케이스 2: 저축 소진되지만 집 전략으로 해결됨
     isPositive = true;
-    const actionLabel =
-      housingSurvivesOption.strategy === 'sell' ? '팔면' : '담보대출을 받으면';
-    headline = `집을 ${actionLabel} ${lifeExpectancy}세까지 가능합니다`;
-    subText = `${financialExhaustionAge}세에 저축이 바닥나지만, 집을 활용하면 ${lifeExpectancy}세까지 이어집니다.`;
+    const actionLabel = housingSurvivesOption.strategy === 'sell' ? '매각' : '담보대출';
+    headline = `집 ${actionLabel} 전략이면 ${lifeExpectancy}세까지 가능해요`;
+    subText = `${financialExhaustionAge}세에 금융자산이 거의 다 떨어지지만, 집 전략을 쓰면 ${lifeExpectancy}세까지 이어집니다.`;
   } else {
     // 케이스 3: 어떤 전략도 기대수명까지 생존 못 함
     isPositive = false;
-    headline = `이 계획대로라면 ${failureAge}세에 돈이 바닥납니다`;
+    headline = `이 계획대로라면 ${failureAge}세부터 생활비가 모자라요`;
 
     const { targetMonthly } = inputs.goal;
     const { sustainableMonthly } = summary;
     const shortfall = targetMonthly > 0 ? targetMonthly - sustainableMonthly : 0;
 
-    // 연금 수령액 합산 (국민연금 + 퇴직연금 + 개인연금)
-    const totalPensionMonthly =
-      (inputs.pension.publicPension.enabled ? inputs.pension.publicPension.manualMonthlyTodayValue : 0) +
-      (inputs.pension.retirementPension.enabled ? inputs.pension.retirementPension.manualMonthlyTodayValue : 0) +
-      (inputs.pension.privatePension.enabled ? inputs.pension.privatePension.manualMonthlyTodayValue : 0);
+    const totalPensionMonthly = getTotalMonthlyPensionTodayValue(
+      inputs.pension,
+      inputs.status.currentAge,
+      inputs.goal.retirementAge,
+      inputs.status.annualIncome,
+      inputs.goal.inflationRate,
+    );
 
     if (sustainableMonthly > 0 && shortfall > 0) {
       const pensionNote = totalPensionMonthly > 0

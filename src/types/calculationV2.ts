@@ -19,6 +19,9 @@ export interface MonthlySnapshotV2 {
   propertyDebtEnd: number;               // 부동산 관련 기존 부채 잔고 (만원)
   securedLoanBalanceEnd: number;         // 담보대출 누적 잔고 (secured_loan 전략, 만원)
   propertySaleProceedsBucketEnd: number; // 매각 대금 버킷 잔고 (sell 전략, 만원)
+  propertySaleGrossProceedsThisMonth: number; // 해당 월 집 매각 총액(헤어컷 적용 전, 만원)
+  propertySaleDebtSettledThisMonth: number;   // 해당 월 매각으로 상환한 부채(만원)
+  propertySaleNetProceedsThisMonth: number;   // 해당 월 순매각대금(헤어컷·부채 상환 후, 만원)
   shortfallThisMonth: number;            // 미충당 금액 (0이면 정상, 만원)
   incomeThisMonth: number;               // 근로소득 (만원)
   pensionThisMonth: number;              // 연금수입 (만원)
@@ -93,14 +96,22 @@ export interface WarningItem {
   message: string;
 }
 
+/** 추천 전략 선택 방식 */
+export type RecommendationModeV2 = 'keep_priority' | 'max_sustainable';
+
 /**
  * V2 계산 결과 DTO.
  * chartData는 포함하지 않음 — 각 차트 컴포넌트가 UI selector에서 직접 조립.
  */
 export interface CalculationResultV2 {
   summary: {
-    sustainableMonthly: number;           // 끝까지 유지 가능한 월 생활비
-    targetGap: number;                    // 목표 대비 차이 (음수 = 부족)
+    sustainableMonthly: number;           // 추천 전략 기준 월 생활비
+    targetGap: number;                    // 추천 전략 기준 목표 대비 차이 (음수 = 부족)
+    maxSustainableMonthly: number;        // 3전략 중 최대 월 생활비
+    maxTargetGap: number;                 // 최대 월 생활비 기준 목표 대비 차이
+    recommendedStrategy: 'keep' | 'secured_loan' | 'sell';
+    maxSustainableStrategy: 'keep' | 'secured_loan' | 'sell';
+    recommendationMode: RecommendationModeV2;
     financialSellStartAge: number | null; // 투자자산 매도 시작 나이 (현금 버퍼 부족 시점)
     financialExhaustionAge: number | null;// 투자자산 소진 나이
     propertyInterventionAge: number | null; // 집 건드려야 하는 나이 (권장 전략)

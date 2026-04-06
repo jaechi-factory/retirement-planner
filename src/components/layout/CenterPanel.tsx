@@ -277,7 +277,7 @@ export default function CenterPanel() {
                                 fontSize: 11,
                                 color: scenarioGap >= 0 ? 'var(--tds-blue-400)' : 'var(--tds-red-400)',
                               }}>
-                                목표 대비 {scenarioGap >= 0 ? '+' : ''}{scenarioGap.toLocaleString('ko-KR')}만
+                                목표와 차이 {scenarioGap >= 0 ? '+' : ''}{scenarioGap.toLocaleString('ko-KR')}만
                               </div>
                             )}
                           </div>

@@ -2,7 +2,6 @@ import { fmtKRW } from '../../utils/format';
 
 interface TransitionSectionProps {
   financialExhaustionAge: number | null;
-  propertyInterventionAge: number | null;
   failureAge: number | null;
   lifeExpectancy: number;
   hasRealEstate: boolean;
@@ -20,7 +19,6 @@ interface TransitionSectionProps {
  */
 export default function TransitionSection({
   financialExhaustionAge,
-  propertyInterventionAge: _propertyInterventionAge,
   failureAge,
   lifeExpectancy,
   hasRealEstate,
@@ -53,12 +51,12 @@ export default function TransitionSection({
             lineHeight: 1.4,
           }}
         >
-          현재 설정이라면 금융자산이 기대수명까지 유지돼요
+          현재 설정이면 금융자산이 기대수명까지 유지돼요
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-          <BulletLine text={`${lifeExpectancy}세까지 현금·투자자산만으로 생활비를 충당할 수 있어요`} />
+          <BulletLine text={`${lifeExpectancy}세까지 현금·투자자산으로 생활비를 감당할 수 있어요`} />
           <BulletLine
-            text={`물가 상승이나 예상치 못한 지출에 따라 달라질 수 있으니, 아래 상세 탭에서 연도별 흐름을 확인해보세요`}
+            text={`물가나 예상 밖 지출에 따라 달라질 수 있으니, 아래에서 연도별 흐름을 확인해보세요`}
             muted
           />
         </div>
@@ -90,14 +88,14 @@ export default function TransitionSection({
           {financialExhaustionAge}세 이후에는 연금 중심으로 생활하게 돼요
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-          <BulletLine text={`현금과 투자자산은 ${financialExhaustionAge}세에 모두 소진돼요`} />
+          <BulletLine text={`현금과 투자자산은 ${financialExhaustionAge}세에 거의 다 떨어져요`} />
           <BulletLine text="이후 수입은 연금만 남아요" />
           {pensionPct > 0 && (
             <BulletLine
               text={
                 monthlyShortfall !== null && monthlyShortfall > 0
-                  ? `연금이 목표 생활비의 ${pensionPct}%를 충당해요 — 매월 ${fmtKRW(monthlyShortfall)} 정도가 부족해요`
-                  : `연금이 목표 생활비의 ${pensionPct}%를 충당해요`
+                  ? `연금이 목표 생활비의 ${pensionPct}%를 채워요 — 매월 ${fmtKRW(monthlyShortfall)}이 부족해요`
+                  : `연금이 목표 생활비의 ${pensionPct}%를 채워요`
               }
             />
           )}
@@ -135,7 +133,7 @@ export default function TransitionSection({
         {financialExhaustionAge}세 이후에는 집 활용 여부가 결과를 바꿔요
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-        <BulletLine text={`현금과 투자자산은 ${financialExhaustionAge}세에 모두 소진돼요`} />
+        <BulletLine text={`현금과 투자자산은 ${financialExhaustionAge}세에 거의 다 떨어져요`} />
         <BulletLine text="주택 자산이 남아 있어 이후 경로를 선택할 수 있어요" />
         <BulletLine text="집을 어떻게 활용하느냐에 따라 이후 생활비 흐름이 달라져요" />
       </div>

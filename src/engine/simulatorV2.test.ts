@@ -1043,3 +1043,75 @@ describe('[단조성] 투자자산 증가 → 지속가능 생활비 ≥ 유지 
     expect(result_high).toBeGreaterThanOrEqual(result_low);
   });
 });
+
+describe('G. 매각 이벤트 메타데이터 및 부동산 부채 추적', () => {
+  it('sell 전략 매각 월에 순매각대금 메타데이터가 보존되어야 함', () => {
+    const inputs = makeInputs({
+      goal: { retirementAge: 65, lifeExpectancy: 90, targetMonthly: 500, inflationRate: 0 },
+      status: { currentAge: 65, annualIncome: 0, incomeGrowthRate: 0, annualExpense: 0, expenseGrowthRate: 0 },
+      assets: {
+        cash:       { amount: 0,      expectedReturn: 0 },
+        deposit:    { amount: 0,      expectedReturn: 0 },
+        bond:       { amount: 0,      expectedReturn: 0 },
+        stock_kr:   { amount: 0,      expectedReturn: 0 },
+        stock_us:   { amount: 0,      expectedReturn: 0 },
+        crypto:     { amount: 0,      expectedReturn: 0 },
+        realEstate: { amount: 100000, expectedReturn: 0 },
+      },
+    });
+
+    const snapshots = simulateMonthlyV2(inputs, 500, 'sell', DEFAULT_FUNDING_POLICY, DEFAULT_LIQUIDATION);
+    const saleMonth = snapshots.find((s) => s.eventFlags.propertySold);
+
+    expect(saleMonth).toBeDefined();
+    expect(saleMonth!.propertySaleGrossProceedsThisMonth).toBeCloseTo(100000, 2);
+    expect(saleMonth!.propertySaleDebtSettledThisMonth).toBe(0);
+    // 정책표 기준 매각 헤어컷 5% 반영
+    expect(saleMonth!.propertySaleNetProceedsThisMonth).toBeCloseTo(95000, 2);
+  });
+
+  it('propertyDebtEnd는 주담대 잔액만 반영해야 함 (신용/기타 대출 제외)', () => {
+    const inputs = makeInputs({
+      debts: {
+        mortgage: {
+          balance: 10000,
+          interestRate: 4.0,
+          repaymentType: 'equal_payment',
+          repaymentYears: 10,
+        },
+        creditLoan: {
+          balance: 5000,
+          interestRate: 6.0,
+          repaymentType: 'equal_payment',
+          repaymentYears: 5,
+        },
+        otherLoan: {
+          balance: 3000,
+          interestRate: 7.0,
+          repaymentType: 'equal_payment',
+          repaymentYears: 3,
+        },
+      },
+    });
+
+    const schedules = precomputeDebtSchedules(inputs.debts);
+    const snapshots = simulateMonthlyV2(
+      inputs,
+      inputs.goal.targetMonthly,
+      'keep',
+      DEFAULT_FUNDING_POLICY,
+      DEFAULT_LIQUIDATION,
+      schedules,
+    );
+
+    const firstMonth = snapshots[0];
+    const mortgageOnly = schedules.mortgage[0]?.remainingBalance ?? 0;
+    const totalDebtBalance =
+      (schedules.mortgage[0]?.remainingBalance ?? 0) +
+      (schedules.creditLoan[0]?.remainingBalance ?? 0) +
+      (schedules.otherLoan[0]?.remainingBalance ?? 0);
+
+    expect(firstMonth.propertyDebtEnd).toBeCloseTo(mortgageOnly, 6);
+    expect(firstMonth.propertyDebtEnd).toBeLessThan(totalDebtBalance);
+  });
+});

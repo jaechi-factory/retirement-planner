@@ -33,10 +33,10 @@ function PropertyEventCard({ data, isSell }: {
           lineHeight: 1.7,
         }}
       >
-        집은 그대로 유지하면서, 집을 담보로 대출을 받아 부족한 생활비를 충당해요.
+        집은 유지하고, 집 담보대출로 부족한 생활비를 채워요.
         {lifeExpectancy > 0 && (
           <div style={{ fontSize: 12, color: 'var(--tds-gray-400)', marginTop: 6 }}>
-            이 방법으로 {lifeExpectancy}세까지 이어질 수 있어요.
+            이 방식이면 {lifeExpectancy}세까지 이어질 수 있어요.
           </div>
         )}
       </div>
@@ -55,7 +55,7 @@ function PropertyEventCard({ data, isSell }: {
       }}
     >
       <div style={{ color: 'var(--tds-gray-600)', marginBottom: 10, lineHeight: 1.6 }}>
-        이 해에 집을 팔면 아래와 같이 돼요.
+        이 해에 집을 팔면 이렇게 계산돼요.
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -96,7 +96,7 @@ function PropertyEventCard({ data, isSell }: {
             lineHeight: 1.6,
           }}
         >
-          이 돈을 추가 생활비로 쓰면 {lifeExpectancy}세까지 이어질 수 있어요.
+          이 돈을 생활비에 쓰면 {lifeExpectancy}세까지 이어질 수 있어요.
         </div>
       )}
     </div>
@@ -180,7 +180,7 @@ export default function LifetimeTimeline({
           letterSpacing: 0.1,
         }}
       >
-        연도별 타임라인 ({retirementAge}세 → {lifeExpectancy}세)
+        나이별 돈 흐름 ({retirementAge}세 → {lifeExpectancy}세)
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
@@ -224,8 +224,8 @@ export default function LifetimeTimeline({
                     lineHeight: 1.5,
                   }}
                 >
-                  {fromAge}~{toAge}세: 큰 변화 없음. 매달{' '}
-                  {avgMonthlyExpense > 0 ? fmtKRW(avgMonthlyExpense) : '—'} 생활 유지.
+                  {fromAge}~{toAge}세: 큰 변화가 없고, 월평균{' '}
+                  {avgMonthlyExpense > 0 ? fmtKRW(avgMonthlyExpense) : '—'}을 써요.
                 </div>
               </div>
             );

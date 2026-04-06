@@ -28,7 +28,7 @@ export default function RetirementPensionCard() {
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 8 }}>
         <div>
           <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--tds-gray-900)' }}>퇴직연금</div>
-          <div style={{ fontSize: 12, color: 'var(--tds-gray-400)', marginTop: 2 }}>회사가 적립한 은퇴자금을 나눠 받는 돈</div>
+          <div style={{ fontSize: 12, color: 'var(--tds-gray-400)', marginTop: 2 }}>회사에서 쌓인 퇴직연금 예상 월액이에요</div>
         </div>
         <ModeLabel text={isAuto ? '간편 계산' : '직접 입력'} />
       </div>
@@ -37,7 +37,7 @@ export default function RetirementPensionCard() {
         월 {fmtKRW(displayValue)}
       </div>
       <div style={{ fontSize: 12, color: 'var(--tds-gray-400)' }}>
-        {startAge}세부터 {retirementPension.payoutYears}년간 수령
+        {startAge}세부터 {retirementPension.payoutYears}년간 받아요
         {!hasBalance && isAuto && ' · 적립금 입력 시 더 정확해져요'}
       </div>
 
@@ -97,7 +97,7 @@ export default function RetirementPensionCard() {
               />
               {!isAuto && (
                 <NumberInput
-                  label="예상 월수령액 (지금 기준)"
+                  label="예상 월수령액 (현재 금액)"
                   value={retirementPension.manualMonthlyTodayValue}
                   onChange={v => setPension({ retirementPension: { ...retirementPension, manualMonthlyTodayValue: v } })}
                   unit="만원"

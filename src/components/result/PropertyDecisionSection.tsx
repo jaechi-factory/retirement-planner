@@ -58,7 +58,7 @@ export default function PropertyDecisionSection({
     >
       {/* 소진 맥락 텍스트 */}
       <div style={{ fontSize: 13, color: 'var(--tds-gray-600)', lineHeight: 1.7, marginBottom: 14 }}>
-        {financialExhaustionAge}세에 금융자산이 소진돼요. 이후 집을 어떻게 할지에 따라 월 생활비가 달라져요.
+        {financialExhaustionAge}세에 금융자산이 거의 다 떨어져요. 이후에는 집 전략에 따라 월 생활비가 달라져요.
       </div>
 
       {/* 구분선 */}
@@ -78,7 +78,7 @@ export default function PropertyDecisionSection({
               marginBottom: 14,
             }}
           >
-            <span style={{ fontSize: 12, color: 'var(--tds-gray-400)' }}>집을 건드리지 않으면</span>
+            <span style={{ fontSize: 12, color: 'var(--tds-gray-400)' }}>집을 유지하면</span>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--tds-gray-500)' }}>
                 월 {fmtKRW(keepOpt.sustainableMonthly)}
@@ -107,7 +107,7 @@ export default function PropertyDecisionSection({
         >
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center' }}>
-              <span style={{ fontSize: 13, color: 'var(--tds-gray-700)' }}>집에 살며 현금흐름을 만들면</span>
+              <span style={{ fontSize: 13, color: 'var(--tds-gray-700)' }}>집 담보대출을 쓰면</span>
               {loanOpt.isRecommended && <span style={recommendBadge}>추천</span>}
             </div>
             <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--tds-gray-900)', marginTop: 2 }}>
@@ -130,7 +130,7 @@ export default function PropertyDecisionSection({
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center' }}>
-                <span style={{ fontSize: 13, color: 'var(--tds-gray-700)' }}>집을 팔면</span>
+                <span style={{ fontSize: 13, color: 'var(--tds-gray-700)' }}>집을 매각하면</span>
                 {sellOpt.isRecommended && <span style={recommendBadge}>추천</span>}
               </div>
               <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--tds-gray-900)', marginTop: 2 }}>
@@ -142,14 +142,14 @@ export default function PropertyDecisionSection({
             </span>
           </div>
           <div style={{ fontSize: 11, color: 'var(--tds-gray-400)', marginTop: 4 }}>
-            단, 이후 월세 약 200만원/월(현재가치·물가연동)이 추가돼요
+            이후 월세 약 200만원/월(현재가치·물가연동)을 추가로 내요
           </div>
         </div>
       )}
 
       {/* 하단 주석 */}
       <div style={{ fontSize: 11, color: 'var(--tds-gray-300)', marginTop: 12 }}>
-        이 수치는 고정 수익률 가정 기준이에요.
+        이 수치는 고정 수익률 가정으로 계산했어요.
       </div>
     </div>
   );

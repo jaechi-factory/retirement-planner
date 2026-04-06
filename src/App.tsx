@@ -41,7 +41,7 @@ export default function App() {
               letterSpacing: '-0.3px',
             }}
           >
-            내 노후는 괜찮을까?
+            내 은퇴, 괜찮을까?
           </span>
           <span
             style={{
@@ -51,7 +51,7 @@ export default function App() {
               fontWeight: 400,
             }}
           >
-            내 재무 구조로 은퇴 후 얼마를 쓸 수 있을까요?
+            지금 조건으로 은퇴 후 월 생활비를 확인해요
           </span>
         </div>
       </div>

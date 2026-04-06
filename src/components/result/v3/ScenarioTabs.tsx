@@ -14,8 +14,8 @@ export default function ScenarioTabs({ propertyOptions, lifeExpectancy, activeSt
   if (!sellOption && !loanOption) return null;
 
   const tabs: Array<{ strategy: 'sell' | 'secured_loan'; label: string; option: PropertyOptionResult }> = [];
-  if (sellOption) tabs.push({ strategy: 'sell', label: '집을 팔 경우', option: sellOption });
-  if (loanOption) tabs.push({ strategy: 'secured_loan', label: '담보대출 받을 경우', option: loanOption });
+  if (sellOption) tabs.push({ strategy: 'sell', label: '집을 팔아 쓸 때', option: sellOption });
+  if (loanOption) tabs.push({ strategy: 'secured_loan', label: '집을 담보로 대출받을 때', option: loanOption });
 
   if (tabs.length === 0) return null;
 
@@ -81,7 +81,7 @@ export default function ScenarioTabs({ propertyOptions, lifeExpectancy, activeSt
                   color: survives ? '#2E7D32' : '#757575',
                 }}
               >
-                {survives ? `${badgeAge}세까지 가능` : `${badgeAge}세에 부족`}
+                {survives ? `${badgeAge}세까지 유지` : `${badgeAge}세부터 부족`}
               </span>
             </button>
           );

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 interface Props {
   label: string;
@@ -10,12 +10,6 @@ interface Props {
 export default function RateInput({ label, value, onChange, hint }: Props) {
   const [focused, setFocused] = useState(false);
   const [draft, setDraft] = useState(value === 0 ? '' : String(value));
-
-  useEffect(() => {
-    if (!focused) {
-      setDraft(value === 0 ? '' : String(value));
-    }
-  }, [value, focused]);
 
   const handleFocus = () => {
     setFocused(true);

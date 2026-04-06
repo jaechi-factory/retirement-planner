@@ -8,7 +8,7 @@ export default function RetirementGoalSection() {
   const { goal } = inputs;
 
   return (
-    <SectionCard title="은퇴 목표" subtitle="언제, 얼마로 살지 정하면 모든 계산의 기준이 잡혀요">
+    <SectionCard title="은퇴 목표" subtitle="언제 은퇴하고 매달 얼마 쓸지 정해요">
       <NumberInput
         label="은퇴 나이"
         value={goal.retirementAge}
@@ -26,13 +26,13 @@ export default function RetirementGoalSection() {
         max={120}
       />
       <NumberInput
-        label="목표 월 생활비 (지금 기준)"
+        label="목표 월 생활비 (현재 금액)"
         value={goal.targetMonthly}
         onChange={(v) => setGoal({ targetMonthly: v })}
         unit="만원"
       />
       <RateInput
-        label="물가상승률 (연)"
+        label="물가 상승률 (연)"
         value={goal.inflationRate}
         onChange={(v) => setGoal({ inflationRate: v })}
       />

@@ -17,7 +17,7 @@ export default function CurrentStatusSection() {
   const showCashflow = status.annualIncome > 0 && status.annualExpense > 0;
 
   return (
-    <SectionCard title="현재 상태" subtitle="지금 기준 생활 수준을 미래에도 유지할 수 있는지 봐요">
+    <SectionCard title="현재 상태" subtitle="지금 수입과 지출로 매달 얼마나 남는지 봐요">
       <NumberInput
         label="현재 나이"
         value={status.currentAge}
@@ -31,7 +31,7 @@ export default function CurrentStatusSection() {
         value={status.annualIncome}
         onChange={(v) => setStatus({ annualIncome: v })}
         unit="만원"
-        hint="세금·4대보험 공제 후 실수령액 (보너스 포함 시 합산)"
+        hint="세금·4대보험을 뺀 실제 연수입이에요 (보너스 포함)"
       />
       <RateInput
         label="연봉 증가율"
@@ -45,7 +45,7 @@ export default function CurrentStatusSection() {
             value={status.annualExpense > 0 ? Math.round(status.annualExpense / 12) : 0}
             onChange={(v) => setStatus({ annualExpense: v * 12 })}
             unit="만원"
-            hint="담보대출 상환액, 월세는 제외하고 입력해주세요"
+            hint="주담대 상환액, 월세는 빼고 입력해요"
           />
           <RateInput
             label="생활비 증가율 (연)"
@@ -54,7 +54,7 @@ export default function CurrentStatusSection() {
           />
         </div>
         <p style={{ fontSize: 12, color: 'var(--tds-gray-400)', margin: 0 }}>
-          같은 생활 수준을 유지하려면 물가 상승률(약 3%) 이상을 입력해요.
+          생활비 증가율은 물가(약 3%)에 맞춰 입력하면 돼요.
         </p>
       </div>
 
@@ -75,7 +75,7 @@ export default function CurrentStatusSection() {
             color: 'var(--tds-gray-500)',
             letterSpacing: 0.2,
           }}>
-            이번 달 현금흐름
+            이번 달 돈 흐름
           </div>
 
           {/* 항목들 */}
@@ -113,8 +113,8 @@ export default function CurrentStatusSection() {
               borderRadius: 6,
             }}>
               {monthlySurplus > 0
-                ? `이 돈이 매달 자산에 쌓이고, 투자 수익까지 더해져 은퇴 자금이 불어나요.`
-                : `지출이 수입보다 많아요. 지출을 줄이거나 소득을 늘려야 자산이 쌓여요.`
+                ? `남는 돈은 지금 자산 비율대로 다시 투자되고, 수익이 더해져 복리로 커져요.`
+                : `지금은 적자예요. 지출을 줄이거나 수입을 늘려야 해요.`
               }
             </div>
           </div>

@@ -84,7 +84,7 @@ export default function DebtSection() {
   const rows: DebtKey[] = ['mortgage', 'creditLoan', 'otherLoan'];
 
   return (
-    <SectionCard title="부채 구성" subtitle="갚아야 할 돈이 생활비에 얼마나 영향을 주는지 반영해요">
+    <SectionCard title="부채 구성" subtitle="대출 상환이 생활비에 주는 영향을 계산해요">
       {result.totalDebt > 0 && (
         <div
           style={{
@@ -207,13 +207,13 @@ export default function DebtSection() {
                   {/* 메인: 첫 달 / 첫 해 — 읽는 순서 1순위 */}
                   <div style={{ padding: '10px 12px 6px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                     <div style={{ padding: '8px 10px', background: 'var(--tds-gray-50)', borderRadius: 8 }}>
-                      <div style={{ fontSize: 11, color: 'var(--tds-gray-400)', marginBottom: 4 }}>첫 달에 갚을 돈</div>
+                      <div style={{ fontSize: 11, color: 'var(--tds-gray-400)', marginBottom: 4 }}>첫 달 상환액</div>
                       <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--tds-gray-700)' }}>
                         −{Math.round(summary.firstMonthPayment).toLocaleString('ko-KR')}만원
                       </div>
                     </div>
                     <div style={{ padding: '8px 10px', background: 'var(--tds-gray-50)', borderRadius: 8 }}>
-                      <div style={{ fontSize: 11, color: 'var(--tds-gray-400)', marginBottom: 4 }}>첫해에 갚을 돈</div>
+                      <div style={{ fontSize: 11, color: 'var(--tds-gray-400)', marginBottom: 4 }}>첫해 상환액</div>
                       <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--tds-gray-600)' }}>
                         −{Math.round(summary.firstYearAnnualPayment).toLocaleString('ko-KR')}만원
                       </div>
@@ -222,13 +222,13 @@ export default function DebtSection() {
                   {/* 보조: 이자 총합 / 최대 월 — 읽는 순서 2순위, 인라인 텍스트 */}
                   <div style={{ padding: '2px 12px 10px', display: 'flex', gap: 14 }}>
                     <span style={{ fontSize: 11, color: 'var(--tds-gray-400)' }}>
-                      이자 총합{' '}
+                      총 이자{' '}
                       <span style={{ fontWeight: 600, color: 'var(--tds-gray-500)' }}>
                         −{Math.round(summary.totalInterest).toLocaleString('ko-KR')}만원
                       </span>
                     </span>
                     <span style={{ fontSize: 11, color: 'var(--tds-gray-400)' }}>
-                      최대 월{' '}
+                      최대 월 상환액{' '}
                       <span style={{ fontWeight: 600, color: 'var(--tds-gray-500)' }}>
                         −{Math.round(summary.maxMonthPayment).toLocaleString('ko-KR')}만원
                       </span>

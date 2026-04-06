@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 interface Props {
   label: string;
@@ -16,13 +16,6 @@ export default function NumberInput({
   const [focused, setFocused] = useState(false);
   // 타이핑 중간 상태를 로컬에서 관리 — 외부 value와 분리
   const [draft, setDraft] = useState(value === 0 ? '' : String(value));
-
-  // 외부에서 value가 바뀌면 (다른 필드가 영향줄 때) draft 동기화
-  useEffect(() => {
-    if (!focused) {
-      setDraft(value === 0 ? '' : String(value));
-    }
-  }, [value, focused]);
 
   const handleFocus = () => {
     setFocused(true);

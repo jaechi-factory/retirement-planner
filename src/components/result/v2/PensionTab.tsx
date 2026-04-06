@@ -20,7 +20,8 @@ export default function PensionTab({ result, inputs }: Props) {
     goal.inflationRate,
   );
 
-  const coveragePct = Math.round(result.pensionCoverageRate * 100);
+  const coveragePct = Math.max(0, Math.round(result.pensionCoverageRate * 100));
+  const remainingPct = Math.max(0, 100 - coveragePct);
 
   // 공백기 계산
   const gapYears = timeline.length > 0 ? timeline[0].age - goal.retirementAge : 0;
@@ -30,11 +31,11 @@ export default function PensionTab({ result, inputs }: Props) {
   const coverageColor = coveragePct >= 50 ? '#1A5DC2' : '#E65100';
   let coverageEvalText = '';
   if (coveragePct >= 80) {
-    coverageEvalText = '연금만으로 생활비 대부분 해결돼요';
+    coverageEvalText = '연금으로 생활비 대부분을 채울 수 있어요';
   } else if (coveragePct >= 50) {
-    coverageEvalText = '절반 이상은 연금으로 커버돼요';
+    coverageEvalText = '절반 이상은 연금으로 채울 수 있어요';
   } else {
-    coverageEvalText = '절반도 안 돼요. 금융자산 의존도가 높아요';
+    coverageEvalText = '절반이 안 돼요. 금융자산 비중이 커요';
   }
 
   // 미반영 연금 목록
@@ -75,7 +76,7 @@ export default function PensionTab({ result, inputs }: Props) {
         }}
       >
         <div style={{ fontSize: 11, color: 'var(--tds-gray-400)', marginBottom: 6 }}>
-          연금이 생활비를 메워주는 비율
+          연금이 생활비를 얼마나 채우는지
         </div>
         <div
           style={{
@@ -92,14 +93,14 @@ export default function PensionTab({ result, inputs }: Props) {
           {coverageEvalText}
         </div>
         <div style={{ fontSize: 12, color: 'var(--tds-gray-600)', marginTop: 6 }}>
-          나머지 {100 - coveragePct}%는 금융자산으로 충당해야 해요
+          나머지 {remainingPct}%는 금융자산에서 메워야 해요
         </div>
       </div>
 
       {/* 공백기 = 0일 때 안내 */}
       {gapYears === 0 && timeline.length > 0 && (
         <div style={{ fontSize: 12, color: 'var(--tds-gray-500)', marginBottom: 14 }}>
-          은퇴 시점부터 연금이 바로 시작돼요
+          은퇴 시점부터 연금이 바로 들어와요
         </div>
       )}
 
@@ -154,7 +155,7 @@ export default function PensionTab({ result, inputs }: Props) {
       {timeline.length > 0 && (
         <>
           <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--tds-gray-600)', marginBottom: 10 }}>
-            연금 개시 타임라인
+            연금 시작 시점
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
             {/* 은퇴 시점 고정 노드 */}
@@ -285,7 +286,7 @@ export default function PensionTab({ result, inputs }: Props) {
           {/* 미반영 연금 안내 */}
           {unreflectedPensions.length > 0 && (
             <div style={{ fontSize: 12, color: 'var(--tds-gray-400)', marginTop: 12 }}>
-              {unreflectedPensions.join(', ')} 미반영 — 추후 입력 가능해요
+              {unreflectedPensions.join(', ')}은 아직 입력하지 않았어요
             </div>
           )}
         </>

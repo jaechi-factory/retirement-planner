@@ -25,7 +25,7 @@ export default function PensionSection() {
           연금
         </h3>
         <p style={{ margin: 0, fontSize: 12, color: 'var(--tds-gray-400)' }}>
-          은퇴 후 생활비를 얼마나 메워줄지 계산해요
+          은퇴 후 매달 들어오는 돈을 입력해요
         </p>
       </div>
 
@@ -46,7 +46,7 @@ export default function PensionSection() {
               추정값 · 지금 기준
             </div>
             <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--tds-gray-600)' }}>
-              월 {fmtKRW(totalPension)} 보탬이 돼요
+              월 {fmtKRW(totalPension)}이 생활비에 들어와요
             </div>
           </div>
           {coveragePct > 0 && (
@@ -61,7 +61,7 @@ export default function PensionSection() {
         marginTop: 10,
         fontSize: 12, color: 'var(--tds-gray-400)', lineHeight: 1.6,
       }}>
-        평균 가정 기반 추정치 · 실제 수령액은 가입 기간·적립금에 따라 달라져요
+        평균값으로 계산한 추정치예요 · 실제 수령액과 다를 수 있어요
       </div>
     </div>
   );

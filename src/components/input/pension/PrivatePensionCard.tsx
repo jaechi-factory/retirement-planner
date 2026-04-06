@@ -176,8 +176,8 @@ export default function PrivatePensionCard() {
 
       {!isEnabled ? (
         <div style={{ fontSize: 12, color: 'var(--tds-gray-400)', lineHeight: 1.7 }}>
-          IRP · 연금저축이 있으면 위 토글을 켜서 입력해보세요.<br />
-          없거나 모르면 그냥 넘어가도 돼요.
+          개인연금이 있으면 위 토글을 켜서 입력해요.<br />
+          없으면 넘어가도 괜찮아요.
         </div>
 
       ) : isDetailMode ? (
@@ -239,7 +239,7 @@ export default function PrivatePensionCard() {
             월 {fmtKRW(displayValue)}
           </div>
           <div style={{ fontSize: 12, color: 'var(--tds-gray-400)', marginBottom: 12 }}>
-            {privatePension.startAge}세부터 {privatePension.payoutYears}년간 수령
+            {privatePension.startAge}세부터 {privatePension.payoutYears}년간 받아요
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>

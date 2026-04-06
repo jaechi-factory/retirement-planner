@@ -2,6 +2,7 @@
 @import "tailwindcss";
 
 :root {
+  --tds-blue-600:   #1B64DA;
   --tds-blue-500:   #3182F6;
   --tds-blue-400:   #5C9EFF;
   --tds-blue-50:    #EBF3FE;
@@ -12,12 +13,39 @@
   --tds-red-500:    #F04452;
   --tds-red-50:     #FEF0F1;
   --tds-gray-900:   #191F28;
+  --tds-gray-800:   #222B38;
   --tds-gray-700:   #333D4B;
+  --tds-gray-600:   #4E5968;
   --tds-gray-500:   #6B7684;
+  --tds-gray-400:   #8B95A1;
   --tds-gray-300:   #B0B8C1;
+  --tds-gray-200:   #D1D6DB;
+  --tds-gray-150:   #E6E8EB;
   --tds-gray-100:   #F2F4F6;
   --tds-gray-50:    #F8F9FA;
   --tds-white:      #FFFFFF;
+
+  /* Result UX semantic tokens */
+  --ux-accent: var(--tds-blue-500);
+  --ux-accent-soft: var(--tds-blue-50);
+  --ux-text-strong: var(--tds-gray-900);
+  --ux-text-base: var(--tds-gray-700);
+  --ux-text-muted: var(--tds-gray-500);
+  --ux-text-subtle: var(--tds-gray-400);
+  --ux-border: var(--tds-gray-150);
+  --ux-border-strong: var(--tds-gray-200);
+  --ux-surface: var(--tds-white);
+  --ux-surface-muted: var(--tds-gray-50);
+  --ux-surface-subtle: #F4F6F8;
+  --ux-status-positive: #1B7F3A;
+  --ux-status-positive-bg: #F2FAF4;
+  --ux-status-positive-soft: #CFE9D5;
+  --ux-status-negative: #C0392B;
+  --ux-status-negative-bg: #FFF5F4;
+  --ux-status-negative-soft: #F2CFCB;
+  --ux-status-warning: #A86C00;
+  --ux-status-warning-bg: #FFF8EC;
+  --ux-status-warning-soft: #F3D8A2;
 }
 
 * { box-sizing: border-box; }

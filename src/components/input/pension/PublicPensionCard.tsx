@@ -29,7 +29,7 @@ export default function PublicPensionCard() {
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 8 }}>
         <div>
           <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--tds-gray-900)' }}>국민연금</div>
-          <div style={{ fontSize: 12, color: 'var(--tds-gray-400)', marginTop: 2 }}>지금 기준으로 예상한 국민연금이에요</div>
+          <div style={{ fontSize: 12, color: 'var(--tds-gray-400)', marginTop: 2 }}>지금 기준 예상 월액이에요</div>
         </div>
         <ModeLabel text={isAuto ? '간편 계산' : '직접 입력'} />
       </div>
@@ -46,13 +46,13 @@ export default function PublicPensionCard() {
         <div style={{ fontSize: 12, color: 'var(--tds-gray-400)', marginTop: 2 }}>
           {isAuto
             ? `${publicPension.startAge}세부터 수령 · ${workStartAge}세 취업 기준 추정`
-            : `${publicPension.startAge}세부터 수령 · 실제값은 차이가 있을 수 있어요`}
+            : `${publicPension.startAge}세부터 수령 · 실제 수령액과 다를 수 있어요`}
         </div>
       </div>
 
       {isAuto && (
         <div style={{ marginTop: 6 }}>
-          <TextBtn onClick={switchToManual}>공단 예상월액 직접 입력하기 ▾</TextBtn>
+          <TextBtn onClick={switchToManual}>공단 예상 월액 직접 입력하기 ▾</TextBtn>
         </div>
       )}
 
@@ -79,7 +79,7 @@ export default function PublicPensionCard() {
               value={workStartAge}
               onChange={v => setPension({ publicPension: { ...publicPension, workStartAge: v } })}
               unit="세"
-              hint="국민연금 납부 시작 나이 — 이 나이부터 가입한 것으로 계산해요"
+              hint="이 나이부터 가입했다고 보고 계산해요"
             />
           )}
           <Row>
@@ -91,11 +91,11 @@ export default function PublicPensionCard() {
             />
             {!isAuto && (
               <NumberInput
-                label="예상 월수령액 (지금 기준)"
+                label="예상 월수령액 (현재 금액)"
                 value={publicPension.manualMonthlyTodayValue}
                 onChange={v => setPension({ publicPension: { ...publicPension, manualMonthlyTodayValue: v } })}
                 unit="만원"
-                hint="국민연금공단 조회값 — 지금 돈 기준으로 입력"
+                hint="국민연금공단 조회값을 넣어 주세요"
               />
             )}
           </Row>

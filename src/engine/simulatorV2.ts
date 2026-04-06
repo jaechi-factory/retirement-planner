@@ -401,6 +401,11 @@ export function simulateMonthlyV2(
         eventFlags.financialExhausted = true;
       }
 
+      // 타임라인 카드용 매각 이벤트 원시값(해당 월만 값 보유)
+      let propertySaleGrossProceedsThisMonth = 0;
+      let propertySaleDebtSettledThisMonth = 0;
+      let propertySaleNetProceedsThisMonth = 0;
+
       // ── 5. 부동산 전략 (미충당 잔액 있을 때) ─────────────────────────
       if (uncoveredAmount > 0 && propertyValue > 0) {
         if (propertyStrategy === 'secured_loan') {
@@ -428,8 +433,13 @@ export function simulateMonthlyV2(
           const remainingMortgage = plannerPolicy.property.saleDebtSettlementMode === 'all_debts'
             ? getRemainingDebt(debtSchedules, totalMonthIndex)
             : getRemainingMortgageBalance(debtSchedules, totalMonthIndex);
-          const grossProceeds = propertyValue * (1 - propertyPolicy.propertySaleHaircut);
-          const netProceeds = Math.max(0, grossProceeds - remainingMortgage);
+          const salePrice = propertyValue;
+          const grossProceedsAfterHaircut = salePrice * (1 - propertyPolicy.propertySaleHaircut);
+          const netProceeds = Math.max(0, grossProceedsAfterHaircut - remainingMortgage);
+
+          propertySaleGrossProceedsThisMonth = salePrice;
+          propertySaleDebtSettledThisMonth = remainingMortgage;
+          propertySaleNetProceedsThisMonth = netProceeds;
 
           // 매각 대금: cash 버킷 대신 별도 운용 잔액으로 관리 (연 4% 복리)
           saleInvestBalance = netProceeds;
@@ -466,7 +476,7 @@ export function simulateMonthlyV2(
 
       const cashLikeEnd          = buckets.cash + buckets.deposit;
       const financialInvestableEnd = FINANCIAL_KEYS.reduce((s, k) => s + buckets[k], 0);
-      const propertyDebtEnd      = getRemainingDebt(debtSchedules, totalMonthIndex);
+      const propertyDebtEnd      = getRemainingMortgageBalance(debtSchedules, totalMonthIndex);
 
       snapshots.push({
         ageYear,
@@ -477,6 +487,9 @@ export function simulateMonthlyV2(
         propertyDebtEnd,
         securedLoanBalanceEnd: securedLoanBalance,
         propertySaleProceedsBucketEnd: propertySaleProceedsBucket,
+        propertySaleGrossProceedsThisMonth,
+        propertySaleDebtSettledThisMonth,
+        propertySaleNetProceedsThisMonth,
         shortfallThisMonth,
         incomeThisMonth,
         pensionThisMonth,

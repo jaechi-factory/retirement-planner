@@ -40,7 +40,7 @@ export default function MonthlyComparison({
           </span>
           {gap !== 0 && (
             <span style={{ fontSize: 12, fontWeight: 700, color: isOk ? 'var(--tds-blue-500)' : 'var(--tds-red-500)' }}>
-              {isOk ? `목표 대비 +${gap.toLocaleString('ko-KR')}만` : `목표 대비 ${gap.toLocaleString('ko-KR')}만`}
+              {isOk ? `목표와 차이 +${gap.toLocaleString('ko-KR')}만` : `목표와 차이 ${gap.toLocaleString('ko-KR')}만`}
             </span>
           )}
         </div>

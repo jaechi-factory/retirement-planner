@@ -238,7 +238,7 @@ export function getAnnualPensionIncomeForAge(
   // 퇴직연금: manual은 현재가치이므로 inflate, auto는 이미 명목값
   const ret = pension.retirementPension;
   const retEndAge = ret.startAge + ret.payoutYears;
-  if (ret.enabled && targetAge >= ret.startAge && targetAge <= retEndAge) {
+  if (ret.enabled && targetAge >= ret.startAge && targetAge < retEndAge) {
     const base = resolveRetirementMonthlyNominal(pension, annualNetIncome, currentAge, retirementAge);
     const nominal = ret.mode === 'manual'
       ? base * Math.pow(1 + inflation, targetAge - currentAge)
@@ -322,7 +322,8 @@ export function getPensionMonthlyAtRetirementStart(
   }
 
   const ret = pension.retirementPension;
-  if (ret.enabled && ret.startAge <= retirementAge) {
+  const retEndAge = ret.startAge + ret.payoutYears;
+  if (ret.enabled && ret.startAge <= retirementAge && retirementAge < retEndAge) {
     total += resolveRetirementMonthlyTodayValue(pension, annualNetIncome, currentAge, retirementAge, inflationRate);
   }
 
@@ -331,7 +332,8 @@ export function getPensionMonthlyAtRetirementStart(
     if (priv.detailMode && priv.products.length > 0) {
       // 상세 모드: 은퇴 시점까지 개시된 상품만 합산
       for (const product of priv.products) {
-        if (product.startAge <= retirementAge) {
+        const productEndAge = product.startAge + product.payoutYears;
+        if (product.startAge <= retirementAge && retirementAge < productEndAge) {
           const yearsToStart = Math.max(product.startAge - currentAge, 0);
           const annualContrib = (product.monthlyContribution || 0) * 12;
           const balance = futureValue(product.currentBalance, annualContrib, product.accumulationReturnRate, yearsToStart);
@@ -339,8 +341,11 @@ export function getPensionMonthlyAtRetirementStart(
           total += nominalMonthly / Math.pow(1 + inflationRate / 100, yearsToStart);
         }
       }
-    } else if (priv.startAge <= retirementAge) {
-      total += resolvePrivateMonthlyTodayValue(pension, currentAge, inflationRate);
+    } else {
+      const privEndAge = priv.startAge + priv.payoutYears;
+      if (priv.startAge <= retirementAge && retirementAge < privEndAge) {
+        total += resolvePrivateMonthlyTodayValue(pension, currentAge, inflationRate);
+      }
     }
   }
 

@@ -12,6 +12,7 @@ import type {
   YearlyAggregateV2,
   AssumptionItem,
   WarningItem,
+  RecommendationModeV2,
 } from '../types/calculationV2';
 import type { FundingPolicy, LiquidationPolicy } from './fundingPolicy';
 import type { DebtSchedules } from './debtSchedule';
@@ -33,6 +34,11 @@ import {
 import { getPlannerPolicy } from '../policy/policyTable';
 
 const STRATEGIES: PropertyStrategyV2[] = ['keep', 'secured_loan', 'sell'];
+const STRATEGY_TIE_BREAK_PRIORITY: Record<PropertyStrategyV2, number> = {
+  keep: 3,
+  secured_loan: 2,
+  sell: 1,
+};
 
 function buildPropertyOption(
   inputs: PlannerInputs,
@@ -40,7 +46,6 @@ function buildPropertyOption(
   fundingPolicy: FundingPolicy,
   liquidationPolicy: LiquidationPolicy,
   debtSchedules: DebtSchedules,
-  _lifeExpectancy: number,
 ): PropertyOptionResult {
   // 단일 source: 같은 debtSchedules를 binary search와 detail simulation에 공유
   const sustainableMonthly = findMaxSustainableMonthlyV2(
@@ -77,19 +82,19 @@ function buildPropertyOption(
   let headline = '';
   if (strategy === 'keep') {
     headline = survivesToLifeExpectancy
-      ? '집을 건드리지 않아도 기대수명까지 유지돼요'
+      ? `집을 팔거나 담보대출을 받지 않아도 ${inputs.goal.lifeExpectancy}세까지 가능해요`
       : `${failureAge}세부터 자금이 부족해요`;
   } else if (strategy === 'secured_loan') {
     headline =
       interventionAge !== null
-        ? `${interventionAge}세부터 집을 담보로 버텨요`
+        ? `${interventionAge}세부터 집을 담보로 대출받아 생활비를 보태요`
         : survivesToLifeExpectancy
         ? '집 담보 없이도 기대수명까지 유지돼요'
         : `${failureAge}세부터 자금이 부족해요`;
   } else {
     headline =
       interventionAge !== null
-        ? `${interventionAge}세에 집을 팔아 현금화해요`
+        ? `${interventionAge}세에 집을 팔아 그 돈으로 생활비를 이어가요`
         : survivesToLifeExpectancy
         ? '집 매각 없이도 기대수명까지 유지돼요'
         : `${failureAge}세부터 자금이 부족해요`;
@@ -109,7 +114,32 @@ function buildPropertyOption(
   };
 }
 
-function pickRecommendedV2(options: PropertyOptionResult[]): PropertyStrategyV2 {
+function compareBySustainableDesc(a: PropertyOptionResult, b: PropertyOptionResult): number {
+  if (a.sustainableMonthly !== b.sustainableMonthly) {
+    return b.sustainableMonthly - a.sustainableMonthly;
+  }
+  if (a.survivesToLifeExpectancy !== b.survivesToLifeExpectancy) {
+    return Number(b.survivesToLifeExpectancy) - Number(a.survivesToLifeExpectancy);
+  }
+  const aFail = a.failureAge ?? Infinity;
+  const bFail = b.failureAge ?? Infinity;
+  if (aFail !== bFail) return bFail - aFail;
+  if (a.finalNetWorth !== b.finalNetWorth) return b.finalNetWorth - a.finalNetWorth;
+  return STRATEGY_TIE_BREAK_PRIORITY[b.strategy] - STRATEGY_TIE_BREAK_PRIORITY[a.strategy];
+}
+
+function pickMaxSustainableOption(options: PropertyOptionResult[]): PropertyOptionResult {
+  return [...options].sort(compareBySustainableDesc)[0];
+}
+
+function pickRecommendedV2(
+  options: PropertyOptionResult[],
+  recommendationMode: RecommendationModeV2,
+): PropertyStrategyV2 {
+  if (recommendationMode === 'max_sustainable') {
+    return pickMaxSustainableOption(options).strategy;
+  }
+
   // 1) keep이 기대수명까지 살아남으면 keep 권장 (집 안 건드려도 되니까)
   const keepOption = options.find((o) => o.strategy === 'keep');
   if (keepOption && keepOption.survivesToLifeExpectancy) return 'keep';
@@ -272,7 +302,7 @@ function buildWarnings(
     const targetMonthly = inputs.goal.targetMonthly;
     const gapPart =
       bestSustainable > 0 && targetMonthly > 0
-        ? ` 지금 자산 기준으로 가능한 생활비는 최대 월 ${bestSustainable.toLocaleString()}만원이에요 (목표 대비 ${(targetMonthly - bestSustainable).toLocaleString()}만원 부족).`
+        ? ` 지금 자산 기준으로 가능한 생활비는 최대 월 ${bestSustainable.toLocaleString()}만원이에요 (목표와 차이 ${(targetMonthly - bestSustainable).toLocaleString()}만원).`
         : '';
     warnings.push({
       severity: 'critical',
@@ -310,6 +340,7 @@ export function runCalculationV2(
   fundingPolicy: FundingPolicy,
   liquidationPolicy: LiquidationPolicy,
   prebuiltSchedules?: DebtSchedules,
+  recommendationMode: RecommendationModeV2 = 'keep_priority',
 ): CalculationResultV2 | null {
   const { goal, status } = inputs;
 
@@ -329,11 +360,12 @@ export function runCalculationV2(
 
   // 3가지 전략 병렬 계산
   const propertyOptions: PropertyOptionResult[] = STRATEGIES.map((strategy) =>
-    buildPropertyOption(inputs, strategy, fundingPolicy, liquidationPolicy, debtSchedules, goal.lifeExpectancy),
+    buildPropertyOption(inputs, strategy, fundingPolicy, liquidationPolicy, debtSchedules),
   );
+  const maxOption = pickMaxSustainableOption(propertyOptions);
 
   // 추천 전략 결정
-  const recommendedStrategy = pickRecommendedV2(propertyOptions);
+  const recommendedStrategy = pickRecommendedV2(propertyOptions, recommendationMode);
   for (const opt of propertyOptions) {
     opt.isRecommended = opt.strategy === recommendedStrategy;
   }
@@ -351,6 +383,8 @@ export function runCalculationV2(
 
   const sustainableMonthly = recommendedOption.sustainableMonthly;
   const targetGap = sustainableMonthly - goal.targetMonthly;
+  const maxSustainableMonthly = maxOption.sustainableMonthly;
+  const maxTargetGap = maxSustainableMonthly - goal.targetMonthly;
 
   const fundingTimeline = buildFundingTimeline(detailYearlyAggregates, goal.retirementAge);
   const assumptions = buildAssumptions(inputs, fundingPolicy);
@@ -360,6 +394,11 @@ export function runCalculationV2(
     summary: {
       sustainableMonthly,
       targetGap,
+      maxSustainableMonthly,
+      maxTargetGap,
+      recommendedStrategy,
+      maxSustainableStrategy: maxOption.strategy,
+      recommendationMode,
       financialSellStartAge,
       financialExhaustionAge,
       propertyInterventionAge,

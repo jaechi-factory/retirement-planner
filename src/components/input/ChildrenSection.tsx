@@ -7,7 +7,7 @@ export default function ChildrenSection() {
   const { children } = inputs;
 
   return (
-    <SectionCard title="자녀 정보" subtitle="자녀 지출이 자산과 저축 여력에 미치는 영향을 반영해요">
+    <SectionCard title="자녀 정보" subtitle="자녀 관련 지출이 언제까지 드는지 넣어요">
       {/* 라디오 버튼 */}
       <div style={{ display: 'flex', gap: 8 }}>
         {[
@@ -58,7 +58,7 @@ export default function ChildrenSection() {
             unit="세"
             min={inputs.status.currentAge}
             max={100}
-            hint="이 나이 이후로 자녀 지출이 사라져요"
+            hint="이 나이부터 자녀 지출을 0원으로 계산해요"
           />
           <div style={{ display: 'grid', gap: 8 }}>
             <div style={{ fontSize: 13, color: 'var(--tds-gray-500)' }}>자녀비 증가 방식</div>
@@ -103,7 +103,7 @@ export default function ChildrenSection() {
               unit="%"
               min={0}
               max={30}
-              hint="물가와 별개로 자녀비만 적용되는 증가율이에요"
+              hint="물가와 별개로 자녀비에만 적용돼요"
             />
           )}
         </>

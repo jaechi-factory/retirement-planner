@@ -11,8 +11,11 @@ import { describe, it, expect } from 'vitest';
 import {
   estimatePublicPension,
   annuitize,
+  getAnnualPensionIncomeForAge,
+  getPensionMonthlyAtRetirementStart,
 } from './pensionEstimation';
 import { estimatePublicPensionWithMeta } from './pensionMeta';
+import type { PensionInputs } from '../types/pension';
 
 // ─── 국민연금 기여기간 경계값 ──────────────────────────────────────────────────
 
@@ -103,5 +106,75 @@ describe('annuitize — 표준 연금 현가 공식', () => {
     const long = annuitize(10000, 3.0, 30);
     expect(short).toBeGreaterThan(medium);
     expect(medium).toBeGreaterThan(long);
+  });
+});
+
+describe('연금 지급 기간 경계값', () => {
+  const pensionFixture: PensionInputs = {
+    publicPension: {
+      enabled: false,
+      mode: 'auto',
+      startAge: 65,
+      manualMonthlyTodayValue: 0,
+      workStartAge: 26,
+    },
+    retirementPension: {
+      enabled: true,
+      mode: 'manual',
+      startAge: 60,
+      payoutYears: 20,
+      currentBalance: 0,
+      accumulationReturnRate: 3.5,
+      payoutReturnRate: 2.0,
+      manualMonthlyTodayValue: 100,
+    },
+    privatePension: {
+      enabled: true,
+      mode: 'manual',
+      startAge: 55,
+      payoutYears: 10,
+      currentBalance: 0,
+      monthlyContribution: 0,
+      expectedReturnRate: 3.5,
+      accumulationReturnRate: 3.5,
+      payoutReturnRate: 3.5,
+      manualMonthlyTodayValue: 50,
+      detailMode: false,
+      products: [],
+    },
+  };
+
+  it('퇴직연금은 종료 나이에서는 더 이상 지급되지 않아야 함', () => {
+    // 60세 시작 + 20년 = 80세 종료(80세부터 미지급)
+    const age79Annual = getAnnualPensionIncomeForAge(
+      pensionFixture,
+      40,
+      79,
+      0,
+      6000,
+      60,
+    );
+    const age80Annual = getAnnualPensionIncomeForAge(
+      pensionFixture,
+      40,
+      80,
+      0,
+      6000,
+      60,
+    );
+    expect(age79Annual).toBe(1200);
+    expect(age80Annual).toBe(0);
+  });
+
+  it('은퇴 시점에 이미 종료된 연금은 retirementStart 합계에 포함되지 않아야 함', () => {
+    // 은퇴 나이 90세: 퇴직(60~79), 개인(55~64) 모두 종료 상태
+    const total = getPensionMonthlyAtRetirementStart(
+      pensionFixture,
+      40,
+      90,
+      6000,
+      0,
+    );
+    expect(total).toBe(0);
   });
 });

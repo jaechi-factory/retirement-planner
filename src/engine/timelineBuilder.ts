@@ -77,10 +77,10 @@ export function extractEvents(
   events.push({
     age: retirementAge,
     type: 'retirement',
-    header: `${retirementAge}세 — 은퇴`,
-    description: '이 해부터 근로소득이 끊기고 저축과 연금으로 생활을 시작해요.',
+    header: `${retirementAge}세 — 은퇴 시작`,
+    description: '이 해부터 근로소득이 멈추고, 저축과 연금으로 생활해요.',
     warning: gapYears > 0
-      ? `이후 ${gapYears}년간 연금이 없어요. 금융자산만으로 생활해야 하는 기간이에요.`
+      ? `이후 ${gapYears}년은 연금 없이 금융자산으로 생활해요.`
       : undefined,
   });
 
@@ -94,8 +94,8 @@ export function extractEvents(
         type: 'pension_public',
         header: `${startAge}세 — 국민연금 시작`,
         description: monthly > 0
-          ? `이 달부터 매달 ${fmtKRW(monthly)}의 국민연금이 들어와요.`
-          : '이 달부터 국민연금이 들어오기 시작해요.',
+          ? `이때부터 국민연금 월 ${fmtKRW(monthly)}이 들어와요.`
+          : '이때부터 국민연금이 들어와요.',
       });
     }
   }
@@ -110,8 +110,8 @@ export function extractEvents(
         type: 'pension_retirement',
         header: `${startAge}세 — 퇴직연금 시작`,
         description: monthly > 0
-          ? `이 달부터 매달 ${fmtKRW(monthly)}의 퇴직연금이 추가돼요.`
-          : '이 달부터 퇴직연금이 들어오기 시작해요.',
+          ? `이때부터 퇴직연금 월 ${fmtKRW(monthly)}이 추가돼요.`
+          : '이때부터 퇴직연금이 들어와요.',
       });
     }
   }
@@ -124,7 +124,7 @@ export function extractEvents(
         age: endAge,
         type: 'pension_retirement_end',
         header: `${endAge}세 — 퇴직연금 수령 종료`,
-        description: '퇴직연금 수령이 끝나요. 이후 생활비를 연금 수입이 덜 커버하게 돼, 매각대금 인출이 늘어날 수 있어요.',
+        description: '퇴직연금이 끝나요. 이후에는 다른 자산에서 생활비 비중이 커져요.',
       });
     }
   }
@@ -139,8 +139,8 @@ export function extractEvents(
         type: 'pension_private',
         header: `${startAge}세 — 개인연금 시작`,
         description: monthly > 0
-          ? `이 달부터 매달 ${fmtKRW(monthly)}의 개인연금이 추가돼요.`
-          : '이 달부터 개인연금이 들어오기 시작해요.',
+          ? `이때부터 개인연금 월 ${fmtKRW(monthly)}이 추가돼요.`
+          : '이때부터 개인연금이 들어와요.',
       });
     }
   }
@@ -150,8 +150,8 @@ export function extractEvents(
     events.push({
       age: summary.financialExhaustionAge,
       type: 'financial_exhaustion',
-      header: `${summary.financialExhaustionAge}세 — 저축한 돈이 바닥납니다`,
-      description: '현금·예금·주식이 이 해에 모두 소진돼요. 이후에는 연금과 집이 유일한 수입원이에요.',
+      header: `${summary.financialExhaustionAge}세 — 금융자산이 거의 다 떨어져요`,
+      description: '현금·예금·주식이 거의 다 떨어져요. 이후에는 연금과 집으로 생활비를 메워야 해요.',
     });
   }
 
@@ -167,24 +167,54 @@ export function extractEvents(
     if (propertyOption && propertyOption.interventionAge !== null) {
       const isSell = propertyOption.strategy === 'sell';
       const interventionAge = propertyOption.interventionAge;
-
-      const yearRow = aggregates.find((r) => r.ageYear === interventionAge);
-      const estimatedPrice = yearRow?.propertyValueEnd ?? 0;
-      const lastMonth = yearRow?.months?.[yearRow.months.length - 1];
-      const existingMortgage = lastMonth?.propertyDebtEnd ?? 0;
-      const mortgageBalance = (yearRow?.securedLoanBalanceEnd ?? 0) + existingMortgage;
       const policy = getPlannerPolicy();
-      const netProceeds = Math.max(0, estimatedPrice * (1 - policy.property.propertySaleHaircut) - mortgageBalance);
+
+      const allMonths = aggregates.flatMap((r) => r.months);
+      const interventionMonth = allMonths.find(
+        (m) => m.ageYear === interventionAge && m.eventFlags.propertyInterventionStarted,
+      );
+      const saleMonth = allMonths.find(
+        (m) => m.ageYear === interventionAge && m.eventFlags.propertySold,
+      );
+      const yearRow = aggregates.find((r) => r.ageYear === interventionAge);
+
+      let estimatedPrice = 0;
+      let mortgageBalance = 0;
+      let netProceeds = 0;
+
+      if (isSell && saleMonth) {
+        estimatedPrice = saleMonth.propertySaleGrossProceedsThisMonth;
+        if (estimatedPrice <= 0) {
+          const saleIdx = allMonths.findIndex((m) => m === saleMonth);
+          estimatedPrice = saleIdx > 0 ? allMonths[saleIdx - 1].propertyValueEnd : 0;
+        }
+        mortgageBalance = saleMonth.propertySaleDebtSettledThisMonth;
+        netProceeds = saleMonth.propertySaleNetProceedsThisMonth > 0
+          ? saleMonth.propertySaleNetProceedsThisMonth
+          : Math.max(0, estimatedPrice * (1 - policy.property.propertySaleHaircut) - mortgageBalance);
+      } else {
+        estimatedPrice = interventionMonth?.propertyValueEnd ?? yearRow?.propertyValueEnd ?? 0;
+        const existingMortgage =
+          interventionMonth?.propertyDebtEnd ??
+          yearRow?.months?.[yearRow.months.length - 1]?.propertyDebtEnd ??
+          0;
+        const securedLoan =
+          interventionMonth?.securedLoanBalanceEnd ??
+          yearRow?.securedLoanBalanceEnd ??
+          0;
+        mortgageBalance = existingMortgage + securedLoan;
+        netProceeds = Math.max(0, estimatedPrice * (1 - policy.property.propertySaleHaircut) - mortgageBalance);
+      }
 
       events.push({
         age: interventionAge,
         type: isSell ? 'property_sell' : 'property_loan',
         header: isSell
-          ? `${interventionAge}세 — 집을 팔아야 하는 시점`
-          : `${interventionAge}세 — 집을 담보로 대출을 받아야 하는 시점`,
+          ? `${interventionAge}세 — 집을 팔아야 할 수 있어요`
+          : `${interventionAge}세 — 집 담보대출이 필요해져요`,
         description: isSell
-          ? '이 해에 집을 팔면 아래와 같이 돼요.'
-          : '이 해에 집을 담보로 대출을 받아야 해요.',
+          ? '이 해에 집을 팔면 이렇게 계산돼요.'
+          : '이 해부터 집 담보대출로 생활비를 메워요.',
         propertyData: { estimatedPrice, mortgageBalance, netProceeds, lifeExpectancy },
       });
     }
@@ -200,10 +230,10 @@ export function extractEvents(
     events.push({
       age: summary.failureAge,
       type: 'failure',
-      header: `${summary.failureAge}세 — 자금이 부족해집니다`,
+      header: `${summary.failureAge}세 — 생활비가 모자라기 시작해요`,
       description: monthlyShortfall
-        ? `이 해부터 매달 ${fmtKRW(monthlyShortfall)}씩 부족해져요.`
-        : '이 해부터 자금이 부족해져요.',
+        ? `이 해부터 매달 ${fmtKRW(monthlyShortfall)}이 부족해요.`
+        : '이 해부터 생활비가 부족해요.',
     });
   }
 
