@@ -64,24 +64,26 @@ export default function VerificationSection({
           display: 'flex',
           alignItems: 'center',
           gap: 'var(--result-space-2)',
+          borderLeft: '3px solid var(--result-accent-strong)',
+          paddingLeft: 'var(--result-space-2)',
         }}
       >
         {hasRealEstate ? (
           <>
             <span
               style={{
-                color: 'var(--result-accent-muted)',
+                color: 'var(--result-accent-strong)',
                 fontWeight: 700,
-                background: 'var(--result-accent-soft)',
-                border: '1px solid var(--result-border-subtle)',
+                background: '#E1EDFF',
+                border: '1px solid rgba(49, 130, 246, 0.24)',
                 borderRadius: 999,
-                padding: '1px 7px',
+                padding: '1px 8px',
                 lineHeight: 1.4,
               }}
             >
               {strategyLabel}
             </span>
-            <span style={{ color: 'var(--result-text-meta-color)' }}>{sectionSuffix}</span>
+            <span style={{ color: 'var(--result-text-body-color)' }}>{sectionSuffix}</span>
           </>
         ) : (
           sectionTitle
@@ -90,8 +92,9 @@ export default function VerificationSection({
       <div
         style={{
           fontSize: 'var(--result-text-meta)',
-          color: 'var(--result-text-faint-color)',
+          color: 'var(--result-text-meta-color)',
           marginBottom: 'var(--result-space-2)',
+          paddingLeft: 'calc(var(--result-space-2) + 3px)',
         }}
       >
         {sectionDescription}

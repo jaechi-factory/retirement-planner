@@ -54,9 +54,9 @@ export default function HouseDecisionRows({ rows, onSelectStrategy }: HouseDecis
             key={row.strategy}
             style={{
               borderBottom: index < rows.length - 1 ? '1px solid var(--result-border-subtle)' : 'none',
-              background: selected ? 'var(--result-accent-soft)' : (hovered ? 'var(--result-surface-base)' : 'transparent'),
+              background: selected ? '#E1EDFF' : (hovered ? 'var(--result-surface-base)' : 'transparent'),
               boxShadow: selected
-                ? 'inset 3px 0 0 var(--result-accent-muted)'
+                ? 'inset 4px 0 0 var(--result-accent-strong), inset 0 0 0 1px rgba(49, 130, 246, 0.22)'
                 : (hovered ? 'inset 2px 0 0 var(--result-border-strong)' : 'none'),
               transition: 'background-color 0.12s ease, box-shadow 0.12s ease',
             }}
@@ -79,7 +79,13 @@ export default function HouseDecisionRows({ rows, onSelectStrategy }: HouseDecis
             >
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 7 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                  <span style={{ fontSize: 'var(--result-text-title)', fontWeight: 600, color: 'var(--result-text-body-color)' }}>
+                  <span
+                    style={{
+                      fontSize: 'var(--result-text-title)',
+                      fontWeight: selected ? 700 : 600,
+                      color: selected ? 'var(--result-accent-strong)' : 'var(--result-text-body-color)',
+                    }}
+                  >
                     {row.strategyLabel}
                   </span>
                   {row.isRecommended && (
@@ -110,7 +116,7 @@ export default function HouseDecisionRows({ rows, onSelectStrategy }: HouseDecis
                       aria-hidden
                       style={{
                         fontSize: 12,
-                        color: selected ? 'var(--result-accent-muted)' : (hovered ? 'var(--result-text-meta-color)' : 'var(--result-text-faint-color)'),
+                        color: selected ? 'var(--result-accent-strong)' : (hovered ? 'var(--result-text-meta-color)' : 'var(--result-text-faint-color)'),
                         fontWeight: 700,
                       }}
                     >
