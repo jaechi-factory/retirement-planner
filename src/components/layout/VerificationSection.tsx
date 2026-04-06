@@ -49,7 +49,7 @@ export default function VerificationSection({
         marginBottom: 24,
       }}
     >
-      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--ux-text-muted)', marginBottom: 10 }}>검증</div>
+      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--ux-text-muted)', marginBottom: 8 }}>검증</div>
 
       <div
         style={{
@@ -68,7 +68,7 @@ export default function VerificationSection({
         />
       </div>
 
-      <details style={{ marginTop: 12 }}>
+      <details style={{ marginTop: 10 }}>
         <summary
           style={{
             fontSize: 12,

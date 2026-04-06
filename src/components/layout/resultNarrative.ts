@@ -29,11 +29,11 @@ function buildTransitionLine(
     if (hasRealEstate && summary.propertyInterventionAge !== null) {
       return `${summary.propertyInterventionAge}세부터는 집을 담보로 대출받거나 팔아야 해요.`;
     }
-    return `${inputs.goal.lifeExpectancy}세까지 큰 부족 없이 이어져요.`;
+    return `${inputs.goal.lifeExpectancy}세까지 생활비가 부족하지 않아요.`;
   }
 
   if (hasRealEstate && summary.propertyInterventionAge !== null) {
-    return `${summary.propertyInterventionAge}세부터 집 대응이 필요하고, ${summary.failureAge}세부터는 생활비가 모자라요.`;
+    return `${summary.propertyInterventionAge}세부터 집을 담보로 대출받거나 팔아야 하고, ${summary.failureAge}세부터는 생활비가 모자라요.`;
   }
 
   return `${summary.failureAge}세부터 생활비가 모자라요.`;
@@ -82,11 +82,11 @@ export function buildResultNarrativeModel(params: {
 
   const incomeLine =
     inputs.status.annualIncome > 0
-      ? `은퇴 전에는 근로소득, 은퇴 후에는 연금 월 ${fmtKRW(pensionMonthly)}이 들어와요.`
-      : `근로소득 입력이 없어 은퇴 후에는 연금 월 ${fmtKRW(pensionMonthly)}만 들어와요.`;
+      ? `은퇴 뒤 고정 수입은 연금 월 ${fmtKRW(pensionMonthly)}이에요.`
+      : `은퇴 뒤 수입은 연금 월 ${fmtKRW(pensionMonthly)}만 잡았어요.`;
 
   const expenseLine =
-    `지출은 생활비·주거비·대출상환·자녀비를 합쳐 월 ${fmtKRW(inputs.goal.targetMonthly)} 기준으로 계산했어요.`;
+    `생활비 목표는 월 ${fmtKRW(inputs.goal.targetMonthly)}으로 계산했어요.`;
 
   const transitionLine = buildTransitionLine(summary, inputs, hasRealEstate);
 
