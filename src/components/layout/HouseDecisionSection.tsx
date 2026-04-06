@@ -30,14 +30,12 @@ export default function HouseDecisionSection({
   return (
     <section
       style={{
-        borderRadius: 14,
-        border: '1px solid var(--ux-border-strong)',
-        background: 'var(--ux-surface)',
-        padding: '16px 18px',
-        marginBottom: 14,
+        background: 'transparent',
+        padding: 'var(--result-space-3) 0',
+        marginBottom: 0,
       }}
     >
-      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--ux-text-muted)', marginBottom: 10 }}>
+      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--result-text-meta-color)', marginBottom: 8 }}>
         집 의사결정
       </div>
       <div style={{ fontSize: 'var(--result-text-meta)', color: 'var(--result-text-meta-color)', marginBottom: 'var(--result-space-2)' }}>

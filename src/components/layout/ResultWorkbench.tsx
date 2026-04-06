@@ -243,6 +243,8 @@ export default function ResultWorkbench() {
   const selectedPropertyStrategy = hasRealEstate
     ? chartStrategy
     : null;
+  const hasSelectableHouseRows = hasRealEstate && propertyOptions.some((option) => option.yearlyAggregates.length > 0);
+  const shouldRenderLinkedGroup = hasSelectableHouseRows;
 
   return (
     <div
@@ -260,27 +262,55 @@ export default function ResultWorkbench() {
 
       <InsightLinesSection lines={narrative.insightLines} />
 
-      <HouseDecisionSection
-        hasRealEstate={hasRealEstate}
-        propertyOptions={propertyOptions}
-        selectedStrategy={selectedStrategy}
-        lifeExpectancy={inputs.goal.lifeExpectancy}
-        onSelectStrategy={handleSelectStrategy}
-      />
+      {shouldRenderLinkedGroup ? (
+        <section
+          style={{
+            marginBottom: 'var(--result-space-5)',
+            padding: 'var(--result-space-2) 0',
+            borderTop: '1px solid var(--result-border-subtle)',
+            borderBottom: '1px solid var(--result-border-subtle)',
+            background: 'transparent',
+          }}
+        >
+          <HouseDecisionSection
+            hasRealEstate={hasRealEstate}
+            propertyOptions={propertyOptions}
+            selectedStrategy={selectedStrategy}
+            lifeExpectancy={inputs.goal.lifeExpectancy}
+            onSelectStrategy={handleSelectStrategy}
+          />
 
-      <VerificationSection
-        hasRealEstate={hasRealEstate}
-        chartRows={chartRows}
-        retirementAge={inputs.goal.retirementAge}
-        strategyLabel={chartLabel}
-        inputs={inputs}
-        summary={summary}
-        propertyOptions={propertyOptions}
-        assumptions={assumptions}
-        warnings={warnings}
-        timelineStrategyMode={timelineStrategyMode}
-        selectedPropertyStrategy={selectedPropertyStrategy}
-      />
+          <div style={{ borderTop: '1px solid var(--result-border-subtle)', margin: 'var(--result-space-1) 0' }} />
+
+          <VerificationSection
+            hasRealEstate={hasRealEstate}
+            chartRows={chartRows}
+            retirementAge={inputs.goal.retirementAge}
+            strategyLabel={chartLabel}
+            inputs={inputs}
+            summary={summary}
+            propertyOptions={propertyOptions}
+            assumptions={assumptions}
+            warnings={warnings}
+            timelineStrategyMode={timelineStrategyMode}
+            selectedPropertyStrategy={selectedPropertyStrategy}
+          />
+        </section>
+      ) : (
+        <VerificationSection
+          hasRealEstate={hasRealEstate}
+          chartRows={chartRows}
+          retirementAge={inputs.goal.retirementAge}
+          strategyLabel={chartLabel}
+          inputs={inputs}
+          summary={summary}
+          propertyOptions={propertyOptions}
+          assumptions={assumptions}
+          warnings={warnings}
+          timelineStrategyMode={timelineStrategyMode}
+          selectedPropertyStrategy={selectedPropertyStrategy}
+        />
+      )}
     </div>
   );
 }

@@ -38,8 +38,9 @@ export default function VerificationSection({
   selectedPropertyStrategy,
 }: VerificationSectionProps) {
   const filteredWarnings = warnings.filter((warning) => warning.severity !== 'info');
+  const sectionSuffix = ', 돈 흐름은 이렇게 바뀌어요';
   const sectionTitle = hasRealEstate
-    ? `${strategyLabel}, 돈 흐름은 이렇게 바뀌어요`
+    ? `${strategyLabel}${sectionSuffix}`
     : '입력한 조건 기준으로 돈 흐름을 확인해요';
   const sectionDescription = hasRealEstate
     ? '위에서 고른 전략 기준으로 계산했어요.'
@@ -48,22 +49,28 @@ export default function VerificationSection({
   return (
     <section
       style={{
-        borderRadius: 12,
-        border: '1px solid var(--result-border-subtle)',
+        border: 'none',
         background: 'transparent',
-        padding: 'var(--result-space-3)',
-        marginBottom: 'var(--result-space-5)',
+        padding: 'var(--result-space-3) 0 0',
+        marginBottom: 0,
       }}
     >
       <div
         style={{
           fontSize: 'var(--result-text-body)',
           fontWeight: 600,
-          color: 'var(--result-text-meta-color)',
+          color: 'var(--result-text-body-color)',
           marginBottom: 'var(--result-space-1)',
         }}
       >
-        {sectionTitle}
+        {hasRealEstate ? (
+          <>
+            <span style={{ color: 'var(--result-accent-muted)', fontWeight: 700 }}>{strategyLabel}</span>
+            <span style={{ color: 'var(--result-text-meta-color)' }}>{sectionSuffix}</span>
+          </>
+        ) : (
+          sectionTitle
+        )}
       </div>
       <div
         style={{
