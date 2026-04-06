@@ -152,6 +152,8 @@ export default function ResultWorkbench() {
         scrollbarWidth: 'thin',
         borderLeft: '1px solid var(--ux-border-strong)',
         background: 'var(--ux-surface-subtle)',
+        position: 'relative',
+        zIndex: 1,
       }}
     >
       {/* 1. 현재 상태 */}
