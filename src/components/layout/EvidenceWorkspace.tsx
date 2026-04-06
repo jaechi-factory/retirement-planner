@@ -96,7 +96,6 @@ export default function EvidenceWorkspace({
           borderRadius: 12,
           border: '1px solid var(--result-border-soft)',
           background: 'var(--result-surface-base)',
-          overflow: 'hidden',
           marginBottom: 'var(--result-space-2)',
         }}
       >
