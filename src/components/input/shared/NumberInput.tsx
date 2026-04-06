@@ -58,7 +58,7 @@ export default function NumberInput({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0 }}>
-      <label style={{ fontSize: 13, color: 'var(--tds-gray-500)', fontWeight: 500 }}>
+      <label style={{ fontSize: 13, color: 'var(--tds-gray-500)', fontWeight: 600 }}>
         {label}
       </label>
       <div

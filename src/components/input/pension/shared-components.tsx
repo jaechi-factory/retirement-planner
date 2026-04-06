@@ -29,7 +29,7 @@ export function TextBtn({ onClick, children }: { onClick: () => void; children: 
 
 export function ModeLabel({ text }: { text: string }) {
   return (
-    <span style={{ fontSize: 11, color: 'var(--tds-gray-400)', fontWeight: 500 }}>
+    <span style={{ fontSize: 11, color: 'var(--tds-gray-400)', fontWeight: 600 }}>
       {text}
     </span>
   );

@@ -111,7 +111,7 @@ function TooltipRow({ label, value, color, bold }: { label: string; value: numbe
   return (
     <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
       <span style={{ color: 'var(--tds-gray-500)' }}>{label}</span>
-      <span style={{ fontWeight: bold ? 700 : 500, color }}>{fmt만(value)}</span>
+      <span style={{ fontWeight: bold ? 700 : 600, color }}>{fmt만(value)}</span>
     </div>
   );
 }

@@ -56,7 +56,7 @@ function RepaymentTypeSelector({
           >
             <div style={{
               fontSize: 12,
-              fontWeight: isSelected ? 700 : 500,
+              fontWeight: isSelected ? 700 : 600,
               color: isSelected ? 'var(--tds-blue-500)' : 'var(--tds-gray-700)',
               lineHeight: 1.3,
               whiteSpace: 'pre-wrap',
@@ -159,7 +159,7 @@ export default function DebtSection() {
 
               {/* 상환방식 선택 */}
               <div style={{ marginBottom: 10 }}>
-                <p style={{ fontSize: 12, color: 'var(--tds-gray-500)', fontWeight: 500, margin: '0 0 8px 0' }}>
+                <p style={{ fontSize: 12, color: 'var(--tds-gray-500)', fontWeight: 600, margin: '0 0 8px 0' }}>
                   상환방식
                 </p>
                 <RepaymentTypeSelector

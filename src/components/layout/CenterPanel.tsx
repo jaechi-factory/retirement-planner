@@ -350,7 +350,7 @@ export default function CenterPanel() {
                 whiteSpace: 'nowrap',
               }}>
                 {liquidAsset.toLocaleString('ko-KR')}만원
-                <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--tds-gray-400)', marginLeft: 4 }}>
+                <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--tds-gray-400)', marginLeft: 4 }}>
                   ({liquidPct}%)
                 </span>
               </span>

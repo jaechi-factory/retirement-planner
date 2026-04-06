@@ -169,7 +169,7 @@ function CustomTooltip({
       <div style={{ fontWeight: 700, marginBottom: 8, color: 'var(--ux-text-strong)' }}>
         {label}세
         {isRetirementYear && (
-          <span style={{ marginLeft: 6, fontSize: 14, color: 'var(--ux-text-subtle)', fontWeight: 500 }}>
+          <span style={{ marginLeft: 6, fontSize: 14, color: 'var(--ux-text-subtle)', fontWeight: 600 }}>
             은퇴
           </span>
         )}
