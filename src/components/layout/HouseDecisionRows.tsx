@@ -16,11 +16,19 @@ function MetricCell({
   selected: boolean;
 }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-      <span style={{ fontSize: 'var(--result-text-meta)', color: 'var(--result-text-faint-color)' }}>{label}</span>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
       <span
         style={{
-          fontSize: 'var(--result-text-body)',
+          fontSize: 'var(--result-text-meta)',
+          color: 'var(--result-text-faint-color)',
+          lineHeight: 1.45,
+        }}
+      >
+        {label}
+      </span>
+      <span
+        style={{
+          fontSize: 'var(--result-text-title)',
           fontWeight: selected ? 600 : 700,
           color: selected ? 'var(--result-text-body-color)' : 'var(--result-text-value-strong-color)',
           lineHeight: 1.35,
@@ -39,7 +47,7 @@ export default function HouseDecisionRows({ rows, onSelectStrategy }: HouseDecis
     <div
       style={{
         border: '1px solid var(--result-border-subtle)',
-        borderRadius: 10,
+        borderRadius: 12,
         overflow: 'hidden',
         background: 'transparent',
       }}
@@ -74,11 +82,11 @@ export default function HouseDecisionRows({ rows, onSelectStrategy }: HouseDecis
                 textAlign: 'left',
                 cursor: disabled ? 'not-allowed' : 'pointer',
                 opacity: disabled ? 0.65 : 1,
-                padding: '9px 10px',
+                padding: '12px 12px',
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 7 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 9 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
                   <span
                     style={{
                       fontSize: 'var(--result-text-title)',
@@ -91,11 +99,11 @@ export default function HouseDecisionRows({ rows, onSelectStrategy }: HouseDecis
                   {row.isRecommended && (
                     <span
                       style={{
-                        fontSize: 9,
+                        fontSize: 12,
                         fontWeight: 600,
                         color: 'var(--result-text-faint-color)',
                         letterSpacing: '0.01em',
-                        padding: '1px 4px',
+                        padding: '1px 6px',
                         borderRadius: 999,
                         border: '1px solid var(--result-border-subtle)',
                         background: 'var(--result-surface-soft)',
@@ -107,7 +115,7 @@ export default function HouseDecisionRows({ rows, onSelectStrategy }: HouseDecis
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                   {disabled && (
-                    <span style={{ fontSize: 'var(--result-text-meta)', color: 'var(--result-text-faint-color)' }}>
+                    <span style={{ fontSize: 'var(--result-text-meta)', color: 'var(--result-text-faint-color)', lineHeight: 1.4 }}>
                       계산 불가
                     </span>
                   )}
@@ -115,7 +123,7 @@ export default function HouseDecisionRows({ rows, onSelectStrategy }: HouseDecis
                     <span
                       aria-hidden
                       style={{
-                        fontSize: 12,
+                        fontSize: 14,
                         color: selected ? 'var(--result-accent-strong)' : (hovered ? 'var(--result-text-meta-color)' : 'var(--result-text-faint-color)'),
                         fontWeight: 700,
                       }}
@@ -137,10 +145,10 @@ export default function HouseDecisionRows({ rows, onSelectStrategy }: HouseDecis
               <div
                 style={{
                   borderTop: '1px solid var(--result-border-subtle)',
-                  padding: '6px 10px 8px',
+                  padding: '8px 12px 10px',
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: 3,
+                  gap: 4,
                   fontSize: 'var(--result-text-meta)',
                   color: 'var(--result-text-meta-color)',
                   lineHeight: 1.55,
@@ -155,9 +163,10 @@ export default function HouseDecisionRows({ rows, onSelectStrategy }: HouseDecis
               <div
                 style={{
                   borderTop: '1px solid var(--result-border-subtle)',
-                  padding: '6px 10px',
+                  padding: '8px 12px',
                   fontSize: 'var(--result-text-meta)',
                   color: 'var(--result-text-faint-color)',
+                  lineHeight: 1.5,
                 }}
               >
                 {row.disabledReason}

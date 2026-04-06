@@ -35,10 +35,25 @@ export default function HouseDecisionSection({
         marginBottom: 0,
       }}
     >
-      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--result-text-body-color)', marginBottom: 8 }}>
+      <div
+        style={{
+          fontSize: 'var(--result-text-title)',
+          fontWeight: 700,
+          color: 'var(--result-text-body-color)',
+          marginBottom: 'var(--result-space-2)',
+          lineHeight: 1.45,
+        }}
+      >
         집 의사결정
       </div>
-      <div style={{ fontSize: 'var(--result-text-meta)', color: 'var(--result-text-meta-color)', marginBottom: 'var(--result-space-2)' }}>
+      <div
+        style={{
+          fontSize: 'var(--result-text-meta)',
+          color: 'var(--result-text-meta-color)',
+          marginBottom: 'var(--result-space-3)',
+          lineHeight: 1.5,
+        }}
+      >
         전략을 누르면 아래 결과가 바뀌어요.
       </div>
       <HouseDecisionRows rows={rows} onSelectStrategy={onSelectStrategy} />

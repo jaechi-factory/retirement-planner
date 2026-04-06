@@ -55,11 +55,11 @@
   --result-space-5: 24px;
   --result-space-6: 32px;
 
-  --result-text-display: 30px;
-  --result-text-title: 14px;
-  --result-text-body: 13px;
-  --result-text-meta: 11px;
-  --result-text-metric: 18px;
+  --result-text-display: 32px;
+  --result-text-title: 16px;
+  --result-text-body: 15px;
+  --result-text-meta: 14px;
+  --result-text-metric: 20px;
 
   --result-text-strong-color: var(--ux-text-strong);
   --result-text-body-color: var(--ux-text-base);

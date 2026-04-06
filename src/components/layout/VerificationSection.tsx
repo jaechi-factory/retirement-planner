@@ -9,6 +9,7 @@ import type {
 } from '../../types/calculationV2';
 import type { PlannerInputs } from '../../types/inputs';
 import { extractKeyDecisionEvents } from '../../engine/timelineBuilder';
+import { CompactLifetimeTimeline } from '../result/v3/LifetimeTimeline';
 
 interface VerificationSectionProps {
   hasRealEstate: boolean;
@@ -65,10 +66,10 @@ export default function VerificationSection({
     >
       <div
         style={{
-          fontSize: 'var(--result-text-body)',
+          fontSize: 'var(--result-text-title)',
           fontWeight: 600,
           color: 'var(--result-text-body-color)',
-          marginBottom: 'var(--result-space-1)',
+          marginBottom: 'var(--result-space-2)',
           display: 'flex',
           alignItems: 'center',
           gap: 'var(--result-space-2)',
@@ -87,6 +88,7 @@ export default function VerificationSection({
                 borderRadius: 999,
                 padding: '1px 8px',
                 lineHeight: 1.4,
+                fontSize: 'var(--result-text-meta)',
               }}
             >
               {strategyLabel}
@@ -101,8 +103,9 @@ export default function VerificationSection({
         style={{
           fontSize: 'var(--result-text-meta)',
           color: 'var(--result-text-meta-color)',
-          marginBottom: 'var(--result-space-2)',
+          marginBottom: 'var(--result-space-3)',
           paddingLeft: 'calc(var(--result-space-2) + 3px)',
+          lineHeight: 1.55,
         }}
       >
         {sectionDescription}
@@ -129,7 +132,7 @@ export default function VerificationSection({
         <summary
           style={{
             fontSize: 'var(--result-text-meta)',
-            fontWeight: 500,
+            fontWeight: 600,
             color: 'var(--result-text-faint-color)',
             cursor: 'pointer',
             userSelect: 'none',
@@ -137,25 +140,14 @@ export default function VerificationSection({
         >
           나이별 주요 이벤트
         </summary>
-        <div style={{ marginTop: 'var(--result-space-2)', paddingLeft: 'var(--result-space-1)', display: 'flex', flexDirection: 'column', gap: 6 }}>
-          {keyEvents.length > 0 ? (
-            keyEvents.map((event) => (
-              <div key={`${event.kind}-${event.age}`}>
-                <div style={{ fontSize: 'var(--result-text-body)', color: 'var(--result-text-body-color)', lineHeight: 1.5 }}>
-                  {event.text}
-                </div>
-                {event.note && (
-                  <div style={{ fontSize: 'var(--result-text-meta)', color: 'var(--result-text-meta-color)', lineHeight: 1.5, marginTop: 2 }}>
-                    {event.note}
-                  </div>
-                )}
-              </div>
-            ))
-          ) : (
-            <div style={{ fontSize: 'var(--result-text-meta)', color: 'var(--result-text-meta-color)', lineHeight: 1.5 }}>
-              표시할 주요 이벤트가 없어요.
-            </div>
-          )}
+        <div
+          style={{
+            marginTop: 'var(--result-space-2)',
+            paddingTop: 'var(--result-space-2)',
+            borderTop: '1px solid var(--result-border-subtle)',
+          }}
+        >
+          <CompactLifetimeTimeline events={keyEvents} />
         </div>
       </details>
 
@@ -163,7 +155,7 @@ export default function VerificationSection({
         <summary
           style={{
             fontSize: 'var(--result-text-meta)',
-            fontWeight: 500,
+            fontWeight: 600,
             color: 'var(--result-text-faint-color)',
             cursor: 'pointer',
             userSelect: 'none',
@@ -184,23 +176,23 @@ export default function VerificationSection({
               <div
                 style={{
                   fontSize: 'var(--result-text-meta)',
-                  fontWeight: 500,
+                  fontWeight: 600,
                   color: 'var(--result-text-faint-color)',
                   marginBottom: 'var(--result-space-2)',
                 }}
               >
                 주요 가정
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <ul style={{ margin: 0, paddingLeft: '1.2em', display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {assumptions.map((assumption, index) => (
-                  <div
+                  <li
                     key={`${assumption.label}-${index}`}
                     style={{ fontSize: 'var(--result-text-meta)', color: 'var(--result-text-meta-color)', lineHeight: 1.6 }}
                   >
                     {assumption.label}: {assumption.value}
-                  </div>
+                  </li>
                 ))}
-              </div>
+              </ul>
             </div>
           )}
 
@@ -209,16 +201,16 @@ export default function VerificationSection({
               <div
                 style={{
                   fontSize: 'var(--result-text-meta)',
-                  fontWeight: 500,
+                  fontWeight: 600,
                   color: 'var(--result-text-faint-color)',
                   marginBottom: 'var(--result-space-2)',
                 }}
               >
                 주의 사항
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {filteredWarnings.map((warning, index) => (
-                  <div
+                  <li
                     key={index}
                     style={{
                       borderRadius: 8,
@@ -231,9 +223,9 @@ export default function VerificationSection({
                     }}
                   >
                     {warning.message}
-                  </div>
+                  </li>
                 ))}
-              </div>
+              </ul>
             </div>
           )}
         </div>

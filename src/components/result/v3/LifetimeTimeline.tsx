@@ -2,7 +2,13 @@ import type { YearlyAggregateV2, CalculationResultV2, PropertyOptionResult } fro
 import type { PlannerInputs } from '../../../types/inputs';
 import { fmtKRW } from '../../../utils/format';
 import { extractEvents, buildGroupedRows } from '../../../engine/timelineBuilder';
-import type { EventType, TimelineEvent, GroupedRow } from '../../../engine/timelineBuilder';
+import type {
+  EventType,
+  TimelineEvent,
+  GroupedRow,
+  KeyDecisionEvent,
+  KeyDecisionEventKind,
+} from '../../../engine/timelineBuilder';
 
 interface LifetimeTimelineProps {
   detailYearlyAggregates: YearlyAggregateV2[];
@@ -121,6 +127,101 @@ function getEventStyle(type: EventType): { dotColor: string; headerColor: string
     case 'failure':
       return { dotColor: '#C0392B', headerColor: 'var(--tds-gray-800)' };
   }
+}
+
+function getKeyEventStyle(kind: KeyDecisionEventKind): { dotColor: string; textColor: string } {
+  switch (kind) {
+    case 'financial_exhaustion_start':
+    case 'lifestyle_shortfall_start':
+      return { dotColor: 'var(--ux-status-negative)', textColor: 'var(--result-text-body-color)' };
+    case 'property_intervention_start':
+      return { dotColor: 'var(--result-accent-strong)', textColor: 'var(--result-text-body-color)' };
+    default:
+      return { dotColor: 'var(--result-text-meta-color)', textColor: 'var(--result-text-body-color)' };
+  }
+}
+
+interface CompactLifetimeTimelineProps {
+  events: KeyDecisionEvent[];
+  emptyText?: string;
+}
+
+export function CompactLifetimeTimeline({
+  events,
+  emptyText = '표시할 주요 이벤트가 없어요.',
+}: CompactLifetimeTimelineProps) {
+  if (events.length === 0) {
+    return (
+      <div style={{ fontSize: 'var(--result-text-meta)', color: 'var(--result-text-meta-color)', lineHeight: 1.55 }}>
+        {emptyText}
+      </div>
+    );
+  }
+
+  return (
+    <ul
+      style={{
+        margin: 0,
+        padding: 0,
+        listStyle: 'none',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 0,
+      }}
+    >
+      {events.map((event, index) => {
+        const style = getKeyEventStyle(event.kind);
+        const isLast = index === events.length - 1;
+        return (
+          <li key={`${event.kind}-${event.age}`} style={{ display: 'flex', gap: 'var(--result-space-3)', paddingLeft: 2 }}>
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                width: 12,
+                flexShrink: 0,
+              }}
+            >
+              <span
+                style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: '50%',
+                  background: style.dotColor,
+                  marginTop: 6,
+                  display: 'inline-block',
+                }}
+              />
+              {!isLast && (
+                <span
+                  style={{
+                    width: 1,
+                    flex: 1,
+                    minHeight: 22,
+                    marginTop: 4,
+                    background: 'var(--result-border-subtle)',
+                    display: 'inline-block',
+                  }}
+                />
+              )}
+            </div>
+
+            <div style={{ paddingBottom: isLast ? 0 : 'var(--result-space-3)', flex: 1 }}>
+              <div style={{ fontSize: 'var(--result-text-body)', color: style.textColor, lineHeight: 1.55 }}>
+                {event.text}
+              </div>
+              {event.note && (
+                <div style={{ fontSize: 'var(--result-text-meta)', color: 'var(--result-text-meta-color)', lineHeight: 1.55, marginTop: 2 }}>
+                  {event.note}
+                </div>
+              )}
+            </div>
+          </li>
+        );
+      })}
+    </ul>
+  );
 }
 
 // ── 메인 컴포넌트 ──────────────────────────────────────────────────────────────

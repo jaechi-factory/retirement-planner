@@ -112,7 +112,7 @@ function CustomTooltip({
         border: '1px solid var(--ux-border-strong)',
         borderRadius: 10,
         padding: '10px 12px',
-        fontSize: 12,
+        fontSize: 14,
         minWidth: 220,
         boxShadow: '0 10px 24px rgba(25, 31, 40, 0.12)',
       }}
@@ -120,7 +120,7 @@ function CustomTooltip({
       <div style={{ fontWeight: 700, marginBottom: 8, color: 'var(--ux-text-strong)' }}>
         {label}세
         {isRetirementYear && (
-          <span style={{ marginLeft: 6, fontSize: 10, color: 'var(--ux-text-subtle)', fontWeight: 500 }}>
+          <span style={{ marginLeft: 6, fontSize: 14, color: 'var(--ux-text-subtle)', fontWeight: 500 }}>
             은퇴
           </span>
         )}
@@ -161,17 +161,17 @@ function CustomTooltip({
       </div>
 
       <div style={{ marginTop: 8, borderTop: '1px solid var(--ux-border)', paddingTop: 8 }}>
-        <div style={{ fontSize: 11, color: 'var(--ux-text-subtle)', marginBottom: 4 }}>수입 내역</div>
+        <div style={{ fontSize: 14, color: 'var(--ux-text-subtle)', marginBottom: 4 }}>수입 내역</div>
         <TooltipRow label="근로소득" value={monthlySalary} />
         <TooltipRow label="연금소득" value={monthlyPension} />
 
-        <div style={{ fontSize: 11, color: 'var(--ux-text-subtle)', margin: '8px 0 4px' }}>지출 내역</div>
+        <div style={{ fontSize: 14, color: 'var(--ux-text-subtle)', margin: '8px 0 4px' }}>지출 내역</div>
         <TooltipRow label="생활비" value={monthlyLivingExpense} />
         <TooltipRow label="주거비(월세)" value={monthlyRent} />
         <TooltipRow label="부채상환" value={monthlyDebtService} />
         <TooltipRow label="자녀비" value={monthlyChildExpense} />
 
-        <div style={{ fontSize: 11, color: 'var(--ux-text-subtle)', margin: '8px 0 4px' }}>자산 내역</div>
+        <div style={{ fontSize: 14, color: 'var(--ux-text-subtle)', margin: '8px 0 4px' }}>자산 내역</div>
         {assetRows.map((row) => (
           <div
             key={row.name}
@@ -334,14 +334,14 @@ export default function AssetBalanceChart({
           <XAxis
             dataKey="age"
             tickFormatter={(value) => `${value}세`}
-            tick={{ fontSize: 10, fill: 'var(--ux-text-subtle)' }}
+            tick={{ fontSize: 14, fill: 'var(--ux-text-subtle)' }}
             tickLine={false}
             axisLine={false}
             interval="preserveStartEnd"
           />
           <YAxis
             tickFormatter={fmtKRWAxis}
-            tick={{ fontSize: 10, fill: 'var(--ux-text-subtle)' }}
+            tick={{ fontSize: 14, fill: 'var(--ux-text-subtle)' }}
             tickLine={false}
             axisLine={false}
             width={44}
@@ -372,7 +372,7 @@ export default function AssetBalanceChart({
               />
             )}
           />
-          <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
+          <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 14, paddingTop: 8 }} />
 
           {hasRealEstate && (
             <Area type="monotone" dataKey="집 자산" stroke="var(--ux-text-subtle)" strokeWidth={1.4} fill="url(#propGrad)" />
@@ -392,7 +392,7 @@ export default function AssetBalanceChart({
         </AreaChart>
       </ResponsiveContainer>
 
-      <div style={{ fontSize: 11, color: 'var(--ux-text-subtle)', marginTop: 6, lineHeight: 1.6 }}>
+      <div style={{ fontSize: 14, color: 'var(--ux-text-subtle)', marginTop: 6, lineHeight: 1.6 }}>
         {hasRealEstate ? `선택 전략: ${strategyLabel}` : `기준: ${strategyLabel}`} / 목표 월 {targetMonthly}만원 / 은퇴 {retirementAge}세
         <br />
         점에 마우스를 올리면 그 나이의 수입·지출·자산을 볼 수 있어요.
