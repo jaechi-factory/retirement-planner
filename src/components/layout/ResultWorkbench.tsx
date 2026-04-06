@@ -87,17 +87,17 @@ function RecommendationModeSwitch({
 }) {
   const buttonStyle = (active: boolean): CSSProperties => ({
     borderRadius: 999,
-    border: `1px solid ${active ? 'var(--ux-accent)' : 'var(--ux-border-strong)'}`,
-    background: active ? 'var(--ux-accent-soft)' : 'var(--ux-surface)',
-    color: active ? 'var(--ux-accent)' : 'var(--ux-text-muted)',
-    fontSize: 12,
-    fontWeight: 700,
-    padding: '8px 12px',
+    border: `1px solid ${active ? 'var(--result-accent-muted)' : 'var(--result-border-soft)'}`,
+    background: active ? 'var(--result-accent-soft)' : 'transparent',
+    color: active ? 'var(--result-accent-muted)' : 'var(--ux-text-subtle)',
+    fontSize: 'var(--result-text-meta)',
+    fontWeight: 600,
+    padding: '6px 11px',
     cursor: 'pointer',
   });
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--result-space-2)', marginBottom: 'var(--result-space-4)' }}>
       <button type="button" style={buttonStyle(mode === 'keep_priority')} onClick={() => onChange('keep_priority')}>
         안전 우선
       </button>
@@ -126,18 +126,27 @@ function ReportConclusionSection({
   return (
     <section
       style={{
-        borderRadius: 14,
-        border: '1px solid var(--ux-border-strong)',
-        background: 'var(--ux-surface)',
-        padding: '20px 22px',
-        marginBottom: 12,
+        borderRadius: 16,
+        border: '1px solid var(--result-border-soft)',
+        background: 'var(--result-surface-base)',
+        padding: 'var(--result-space-5)',
+        marginBottom: 'var(--result-space-4)',
       }}
     >
-      <div style={{ fontSize: 11, color: 'var(--ux-text-subtle)', marginBottom: 6 }}>
+      <div style={{ fontSize: 'var(--result-text-meta)', color: 'var(--ux-text-subtle)', marginBottom: 'var(--result-space-2)' }}>
         {hasRealEstate ? '추천 전략 기준' : '무주택 기준'} · {RECOMMENDATION_MODE_LABELS[mode]}
       </div>
 
-      <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--ux-text-strong)', lineHeight: 1.4, marginBottom: 14 }}>
+      <div
+        style={{
+          fontSize: 'var(--result-text-display)',
+          fontWeight: 800,
+          color: 'var(--ux-text-strong)',
+          lineHeight: 1.26,
+          letterSpacing: '-0.02em',
+          marginBottom: 'var(--result-space-5)',
+        }}
+      >
         {model.headline}
       </div>
 
@@ -145,35 +154,37 @@ function ReportConclusionSection({
         style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
-          gap: 10,
-          marginBottom: 12,
+          gap: 'var(--result-space-2)',
+          marginBottom: 'var(--result-space-4)',
         }}
       >
         {model.metrics.map((metric) => (
           <div
             key={metric.label}
             style={{
-              borderRadius: 10,
-              border: '1px solid var(--ux-border)',
-              background: 'var(--ux-surface-muted)',
-              padding: '10px 12px',
-              minHeight: 72,
+              borderRadius: 8,
+              border: '1px solid var(--result-border-soft)',
+              background: 'var(--result-surface-metric)',
+              padding: 'var(--result-space-3)',
+              minHeight: 64,
             }}
           >
-            <div style={{ fontSize: 11, color: 'var(--ux-text-subtle)', marginBottom: 4 }}>{metric.label}</div>
-            <div style={{ fontSize: 15, fontWeight: 800, color: metricToneColor(metric.tone), lineHeight: 1.4 }}>
+            <div style={{ fontSize: 'var(--result-text-meta)', color: 'var(--ux-text-subtle)', marginBottom: 'var(--result-space-1)' }}>
+              {metric.label}
+            </div>
+            <div style={{ fontSize: 'var(--result-text-metric)', fontWeight: 700, color: metricToneColor(metric.tone), lineHeight: 1.3 }}>
               {metric.value}
             </div>
           </div>
         ))}
       </div>
 
-      <div style={{ borderTop: '1px solid var(--ux-border)', paddingTop: 10 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-          <span style={{ fontSize: 12, color: 'var(--ux-text-subtle)' }}>권장 전략</span>
-          <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--ux-text-strong)' }}>{model.recommendedStrategyLabel}</span>
+      <div style={{ borderTop: '1px solid var(--result-border-soft)', paddingTop: 'var(--result-space-3)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--result-space-2)', marginBottom: 'var(--result-space-1)' }}>
+          <span style={{ fontSize: 'var(--result-text-meta)', color: 'var(--ux-text-subtle)' }}>권장 전략</span>
+          <span style={{ fontSize: 'var(--result-text-title)', fontWeight: 700, color: 'var(--ux-text-strong)' }}>{model.recommendedStrategyLabel}</span>
         </div>
-        <div style={{ fontSize: 13, color: 'var(--ux-text-base)', lineHeight: 1.6 }}>{model.recommendationReasonLine}</div>
+        <div style={{ fontSize: 'var(--result-text-body)', color: 'var(--ux-text-base)', lineHeight: 1.55 }}>{model.recommendationReasonLine}</div>
       </div>
     </section>
   );
@@ -306,7 +317,7 @@ export default function ResultWorkbench() {
         flex: 1,
         height: 'calc(100vh - 56px)',
         overflowY: 'auto',
-        padding: '28px 24px 56px',
+        padding: '32px 28px 64px',
         scrollbarWidth: 'thin',
         borderLeft: '1px solid var(--ux-border-strong)',
         background: 'var(--ux-surface-subtle)',

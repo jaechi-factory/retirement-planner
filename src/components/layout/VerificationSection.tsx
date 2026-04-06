@@ -42,20 +42,22 @@ export default function VerificationSection({
   return (
     <section
       style={{
-        borderRadius: 14,
-        border: '1px solid var(--ux-border-strong)',
-        background: 'var(--ux-surface)',
-        padding: '16px 18px',
-        marginBottom: 24,
+        borderRadius: 12,
+        border: '1px solid var(--result-border-soft)',
+        background: 'transparent',
+        padding: 'var(--result-space-4)',
+        marginBottom: 'var(--result-space-5)',
       }}
     >
-      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--ux-text-muted)', marginBottom: 8 }}>검증</div>
+      <div style={{ fontSize: 'var(--result-text-meta)', fontWeight: 600, color: 'var(--ux-text-subtle)', marginBottom: 'var(--result-space-2)' }}>
+        검증
+      </div>
 
       <div
         style={{
-          borderRadius: 12,
-          border: '1px solid var(--ux-border)',
-          background: 'var(--ux-surface-muted)',
+          borderRadius: 10,
+          border: '1px solid var(--result-border-soft)',
+          background: 'var(--result-surface-base)',
           padding: '12px 12px 10px',
         }}
       >
@@ -68,12 +70,12 @@ export default function VerificationSection({
         />
       </div>
 
-      <details style={{ marginTop: 10 }}>
+      <details style={{ marginTop: 'var(--result-space-2)' }}>
         <summary
           style={{
-            fontSize: 12,
-            fontWeight: 700,
-            color: 'var(--ux-accent)',
+            fontSize: 'var(--result-text-meta)',
+            fontWeight: 600,
+            color: 'var(--ux-text-muted)',
             cursor: 'pointer',
             userSelect: 'none',
           }}
@@ -92,12 +94,12 @@ export default function VerificationSection({
         </div>
       </details>
 
-      <details style={{ marginTop: 10 }}>
+      <details style={{ marginTop: 'var(--result-space-2)' }}>
         <summary
           style={{
-            fontSize: 12,
-            fontWeight: 700,
-            color: 'var(--ux-accent)',
+            fontSize: 'var(--result-text-meta)',
+            fontWeight: 600,
+            color: 'var(--ux-text-muted)',
             cursor: 'pointer',
             userSelect: 'none',
           }}
@@ -105,19 +107,21 @@ export default function VerificationSection({
           가정과 주의 보기
         </summary>
 
-        <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--ux-border)' }}>
+        <div style={{ marginTop: 'var(--result-space-2)', paddingTop: 'var(--result-space-2)', borderTop: '1px solid var(--result-border-soft)' }}>
           {hasRealEstate && (
-            <div style={{ marginBottom: 12 }}>
+            <div style={{ marginBottom: 'var(--result-space-3)' }}>
               <PropertyAssetChart rows={chartRows} retirementAge={retirementAge} />
             </div>
           )}
 
           {assumptions.length > 0 && (
-            <div style={{ marginBottom: filteredWarnings.length > 0 ? 10 : 0 }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--ux-text-muted)', marginBottom: 8 }}>주요 가정</div>
+            <div style={{ marginBottom: filteredWarnings.length > 0 ? 'var(--result-space-2)' : 0 }}>
+              <div style={{ fontSize: 'var(--result-text-meta)', fontWeight: 600, color: 'var(--ux-text-subtle)', marginBottom: 'var(--result-space-2)' }}>
+                주요 가정
+              </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {assumptions.map((assumption, index) => (
-                  <div key={`${assumption.label}-${index}`} style={{ fontSize: 12, color: 'var(--ux-text-base)', lineHeight: 1.6 }}>
+                  <div key={`${assumption.label}-${index}`} style={{ fontSize: 'var(--result-text-meta)', color: 'var(--ux-text-muted)', lineHeight: 1.6 }}>
                     {assumption.label}: {assumption.value}
                   </div>
                 ))}
@@ -127,7 +131,9 @@ export default function VerificationSection({
 
           {filteredWarnings.length > 0 && (
             <div>
-              <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--ux-text-muted)', marginBottom: 8 }}>주의 사항</div>
+              <div style={{ fontSize: 'var(--result-text-meta)', fontWeight: 600, color: 'var(--ux-text-subtle)', marginBottom: 'var(--result-space-2)' }}>
+                주의 사항
+              </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {filteredWarnings.map((warning, index) => (
                   <div
@@ -136,8 +142,8 @@ export default function VerificationSection({
                       borderRadius: 8,
                       border: `1px solid ${warning.severity === 'critical' ? 'var(--ux-status-negative-soft)' : 'var(--ux-status-warning-soft)'}`,
                       background: warning.severity === 'critical' ? 'var(--ux-status-negative-bg)' : 'var(--ux-status-warning-bg)',
-                      color: 'var(--ux-text-base)',
-                      fontSize: 12,
+                      color: 'var(--ux-text-muted)',
+                      fontSize: 'var(--result-text-meta)',
                       lineHeight: 1.6,
                       padding: '8px 10px',
                     }}

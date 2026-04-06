@@ -6,23 +6,21 @@ export default function InsightLinesSection({ lines }: InsightLinesSectionProps)
   return (
     <section
       style={{
-        borderRadius: 14,
-        border: '1px solid var(--ux-border-strong)',
-        background: 'var(--ux-surface)',
-        padding: '14px 16px',
-        marginBottom: 14,
+        marginBottom: 'var(--result-space-5)',
         display: 'flex',
         flexDirection: 'column',
-        gap: 8,
+        gap: 0,
       }}
     >
       {lines.map((line, index) => (
         <div
           key={`insight-line-${index}`}
           style={{
-            fontSize: 13,
+            fontSize: 'var(--result-text-body)',
             lineHeight: 1.6,
             color: 'var(--ux-text-base)',
+            padding: 'var(--result-space-2) 0',
+            borderBottom: index < lines.length - 1 ? '1px solid var(--result-border-soft)' : 'none',
           }}
         >
           {line}
