@@ -44,6 +44,25 @@ export interface GroupedRow {
   avgMonthlyExpense: number;
 }
 
+export type KeyDecisionEventKind =
+  | 'retirement_start'
+  | 'pension_public_start'
+  | 'pension_retirement_start'
+  | 'pension_retirement_end'
+  | 'pension_private_start'
+  | 'pension_private_end'
+  | 'financial_exhaustion_start'
+  | 'property_intervention_start'
+  | 'lifestyle_shortfall_start'
+  | 'child_expense_end';
+
+export interface KeyDecisionEvent {
+  kind: KeyDecisionEventKind;
+  age: number;
+  text: string;
+  note?: string;
+}
+
 // ── 이벤트 추출 ───────────────────────────────────────────────────────────────
 
 export function extractEvents(
@@ -249,6 +268,153 @@ export function extractEvents(
 
   events.sort((a, b) => a.age - b.age);
   return events.filter((e) => e.age <= lifeExpectancy);
+}
+
+function eventPriority(kind: KeyDecisionEventKind): number {
+  switch (kind) {
+    case 'retirement_start':
+      return 10;
+    case 'pension_public_start':
+      return 20;
+    case 'pension_retirement_start':
+      return 30;
+    case 'pension_private_start':
+      return 40;
+    case 'pension_retirement_end':
+      return 50;
+    case 'pension_private_end':
+      return 60;
+    case 'child_expense_end':
+      return 70;
+    case 'financial_exhaustion_start':
+      return 80;
+    case 'property_intervention_start':
+      return 90;
+    case 'lifestyle_shortfall_start':
+      return 100;
+  }
+}
+
+export function extractKeyDecisionEvents(
+  aggregates: YearlyAggregateV2[],
+  summary: CalculationResultV2['summary'],
+  propertyOptions: PropertyOptionResult[],
+  inputs: PlannerInputs,
+  timelineStrategyMode: 'recommended' | 'selected' = 'recommended',
+  selectedPropertyStrategy: PropertyOptionResult['strategy'] | null = null,
+): KeyDecisionEvent[] {
+  const { retirementAge, lifeExpectancy } = inputs.goal;
+  const timelineEvents = extractEvents(
+    aggregates,
+    summary,
+    propertyOptions,
+    inputs,
+    timelineStrategyMode,
+    selectedPropertyStrategy,
+  );
+
+  const all: KeyDecisionEvent[] = [];
+  const add = (event: KeyDecisionEvent) => {
+    if (event.age < retirementAge || event.age > lifeExpectancy) return;
+    all.push(event);
+  };
+
+  const retirementEvent = timelineEvents.find((event) => event.type === 'retirement');
+  add({
+    kind: 'retirement_start',
+    age: retirementAge,
+    text: `${retirementAge}세 은퇴가 시작돼요`,
+    note: retirementEvent?.warning,
+  });
+
+  if (inputs.pension.publicPension.enabled) {
+    add({
+      kind: 'pension_public_start',
+      age: inputs.pension.publicPension.startAge,
+      text: `${inputs.pension.publicPension.startAge}세 국민연금이 시작돼요`,
+    });
+  }
+
+  if (inputs.pension.retirementPension.enabled) {
+    const retirementStartAge = inputs.pension.retirementPension.startAge;
+    add({
+      kind: 'pension_retirement_start',
+      age: retirementStartAge,
+      text: `${retirementStartAge}세 퇴직연금이 시작돼요`,
+    });
+
+    const retirementEndAge = retirementStartAge + inputs.pension.retirementPension.payoutYears;
+    add({
+      kind: 'pension_retirement_end',
+      age: retirementEndAge,
+      text: `${retirementEndAge}세 퇴직연금이 끝나요`,
+    });
+  }
+
+  if (inputs.pension.privatePension.enabled) {
+    const privateStartAge = inputs.pension.privatePension.startAge;
+    add({
+      kind: 'pension_private_start',
+      age: privateStartAge,
+      text: `${privateStartAge}세 개인연금이 시작돼요`,
+    });
+
+    const privateEndAge = privateStartAge + inputs.pension.privatePension.payoutYears;
+    add({
+      kind: 'pension_private_end',
+      age: privateEndAge,
+      text: `${privateEndAge}세 개인연금이 끝나요`,
+    });
+  }
+
+  if (inputs.children.hasChildren && inputs.children.count > 0) {
+    const childExpenseEndAge = inputs.children.independenceAge + 1;
+    add({
+      kind: 'child_expense_end',
+      age: childExpenseEndAge,
+      text: `${childExpenseEndAge}세 자녀 지출이 끝나요`,
+    });
+  }
+
+  if (summary.financialExhaustionAge !== null) {
+    add({
+      kind: 'financial_exhaustion_start',
+      age: summary.financialExhaustionAge,
+      text: `${summary.financialExhaustionAge}세 금융자산이 부족해지기 시작해요`,
+    });
+  }
+
+  const propertyEvent = timelineEvents.find(
+    (event) => event.type === 'property_loan' || event.type === 'property_sell',
+  );
+  if (propertyEvent) {
+    add({
+      kind: 'property_intervention_start',
+      age: propertyEvent.age,
+      text: propertyEvent.type === 'property_sell'
+        ? `${propertyEvent.age}세 집을 팔아 생활비를 이어가야 해요`
+        : `${propertyEvent.age}세 집을 담보로 빌려 생활비를 보태야 해요`,
+    });
+  }
+
+  if (summary.failureAge !== null) {
+    add({
+      kind: 'lifestyle_shortfall_start',
+      age: summary.failureAge,
+      text: `${summary.failureAge}세 생활비가 부족해지기 시작해요`,
+    });
+  }
+
+  const deduped = all.filter((event, index, arr) => (
+    arr.findIndex((candidate) => candidate.kind === event.kind && candidate.age === event.age) === index
+  ));
+
+  deduped.sort((a, b) => {
+    if (a.age !== b.age) return a.age - b.age;
+    return eventPriority(a.kind) - eventPriority(b.kind);
+  });
+
+  return deduped;
 }
 
 // ── 묶음 행 생성 ──────────────────────────────────────────────────────────────

@@ -1,6 +1,5 @@
 import AssetBalanceChart from '../charts/AssetBalanceChart';
 import PropertyAssetChart from '../charts/PropertyAssetChart';
-import LifetimeTimeline from '../result/v3/LifetimeTimeline';
 import type {
   AssumptionItem,
   WarningItem,
@@ -9,6 +8,7 @@ import type {
   CalculationResultV2,
 } from '../../types/calculationV2';
 import type { PlannerInputs } from '../../types/inputs';
+import { extractKeyDecisionEvents } from '../../engine/timelineBuilder';
 
 interface VerificationSectionProps {
   hasRealEstate: boolean;
@@ -45,6 +45,14 @@ export default function VerificationSection({
   const sectionDescription = hasRealEstate
     ? '위에서 고른 전략 기준으로 계산했어요.'
     : '입력한 조건 기준으로 계산했어요.';
+  const keyEvents = extractKeyDecisionEvents(
+    chartRows,
+    summary,
+    propertyOptions,
+    inputs,
+    timelineStrategyMode,
+    selectedPropertyStrategy,
+  );
 
   return (
     <section
@@ -127,17 +135,27 @@ export default function VerificationSection({
             userSelect: 'none',
           }}
         >
-          나이별 타임라인 보기
+          나이별 주요 이벤트
         </summary>
-        <div style={{ marginTop: 10 }}>
-          <LifetimeTimeline
-            detailYearlyAggregates={chartRows}
-            summary={summary}
-            propertyOptions={propertyOptions}
-            inputs={inputs}
-            timelineStrategyMode={timelineStrategyMode}
-            selectedPropertyStrategy={selectedPropertyStrategy}
-          />
+        <div style={{ marginTop: 'var(--result-space-2)', paddingLeft: 'var(--result-space-1)', display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {keyEvents.length > 0 ? (
+            keyEvents.map((event) => (
+              <div key={`${event.kind}-${event.age}`}>
+                <div style={{ fontSize: 'var(--result-text-body)', color: 'var(--result-text-body-color)', lineHeight: 1.5 }}>
+                  {event.text}
+                </div>
+                {event.note && (
+                  <div style={{ fontSize: 'var(--result-text-meta)', color: 'var(--result-text-meta-color)', lineHeight: 1.5, marginTop: 2 }}>
+                    {event.note}
+                  </div>
+                )}
+              </div>
+            ))
+          ) : (
+            <div style={{ fontSize: 'var(--result-text-meta)', color: 'var(--result-text-meta-color)', lineHeight: 1.5 }}>
+              표시할 주요 이벤트가 없어요.
+            </div>
+          )}
         </div>
       </details>
 
