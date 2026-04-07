@@ -38,7 +38,9 @@ function computeMaxSecuredLoanBalance(option: PropertyOptionResult): number {
 
 function toStartAgeText(option: PropertyOptionResult): string {
   if (option.interventionAge === null) {
-    return option.strategy === 'keep' ? '집 개입 없음' : '필요 시점 없음';
+    if (option.strategy === 'keep') return '없음';
+    if (option.strategy === 'secured_loan') return '대출 불필요';
+    return '매각 안 함';
   }
   return `${option.interventionAge}세`;
 }
@@ -80,7 +82,7 @@ export function buildHouseDecisionRowsVM(params: {
     const startAgeLabel =
       strategy === 'secured_loan' ? '대출 시작'
       : strategy === 'sell' ? '매각 시점'
-      : '집 개입';
+      : '집 활용';
 
     const row: HouseDecisionRowVM = {
       strategy,

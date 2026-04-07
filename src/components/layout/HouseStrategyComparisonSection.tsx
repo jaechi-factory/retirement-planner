@@ -24,6 +24,12 @@ interface HouseStrategyComparisonSectionProps {
   onSelectStrategy: (strategy: HouseDecisionStrategy) => void;
 }
 
+const STRATEGY_CHART_LABELS: Record<string, string> = {
+  keep: '유지',
+  secured_loan: '대출',
+  sell: '매각',
+};
+
 const STRATEGY_COLORS: Record<string, string> = {
   keep: 'var(--result-border-strong)',
   secured_loan: '#93C5FD',
@@ -90,7 +96,7 @@ export default function HouseStrategyComparisonSection({
     .filter((opt) => opt.yearlyAggregates.length > 0)
     .map((opt) => ({
       strategy: opt.strategy,
-      label: PROPERTY_STRATEGY_LABELS[opt.strategy],
+      label: STRATEGY_CHART_LABELS[opt.strategy] ?? opt.strategy,
       sustainableMonthly: opt.sustainableMonthly,
       failureAge: opt.failureAge,
       survivalLabel: opt.survivesToLifeExpectancy
