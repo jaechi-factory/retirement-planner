@@ -126,7 +126,7 @@ export default function HouseStrategyComparisonSection({
           weight="bold"
           style={{ color: 'var(--result-text-strong-color)', display: 'block', marginBottom: 'var(--result-space-1)' }}
         >
-          집을 팔거나 대출받는 선택
+          집을 어떻게 쓸지 비교
         </Typography>
         <Typography
           variant="caption1"
