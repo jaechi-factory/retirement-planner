@@ -9,55 +9,84 @@ export default function App() {
         display: 'flex',
         flexDirection: 'column',
         height: '100vh',
-        background: 'var(--tds-gray-100)',
+        background: 'var(--neutral-100)',
       }}
     >
-      {/* 헤더 — full width 흰 배경, 내부 텍스트는 90% 정렬 */}
-      <div
+      {/* Header — Premium editorial style */}
+      <header
         style={{
-          height: 56,
+          height: 64,
           flexShrink: 0,
-          background: 'var(--tds-white)',
-          borderBottom: '1px solid var(--tds-gray-100)',
+          background: 'var(--white)',
+          borderBottom: '1px solid var(--neutral-150)',
           display: 'flex',
           justifyContent: 'center',
+          position: 'sticky',
+          top: 0,
           zIndex: 100,
         }}
       >
         <div
           style={{
-            width: '90%',
-            maxWidth: 1440,
+            width: '100%',
+            maxWidth: 1520,
             display: 'flex',
             alignItems: 'center',
-            paddingLeft: 40,
+            justifyContent: 'space-between',
+            padding: '0 40px',
           }}
         >
-          <span
-            style={{
-              fontSize: 17,
-              fontWeight: 800,
-              color: 'var(--tds-blue-500)',
-              letterSpacing: '-0.3px',
-            }}
-          >
-            내 은퇴, 괜찮을까?
-          </span>
-          <span
-            style={{
-              marginLeft: 10,
-              fontSize: 12,
-              color: 'var(--tds-gray-300)',
-              fontWeight: 400,
-            }}
-          >
-            지금 조건으로 은퇴 후 월 생활비를 확인해요
-          </span>
-        </div>
-      </div>
+          {/* Left: Brand */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            <h1
+              style={{
+                margin: 0,
+                fontSize: 18,
+                fontWeight: 800,
+                color: 'var(--neutral-900)',
+                letterSpacing: '-0.02em',
+              }}
+            >
+              내 은퇴, 괜찮을까?
+            </h1>
+            <span
+              style={{
+                fontSize: 13,
+                color: 'var(--neutral-400)',
+                fontWeight: 500,
+                letterSpacing: '-0.01em',
+              }}
+            >
+              은퇴 자금 시뮬레이터
+            </span>
+          </div>
 
-      {/* 2컬럼 레이아웃 */}
-      <div
+          {/* Right: Meta info */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              fontSize: 12,
+              color: 'var(--neutral-400)',
+            }}
+          >
+            <span
+              style={{
+                padding: '4px 10px',
+                background: 'var(--neutral-50)',
+                borderRadius: 'var(--radius-full)',
+                fontWeight: 600,
+              }}
+            >
+              Beta
+            </span>
+          </div>
+        </div>
+      </header>
+
+      {/* Main content — Two column layout */}
+      <main
         style={{
           display: 'flex',
           justifyContent: 'center',
@@ -68,18 +97,15 @@ export default function App() {
         <div
           style={{
             display: 'flex',
-            width: '90%',
-            maxWidth: 1440,
+            width: '100%',
+            maxWidth: 1520,
             overflow: 'hidden',
-            background: 'var(--tds-white)',
-            borderLeft: '1px solid var(--tds-gray-100)',
-            borderRight: '1px solid var(--tds-gray-100)',
           }}
         >
           <InputWorkbench />
           <ResultWorkbench />
         </div>
-      </div>
+      </main>
     </div>
   );
 }

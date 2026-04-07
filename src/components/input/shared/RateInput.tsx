@@ -37,8 +37,18 @@ export default function RateInput({ label, value, onChange, hint }: Props) {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0 }}>
-      <Typography as="label" variant="label2" weight="medium" color="semantic.label.alternative">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, minWidth: 0 }}>
+      <Typography
+        as="label"
+        variant="label2"
+        weight="medium"
+        style={{
+          fontSize: 13,
+          fontWeight: 500,
+          color: 'var(--neutral-500)',
+          letterSpacing: '-0.01em',
+        }}
+      >
         {label}
       </Typography>
       <TextField
@@ -50,11 +60,26 @@ export default function RateInput({ label, value, onChange, hint }: Props) {
         onChange={handleChange}
         placeholder="0"
         trailingContent={
-          <TextFieldContent variant="text">%</TextFieldContent>
+          <TextFieldContent variant="text">
+            <span style={{ color: 'var(--neutral-400)', fontSize: 14 }}>%</span>
+          </TextFieldContent>
         }
+        style={{
+          '--wds-text-field-background': 'var(--neutral-50)',
+          '--wds-text-field-border-color': 'var(--neutral-150)',
+          '--wds-text-field-border-radius': 'var(--radius-md)',
+        } as React.CSSProperties}
       />
       {hint && (
-        <Typography variant="caption1" color="semantic.label.alternative" style={{ margin: 0 }}>
+        <Typography
+          variant="caption1"
+          style={{
+            margin: 0,
+            fontSize: 12,
+            color: 'var(--neutral-400)',
+            lineHeight: 1.5,
+          }}
+        >
           {hint}
         </Typography>
       )}

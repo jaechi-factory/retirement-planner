@@ -8,28 +8,54 @@ interface Props {
 
 export default function SectionCard({ title, subtitle, children }: Props) {
   return (
-    <div
+    <section
       style={{
-        background: 'var(--tds-white)',
-        borderRadius: 16,
-        padding: '20px 20px 24px',
-        marginBottom: 12,
-        border: '1px solid var(--tds-gray-100)',
+        background: 'var(--white)',
+        borderRadius: 'var(--radius-xl)',
+        padding: '24px',
+        marginBottom: 16,
+        border: '1px solid var(--neutral-100)',
+        transition: 'border-color var(--transition-base), box-shadow var(--transition-base)',
       }}
     >
-      <div style={{ marginBottom: 16 }}>
-        <Typography as="h3" variant="headline2" weight="bold" color="semantic.label.normal" style={{ margin: subtitle ? '0 0 3px 0' : '0' }}>
+      {/* Section header */}
+      <header style={{ marginBottom: 20 }}>
+        <Typography
+          as="h3"
+          variant="headline2"
+          weight="bold"
+          style={{
+            margin: 0,
+            fontSize: 17,
+            fontWeight: 700,
+            color: 'var(--neutral-900)',
+            letterSpacing: '-0.015em',
+            lineHeight: 1.35,
+          }}
+        >
           {title}
         </Typography>
         {subtitle && (
-          <Typography variant="caption1" color="semantic.label.alternative" style={{ margin: 0, lineHeight: 1.4 }}>
+          <Typography
+            variant="caption1"
+            style={{
+              display: 'block',
+              margin: '4px 0 0',
+              fontSize: 13,
+              color: 'var(--neutral-400)',
+              lineHeight: 1.5,
+              fontWeight: 400,
+            }}
+          >
             {subtitle}
           </Typography>
         )}
-      </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      </header>
+
+      {/* Section content */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         {children}
       </div>
-    </div>
+    </section>
   );
 }

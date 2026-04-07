@@ -1,4 +1,4 @@
-import { SectionHeader, Typography } from '@wanteddev/wds';
+import { Typography } from '@wanteddev/wds';
 import { getTotalMonthlyPensionTodayValue } from '../../engine/pensionEstimation';
 import type { CalculationResultV2 } from '../../types/calculationV2';
 import type { PlannerInputs } from '../../types/inputs';
@@ -19,8 +19,8 @@ interface ReasonCard {
 function cardAccentColor(tone: ReasonCard['tone']): string {
   if (tone === 'positive') return 'var(--ux-status-positive)';
   if (tone === 'negative') return 'var(--ux-status-negative)';
-  if (tone === 'warning') return 'var(--ux-status-warning, #D97706)';
-  return 'var(--result-accent-strong)';
+  if (tone === 'warning') return 'var(--ux-status-warning)';
+  return 'var(--brand-accent)';
 }
 
 export default function WhyThisResultSection({ summary, inputs, hasRealEstate }: WhyThisResultSectionProps) {
@@ -37,7 +37,7 @@ export default function WhyThisResultSection({ summary, inputs, hasRealEstate }:
 
   const cards: ReasonCard[] = [];
 
-  // 카드 1: 연금 커버리지
+  // Card 1: Pension coverage
   if (pensionMonthly > 0) {
     const coverageRatio = targetMonthly > 0 ? Math.round((pensionMonthly / targetMonthly) * 100) : 0;
     cards.push({
@@ -53,7 +53,7 @@ export default function WhyThisResultSection({ summary, inputs, hasRealEstate }:
     });
   }
 
-  // 카드 2: 자산 수준
+  // Card 2: Asset level
   const gap = summary.sustainableMonthly - targetMonthly;
   if (gap >= 0) {
     cards.push({
@@ -69,7 +69,7 @@ export default function WhyThisResultSection({ summary, inputs, hasRealEstate }:
     });
   }
 
-  // 카드 3: 자금 전환 시점
+  // Card 3: Transition timing
   const exhaustionAge = summary.financialExhaustionAge;
   const interventionAge = summary.propertyInterventionAge;
 
@@ -94,43 +94,66 @@ export default function WhyThisResultSection({ summary, inputs, hasRealEstate }:
   }
 
   return (
-    <section style={{ marginBottom: 'var(--result-space-5)' }}>
-      <SectionHeader
-        headingContent="이런 결과가 나온 이유"
-        size="small"
-        headingTag="h2"
+    <section style={{ marginBottom: 40 }}>
+      {/* Section label — Editorial style */}
+      <div
         style={{
+          fontSize: 12,
+          fontWeight: 700,
+          color: 'var(--neutral-400)',
+          letterSpacing: '0.06em',
           textTransform: 'uppercase',
-          letterSpacing: '0.02em',
-          marginBottom: 'var(--result-space-3)',
+          marginBottom: 16,
         }}
-      />
+      >
+        이런 결과가 나온 이유
+      </div>
+
+      {/* Reason cards */}
       <div
         style={{
           display: 'flex',
           flexDirection: 'column',
-          gap: 'var(--result-space-2)',
+          gap: 12,
         }}
       >
-        {cards.map((card) => (
+        {cards.map((card, index) => (
           <div
             key={card.title}
             style={{
-              borderRadius: 10,
-              border: '1px solid var(--result-border-soft)',
-              background: 'var(--result-surface-base)',
-              padding: 'var(--result-space-3) var(--result-space-4)',
-              borderLeft: `3px solid ${cardAccentColor(card.tone)}`,
+              background: 'var(--white)',
+              borderRadius: 'var(--radius-lg)',
+              border: '1px solid var(--neutral-150)',
+              padding: '20px 24px',
+              borderLeft: `4px solid ${cardAccentColor(card.tone)}`,
+              position: 'relative',
             }}
           >
+            {/* Card number */}
+            <span
+              style={{
+                position: 'absolute',
+                top: 20,
+                right: 24,
+                fontSize: 11,
+                fontWeight: 700,
+                color: 'var(--neutral-300)',
+                letterSpacing: '0.02em',
+              }}
+            >
+              {String(index + 1).padStart(2, '0')}
+            </span>
+
             <Typography
               variant="body1"
               weight="bold"
               style={{
-                color: 'var(--result-text-strong-color)',
-                display: 'block',
-                marginBottom: 'var(--result-space-1)',
+                fontSize: 15,
+                fontWeight: 700,
+                color: 'var(--neutral-900)',
+                marginBottom: 6,
                 lineHeight: 1.4,
+                paddingRight: 32,
               }}
             >
               {card.title}
@@ -138,9 +161,9 @@ export default function WhyThisResultSection({ summary, inputs, hasRealEstate }:
             <Typography
               variant="body1"
               style={{
-                color: 'var(--result-text-body-color)',
-                display: 'block',
-                lineHeight: 1.62,
+                fontSize: 14,
+                color: 'var(--neutral-500)',
+                lineHeight: 1.65,
               }}
             >
               {card.body}

@@ -18,20 +18,55 @@ function EmptyStateCard({ title, body }: { title: string; body: string }) {
   return (
     <div
       style={{
-        borderRadius: 14,
-        border: '1px solid var(--ux-border-strong)',
-        background: 'var(--ux-surface)',
-        padding: '56px 28px',
+        borderRadius: 'var(--radius-xl)',
+        background: 'var(--white)',
+        border: '1px solid var(--neutral-150)',
+        padding: '80px 40px',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: 10,
+        textAlign: 'center',
+        maxWidth: 480,
+        margin: '0 auto',
       }}
     >
-      <Typography variant="headline1" color="semantic.label.alternative" style={{ fontSize: 28 }}>—</Typography>
-      <Typography variant="headline1" weight="bold" color="semantic.label.normal" style={{ textAlign: 'center' }}>{title}</Typography>
-      <Typography variant="body1" color="semantic.label.alternative" style={{ textAlign: 'center', lineHeight: 1.7 }}>{body}</Typography>
+      <div
+        style={{
+          width: 64,
+          height: 64,
+          borderRadius: 'var(--radius-full)',
+          background: 'var(--neutral-100)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginBottom: 24,
+        }}
+      >
+        <span style={{ fontSize: 28, color: 'var(--neutral-400)' }}>?</span>
+      </div>
+      <Typography
+        variant="headline1"
+        weight="bold"
+        style={{
+          fontSize: 20,
+          color: 'var(--neutral-900)',
+          marginBottom: 8,
+          lineHeight: 1.35,
+        }}
+      >
+        {title}
+      </Typography>
+      <Typography
+        variant="body1"
+        style={{
+          fontSize: 15,
+          color: 'var(--neutral-500)',
+          lineHeight: 1.6,
+        }}
+      >
+        {body}
+      </Typography>
     </div>
   );
 }
@@ -77,10 +112,18 @@ export default function ResultWorkbench() {
     setSelectedStrategy(strategy);
   };
 
-  // — empty states —
+  // — Empty states —
   if (inputs.status.currentAge > 0 && inputs.goal.retirementAge > 0 && inputs.status.currentAge >= inputs.goal.retirementAge) {
     return (
-      <div style={{ flex: 1, height: 'calc(100vh - 56px)', overflowY: 'auto', padding: '24px 20px', borderLeft: '1px solid var(--ux-border-strong)' }}>
+      <div
+        style={{
+          flex: 1,
+          height: 'calc(100vh - 64px)',
+          overflowY: 'auto',
+          padding: '48px 40px',
+          background: 'var(--neutral-50)',
+        }}
+      >
         <EmptyStateCard
           title="이 계산기는 은퇴 전 준비 단계에 맞춰져 있어요"
           body="현재 나이가 은퇴 나이 이상으로 설정돼 있어요. 왼쪽에서 현재 나이 또는 은퇴 나이를 조정해 주세요."
@@ -91,10 +134,18 @@ export default function ResultWorkbench() {
 
   if (result.isValid && financialAssetTotal === 0) {
     return (
-      <div style={{ flex: 1, height: 'calc(100vh - 56px)', overflowY: 'auto', padding: '24px 20px', borderLeft: '1px solid var(--ux-border-strong)' }}>
+      <div
+        style={{
+          flex: 1,
+          height: 'calc(100vh - 64px)',
+          overflowY: 'auto',
+          padding: '48px 40px',
+          background: 'var(--neutral-50)',
+        }}
+      >
         <EmptyStateCard
           title="금융자산을 입력하면 결과를 볼 수 있어요"
-          body="현금·예적금·주식 중 하나 이상 입력해 주세요. 부동산만으로는 계산이 어려워요."
+          body="현금, 예적금, 주식 중 하나 이상 입력해 주세요. 부동산만으로는 계산이 어려워요."
         />
       </div>
     );
@@ -102,7 +153,15 @@ export default function ResultWorkbench() {
 
   if (!resultV2 || !result.isValid) {
     return (
-      <div style={{ flex: 1, height: 'calc(100vh - 56px)', overflowY: 'auto', padding: '24px 20px', borderLeft: '1px solid var(--ux-border-strong)' }}>
+      <div
+        style={{
+          flex: 1,
+          height: 'calc(100vh - 64px)',
+          overflowY: 'auto',
+          padding: '48px 40px',
+          background: 'var(--neutral-50)',
+        }}
+      >
         <EmptyStateCard
           title="입력하면 결과 리포트가 바로 나와요"
           body="왼쪽에서 나이, 은퇴 나이, 기대수명, 목표 생활비를 입력해 주세요."
@@ -144,73 +203,74 @@ export default function ResultWorkbench() {
   const hasSelectableHouseRows = hasRealEstate && propertyOptions.some((option) => option.yearlyAggregates.length > 0);
 
   return (
-    <div
+    <main
       style={{
         flex: 1,
-        height: 'calc(100vh - 56px)',
+        height: 'calc(100vh - 64px)',
         overflowY: 'auto',
-        padding: '32px 28px 64px',
+        overflowX: 'hidden',
+        padding: '32px 40px 80px',
         scrollbarWidth: 'thin',
-        borderLeft: '1px solid var(--ux-border-strong)',
-        background: 'var(--ux-surface-subtle)',
-        position: 'relative',
-        zIndex: 1,
+        background: 'var(--neutral-50)',
       }}
     >
-      {/* 1. 현재 상태 */}
-      <ResultHeroSection
-        summary={summary}
-        narrative={narrative}
-        hasRealEstate={hasRealEstate}
-      />
+      {/* Result content container */}
+      <div style={{ maxWidth: 720, margin: '0 auto' }}>
+        {/* 1. Hero — Current Status */}
+        <ResultHeroSection
+          summary={summary}
+          narrative={narrative}
+          hasRealEstate={hasRealEstate}
+        />
 
-      {/* 2. 왜 이런 결과인지 */}
-      <WhyThisResultSection
-        summary={summary}
-        inputs={inputs}
-        hasRealEstate={hasRealEstate}
-      />
+        {/* 2. Why This Result */}
+        <WhyThisResultSection
+          summary={summary}
+          inputs={inputs}
+          hasRealEstate={hasRealEstate}
+        />
 
-      {/* 3. 자금원 전환 타임라인 */}
-      <FundingPathSection
-        fundingTimeline={fundingTimeline}
-        lifeExpectancy={inputs.goal.lifeExpectancy}
-        retirementAge={inputs.goal.retirementAge}
-      />
+        {/* 3. Funding Timeline */}
+        <FundingPathSection
+          fundingTimeline={fundingTimeline}
+          lifeExpectancy={inputs.goal.lifeExpectancy}
+          retirementAge={inputs.goal.retirementAge}
+        />
 
-      {/* 4. 집을 팔거나 대출받는 선택 (집 있을 때만) */}
-      {hasSelectableHouseRows && (
-        <HouseStrategyComparisonSection
+        {/* 4. House Strategy Comparison (if has real estate) */}
+        {hasSelectableHouseRows && (
+          <HouseStrategyComparisonSection
+            hasRealEstate={hasRealEstate}
+            propertyOptions={propertyOptions}
+            selectedStrategy={selectedStrategy}
+            lifeExpectancy={inputs.goal.lifeExpectancy}
+            onSelectStrategy={handleSelectStrategy}
+          />
+        )}
+
+        {/* 5. Evidence Workspace */}
+        <EvidenceWorkspace
+          hasRealEstate={hasRealEstate}
+          chartRows={chartRows}
+          retirementAge={inputs.goal.retirementAge}
+          strategyLabel={chartLabel}
+          inputs={inputs}
+          summary={summary}
+          propertyOptions={propertyOptions}
+          assumptions={assumptions}
+          warnings={warnings}
+          timelineStrategyMode={timelineStrategyMode}
+          selectedPropertyStrategy={selectedPropertyStrategy}
+        />
+
+        {/* 6. Action Plan */}
+        <ActionPlanSection
+          summary={summary}
+          inputs={inputs}
           hasRealEstate={hasRealEstate}
           propertyOptions={propertyOptions}
-          selectedStrategy={selectedStrategy}
-          lifeExpectancy={inputs.goal.lifeExpectancy}
-          onSelectStrategy={handleSelectStrategy}
         />
-      )}
-
-      {/* 5. 근거 확인 */}
-      <EvidenceWorkspace
-        hasRealEstate={hasRealEstate}
-        chartRows={chartRows}
-        retirementAge={inputs.goal.retirementAge}
-        strategyLabel={chartLabel}
-        inputs={inputs}
-        summary={summary}
-        propertyOptions={propertyOptions}
-        assumptions={assumptions}
-        warnings={warnings}
-        timelineStrategyMode={timelineStrategyMode}
-        selectedPropertyStrategy={selectedPropertyStrategy}
-      />
-
-      {/* 6. 지금 해야 할 일 */}
-      <ActionPlanSection
-        summary={summary}
-        inputs={inputs}
-        hasRealEstate={hasRealEstate}
-        propertyOptions={propertyOptions}
-      />
-    </div>
+      </div>
+    </main>
   );
 }

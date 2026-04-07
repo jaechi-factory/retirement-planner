@@ -1,4 +1,4 @@
-import { ContentBadge, SectionHeader, Typography } from '@wanteddev/wds';
+import { Typography } from '@wanteddev/wds';
 import AssetBalanceChart from '../charts/AssetBalanceChart';
 import PropertyAssetChart from '../charts/PropertyAssetChart';
 import type {
@@ -76,76 +76,85 @@ export default function EvidenceWorkspace({
   );
 
   return (
-    <section style={{ marginBottom: 'var(--result-space-5)' }}>
-      {/* 섹션 레이블 */}
-      <SectionHeader
-        headingContent="근거 확인"
-        size="small"
-        headingTag="h2"
-        style={{
-          textTransform: 'uppercase',
-          letterSpacing: '0.02em',
-          marginBottom: 'var(--result-space-3)',
-        }}
-      />
-
-      {/* 돈 흐름 */}
+    <section style={{ marginBottom: 40 }}>
+      {/* Section label */}
       <div
         style={{
-          borderRadius: 12,
-          border: '1px solid var(--result-border-soft)',
-          background: 'var(--result-surface-base)',
-          marginBottom: 'var(--result-space-2)',
+          fontSize: 12,
+          fontWeight: 700,
+          color: 'var(--neutral-400)',
+          letterSpacing: '0.06em',
+          textTransform: 'uppercase',
+          marginBottom: 16,
         }}
       >
-        {/* 돈 흐름 헤더 */}
+        근거 확인
+      </div>
+
+      {/* Money flow chart card */}
+      <div
+        style={{
+          background: 'var(--white)',
+          borderRadius: 'var(--radius-lg)',
+          border: '1px solid var(--neutral-150)',
+          marginBottom: 12,
+          overflow: 'hidden',
+        }}
+      >
+        {/* Chart header */}
         <div
           style={{
-            padding: '12px 16px 0',
+            padding: '20px 24px 16px',
             display: 'flex',
             alignItems: 'flex-start',
             justifyContent: 'space-between',
-            gap: 'var(--result-space-3)',
+            gap: 16,
           }}
         >
-          <div>
+          <div style={{ flex: 1 }}>
             <Typography
               variant="body1"
               weight="bold"
-              style={{ color: 'var(--result-text-strong-color)', display: 'block', marginBottom: 4 }}
+              style={{
+                fontSize: 15,
+                fontWeight: 700,
+                color: 'var(--neutral-900)',
+                marginBottom: 4,
+              }}
             >
               돈 흐름
             </Typography>
             <Typography
               variant="caption1"
-              color="semantic.label.alternative"
-              style={{ display: 'block', lineHeight: 1.55, marginBottom: 10 }}
+              style={{
+                fontSize: 13,
+                color: 'var(--neutral-500)',
+                lineHeight: 1.55,
+              }}
             >
               {chartInterpretation}
             </Typography>
           </div>
           {hasRealEstate && (
-            <ContentBadge
-              variant="solid"
-              size="xsmall"
+            <span
               style={{
-                color: 'var(--result-accent-strong)',
-                background: '#E1EDFF',
-                border: '1px solid rgba(49,130,246,0.24)',
-                borderRadius: 999,
-                padding: '2px 8px',
+                fontSize: 12,
+                fontWeight: 700,
+                color: 'var(--brand-accent)',
+                background: 'var(--result-accent-soft)',
+                padding: '4px 12px',
+                borderRadius: 'var(--radius-full)',
                 whiteSpace: 'nowrap',
                 flexShrink: 0,
-                fontWeight: 600,
               }}
             >
               {strategyLabel}
-            </ContentBadge>
+            </span>
           )}
         </div>
 
-        {/* 차트 */}
-        <div style={{ padding: '0 12px 10px' }}>
+        {/* Chart */}
+        <div style={{ padding: '0 16px 16px' }}>
           <AssetBalanceChart
             rows={chartRows}
             retirementAge={retirementAge}
@@ -156,70 +165,106 @@ export default function EvidenceWorkspace({
         </div>
       </div>
 
-      {/* 나이별 주요 이벤트 */}
+      {/* Key events timeline card */}
       <div
         style={{
-          borderRadius: 12,
-          border: '1px solid var(--result-border-soft)',
-          background: 'var(--result-surface-base)',
-          padding: '12px 14px',
-          marginBottom: 'var(--result-space-2)',
+          background: 'var(--white)',
+          borderRadius: 'var(--radius-lg)',
+          border: '1px solid var(--neutral-150)',
+          padding: '20px 24px',
+          marginBottom: 12,
         }}
       >
         <Typography
           variant="body1"
           weight="bold"
-          style={{ color: 'var(--result-text-strong-color)', display: 'block', marginBottom: 10 }}
+          style={{
+            fontSize: 15,
+            fontWeight: 700,
+            color: 'var(--neutral-900)',
+            marginBottom: 16,
+          }}
         >
           나이별 주요 이벤트
         </Typography>
         <CompactLifetimeTimeline events={keyEvents} />
       </div>
 
-      {/* 가정과 주의 */}
+      {/* Assumptions and warnings — collapsible */}
       <details style={{ marginTop: 0 }}>
         <summary
           style={{
             cursor: 'pointer',
             userSelect: 'none',
-            padding: '6px 2px',
+            padding: '12px 0',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
           }}
         >
-          <Typography
-            as="span"
-            variant="caption1"
-            weight="bold"
-            style={{ color: 'var(--result-text-body-color)' }}
+          <span
+            style={{
+              fontSize: 13,
+              fontWeight: 600,
+              color: 'var(--neutral-500)',
+            }}
           >
             가정과 주의 보기
-          </Typography>
+          </span>
+          <span
+            style={{
+              fontSize: 11,
+              color: 'var(--neutral-400)',
+            }}
+          >
+            {assumptions.length + filteredWarnings.length}개 항목
+          </span>
         </summary>
 
         <div
           style={{
-            marginTop: 'var(--result-space-2)',
-            borderRadius: 10,
-            border: '1px solid var(--result-border-soft)',
-            background: 'var(--result-surface-base)',
-            padding: '12px',
+            marginTop: 8,
+            background: 'var(--white)',
+            borderRadius: 'var(--radius-lg)',
+            border: '1px solid var(--neutral-150)',
+            padding: '20px 24px',
           }}
         >
+          {/* Property chart if applicable */}
           {hasRealEstate && (
-            <div style={{ marginBottom: 'var(--result-space-3)' }}>
+            <div style={{ marginBottom: 24 }}>
               <PropertyAssetChart rows={chartRows} retirementAge={retirementAge} />
             </div>
           )}
 
+          {/* Assumptions */}
           {assumptions.length > 0 && (
-            <div style={{ marginBottom: filteredWarnings.length > 0 ? 'var(--result-space-2)' : 0 }}>
+            <div style={{ marginBottom: filteredWarnings.length > 0 ? 20 : 0 }}>
               <Typography
                 variant="caption1"
                 weight="bold"
-                style={{ color: 'var(--result-text-body-color)', display: 'block', marginBottom: 'var(--result-space-2)' }}
+                style={{
+                  fontSize: 12,
+                  fontWeight: 700,
+                  color: 'var(--neutral-500)',
+                  marginBottom: 12,
+                  display: 'block',
+                  letterSpacing: '0.02em',
+                  textTransform: 'uppercase',
+                }}
               >
                 주요 가정
               </Typography>
-              <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <ul
+                style={{
+                  margin: 0,
+                  padding: 0,
+                  listStyle: 'none',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 8,
+                }}
+              >
                 {assumptions.map((assumption, index) => (
                   <li
                     key={`${assumption.label}-${index}`}
@@ -227,11 +272,27 @@ export default function EvidenceWorkspace({
                       lineHeight: 1.6,
                       display: 'flex',
                       alignItems: 'flex-start',
-                      gap: 'var(--result-space-2)',
+                      gap: 10,
                     }}
                   >
-                    <span aria-hidden style={{ fontWeight: 700, flexShrink: 0 }}>•</span>
-                    <Typography variant="caption1" style={{ color: 'var(--result-text-body-color)' }}>
+                    <span
+                      aria-hidden
+                      style={{
+                        width: 6,
+                        height: 6,
+                        borderRadius: 'var(--radius-full)',
+                        background: 'var(--neutral-300)',
+                        marginTop: 7,
+                        flexShrink: 0,
+                      }}
+                    />
+                    <Typography
+                      variant="caption1"
+                      style={{
+                        fontSize: 13,
+                        color: 'var(--neutral-600)',
+                      }}
+                    >
                       {assumption.label}: {assumption.value}
                     </Typography>
                   </li>
@@ -240,31 +301,52 @@ export default function EvidenceWorkspace({
             </div>
           )}
 
+          {/* Warnings */}
           {filteredWarnings.length > 0 && (
             <div>
               <Typography
                 variant="caption1"
                 weight="bold"
-                style={{ color: 'var(--result-text-body-color)', display: 'block', marginBottom: 'var(--result-space-2)' }}
+                style={{
+                  fontSize: 12,
+                  fontWeight: 700,
+                  color: 'var(--neutral-500)',
+                  marginBottom: 12,
+                  display: 'block',
+                  letterSpacing: '0.02em',
+                  textTransform: 'uppercase',
+                }}
               >
                 주의 사항
               </Typography>
-              <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <ul
+                style={{
+                  margin: 0,
+                  padding: 0,
+                  listStyle: 'none',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 8,
+                }}
+              >
                 {filteredWarnings.map((warning, index) => (
                   <li
                     key={index}
                     style={{
-                      borderRadius: 8,
+                      borderRadius: 'var(--radius-md)',
                       border: `1px solid ${warning.severity === 'critical' ? 'var(--ux-status-negative-soft)' : 'var(--ux-status-warning-soft)'}`,
                       background: warning.severity === 'critical' ? 'var(--ux-status-negative-bg)' : 'var(--ux-status-warning-bg)',
                       lineHeight: 1.6,
-                      padding: '8px 10px',
+                      padding: '12px 16px',
                     }}
                   >
                     <Typography
                       variant="caption1"
                       weight="medium"
-                      style={{ color: 'var(--result-text-body-color)' }}
+                      style={{
+                        fontSize: 13,
+                        color: warning.severity === 'critical' ? 'var(--ux-status-negative)' : 'var(--ux-status-warning)',
+                      }}
                     >
                       {warning.message}
                     </Typography>
