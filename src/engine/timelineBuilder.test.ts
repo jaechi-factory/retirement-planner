@@ -20,6 +20,7 @@ function makeYear(ageYear: number): YearlyAggregateV2 {
     totalExpense: 0,
     totalDebtService: 0,
     totalChildExpense: 0,
+    totalRentalCost: 0,
     eventSummary: [],
     months: [],
   };

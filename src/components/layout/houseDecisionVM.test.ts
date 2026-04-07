@@ -47,6 +47,7 @@ function createYear(ageYear: number, months: MonthlySnapshotV2[]): YearlyAggrega
     totalExpense: 0,
     totalDebtService: 0,
     totalChildExpense: 0,
+    totalRentalCost: 0,
     eventSummary: [],
     months,
   };
