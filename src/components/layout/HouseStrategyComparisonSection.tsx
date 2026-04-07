@@ -14,6 +14,7 @@ import type { PropertyOptionResult } from '../../types/calculationV2';
 import { buildHouseDecisionRowsVM, type HouseDecisionStrategy } from './houseDecisionVM';
 import HouseDecisionRows from './HouseDecisionRows';
 import { fmtKRW, fmtKRWAxis } from '../../utils/format';
+import { PROPERTY_STRATEGY_LABELS } from '../../engine/propertyStrategiesV2';
 
 interface HouseStrategyComparisonSectionProps {
   hasRealEstate: boolean;
@@ -22,12 +23,6 @@ interface HouseStrategyComparisonSectionProps {
   lifeExpectancy: number;
   onSelectStrategy: (strategy: HouseDecisionStrategy) => void;
 }
-
-const STRATEGY_DISPLAY_LABELS: Record<string, string> = {
-  keep: '그대로 두기',
-  secured_loan: '담보대출',
-  sell: '팔기',
-};
 
 const STRATEGY_COLORS: Record<string, string> = {
   keep: 'var(--result-border-strong)',
@@ -64,7 +59,7 @@ function CustomTooltip({ active, payload }: { active?: boolean; payload?: Toolti
       }}
     >
       <div style={{ fontWeight: 700, color: 'var(--result-text-strong-color)', marginBottom: 2 }}>
-        {STRATEGY_DISPLAY_LABELS[d.strategy] ?? d.strategy}
+        {PROPERTY_STRATEGY_LABELS[d.strategy as keyof typeof PROPERTY_STRATEGY_LABELS] ?? d.strategy}
       </div>
       <div style={{ color: 'var(--result-text-body-color)' }}>
         가능한 월 생활비: <strong>{fmtKRW(d.sustainableMonthly)}</strong>
@@ -95,7 +90,7 @@ export default function HouseStrategyComparisonSection({
     .filter((opt) => opt.yearlyAggregates.length > 0)
     .map((opt) => ({
       strategy: opt.strategy,
-      label: STRATEGY_DISPLAY_LABELS[opt.strategy] ?? opt.strategy,
+      label: PROPERTY_STRATEGY_LABELS[opt.strategy],
       sustainableMonthly: opt.sustainableMonthly,
       failureAge: opt.failureAge,
       survivalLabel: opt.survivesToLifeExpectancy

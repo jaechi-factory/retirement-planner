@@ -173,6 +173,7 @@ function pickRecommendedV2(
 function buildFundingTimeline(
   aggregates: YearlyAggregateV2[],
   retirementAge: number,
+  strategy: PropertyStrategyV2,
 ): FundingStage[] {
   const stages: FundingStage[] = [];
 
@@ -237,11 +238,19 @@ function buildFundingTimeline(
   // 부동산 전략 구간
   if (propertyStart !== null) {
     const propEnd = failureStart ?? lastYear;
+    const propertyBucketType =
+      strategy === 'secured_loan' ? ('property_loan' as const)
+      : strategy === 'sell' ? ('property_sale' as const)
+      : ('property_keep' as const);
+    const propertyLabel =
+      strategy === 'secured_loan' ? '담보대출로 생활'
+      : strategy === 'sell' ? '매각 대금으로 생활'
+      : '집 유지하며 생활';
     stages.push({
-      label: '집 활용해서 생활',
+      label: propertyLabel,
       fromAge: propertyStart,
       toAge: propEnd,
-      bucketType: 'property_keep',
+      bucketType: propertyBucketType,
     });
   }
 
@@ -393,7 +402,7 @@ export function runCalculationV2(
   const maxSustainableMonthly = maxOption.sustainableMonthly;
   const maxTargetGap = maxSustainableMonthly - goal.targetMonthly;
 
-  const fundingTimeline = buildFundingTimeline(detailYearlyAggregates, goal.retirementAge);
+  const fundingTimeline = buildFundingTimeline(detailYearlyAggregates, goal.retirementAge, recommendedStrategy);
   const assumptions = buildAssumptions(inputs, fundingPolicy);
   const warnings = buildWarnings(inputs, propertyOptions, debtSchedules);
 

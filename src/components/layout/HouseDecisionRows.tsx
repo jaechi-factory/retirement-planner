@@ -127,7 +127,7 @@ export default function HouseDecisionRows({ rows, onSelectStrategy }: HouseDecis
                 </div>
 
                 <div className="house-decision-row-metrics">
-                  <MetricCell label="시작 시점" value={row.startAgeText} selected={selected} />
+                  <MetricCell label={row.startAgeLabel} value={row.startAgeText} selected={selected} />
                   <MetricCell label="가능 월생활비" value={row.sustainableMonthlyText} selected={selected} />
                   <MetricCell label="유지 가능 나이" value={row.survivalAgeText} selected={selected} />
                 </div>

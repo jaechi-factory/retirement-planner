@@ -7,6 +7,7 @@ export type HouseDecisionStrategy = PropertyOptionResult['strategy'];
 export type HouseDecisionRowVM = {
   strategy: HouseDecisionStrategy;
   strategyLabel: string;
+  startAgeLabel: string;
   startAgeText: string;
   sustainableMonthlyText: string;
   survivalAgeText: string;
@@ -76,9 +77,15 @@ export function buildHouseDecisionRowsVM(params: {
 
     const isSelectable = option.yearlyAggregates.length > 0;
 
+    const startAgeLabel =
+      strategy === 'secured_loan' ? '대출 시작'
+      : strategy === 'sell' ? '매각 시점'
+      : '집 개입';
+
     const row: HouseDecisionRowVM = {
       strategy,
       strategyLabel: PROPERTY_STRATEGY_LABELS[strategy],
+      startAgeLabel,
       startAgeText: isSelectable ? toStartAgeText(option) : '계산 불가',
       sustainableMonthlyText: isSelectable ? `월 ${fmtKRW(option.sustainableMonthly)}` : '계산 불가',
       survivalAgeText: isSelectable ? toSurvivalAgeText(option, lifeExpectancy) : '계산 불가',
