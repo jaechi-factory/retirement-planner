@@ -283,7 +283,6 @@ export function simulateMonthlyV2(
     );
 
     for (let ageMonthIndex = 0; ageMonthIndex < 12; ageMonthIndex++) {
-      if (ageYear === lifeExpectancy && ageMonthIndex > 0) break;
 
       // [P4] totalMonthIndex = 0부터 시작, offset 없음
       const totalMonthIndex = (ageYear - currentAge) * 12 + ageMonthIndex;

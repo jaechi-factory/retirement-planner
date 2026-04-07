@@ -858,11 +858,12 @@ describe('생활비별 시나리오 (높을수록 결과 나빠져야 함)', () 
 // ─── 기본 동작 검증 ──────────────────────────────────────────────────────────
 
 describe('기본 동작', () => {
-  it('스냅샷 개수가 (lifeExpectancy - currentAge + 1) × 12 - 11 이어야 함', () => {
+  it('스냅샷 개수가 (lifeExpectancy - currentAge + 1) × 12 이어야 함', () => {
     const inputs = makeInputs();
     const snapshots = simulateMonthlyV2(inputs, inputs.goal.targetMonthly, 'keep', DEFAULT_FUNDING_POLICY, DEFAULT_LIQUIDATION);
-    // currentAge 40, lifeExpectancy 90 → 51년 × 12 - 11 = 601개
-    expect(snapshots.length).toBe(601);
+    // currentAge 40, lifeExpectancy 90 → 51년 × 12 = 612개
+    // [W6] lifeExpectancy 해 전체 12개월 시뮬레이션 (기존 첫 달만 → 전체)
+    expect(snapshots.length).toBe(612);
   });
 
   it('모든 스냅샷의 cashLikeEnd / financialInvestableEnd는 음수가 없어야 함', () => {
