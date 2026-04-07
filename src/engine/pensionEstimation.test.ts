@@ -13,9 +13,11 @@ import {
   annuitize,
   getAnnualPensionIncomeForAge,
   getPensionMonthlyAtRetirementStart,
+  futureValueMonthly,
+  estimatePrivatePension,
 } from './pensionEstimation';
 import { estimatePublicPensionWithMeta } from './pensionMeta';
-import type { PensionInputs } from '../types/pension';
+import type { PensionInputs, PrivatePensionInput } from '../types/pension';
 
 // ─── 국민연금 기여기간 경계값 ──────────────────────────────────────────────────
 
@@ -176,5 +178,184 @@ describe('연금 지급 기간 경계값', () => {
       0,
     );
     expect(total).toBe(0);
+  });
+});
+
+// ─── W7-1: 개인연금 월단위 적립식 전환 ──────────────────────────────────────────
+
+describe('J. W7-1 futureValueMonthly 기본 수식 검증', () => {
+  it('J-1: 이자율 0일 때 — pv + monthlyContrib × 개월수', () => {
+    // r=0 이면 복리 없이 단순 합산: 100만원/월 × 120개월 = 12000만원
+    expect(futureValueMonthly(0, 100, 0, 10)).toBeCloseTo(12000, 0);
+  });
+
+  it('J-2: 납입 없을 때 — pv 복리 성장만 반영 (연복리 동치)', () => {
+    // montlyContrib=0이면 pv * (1+r)^years 와 동일
+    // (1+r_m)^(12*years) = ((1+r)^(1/12))^(12*years) = (1+r)^years
+    const expected = 1000 * Math.pow(1.06, 10);
+    expect(futureValueMonthly(1000, 0, 6, 10)).toBeCloseTo(expected, 0);
+  });
+
+  it('J-3: years <= 0이면 pv 그대로 반환', () => {
+    expect(futureValueMonthly(5000, 100, 5, 0)).toBe(5000);
+    expect(futureValueMonthly(5000, 100, 5, -1)).toBe(5000);
+  });
+
+  it('J-4: 월납 있을 때 — 동일 연납입 금액 기준 연단위보다 크거나 같음', () => {
+    // 월50万원 납입 vs 年600万원 납입 — 월납이 더 이른 복리로 결과 더 큼
+    // 연단위 근사: annualContrib=600, factor=1.05^25
+    const annualFactor = Math.pow(1.05, 25);
+    const annualFV = 600 * (annualFactor - 1) / 0.05;
+    const monthlyFV = futureValueMonthly(0, 50, 5, 25);
+    expect(monthlyFV).toBeGreaterThanOrEqual(annualFV);
+  });
+});
+
+describe('K. W7-1 estimatePrivatePension 월단위 전환 검증', () => {
+  const baseInput: PrivatePensionInput = {
+    enabled: true,
+    mode: 'auto',
+    startAge: 65,
+    payoutYears: 20,
+    currentBalance: 0,
+    monthlyContribution: 50,
+    expectedReturnRate: 5,
+    accumulationReturnRate: 5,
+    payoutReturnRate: 4,
+    manualMonthlyTodayValue: 0,
+    detailMode: false,
+    products: [],
+  };
+
+  it('K-1: 25년 적립(40세→65세) 월50만원 5%: 월수령액 합리적 범위 내', () => {
+    // futureValueMonthly(0, 50, 5, 25) ≈ 29288万원
+    // annuitize(29288, 4, 20) ≈ 177万원/月
+    const result = estimatePrivatePension(baseInput, 40);
+    expect(result).toBeGreaterThan(170);
+    expect(result).toBeLessThan(200);
+  });
+
+  it('K-2: 연단위 근사 대비 월단위 결과가 크거나 같음', () => {
+    // 연단위 근사 수계산: annualBalance = 600*(1.05^25 - 1)/0.05 = 28636
+    const annualFactor = Math.pow(1.05, 25);
+    const annualBalance = 600 * (annualFactor - 1) / 0.05;
+    const m = 0.04 / 12;
+    const n = 240;
+    const annualMonthly = Math.round(annualBalance * m / (1 - Math.pow(1 + m, -n)));
+
+    const monthlyResult = estimatePrivatePension(baseInput, 40);
+    expect(monthlyResult).toBeGreaterThanOrEqual(annualMonthly);
+  });
+
+  it('K-3: 기존 잔고만 있고 납입 없을 때 — 월/연 결과 동일 (PV 복리 동치)', () => {
+    // monthlyContrib=0이면 PV 복리만: 월/연 동일 결과
+    const pvOnly: PrivatePensionInput = { ...baseInput, monthlyContribution: 0, currentBalance: 10000 };
+    const result = estimatePrivatePension(pvOnly, 40);
+    // PV * 1.05^25 = 10000 * 3.38635 = 33864
+    // annuitize(33864, 4, 20) = 33864 * 0.006060 ≈ 205
+    expect(result).toBeGreaterThan(195);
+    expect(result).toBeLessThan(220);
+  });
+});
+
+describe('L. W7-1 manual mode 영향 없음 검증', () => {
+  const manualPensionFixture: PensionInputs = {
+    publicPension: { enabled: false, mode: 'auto', startAge: 65, manualMonthlyTodayValue: 0 },
+    retirementPension: {
+      enabled: false,
+      mode: 'auto',
+      startAge: 60,
+      payoutYears: 20,
+      currentBalance: 0,
+      accumulationReturnRate: 3.5,
+      payoutReturnRate: 2,
+      manualMonthlyTodayValue: 0,
+    },
+    privatePension: {
+      enabled: true,
+      mode: 'manual',
+      startAge: 60,
+      payoutYears: 20,
+      currentBalance: 0,
+      monthlyContribution: 50,
+      expectedReturnRate: 5,
+      accumulationReturnRate: 5,
+      payoutReturnRate: 4,
+      manualMonthlyTodayValue: 80,
+      detailMode: false,
+      products: [],
+    },
+  };
+
+  it('L-1: manual mode에서는 manualMonthlyTodayValue가 그대로 쓰임 (계산식 미사용)', () => {
+    // 60세 시작이므로 targetAge=60일 때 수령 중
+    // 80만원/월 × (1.02)^20 inflate ≈ 80 × 1.4859 = 118.9만원/월
+    const annualIncome = getAnnualPensionIncomeForAge(manualPensionFixture, 40, 60, 2, 6000, 60);
+    expect(annualIncome).toBeGreaterThan(0);
+    // futureValueMonthly 전환과 무관하게 동일 결과 보장
+    expect(annualIncome).toBeGreaterThan(1100);
+    expect(annualIncome).toBeLessThan(1600);
+  });
+});
+
+describe('M. W7-1 detail mode 상품별 월단위 전환 검증', () => {
+  const detailFixture: PensionInputs = {
+    publicPension: { enabled: false, mode: 'auto', startAge: 65, manualMonthlyTodayValue: 0 },
+    retirementPension: {
+      enabled: false,
+      mode: 'auto',
+      startAge: 60,
+      payoutYears: 20,
+      currentBalance: 0,
+      accumulationReturnRate: 3.5,
+      payoutReturnRate: 2,
+      manualMonthlyTodayValue: 0,
+    },
+    privatePension: {
+      enabled: true,
+      mode: 'auto',
+      startAge: 65,
+      payoutYears: 20,
+      currentBalance: 0,
+      monthlyContribution: 0,
+      expectedReturnRate: 5,
+      accumulationReturnRate: 5,
+      payoutReturnRate: 4,
+      manualMonthlyTodayValue: 0,
+      detailMode: true,
+      products: [{
+        id: 'p1',
+        label: '연금저축펀드',
+        currentBalance: 0,
+        monthlyContribution: 50,
+        startAge: 65,
+        payoutYears: 20,
+        expectedReturnRate: 5,
+        accumulationReturnRate: 5,
+        payoutReturnRate: 4,
+      }],
+    },
+  };
+
+  it('M-1: detail mode 상품 1개 — 연단위 근사 대비 월단위가 크거나 같음', () => {
+    // 연단위 근사 기준 기대값 계산
+    const annualFactor = Math.pow(1.05, 25);
+    const annualBalance = 600 * (annualFactor - 1) / 0.05;
+    const m = 0.04 / 12;
+    const n = 240;
+    const annualMonthly = Math.round(annualBalance * m / (1 - Math.pow(1 + m, -n)));
+
+    // detail mode → getAnnualPensionIncomeForAge 에서 직접 경로 통과
+    const annualIncome = getAnnualPensionIncomeForAge(detailFixture, 40, 65, 0, 6000, 65);
+    const monthlyResult = annualIncome / 12;
+    expect(monthlyResult).toBeGreaterThanOrEqual(annualMonthly);
+  });
+
+  it('M-2: detail mode 상품 1개 — 결과가 합리적 범위 내', () => {
+    // ~177만원/月 기대
+    const annualIncome = getAnnualPensionIncomeForAge(detailFixture, 40, 65, 0, 6000, 65);
+    const monthlyResult = annualIncome / 12;
+    expect(monthlyResult).toBeGreaterThan(170);
+    expect(monthlyResult).toBeLessThan(200);
   });
 });

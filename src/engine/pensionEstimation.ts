@@ -74,6 +74,20 @@ function futureValue(pv: number, annualContrib: number, annualRatePercent: numbe
   return pv * factor + annualContrib * (factor - 1) / r;
 }
 
+/**
+ * 월단위 적립식 미래가치 — 개인연금 전용
+ * 월이율은 연이율의 복리 동치: r_m = (1 + annual/100)^(1/12) - 1
+ * PV 복리 팩터는 futureValue와 동일 ((1+r)^years), 차이는 기여금 납입 주기
+ */
+export function futureValueMonthly(pv: number, monthlyContrib: number, annualRatePercent: number, years: number): number {
+  if (years <= 0) return pv;
+  const r_m = Math.pow(1 + annualRatePercent / 100, 1 / 12) - 1;
+  const n_m = years * 12;
+  if (r_m === 0) return pv + monthlyContrib * n_m;
+  const factor = Math.pow(1 + r_m, n_m); // = (1 + annual/100)^years
+  return pv * factor + monthlyContrib * (factor - 1) / r_m;
+}
+
 export function annuitize(totalBalance: number, annualPayoutRatePercent: number, payoutYears: number): number {
   if (totalBalance <= 0 || payoutYears <= 0) return 0;
   const m = annualPayoutRatePercent / 100 / 12;
@@ -117,8 +131,7 @@ export function estimatePrivatePension(
   currentAge: number,
 ): number {
   const yearsToStart = Math.max(p.startAge - currentAge, 0);
-  const annualContrib = (p.monthlyContribution || 0) * 12;
-  const balance = futureValue(p.currentBalance, annualContrib, p.accumulationReturnRate, yearsToStart);
+  const balance = futureValueMonthly(p.currentBalance, p.monthlyContribution || 0, p.accumulationReturnRate, yearsToStart);
   return Math.round(annuitize(balance, p.payoutReturnRate, p.payoutYears));
 }
 
@@ -181,8 +194,7 @@ export function estimatePrivatePensionProducts(
 ): number {
   return products.reduce((sum, product) => {
     const yearsToStart = Math.max(product.startAge - currentAge, 0);
-    const annualContrib = (product.monthlyContribution || 0) * 12;
-    const balance = futureValue(product.currentBalance, annualContrib, product.accumulationReturnRate, yearsToStart);
+    const balance = futureValueMonthly(product.currentBalance, product.monthlyContribution || 0, product.accumulationReturnRate, yearsToStart);
     return sum + Math.round(annuitize(balance, product.payoutReturnRate, product.payoutYears));
   }, 0);
 }
@@ -203,8 +215,7 @@ function resolvePrivateMonthlyTodayValue(
   if (p.detailMode && p.products.length > 0) {
     return p.products.reduce((sum, product) => {
       const yearsToStart = Math.max(product.startAge - currentAge, 0);
-      const annualContrib = (product.monthlyContribution || 0) * 12;
-      const balance = futureValue(product.currentBalance, annualContrib, product.accumulationReturnRate, yearsToStart);
+      const balance = futureValueMonthly(product.currentBalance, product.monthlyContribution || 0, product.accumulationReturnRate, yearsToStart);
       const nominalMonthly = Math.round(annuitize(balance, product.payoutReturnRate, product.payoutYears));
       return sum + nominalMonthly / Math.pow(1 + inflationRate / 100, yearsToStart);
     }, 0);
@@ -279,8 +290,7 @@ export function getPensionMonthlyBreakdownForAge(
         const productEndAge = product.startAge + product.payoutYears;
         if (targetAge >= product.startAge && targetAge < productEndAge) {
           const yearsToStart = Math.max(product.startAge - currentAge, 0);
-          const annualContrib = (product.monthlyContribution || 0) * 12;
-          const balance = futureValue(product.currentBalance, annualContrib, product.accumulationReturnRate, yearsToStart);
+          const balance = futureValueMonthly(product.currentBalance, product.monthlyContribution || 0, product.accumulationReturnRate, yearsToStart);
           privateMonthly += Math.round(annuitize(balance, product.payoutReturnRate, product.payoutYears));
         }
       }
@@ -359,8 +369,7 @@ export function getPensionMonthlyAtRetirementStart(
         const productEndAge = product.startAge + product.payoutYears;
         if (product.startAge <= retirementAge && retirementAge < productEndAge) {
           const yearsToStart = Math.max(product.startAge - currentAge, 0);
-          const annualContrib = (product.monthlyContribution || 0) * 12;
-          const balance = futureValue(product.currentBalance, annualContrib, product.accumulationReturnRate, yearsToStart);
+          const balance = futureValueMonthly(product.currentBalance, product.monthlyContribution || 0, product.accumulationReturnRate, yearsToStart);
           const nominalMonthly = Math.round(annuitize(balance, product.payoutReturnRate, product.payoutYears));
           total += nominalMonthly / Math.pow(1 + inflationRate / 100, yearsToStart);
         }
@@ -419,8 +428,7 @@ export function getPensionTimeline(
       // 상세 모드: 상품별로 별도 이벤트 생성
       for (const product of priv.products) {
         const yearsToStart = Math.max(product.startAge - currentAge, 0);
-        const annualContrib = (product.monthlyContribution || 0) * 12;
-        const balance = futureValue(product.currentBalance, annualContrib, product.accumulationReturnRate, yearsToStart);
+        const balance = futureValueMonthly(product.currentBalance, product.monthlyContribution || 0, product.accumulationReturnRate, yearsToStart);
         const nominalMonthly = Math.round(annuitize(balance, product.payoutReturnRate, product.payoutYears));
         const todayValue = nominalMonthly / Math.pow(1 + inflationRate / 100, yearsToStart);
         if (todayValue > 0) {
