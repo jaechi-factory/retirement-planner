@@ -118,9 +118,10 @@ export function estimateRetirementPension(
   retirementAge: number,
 ): number {
   const grossAnnualIncome = annualNetIncome / DEFAULT_NET_TO_GROSS_RATIO;
-  const annualContrib = grossAnnualIncome * RETIREMENT_CONTRIBUTION_RATE;
+  // 퇴직연금 법정 기여율: 연봉의 1/12 → 월납입 = 연봉 / 144
+  const monthlyContrib = grossAnnualIncome * RETIREMENT_CONTRIBUTION_RATE / 12;
   const yearsToRetirement = Math.max(retirementAge - currentAge, 0);
-  const balanceAtRetirement = futureValue(p.currentBalance, annualContrib, p.accumulationReturnRate, yearsToRetirement);
+  const balanceAtRetirement = futureValueMonthly(p.currentBalance, monthlyContrib, p.accumulationReturnRate, yearsToRetirement);
   const yearsToStart = Math.max(p.startAge - retirementAge, 0);
   const balanceAtStart = balanceAtRetirement * Math.pow(1 + p.accumulationReturnRate / 100, yearsToStart);
   return Math.round(annuitize(balanceAtStart, p.payoutReturnRate, p.payoutYears));
