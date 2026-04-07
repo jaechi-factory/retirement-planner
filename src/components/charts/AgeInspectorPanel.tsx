@@ -1,15 +1,20 @@
 import type { AgeSnapshotData } from './assetBalanceMetrics';
 import { fmtKRW } from '../../utils/format';
 
-interface RowProps {
+// ── 공통 행 컴포넌트 ─────────────────────────────────────────────────────────
+
+function DetailRow({
+  label,
+  value,
+  indent = false,
+  unit = '월',
+}: {
   label: string;
   value: number;
   indent?: boolean;
   unit?: string;
-}
-
-function Row({ label, value, indent = false, unit = '월' }: RowProps) {
-  if (value === 0) return null;
+}) {
+  const isEmpty = value === 0;
   return (
     <div
       style={{
@@ -17,57 +22,54 @@ function Row({ label, value, indent = false, unit = '월' }: RowProps) {
         justifyContent: 'space-between',
         gap: 8,
         paddingLeft: indent ? 10 : 0,
-        color: indent ? 'var(--ux-text-muted)' : 'var(--ux-text-base)',
+        color: isEmpty
+          ? 'var(--ux-text-disabled, #bbb)'
+          : indent
+          ? 'var(--ux-text-subtle)'
+          : 'var(--ux-text-base)',
         fontSize: 13,
-        lineHeight: 1.6,
-      }}
-    >
-      <span>{label}</span>
-      <span style={{ whiteSpace: 'nowrap' }}>{unit} {fmtKRW(Math.round(value))}</span>
-    </div>
-  );
-}
-
-function TotalRow({ label, value, color, unit = '월' }: { label: string; value: number; color?: string; unit?: string }) {
-  return (
-    <div
-      style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        gap: 8,
-        fontWeight: 700,
-        fontSize: 13,
-        color: color ?? 'var(--ux-text-strong)',
-        lineHeight: 1.6,
-        paddingTop: 4,
-        marginTop: 2,
-        borderTop: '1px solid var(--ux-border)',
+        lineHeight: 1.7,
       }}
     >
       <span>{label}</span>
       <span style={{ whiteSpace: 'nowrap' }}>
-        {color ? (value >= 0 ? '+' : '-') : ''}{unit} {fmtKRW(Math.round(Math.abs(value)))}
+        {unit} {fmtKRW(Math.round(value))}
       </span>
     </div>
   );
 }
 
-function AssetRow({ label, value, color }: { label: string; value: number; color: string }) {
-  if (value === 0) return null;
+function AssetRow({
+  label,
+  value,
+  dotColor,
+}: {
+  label: string;
+  value: number;
+  dotColor: string;
+}) {
+  const isEmpty = value === 0;
   return (
     <div
       style={{
         display: 'flex',
         justifyContent: 'space-between',
         gap: 8,
-        color: 'var(--ux-text-base)',
+        color: isEmpty ? 'var(--ux-text-disabled, #bbb)' : 'var(--ux-text-base)',
         fontSize: 13,
-        lineHeight: 1.6,
+        lineHeight: 1.7,
       }}
     >
       <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
         <span
-          style={{ width: 6, height: 6, borderRadius: '50%', background: color, flexShrink: 0, display: 'inline-block' }}
+          style={{
+            width: 6,
+            height: 6,
+            borderRadius: '50%',
+            background: isEmpty ? 'var(--ux-text-disabled, #bbb)' : dotColor,
+            flexShrink: 0,
+            display: 'inline-block',
+          }}
         />
         {label}
       </span>
@@ -76,24 +78,64 @@ function AssetRow({ label, value, color }: { label: string; value: number; color
   );
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
-    <div>
-      <div
-        style={{
-          fontSize: 12,
-          fontWeight: 600,
-          color: 'var(--ux-text-subtle)',
-          marginBottom: 4,
-          letterSpacing: '0.03em',
-        }}
-      >
-        {title}
-      </div>
+    <div
+      style={{
+        fontSize: 11,
+        fontWeight: 600,
+        color: 'var(--ux-text-subtle)',
+        letterSpacing: '0.05em',
+        textTransform: 'uppercase',
+        marginBottom: 4,
+      }}
+    >
       {children}
     </div>
   );
 }
+
+// ── 상단 요약 셀 ─────────────────────────────────────────────────────────────
+
+function SummaryCell({
+  label,
+  value,
+  color,
+  prefix = '',
+  unit = '월 ',
+}: {
+  label: string;
+  value: number;
+  color?: string;
+  prefix?: string;
+  unit?: string;
+}) {
+  return (
+    <div
+      style={{
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 2,
+        padding: '8px 12px',
+      }}
+    >
+      <span style={{ fontSize: 11, color: 'var(--ux-text-subtle)', fontWeight: 500 }}>{label}</span>
+      <span
+        style={{
+          fontSize: 14,
+          fontWeight: 700,
+          color: color ?? 'var(--ux-text-strong)',
+          whiteSpace: 'nowrap',
+        }}
+      >
+        {prefix}{unit}{fmtKRW(Math.round(Math.abs(value)))}
+      </span>
+    </div>
+  );
+}
+
+// ── 메인 컴포넌트 ─────────────────────────────────────────────────────────────
 
 interface Props {
   data: AgeSnapshotData;
@@ -104,6 +146,7 @@ interface Props {
 export default function AgeInspectorPanel({ data, hasRealEstate, hasSaleProceeds }: Props) {
   const netColor =
     data.monthlyNet >= 0 ? 'var(--ux-status-positive)' : 'var(--ux-status-negative)';
+  const netPrefix = data.monthlyNet >= 0 ? '+' : '-';
 
   return (
     <div
@@ -113,15 +156,16 @@ export default function AgeInspectorPanel({ data, hasRealEstate, hasSaleProceeds
         borderRadius: 10,
         overflow: 'hidden',
         background: 'var(--ux-surface)',
+        fontSize: 13,
       }}
     >
-      {/* 헤더 */}
+      {/* ── 헤더: 나이 + 이벤트 ── */}
       <div
         style={{
           display: 'flex',
           alignItems: 'center',
           gap: 8,
-          padding: '8px 14px',
+          padding: '7px 14px',
           borderBottom: '1px solid var(--ux-border)',
           background: 'var(--ux-surface-elevated, var(--ux-surface))',
         }}
@@ -135,57 +179,95 @@ export default function AgeInspectorPanel({ data, hasRealEstate, hasSaleProceeds
           </span>
         )}
         {data.pensionEvents.length > 0 && (
-          <span style={{ fontSize: 12, color: 'var(--ux-status-positive)', fontWeight: 600, marginLeft: 'auto' }}>
+          <span
+            style={{
+              fontSize: 12,
+              color: 'var(--ux-status-positive)',
+              fontWeight: 600,
+              marginLeft: 'auto',
+            }}
+          >
             {data.pensionEvents.map((e) => `${e.name} 수령 시작`).join(' · ')}
           </span>
         )}
       </div>
 
-      {/* 3열 그리드 */}
+      {/* ── 상단 요약 4칸 ── */}
       <div
         style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(3, 1fr)',
-          gap: 0,
+          display: 'flex',
+          borderBottom: '1px solid var(--ux-border)',
         }}
       >
-        {/* 수입 내역 */}
+        <SummaryCell label="수입" value={data.monthlyIncome} />
+        <div style={{ width: 1, background: 'var(--ux-border)' }} />
+        <SummaryCell label="지출" value={data.monthlyOutflow} />
+        <div style={{ width: 1, background: 'var(--ux-border)' }} />
+        <SummaryCell
+          label="월 잔액"
+          value={data.monthlyNet}
+          color={netColor}
+          prefix={netPrefix}
+        />
+        <div style={{ width: 1, background: 'var(--ux-border)' }} />
+        <SummaryCell label="총 자산" value={data.totalAssets} unit="" />
+      </div>
+
+      {/* ── 하단 2열 상세 ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
+
+        {/* 왼쪽: 수입 내역 + 지출 내역 */}
         <div style={{ padding: '10px 14px', borderRight: '1px solid var(--ux-border)' }}>
-          <Section title="수입 내역">
-            <Row label="근로소득" value={data.monthlySalary} />
-            <Row label="연금 합계" value={data.monthlyPension} />
-            <Row label="국민연금" value={data.monthlyPublicPension} indent />
-            <Row label="퇴직연금" value={data.monthlyRetirementPension} indent />
-            <Row label="개인연금" value={data.monthlyPrivatePension} indent />
-          </Section>
-          <TotalRow label="합계" value={data.monthlyIncome} />
+          <SectionTitle>수입 내역</SectionTitle>
+          <DetailRow label="근로소득" value={data.monthlySalary} />
+          <DetailRow label="연금 합계" value={data.monthlyPension} />
+          <DetailRow label="국민연금" value={data.monthlyPublicPension} indent />
+          <DetailRow label="퇴직연금" value={data.monthlyRetirementPension} indent />
+          <DetailRow label="개인연금" value={data.monthlyPrivatePension} indent />
+
+          <div style={{ marginTop: 12 }}>
+            <SectionTitle>지출 내역</SectionTitle>
+            <DetailRow label="생활비" value={data.monthlyLivingExpense} />
+            <DetailRow label="부채상환" value={data.monthlyDebtService} />
+            <DetailRow label="자녀비" value={data.monthlyChildExpense} />
+            <DetailRow label="주거비" value={data.monthlyRent} />
+          </div>
         </div>
 
-        {/* 지출 내역 */}
-        <div style={{ padding: '10px 14px', borderRight: '1px solid var(--ux-border)' }}>
-          <Section title="지출 내역">
-            <Row label="생활비" value={data.monthlyLivingExpense} />
-            <Row label="부채상환" value={data.monthlyDebtService} />
-            <Row label="자녀비" value={data.monthlyChildExpense} />
-            <Row label="주거비" value={data.monthlyRent} />
-          </Section>
-          <TotalRow label="합계" value={data.monthlyOutflow} />
-          <TotalRow label="월 잔액" value={data.monthlyNet} color={netColor} />
-        </div>
-
-        {/* 자산 내역 (연말 잔고) */}
+        {/* 오른쪽: 자산 내역 + 연금 이벤트 */}
         <div style={{ padding: '10px 14px' }}>
-          <Section title="자산 (연말)">
-            <AssetRow label="현금·예금" value={data.cashLike} color="var(--ux-accent)" />
-            <AssetRow label="주식·채권" value={data.financialInvestable} color="var(--ux-text-base)" />
-            {hasRealEstate && (
-              <AssetRow label="집 자산" value={data.propertyValue} color="var(--ux-text-subtle)" />
-            )}
-            {hasSaleProceeds && (
-              <AssetRow label="매각대금 운용" value={data.saleProceedsEnd} color="var(--ux-status-positive)" />
-            )}
-          </Section>
-          <TotalRow label="총 자산" value={data.totalAssets} unit="" />
+          <SectionTitle>자산 (연말 잔고)</SectionTitle>
+          <AssetRow label="현금·예금" value={data.cashLike} dotColor="var(--ux-accent)" />
+          <AssetRow label="주식·채권" value={data.financialInvestable} dotColor="var(--ux-text-base)" />
+          {hasRealEstate && (
+            <AssetRow label="집 자산" value={data.propertyValue} dotColor="var(--ux-text-subtle)" />
+          )}
+          {hasSaleProceeds && (
+            <AssetRow
+              label="매각대금 운용"
+              value={data.saleProceedsEnd}
+              dotColor="var(--ux-status-positive)"
+            />
+          )}
+
+          {data.pensionEvents.length > 0 && (
+            <div style={{ marginTop: 12 }}>
+              <SectionTitle>이벤트</SectionTitle>
+              {data.pensionEvents.map((e, i) => (
+                <div
+                  key={i}
+                  style={{
+                    fontSize: 13,
+                    color: 'var(--ux-status-positive)',
+                    fontWeight: 600,
+                    lineHeight: 1.7,
+                  }}
+                >
+                  {e.name} 수령 시작 · 월 {fmtKRW(e.monthly)}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
