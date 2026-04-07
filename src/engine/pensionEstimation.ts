@@ -66,14 +66,6 @@ function computeNPSReplacement(currentAge: number, retirementAge: number, workSt
   };
 }
 
-function futureValue(pv: number, annualContrib: number, annualRatePercent: number, years: number): number {
-  if (years <= 0) return pv;
-  const r = annualRatePercent / 100;
-  if (r === 0) return pv + annualContrib * years;
-  const factor = Math.pow(1 + r, years);
-  return pv * factor + annualContrib * (factor - 1) / r;
-}
-
 /**
  * 월단위 적립식 미래가치 — 개인연금 전용
  * 월이율은 연이율의 복리 동치: r_m = (1 + annual/100)^(1/12) - 1
