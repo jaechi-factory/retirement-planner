@@ -1,5 +1,33 @@
 import type { MonthlySnapshotV2, YearlyAggregateV2 } from '../../types/calculationV2';
 
+export interface AgeSnapshotData {
+  age: number;
+  isRetirementYear: boolean;
+  // income
+  monthlySalary: number;
+  monthlyPension: number;
+  monthlyPublicPension: number;
+  monthlyRetirementPension: number;
+  monthlyPrivatePension: number;
+  monthlyIncome: number;
+  // expense
+  monthlyLivingExpense: number;
+  monthlyRent: number;
+  monthlyDebtService: number;
+  monthlyChildExpense: number;
+  monthlyOutflow: number;
+  // net
+  monthlyNet: number;
+  // assets (year-end balances)
+  cashLike: number;
+  financialInvestable: number;
+  propertyValue: number;
+  saleProceedsEnd: number;
+  totalAssets: number;
+  // events
+  pensionEvents: Array<{ name: string; monthly: number }>;
+}
+
 export interface CashflowByAgeMaps {
   monthlySalaryByAge: Map<number, number>;
   monthlyPensionByAge: Map<number, number>;
@@ -66,6 +94,66 @@ export function buildCashflowByAgeMaps(rows: YearlyAggregateV2[]): CashflowByAge
     monthlyIncomeByAge,
     monthlyOutflowByAge,
     monthlyNetByAge,
+  };
+}
+
+export function getAgeSnapshot(params: {
+  age: number;
+  retirementAge: number;
+  rows: YearlyAggregateV2[];
+  cashflow: CashflowByAgeMaps;
+  monthlyPublicPensionByAge: Map<number, number>;
+  monthlyRetirementPensionByAge: Map<number, number>;
+  monthlyPrivatePensionByAge: Map<number, number>;
+  pensionStartMap: Map<number, Array<{ name: string; monthly: number }>>;
+}): AgeSnapshotData | null {
+  const {
+    age, retirementAge, rows, cashflow,
+    monthlyPublicPensionByAge, monthlyRetirementPensionByAge, monthlyPrivatePensionByAge,
+    pensionStartMap,
+  } = params;
+  const row = rows.find((r) => r.ageYear === age);
+  if (!row) return null;
+
+  const monthlySalary = cashflow.monthlySalaryByAge.get(age) ?? 0;
+  const monthlyPension = cashflow.monthlyPensionByAge.get(age) ?? 0;
+  const monthlyPublicPension = monthlyPublicPensionByAge.get(age) ?? 0;
+  const monthlyRetirementPension = monthlyRetirementPensionByAge.get(age) ?? 0;
+  const monthlyPrivatePension = monthlyPrivatePensionByAge.get(age) ?? 0;
+  const monthlyIncome = cashflow.monthlyIncomeByAge.get(age) ?? 0;
+  const monthlyLivingExpense = cashflow.monthlyLivingExpenseByAge.get(age) ?? 0;
+  const monthlyRent = cashflow.monthlyRentByAge.get(age) ?? 0;
+  const monthlyDebtService = cashflow.monthlyDebtServiceByAge.get(age) ?? 0;
+  const monthlyChildExpense = cashflow.monthlyChildExpenseByAge.get(age) ?? 0;
+  const monthlyOutflow = cashflow.monthlyOutflowByAge.get(age) ?? 0;
+  const monthlyNet = cashflow.monthlyNetByAge.get(age) ?? 0;
+  const totalAssets =
+    row.cashLikeEnd +
+    row.financialInvestableEnd +
+    row.propertyValueEnd +
+    row.propertySaleProceedsBucketEnd;
+
+  return {
+    age,
+    isRetirementYear: age === retirementAge,
+    monthlySalary,
+    monthlyPension,
+    monthlyPublicPension,
+    monthlyRetirementPension,
+    monthlyPrivatePension,
+    monthlyIncome,
+    monthlyLivingExpense,
+    monthlyRent,
+    monthlyDebtService,
+    monthlyChildExpense,
+    monthlyOutflow,
+    monthlyNet,
+    cashLike: row.cashLikeEnd,
+    financialInvestable: row.financialInvestableEnd,
+    propertyValue: row.propertyValueEnd,
+    saleProceedsEnd: row.propertySaleProceedsBucketEnd,
+    totalAssets,
+    pensionEvents: pensionStartMap.get(age) ?? [],
   };
 }
 
