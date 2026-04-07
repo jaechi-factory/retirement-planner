@@ -17,13 +17,15 @@
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import type { PlannerInputs } from '../types/inputs';
 import type { FundingPolicy, LiquidationPolicy } from './fundingPolicy';
+import * as policyModule from '../policy/policyTable';
 import {
   simulateMonthlyV2,
   isSustainableV2,
   findFinancialSellStartAgeV2,
+  aggregateToYearly,
 } from './simulatorV2';
 import { findMaxSustainableMonthlyV2 } from './binarySearchV2';
 import { calcHousingAnnuityMonthly } from './housingAnnuity';
@@ -1113,5 +1115,281 @@ describe('G. 매각 이벤트 메타데이터 및 부동산 부채 추적', () =
 
     expect(firstMonth.propertyDebtEnd).toBeCloseTo(mortgageOnly, 6);
     expect(firstMonth.propertyDebtEnd).toBeLessThan(totalDebtBalance);
+  });
+
+  // ─── W1: sell 후 propertyDebtEnd → 0 ──────────────────────────────────────
+  //
+  // 버그: 집 매각 시 netProceeds = grossProceedsAfterHaircut - remainingMortgage 로
+  //       주담대를 일괄 상환함에도, 이후 스냅샷에서 debtSchedules 정적 배열을
+  //       그대로 읽어 propertyDebtEnd > 0이 유지되는 문제.
+  //
+  // 핵심: 20년 모기지 + 65세 은퇴 시나리오에서는 모기지가 이미 만료돼
+  //       우연히 0이 되어 버그를 숨긴다. 버그를 잡으려면 반드시
+  //       30년 모기지처럼 매각 시점까지 잔액이 남는 시나리오가 필요하다.
+  //
+  // 시나리오: currentAge=50, retirementAge=55, lifeExpectancy=70
+  //           자산 부족 → 은퇴 직후 집 매각 (totalMonthIndex ≈ 60~72)
+  //           30년 모기지 잔액이 남아있는 시점에 매각 발생 → 버그 재현
+  //
+  // 기대: propertySold 이후 모든 스냅샷의 propertyDebtEnd === 0
+  // ─────────────────────────────────────────────────────────────────────────
+
+  it('[W1] sell 전략: 30년 모기지 보유 중 매각 → 이후 모든 snapshot.propertyDebtEnd === 0', () => {
+    // 자산이 적어 은퇴 직후 집을 팔아야 하는 시나리오
+    // 30년 모기지(360개월 스케줄)가 있으므로 매각 시점(totalMonthIndex≈60)에
+    // 스케줄 잔액이 남아있어 버그가 재현된다
+    const inputs = makeInputs({
+      goal: { retirementAge: 55, lifeExpectancy: 70, targetMonthly: 600, inflationRate: 2.5 },
+      status: { currentAge: 50, annualIncome: 3000, incomeGrowthRate: 0, annualExpense: 4800, expenseGrowthRate: 0 },
+      assets: {
+        cash:       { amount: 200,   expectedReturn: 1.0 },
+        deposit:    { amount: 200,   expectedReturn: 2.0 },
+        stock_kr:   { amount: 0,     expectedReturn: 6.0 },
+        stock_us:   { amount: 0,     expectedReturn: 8.0 },
+        bond:       { amount: 0,     expectedReturn: 3.5 },
+        crypto:     { amount: 0,     expectedReturn: 0   },
+        realEstate: { amount: 50000, expectedReturn: 1.0 },
+      },
+      debts: {
+        mortgage:   { balance: 30000, interestRate: 4.0, repaymentType: 'equal_payment', repaymentYears: 30 },
+        creditLoan: { balance: 0, interestRate: 0, repaymentType: 'balloon_payment', repaymentYears: 0 },
+        otherLoan:  { balance: 0, interestRate: 0, repaymentType: 'balloon_payment', repaymentYears: 0 },
+      },
+    });
+
+    const snapshots = simulateMonthlyV2(inputs, 600, 'sell', DEFAULT_FUNDING_POLICY, DEFAULT_LIQUIDATION);
+
+    const saleIdx = snapshots.findIndex((s) => s.eventFlags.propertySold);
+    expect(saleIdx).toBeGreaterThanOrEqual(0); // 매각이 발생해야 함
+
+    // 매각 시점에 모기지 스케줄 잔액이 실제로 남아있는지 확인 (버그 재현 조건)
+    const saleMonth = snapshots[saleIdx];
+    expect(saleMonth.ageYear).toBeLessThan(80); // 30년 모기지 만료 전에 팔아야 함
+
+    // 핵심 검증: 매각 이후 모든 스냅샷의 propertyDebtEnd === 0
+    const afterSale = snapshots.slice(saleIdx);
+    const nonZero = afterSale.filter((s) => s.propertyDebtEnd !== 0);
+    expect(nonZero).toHaveLength(0);
+  });
+
+  it('[W1] keep/secured_loan 전략: 주담대 있으면 propertyDebtEnd > 0 유지 (W1 영향 없음)', () => {
+    const inputs = makeInputs({
+      debts: {
+        mortgage:   { balance: 20000, interestRate: 4.0, repaymentType: 'equal_payment', repaymentYears: 20 },
+        creditLoan: { balance: 0, interestRate: 0, repaymentType: 'balloon_payment', repaymentYears: 0 },
+        otherLoan:  { balance: 0, interestRate: 0, repaymentType: 'balloon_payment', repaymentYears: 0 },
+      },
+    });
+
+    const keepSnaps = simulateMonthlyV2(inputs, inputs.goal.targetMonthly, 'keep', DEFAULT_FUNDING_POLICY, DEFAULT_LIQUIDATION);
+    const loanSnaps = simulateMonthlyV2(inputs, inputs.goal.targetMonthly, 'secured_loan', DEFAULT_FUNDING_POLICY, DEFAULT_LIQUIDATION);
+
+    // keep: 초기에 propertyDebtEnd > 0 이어야 함
+    expect(keepSnaps[0].propertyDebtEnd).toBeGreaterThan(0);
+    // secured_loan: 초기에 propertyDebtEnd > 0 이어야 함
+    expect(loanSnaps[0].propertyDebtEnd).toBeGreaterThan(0);
+  });
+
+  it('[W1] sell 전략: 주담대 없을 때도 매각 이후 propertyDebtEnd === 0 (기존 동작 유지)', () => {
+    const inputs = makeInputs({
+      goal: { retirementAge: 55, lifeExpectancy: 70, targetMonthly: 600, inflationRate: 2.5 },
+      status: { currentAge: 50, annualIncome: 3000, incomeGrowthRate: 0, annualExpense: 4800, expenseGrowthRate: 0 },
+      assets: {
+        cash:       { amount: 200,   expectedReturn: 1.0 },
+        deposit:    { amount: 200,   expectedReturn: 2.0 },
+        stock_kr:   { amount: 0,     expectedReturn: 6.0 },
+        stock_us:   { amount: 0,     expectedReturn: 8.0 },
+        bond:       { amount: 0,     expectedReturn: 3.5 },
+        crypto:     { amount: 0,     expectedReturn: 0   },
+        realEstate: { amount: 50000, expectedReturn: 1.0 },
+      },
+      debts: {
+        mortgage:   { balance: 0, interestRate: 0, repaymentType: 'balloon_payment', repaymentYears: 0 },
+        creditLoan: { balance: 0, interestRate: 0, repaymentType: 'balloon_payment', repaymentYears: 0 },
+        otherLoan:  { balance: 0, interestRate: 0, repaymentType: 'balloon_payment', repaymentYears: 0 },
+      },
+    });
+
+    const snapshots = simulateMonthlyV2(inputs, 600, 'sell', DEFAULT_FUNDING_POLICY, DEFAULT_LIQUIDATION);
+
+    const saleIdx = snapshots.findIndex((s) => s.eventFlags.propertySold);
+    if (saleIdx >= 0) {
+      const afterSale = snapshots.slice(saleIdx);
+      afterSale.forEach((s) => {
+        expect(s.propertyDebtEnd).toBe(0);
+      });
+    }
+  });
+});
+
+// ─── H. W3: YearlyAggregateV2 totalRentalCost ─────────────────────────────────
+//
+// 버그: aggregateToYearly가 rentalCostThisMonth를 연간 합산하지 않아
+//       sell 전략 매각 후 임대비가 연도 집계에서 누락됨.
+// 기대: YearlyAggregateV2.totalRentalCost === 해당 연도 월별 rentalCostThisMonth 합계
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('H. W3: YearlyAggregateV2 totalRentalCost 집계', () => {
+  // sell 전략 + 매각 후 임대비 발생 시나리오 공통 입력
+  const SELL_INPUTS = makeInputs({
+    goal: { retirementAge: 55, lifeExpectancy: 70, targetMonthly: 300, inflationRate: 2.5 },
+    status: { currentAge: 50, annualIncome: 3000, incomeGrowthRate: 0, annualExpense: 4800, expenseGrowthRate: 0 },
+    assets: {
+      cash:       { amount: 200,   expectedReturn: 1.0 },
+      deposit:    { amount: 200,   expectedReturn: 2.0 },
+      stock_kr:   { amount: 0,     expectedReturn: 6.0 },
+      stock_us:   { amount: 0,     expectedReturn: 8.0 },
+      bond:       { amount: 0,     expectedReturn: 3.5 },
+      crypto:     { amount: 0,     expectedReturn: 0   },
+      realEstate: { amount: 50000, expectedReturn: 1.0 },
+    },
+    debts: {
+      mortgage:   { balance: 0, interestRate: 0, repaymentType: 'balloon_payment', repaymentYears: 0 },
+      creditLoan: { balance: 0, interestRate: 0, repaymentType: 'balloon_payment', repaymentYears: 0 },
+      otherLoan:  { balance: 0, interestRate: 0, repaymentType: 'balloon_payment', repaymentYears: 0 },
+    },
+  });
+
+  it('[W3-1] sell 전략: 매각 후 연도에 totalRentalCost > 0이어야 함', () => {
+    const snapshots = simulateMonthlyV2(SELL_INPUTS, 300, 'sell', DEFAULT_FUNDING_POLICY, DEFAULT_LIQUIDATION);
+    const yearly = aggregateToYearly(snapshots);
+
+    // 매각이 발생했는지 확인
+    const saleMonth = snapshots.find(s => s.eventFlags.propertySold);
+    expect(saleMonth).toBeDefined();
+
+    // 매각 이후 연도에 totalRentalCost > 0인 연도가 있어야 함
+    const saleAge = saleMonth!.ageYear;
+    const afterSaleYears = yearly.filter(y => y.ageYear > saleAge);
+    expect(afterSaleYears.length).toBeGreaterThan(0);
+
+    const anyRentalCost = afterSaleYears.some(y => y.totalRentalCost > 0);
+    expect(anyRentalCost).toBe(true);
+  });
+
+  it('[W3-2] sell 전략: 월별 rentalCostThisMonth 합계 === yearly.totalRentalCost (정확도 검증)', () => {
+    const snapshots = simulateMonthlyV2(SELL_INPUTS, 300, 'sell', DEFAULT_FUNDING_POLICY, DEFAULT_LIQUIDATION);
+    const yearly = aggregateToYearly(snapshots);
+
+    for (const year of yearly) {
+      const monthlySum = year.months.reduce((s, m) => s + m.rentalCostThisMonth, 0);
+      expect(year.totalRentalCost).toBeCloseTo(monthlySum, 6);
+    }
+  });
+
+  it('[W3-3] keep/secured_loan 전략: 임대 없으므로 모든 연도 totalRentalCost === 0', () => {
+    const keepSnaps = simulateMonthlyV2(SELL_INPUTS, 300, 'keep', DEFAULT_FUNDING_POLICY, DEFAULT_LIQUIDATION);
+    const loanSnaps = simulateMonthlyV2(SELL_INPUTS, 300, 'secured_loan', DEFAULT_FUNDING_POLICY, DEFAULT_LIQUIDATION);
+
+    for (const year of aggregateToYearly(keepSnaps)) {
+      expect(year.totalRentalCost).toBe(0);
+    }
+    for (const year of aggregateToYearly(loanSnaps)) {
+      expect(year.totalRentalCost).toBe(0);
+    }
+  });
+});
+
+// ─── I. W4: all_debts 모드 이중 상환 방지 ────────────────────────────────────
+//
+// 버그: propertySold 이후 debtServiceThisMonth는 "전체 - mortgage" 방식이라
+//       all_debts 모드에서 매각으로 정산한 신용/기타 대출이 계속 차감됨.
+//
+// 기대:
+//   - all_debts + sell: 매각 이후 debtServiceThisMonth === 0
+//   - mortgage_only + sell: 매각 이후 credit/other 납입은 유지, mortgage만 제외
+//   - keep / secured_loan: 전략 영향 없음
+//
+// 구현 메모: getPlannerPolicy를 vi.spyOn으로 mock해 all_debts 경로를 직접 실행.
+//            production 코드 변경 없이 두 분기를 모두 테스트 가능.
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('I. W4: all_debts 모드 이중 상환 방지', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  // 주담대 + 신용대출 동시 보유 시나리오 (매각 전 두 대출 모두 active)
+  const DEBT_SELL_INPUTS = makeInputs({
+    goal: { retirementAge: 55, lifeExpectancy: 70, targetMonthly: 400, inflationRate: 2.5 },
+    status: { currentAge: 50, annualIncome: 3000, incomeGrowthRate: 0, annualExpense: 4800, expenseGrowthRate: 0 },
+    assets: {
+      cash:       { amount: 200,   expectedReturn: 1.0 },
+      deposit:    { amount: 200,   expectedReturn: 2.0 },
+      stock_kr:   { amount: 0,     expectedReturn: 6.0 },
+      stock_us:   { amount: 0,     expectedReturn: 8.0 },
+      bond:       { amount: 0,     expectedReturn: 3.5 },
+      crypto:     { amount: 0,     expectedReturn: 0   },
+      realEstate: { amount: 50000, expectedReturn: 1.0 },
+    },
+    debts: {
+      // 30년 모기지 — 매각 후에도 스케줄 잔여 있음
+      mortgage:   { balance: 20000, interestRate: 4.0, repaymentType: 'equal_payment', repaymentYears: 30 },
+      // 5년 신용대출 — 매각 시점에 아직 납입 진행 중
+      creditLoan: { balance: 5000, interestRate: 6.0, repaymentType: 'equal_payment', repaymentYears: 5 },
+      otherLoan:  { balance: 0, interestRate: 0, repaymentType: 'balloon_payment', repaymentYears: 0 },
+    },
+  });
+
+  it('[W4-1] sell + all_debts: 매각 이후 debtServiceThisMonth === 0', () => {
+    // all_debts 모드: 매각 시 전체 부채 정산 → 이후 월 상환 없어야 함
+    const realPolicy = policyModule.getPlannerPolicy();
+    vi.spyOn(policyModule, 'getPlannerPolicy').mockReturnValue({
+      ...realPolicy,
+      property: { ...realPolicy.property, saleDebtSettlementMode: 'all_debts' },
+    });
+
+    const snapshots = simulateMonthlyV2(DEBT_SELL_INPUTS, 400, 'sell', DEFAULT_FUNDING_POLICY, DEFAULT_LIQUIDATION);
+
+    const saleIdx = snapshots.findIndex(s => s.eventFlags.propertySold);
+    expect(saleIdx).toBeGreaterThanOrEqual(0);
+
+    // 매각 다음 달부터 debtServiceThisMonth가 0이어야 함
+    const afterSale = snapshots.slice(saleIdx + 1);
+    expect(afterSale.length).toBeGreaterThan(0);
+    const nonZero = afterSale.filter(s => s.debtServiceThisMonth !== 0);
+    expect(nonZero).toHaveLength(0);
+  });
+
+  it('[W4-2] sell + mortgage_only: 매각 이후 신용대출 납입은 유지, mortgage만 제외', () => {
+    // mortgage_only 모드 (현재 기본값): 신용대출은 계속 차감되어야 함
+    // getPlannerPolicy mock 없이 기본 동작 사용
+    const snapshots = simulateMonthlyV2(DEBT_SELL_INPUTS, 400, 'sell', DEFAULT_FUNDING_POLICY, DEFAULT_LIQUIDATION);
+
+    const saleIdx = snapshots.findIndex(s => s.eventFlags.propertySold);
+    expect(saleIdx).toBeGreaterThanOrEqual(0);
+
+    // 매각 이후 debtServiceThisMonth > 0 이어야 함 (신용대출 납입 계속)
+    // (신용대출 5년=60개월, 매각이 충분히 이른 시점이면 납입 잔여분 있음)
+    const afterSale = snapshots.slice(saleIdx + 1);
+    expect(afterSale.length).toBeGreaterThan(0);
+
+    // 매각 직후 최소 1달은 신용대출 납입이 있어야 함 (스케줄이 남아있는 경우)
+    // 매각 month index 확인: 신용대출 60개월 스케줄 내에서 매각이 일어나는지 체크
+    const saleMonthIdx = snapshots[saleIdx].ageMonthIndex + (snapshots[saleIdx].ageYear - DEBT_SELL_INPUTS.status.currentAge) * 12;
+    if (saleMonthIdx < 60) {
+      // 신용대출 스케줄이 남아있는 기간 → debtService > 0
+      const nextMonth = afterSale[0];
+      expect(nextMonth.debtServiceThisMonth).toBeGreaterThan(0);
+    }
+  });
+
+  it('[W4-3] keep/secured_loan: all_debts mock에서도 debtService 정상 동작 (propertySold 없음)', () => {
+    // keep/secured_loan에서는 propertySold가 false → W4 수정의 영향 없어야 함
+    const realPolicy = policyModule.getPlannerPolicy();
+    vi.spyOn(policyModule, 'getPlannerPolicy').mockReturnValue({
+      ...realPolicy,
+      property: { ...realPolicy.property, saleDebtSettlementMode: 'all_debts' },
+    });
+
+    const keepSnaps = simulateMonthlyV2(DEBT_SELL_INPUTS, 400, 'keep', DEFAULT_FUNDING_POLICY, DEFAULT_LIQUIDATION);
+    const loanSnaps = simulateMonthlyV2(DEBT_SELL_INPUTS, 400, 'secured_loan', DEFAULT_FUNDING_POLICY, DEFAULT_LIQUIDATION);
+
+    // keep/secured_loan: 첫 달 debtService > 0 이어야 함 (부채 있으므로)
+    expect(keepSnaps[0].debtServiceThisMonth).toBeGreaterThan(0);
+    expect(loanSnaps[0].debtServiceThisMonth).toBeGreaterThan(0);
+
+    // 집 매각 이벤트가 발생하지 않아야 함
+    expect(keepSnaps.some(s => s.eventFlags.propertySold)).toBe(false);
   });
 });

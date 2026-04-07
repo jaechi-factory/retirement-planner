@@ -321,10 +321,13 @@ export function simulateMonthlyV2(
       }
 
       // [P4] 부채상환: schedule index = totalMonthIndex (offset 없음, 첫 달부터 적용)
-      // sell 전략: 집 매각 시 netProceeds = grossProceeds - remainingMortgage 로 주담대를 일괄 상환.
-      // 이후 월 주담대 납입금을 계속 차감하면 이중 상환이 되므로 0으로 처리.
+      // sell 전략 + all_debts: 매각 시 전체 잔존부채를 일괄 상환 → 이후 월 납입 0.
+      // sell 전략 + mortgage_only: 주담대만 일괄 상환 → 이후 신용/기타 대출 납입은 유지.
+      // [W4] all_debts 모드에서 이미 정산된 신용/기타 대출의 이중 상환 방지.
       const debtServiceThisMonth = propertySold
-        ? getMonthlyDebtService(debtSchedules, totalMonthIndex) - getMortgagePayment(debtSchedules, totalMonthIndex)
+        ? propertyPolicy.saleDebtSettlementMode === 'all_debts'
+          ? 0
+          : getMonthlyDebtService(debtSchedules, totalMonthIndex) - getMortgagePayment(debtSchedules, totalMonthIndex)
         : getMonthlyDebtService(debtSchedules, totalMonthIndex);
 
       const childExpenseThisMonth =
@@ -476,7 +479,11 @@ export function simulateMonthlyV2(
 
       const cashLikeEnd          = buckets.cash + buckets.deposit;
       const financialInvestableEnd = FINANCIAL_KEYS.reduce((s, k) => s + buckets[k], 0);
-      const propertyDebtEnd      = getRemainingMortgageBalance(debtSchedules, totalMonthIndex);
+      // [W1] sell 전략에서 집 매각 시 주담대를 일괄 상환하므로
+      // 매각 이후에는 스케줄 잔액과 무관하게 0으로 강제한다.
+      const propertyDebtEnd      = propertySold
+        ? 0
+        : getRemainingMortgageBalance(debtSchedules, totalMonthIndex);
 
       snapshots.push({
         ageYear,
@@ -573,6 +580,7 @@ export function aggregateToYearly(snapshots: MonthlySnapshotV2[]): YearlyAggrega
       totalExpense:      months.reduce((s, m) => s + m.expenseThisMonth, 0),
       totalDebtService:  months.reduce((s, m) => s + m.debtServiceThisMonth, 0),
       totalChildExpense: months.reduce((s, m) => s + m.childExpenseThisMonth, 0),
+      totalRentalCost:   months.reduce((s, m) => s + m.rentalCostThisMonth, 0),
       eventSummary,
       months,
     });

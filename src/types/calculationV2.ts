@@ -53,6 +53,7 @@ export interface YearlyAggregateV2 {
   totalExpense: number;                  // 연간 생활비
   totalDebtService: number;              // 연간 부채상환
   totalChildExpense: number;             // 연간 자녀지출
+  totalRentalCost: number;               // 연간 임대비 (sell 전략 매각 후 발생, 만원)
   eventSummary: string[];                // 이벤트 요약 텍스트 목록
   months: MonthlySnapshotV2[];           // 드릴다운용 원본 월별 데이터
 }
