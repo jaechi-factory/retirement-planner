@@ -1,4 +1,4 @@
-import { Typography } from '@wanteddev/wds';
+import { Typography } from '../../ui/wds-replacements';
 
 interface Props {
   title: string;
@@ -22,7 +22,7 @@ export default function SectionCard({ title, subtitle, children }: Props) {
       <header style={{ marginBottom: 20 }}>
         <Typography
           as="h3"
-          variant="headline2"
+          variant="heading6"
           weight="bold"
           style={{
             margin: 0,

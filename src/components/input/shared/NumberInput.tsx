@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { TextField, TextFieldContent, Typography } from '@wanteddev/wds';
+import { Typography } from '../../ui/wds-replacements';
 
 interface Props {
   label: string;
@@ -68,25 +68,41 @@ export default function NumberInput({
       >
         {label}
       </Typography>
-      <TextField
-        type="text"
-        inputMode="numeric"
-        value={displayValue}
-        onFocus={handleFocus}
-        onBlur={handleBlur}
-        onChange={handleChange}
-        placeholder="0"
-        trailingContent={
-          <TextFieldContent variant="text">
-            <span style={{ color: 'var(--neutral-400)', fontSize: 14 }}>{unit}</span>
-          </TextFieldContent>
-        }
+      <div
         style={{
-          '--wds-text-field-background': 'var(--neutral-50)',
-          '--wds-text-field-border-color': 'var(--neutral-150)',
-          '--wds-text-field-border-radius': 'var(--radius-md)',
-        } as React.CSSProperties}
-      />
+          display: 'flex',
+          alignItems: 'center',
+          background: 'var(--neutral-50)',
+          border: '1px solid var(--neutral-150)',
+          borderRadius: 'var(--radius-md)',
+          overflow: 'hidden',
+          transition: 'border-color 0.15s',
+        }}
+        className="focus-within:border-[#0066FF]"
+      >
+        <input
+          type="text"
+          inputMode="numeric"
+          value={displayValue}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
+          onChange={handleChange}
+          placeholder="0"
+          style={{
+            flex: 1,
+            height: 40,
+            padding: '0 12px',
+            background: 'transparent',
+            border: 'none',
+            outline: 'none',
+            fontSize: 14,
+            color: 'var(--neutral-900)',
+          }}
+        />
+        <span style={{ padding: '0 12px', color: 'var(--neutral-400)', fontSize: 14 }}>
+          {unit}
+        </span>
+      </div>
       {hint && (
         <Typography
           variant="caption1"

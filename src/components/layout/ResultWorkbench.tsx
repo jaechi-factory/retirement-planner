@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Typography } from '@wanteddev/wds';
+import { Typography } from '../ui/wds-replacements';
 import { usePlannerStore } from '../../store/usePlannerStore';
 import { calcFinancialTotalAsset } from '../../engine/assetWeighting';
 import { PROPERTY_STRATEGY_LABELS } from '../../engine/propertyStrategiesV2';

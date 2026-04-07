@@ -4,7 +4,7 @@ import NumberInput from '../shared/NumberInput';
 import RateInput from '../shared/RateInput';
 import { estimateRetirementPension } from '../../../engine/pensionEstimation';
 import { fmtKRW } from '../../../utils/format';
-import { Chip, Typography } from '@wanteddev/wds';
+import { Chip, Typography } from '../../ui/wds-replacements';
 import { cardStyle } from './shared';
 import { Row, Divider, TextBtn, ModeLabel } from './shared-components';
 

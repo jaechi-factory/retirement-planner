@@ -1,4 +1,4 @@
-import { Typography } from '@wanteddev/wds';
+import { Typography } from '../ui/wds-replacements';
 import type { CalculationResultV2 } from '../../types/calculationV2';
 import type { NarrativeMetric, ResultNarrativeModel } from './resultNarrative';
 
@@ -43,23 +43,25 @@ function metricToneColor(tone?: NarrativeMetric['tone']): string {
   return 'var(--neutral-900)';
 }
 
+function metricBgColor(tone?: NarrativeMetric['tone']): string {
+  if (tone === 'positive') return 'linear-gradient(135deg, #ECFDF5 0%, #F0FDF4 100%)';
+  if (tone === 'negative') return 'linear-gradient(135deg, #FEF2F2 0%, #FFF5F5 100%)';
+  return 'var(--white)';
+}
+
 export default function ResultHeroSection({ summary, narrative, hasRealEstate }: ResultHeroSectionProps) {
   const badge = getStatusBadge(summary);
   const badgeCfg = BADGE_CONFIG[badge];
 
   return (
-    <section
-      style={{
-        marginBottom: 32,
-      }}
-    >
-      {/* Status badge + context */}
+    <section style={{ marginBottom: 48 }}>
+      {/* Status badge + context — more breathing room */}
       <div
         style={{
           display: 'flex',
           alignItems: 'center',
           gap: 12,
-          marginBottom: 16,
+          marginBottom: 20,
         }}
       >
         <span
@@ -67,10 +69,10 @@ export default function ResultHeroSection({ summary, narrative, hasRealEstate }:
             display: 'inline-flex',
             alignItems: 'center',
             gap: 6,
-            padding: '6px 14px',
+            padding: '7px 16px',
             borderRadius: 'var(--radius-full)',
             background: badgeCfg.bg,
-            border: `1px solid ${badgeCfg.border}`,
+            border: `1.5px solid ${badgeCfg.border}`,
             color: badgeCfg.color,
             fontSize: 13,
             fontWeight: 700,
@@ -79,10 +81,11 @@ export default function ResultHeroSection({ summary, narrative, hasRealEstate }:
         >
           <span
             style={{
-              width: 6,
-              height: 6,
+              width: 7,
+              height: 7,
               borderRadius: 'var(--radius-full)',
               background: badgeCfg.color,
+              boxShadow: `0 0 0 2px ${badgeCfg.bg}`,
             }}
           />
           {badgeCfg.label}
@@ -92,72 +95,75 @@ export default function ResultHeroSection({ summary, narrative, hasRealEstate }:
           style={{
             fontSize: 13,
             color: 'var(--neutral-400)',
+            fontWeight: 500,
           }}
         >
           {hasRealEstate ? '추천 전략 기준' : '무주택 기준'} · 최대 생활비
         </Typography>
       </div>
 
-      {/* Main headline — Big, confident, editorial */}
+      {/* Main headline — Bigger, bolder, editorial confidence */}
       <h1
         style={{
           margin: 0,
-          fontSize: 36,
+          fontSize: 40,
           fontWeight: 800,
           color: 'var(--neutral-900)',
-          lineHeight: 1.25,
-          letterSpacing: '-0.025em',
-          marginBottom: 28,
+          lineHeight: 1.2,
+          letterSpacing: '-0.03em',
+          marginBottom: 36,
           wordBreak: 'keep-all',
+          maxWidth: 640,
         }}
       >
         {narrative.headline}
       </h1>
 
-      {/* Key metrics — 3 columns */}
+      {/* Key metrics — asymmetric sizing for visual interest */}
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(3, 1fr)',
-          gap: 12,
-          marginBottom: 24,
+          gridTemplateColumns: '1.2fr 1fr 1fr',
+          gap: 16,
+          marginBottom: 32,
         }}
       >
-        {narrative.metrics.map((metric) => (
+        {narrative.metrics.map((metric, idx) => (
           <div
             key={metric.label}
             style={{
-              background: 'var(--white)',
-              borderRadius: 'var(--radius-lg)',
-              border: '1px solid var(--neutral-150)',
-              padding: '20px',
-              minHeight: 90,
+              background: idx === 0 ? metricBgColor(metric.tone) : 'var(--white)',
+              borderRadius: idx === 0 ? 'var(--radius-xl)' : 'var(--radius-lg)',
+              border: idx === 0 ? 'none' : '1px solid var(--neutral-100)',
+              padding: idx === 0 ? '28px 24px' : '20px 20px',
+              minHeight: idx === 0 ? 110 : 90,
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'space-between',
+              boxShadow: idx === 0 ? 'var(--shadow-sm)' : 'none',
             }}
           >
             <Typography
               variant="caption2"
               style={{
-                fontSize: 12,
-                fontWeight: 500,
-                color: 'var(--neutral-400)',
+                fontSize: idx === 0 ? 13 : 12,
+                fontWeight: 600,
+                color: idx === 0 ? 'var(--neutral-600)' : 'var(--neutral-400)',
                 letterSpacing: '0.01em',
-                marginBottom: 8,
+                marginBottom: idx === 0 ? 12 : 8,
               }}
             >
               {metric.label}
             </Typography>
             <Typography
-              variant="headline2"
+              variant="heading2"
               weight="bold"
               style={{
-                fontSize: 24,
+                fontSize: idx === 0 ? 32 : 22,
                 fontWeight: 800,
                 color: metricToneColor(metric.tone),
-                lineHeight: 1.2,
-                letterSpacing: '-0.02em',
+                lineHeight: 1.15,
+                letterSpacing: '-0.025em',
                 fontVariantNumeric: 'tabular-nums',
               }}
             >
@@ -167,44 +173,45 @@ export default function ResultHeroSection({ summary, narrative, hasRealEstate }:
         ))}
       </div>
 
-      {/* Recommended strategy card */}
+      {/* Recommended strategy card — more refined */}
       <div
         style={{
-          background: 'var(--white)',
-          borderRadius: 'var(--radius-lg)',
-          border: '1px solid var(--neutral-150)',
-          padding: '20px 24px',
+          background: 'var(--neutral-25)',
+          borderRadius: 'var(--radius-xl)',
+          padding: '24px 28px',
+          border: '1px solid var(--neutral-100)',
         }}
       >
         <div
           style={{
             display: 'flex',
             alignItems: 'flex-start',
-            gap: 16,
+            gap: 20,
           }}
         >
           <span
             style={{
-              fontSize: 11,
-              fontWeight: 700,
+              fontSize: 10,
+              fontWeight: 800,
               color: 'var(--neutral-400)',
-              letterSpacing: '0.05em',
+              letterSpacing: '0.1em',
               textTransform: 'uppercase',
               flexShrink: 0,
-              paddingTop: 3,
+              paddingTop: 5,
             }}
           >
-            {hasRealEstate ? '권장 전략' : '현재 상태'}
+            {hasRealEstate ? '권장' : '상태'}
           </span>
           <div style={{ flex: 1 }}>
             <Typography
-              variant="headline2"
+              variant="heading6"
               weight="bold"
               style={{
-                fontSize: 17,
+                fontSize: 18,
                 fontWeight: 700,
                 color: 'var(--neutral-900)',
-                marginBottom: 4,
+                marginBottom: 6,
+                letterSpacing: '-0.01em',
               }}
             >
               {narrative.recommendedStrategyLabel}
@@ -214,7 +221,7 @@ export default function ResultHeroSection({ summary, narrative, hasRealEstate }:
               style={{
                 fontSize: 14,
                 color: 'var(--neutral-500)',
-                lineHeight: 1.6,
+                lineHeight: 1.65,
               }}
             >
               {narrative.recommendationReasonLine}

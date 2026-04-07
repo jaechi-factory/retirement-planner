@@ -1,4 +1,4 @@
-import { Typography } from '@wanteddev/wds';
+import { Typography } from '../ui/wds-replacements';
 import AssetBalanceChart from '../charts/AssetBalanceChart';
 import PropertyAssetChart from '../charts/PropertyAssetChart';
 import type {

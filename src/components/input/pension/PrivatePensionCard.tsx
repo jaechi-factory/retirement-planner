@@ -8,7 +8,7 @@ import {
   estimatePrivatePensionProducts,
 } from '../../../engine/pensionEstimation';
 import { fmtKRW } from '../../../utils/format';
-import { Typography } from '@wanteddev/wds';
+import { Typography } from '../../ui/wds-replacements';
 import { cardStyle } from './shared';
 import { Row, TextBtn } from './shared-components';
 

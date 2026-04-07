@@ -1,4 +1,4 @@
-import { Typography } from '@wanteddev/wds';
+import { Typography } from '../ui/wds-replacements';
 import type { FundingStage } from '../../types/calculationV2';
 
 interface FundingPathSectionProps {

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Typography } from '@wanteddev/wds';
+import { Typography } from '../ui/wds-replacements';
 import type { HouseDecisionRowVM, HouseDecisionStrategy } from './houseDecisionVM';
 
 interface HouseDecisionRowsProps {

@@ -1,4 +1,4 @@
-import { Typography } from '@wanteddev/wds';
+import { Typography } from '../ui/wds-replacements';
 import { getTotalMonthlyPensionTodayValue } from '../../engine/pensionEstimation';
 import type { CalculationResultV2, PropertyOptionResult } from '../../types/calculationV2';
 import type { PlannerInputs } from '../../types/inputs';

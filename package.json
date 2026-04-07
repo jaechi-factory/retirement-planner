@@ -13,10 +13,7 @@
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.2.1",
-    "@wanteddev/wds": "file:../../../tmp/wanteddev-wds-3.4.3.tgz",
-    "@wanteddev/wds-engine": "file:../../../tmp/wanteddev-wds-engine-3.4.3.tgz",
-    "@wanteddev/wds-icon": "file:../../../tmp/wanteddev-wds-icon-3.4.3.tgz",
-    "@wanteddev/wds-theme": "file:../../../tmp/wanteddev-wds-theme-3.4.3.tgz",
+
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "react-is": "^19.2.4",

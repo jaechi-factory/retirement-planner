@@ -1,7 +1,6 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { ThemeProvider } from '@wanteddev/wds'
-import '@wanteddev/wds/global.css'
+import { ThemeProvider } from './components/ui/wds-replacements'
 import './index.css'
 import App from './App.tsx'
 

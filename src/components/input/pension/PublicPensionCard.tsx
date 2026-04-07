@@ -3,7 +3,7 @@ import { usePlannerStore } from '../../../store/usePlannerStore';
 import NumberInput from '../shared/NumberInput';
 import { estimatePublicPensionWithMeta } from '../../../engine/pensionMeta';
 import { fmtKRW } from '../../../utils/format';
-import { Chip, Typography } from '@wanteddev/wds';
+import { Chip, Typography } from '../../ui/wds-replacements';
 import { cardStyle } from './shared';
 import { Row, Divider, TextBtn, ModeLabel } from './shared-components';
 

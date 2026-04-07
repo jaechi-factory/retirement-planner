@@ -9,7 +9,7 @@ import {
   ResponsiveContainer,
   Cell,
 } from 'recharts';
-import { Typography } from '@wanteddev/wds';
+import { Typography } from '../ui/wds-replacements';
 import type { PropertyOptionResult } from '../../types/calculationV2';
 import { buildHouseDecisionRowsVM, type HouseDecisionStrategy } from './houseDecisionVM';
 import HouseDecisionRows from './HouseDecisionRows';
