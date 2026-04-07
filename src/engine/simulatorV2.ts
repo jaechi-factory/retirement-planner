@@ -228,6 +228,13 @@ export function simulateMonthlyV2(
   const propertyPolicy         = plannerPolicy.property;
 
   // [P5] 담보대출 월 이자율 — draw 다음 달부터 적용
+  // 【금리 컨벤션】 APR/12 단순 분할 방식을 의도적으로 사용한다.
+  //   - 한국 대출 관행: 주담대·신용대출 금리는 APR 기준으로 고지·청구됨.
+  //   - 부채 영역 일관성: debtSchedule.ts의 모기지·기타대출 스케줄도
+  //     동일하게 interestRate / 100 / 12 방식을 사용한다.
+  //   - 자산 수익률(annualToMonthlyRate, 월복리 동치)과 다른 컨벤션이지만,
+  //     이는 자산/부채 도메인의 관행 차이를 반영한 의도적 설계다.
+  //   - 실효 오차: 연 4.5% 기준 실효연이율 4.594% (과다 0.094%p, 보수적 방향).
   const securedLoanMonthlyRate = propertyPolicy.securedLoanAnnualRate / 12;
   const propertyMonthlyRate    = annualToMonthlyRate(assets.realEstate.expectedReturn);
   const saleInvestMonthlyRate  = annualToMonthlyRate(propertyPolicy.saleProceedsAnnualReturn * 100);

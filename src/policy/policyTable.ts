@@ -15,6 +15,9 @@ export interface PropertyPolicy {
   rentalBaseMonthlyToday: number;
   saleProceedsAnnualReturn: number;
   securedLoanLtv: number;
+  /** APR 기준 연이율 (소수, e.g. 0.045 = 4.5%).
+   *  월이자 계산: annualRate / 12 (APR/12 방식, 복리 변환 아님).
+   *  한국 대출 상품 관행 및 debtSchedule.ts와 동일 컨벤션. */
   securedLoanAnnualRate: number;
   saleDebtSettlementMode: DebtSettlementMode;
 }
