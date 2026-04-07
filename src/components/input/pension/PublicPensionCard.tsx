@@ -3,7 +3,8 @@ import { usePlannerStore } from '../../../store/usePlannerStore';
 import NumberInput from '../shared/NumberInput';
 import { estimatePublicPensionWithMeta } from '../../../engine/pensionMeta';
 import { fmtKRW } from '../../../utils/format';
-import { cardStyle, toggleBtnStyle } from './shared';
+import { Chip, Typography } from '@wanteddev/wds';
+import { cardStyle } from './shared';
 import { Row, Divider, TextBtn, ModeLabel } from './shared-components';
 
 export default function PublicPensionCard() {
@@ -28,26 +29,24 @@ export default function PublicPensionCard() {
     <div style={cardStyle}>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 8 }}>
         <div>
-          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--tds-gray-900)' }}>국민연금</div>
-          <div style={{ fontSize: 12, color: 'var(--tds-gray-400)', marginTop: 2 }}>지금 기준 예상 월액이에요</div>
+          <Typography variant="label1" weight="bold" color="semantic.label.normal">국민연금</Typography>
+          <Typography variant="caption1" color="semantic.label.alternative" style={{ marginTop: 2, display: 'block' }}>지금 기준 예상 월액이에요</Typography>
         </div>
         <ModeLabel text={isAuto ? '간편 계산' : '직접 입력'} />
       </div>
 
       <div style={{ margin: '4px 0 2px' }}>
-        <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--tds-gray-700)' }}>
+        <Typography variant="headline1" weight="bold" color="semantic.label.normal" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           월 {fmtKRW(displayValue)}
           {meta.cappedByIncomeCeiling && isAuto && (
-            <span style={{ fontSize: 11, color: 'var(--tds-gray-400)', marginLeft: 6, fontWeight: 400 }}>
-              소득 상한 기준
-            </span>
+            <Typography as="span" variant="caption2" color="semantic.label.alternative">소득 상한 기준</Typography>
           )}
-        </div>
-        <div style={{ fontSize: 12, color: 'var(--tds-gray-400)', marginTop: 2 }}>
+        </Typography>
+        <Typography variant="caption1" color="semantic.label.alternative" style={{ marginTop: 2, display: 'block' }}>
           {isAuto
             ? `${publicPension.startAge}세부터 수령 · ${workStartAge}세 취업 기준 추정`
             : `${publicPension.startAge}세부터 수령 · 실제 수령액과 다를 수 있어요`}
-        </div>
+        </Typography>
       </div>
 
       {isAuto && (
@@ -66,12 +65,8 @@ export default function PublicPensionCard() {
         <>
           <Divider />
           <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
-            <button style={toggleBtnStyle(isAuto)} onClick={() => setPension({ publicPension: { ...publicPension, mode: 'auto' } })}>
-              간편 계산
-            </button>
-            <button style={toggleBtnStyle(!isAuto)} onClick={() => setPension({ publicPension: { ...publicPension, mode: 'manual' } })}>
-              내가 직접 입력
-            </button>
+            <Chip size="small" active={isAuto} onClick={() => setPension({ publicPension: { ...publicPension, mode: 'auto' } })}>간편 계산</Chip>
+            <Chip size="small" active={!isAuto} onClick={() => setPension({ publicPension: { ...publicPension, mode: 'manual' } })}>내가 직접 입력</Chip>
           </div>
           {isAuto && (
             <NumberInput

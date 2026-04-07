@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Button } from '@wanteddev/wds';
 import { usePlannerStore } from '../../store/usePlannerStore';
 import RetirementGoalSection from '../input/RetirementGoalSection';
 import CurrentStatusSection from '../input/CurrentStatusSection';
@@ -35,22 +36,15 @@ export default function InputWorkbench() {
       }}
     >
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
-        <button
+        <Button
+          variant={confirmReset ? 'solid' : 'outlined'}
+          color={confirmReset ? 'primary' : 'assistive'}
+          size="small"
           onClick={handleResetClick}
-          style={{
-            fontSize: 12,
-            fontWeight: 600,
-            color: 'white',
-            background: confirmReset ? '#C0392B' : 'var(--tds-gray-500)',
-            border: 'none',
-            borderRadius: 8,
-            padding: '6px 14px',
-            cursor: 'pointer',
-            transition: 'background 0.15s',
-          }}
+          style={confirmReset ? { background: '#C0392B', borderColor: '#C0392B' } : undefined}
         >
           {confirmReset ? '정말 초기화할까요?' : '전체 초기화'}
-        </button>
+        </Button>
       </div>
       <RetirementGoalSection />
       <CurrentStatusSection />

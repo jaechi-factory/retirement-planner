@@ -1,3 +1,4 @@
+import { SectionHeader, Typography } from '@wanteddev/wds';
 import { getTotalMonthlyPensionTodayValue } from '../../engine/pensionEstimation';
 import type { CalculationResultV2, PropertyOptionResult } from '../../types/calculationV2';
 import type { PlannerInputs } from '../../types/inputs';
@@ -88,21 +89,19 @@ export default function ActionPlanSection({ summary, inputs, hasRealEstate, prop
           marginBottom: 'var(--result-space-5)',
         }}
       >
-        <div
+        <SectionHeader
+          headingContent="지금 해야 할 일"
+          size="small"
+          headingTag="h2"
           style={{
-            fontSize: 'var(--result-text-meta)',
-            fontWeight: 700,
-            color: 'var(--result-text-meta-color)',
-            marginBottom: 'var(--result-space-3)',
-            letterSpacing: '0.02em',
             textTransform: 'uppercase',
+            letterSpacing: '0.02em',
+            marginBottom: 'var(--result-space-3)',
           }}
-        >
-          지금 해야 할 일
-        </div>
-        <div style={{ fontSize: 'var(--result-text-body)', color: 'var(--result-text-body-color)', lineHeight: 1.62 }}>
+        />
+        <Typography variant="body1" style={{ color: 'var(--result-text-body-color)', lineHeight: 1.62 }}>
           현재 입력 기준으로 추가 조정 없이 안정적인 계획이에요. 입력값이 바뀌면 다시 확인해보세요.
-        </div>
+        </Typography>
       </section>
     );
   }
@@ -117,18 +116,16 @@ export default function ActionPlanSection({ summary, inputs, hasRealEstate, prop
         marginBottom: 'var(--result-space-5)',
       }}
     >
-      <div
+      <SectionHeader
+        headingContent="지금 해야 할 일"
+        size="small"
+        headingTag="h2"
         style={{
-          fontSize: 'var(--result-text-meta)',
-          fontWeight: 700,
-          color: 'var(--result-text-meta-color)',
-          marginBottom: 'var(--result-space-3)',
-          letterSpacing: '0.02em',
           textTransform: 'uppercase',
+          letterSpacing: '0.02em',
+          marginBottom: 'var(--result-space-3)',
         }}
-      >
-        지금 해야 할 일
-      </div>
+      />
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--result-space-2)' }}>
         {items.map((item, idx) => (
@@ -144,7 +141,7 @@ export default function ActionPlanSection({ summary, inputs, hasRealEstate, prop
               background: 'var(--result-surface-metric)',
             }}
           >
-            {/* 번호 */}
+            {/* 번호 — WDS에 numbered-step primitive 없음, 커스텀 유지 */}
             <span
               style={{
                 width: 24,
@@ -166,31 +163,30 @@ export default function ActionPlanSection({ summary, inputs, hasRealEstate, prop
 
             {/* 내용 */}
             <div style={{ flex: 1 }}>
-              <div
+              <Typography
+                variant="body1"
+                weight="bold"
                 style={{
-                  fontSize: 'var(--result-text-body)',
-                  fontWeight: 700,
                   color: 'var(--result-text-strong-color)',
+                  display: 'block',
                   lineHeight: 1.45,
                   marginBottom: item.detail ? 4 : 0,
                 }}
               >
                 {item.text}
-              </div>
+              </Typography>
               {item.detail && (
-                <div
-                  style={{
-                    fontSize: 'var(--result-text-meta)',
-                    color: 'var(--result-text-meta-color)',
-                    lineHeight: 1.55,
-                  }}
+                <Typography
+                  variant="caption1"
+                  color="semantic.label.alternative"
+                  style={{ display: 'block', lineHeight: 1.55 }}
                 >
                   {item.detail}
-                </div>
+                </Typography>
               )}
             </div>
 
-            {/* 화살표 */}
+            {/* 화살표 — 장식 요소, 커스텀 유지 */}
             <span
               aria-hidden
               style={{

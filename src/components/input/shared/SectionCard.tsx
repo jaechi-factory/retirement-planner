@@ -1,3 +1,4 @@
+import { Typography } from '@wanteddev/wds';
 
 interface Props {
   title: string;
@@ -17,20 +18,13 @@ export default function SectionCard({ title, subtitle, children }: Props) {
       }}
     >
       <div style={{ marginBottom: 16 }}>
-        <h3
-          style={{
-            margin: subtitle ? '0 0 3px 0' : '0',
-            fontSize: 15,
-            fontWeight: 700,
-            color: 'var(--tds-gray-900)',
-          }}
-        >
+        <Typography as="h3" variant="headline2" weight="bold" color="semantic.label.normal" style={{ margin: subtitle ? '0 0 3px 0' : '0' }}>
           {title}
-        </h3>
+        </Typography>
         {subtitle && (
-          <p style={{ margin: 0, fontSize: 12, color: 'var(--tds-gray-400)', lineHeight: 1.4 }}>
+          <Typography variant="caption1" color="semantic.label.alternative" style={{ margin: 0, lineHeight: 1.4 }}>
             {subtitle}
-          </p>
+          </Typography>
         )}
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>

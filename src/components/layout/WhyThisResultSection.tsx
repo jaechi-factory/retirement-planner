@@ -1,3 +1,4 @@
+import { SectionHeader, Typography } from '@wanteddev/wds';
 import { getTotalMonthlyPensionTodayValue } from '../../engine/pensionEstimation';
 import type { CalculationResultV2 } from '../../types/calculationV2';
 import type { PlannerInputs } from '../../types/inputs';
@@ -94,18 +95,16 @@ export default function WhyThisResultSection({ summary, inputs, hasRealEstate }:
 
   return (
     <section style={{ marginBottom: 'var(--result-space-5)' }}>
-      <div
+      <SectionHeader
+        headingContent="이런 결과가 나온 이유"
+        size="small"
+        headingTag="h2"
         style={{
-          fontSize: 'var(--result-text-meta)',
-          fontWeight: 700,
-          color: 'var(--result-text-meta-color)',
-          marginBottom: 'var(--result-space-3)',
-          letterSpacing: '0.02em',
           textTransform: 'uppercase',
+          letterSpacing: '0.02em',
+          marginBottom: 'var(--result-space-3)',
         }}
-      >
-        이런 결과가 나온 이유
-      </div>
+      />
       <div
         style={{
           display: 'flex',
@@ -124,26 +123,28 @@ export default function WhyThisResultSection({ summary, inputs, hasRealEstate }:
               borderLeft: `3px solid ${cardAccentColor(card.tone)}`,
             }}
           >
-            <div
+            <Typography
+              variant="body1"
+              weight="bold"
               style={{
-                fontSize: 'var(--result-text-body)',
-                fontWeight: 700,
                 color: 'var(--result-text-strong-color)',
+                display: 'block',
                 marginBottom: 'var(--result-space-1)',
                 lineHeight: 1.4,
               }}
             >
               {card.title}
-            </div>
-            <div
+            </Typography>
+            <Typography
+              variant="body1"
               style={{
-                fontSize: 'var(--result-text-body)',
                 color: 'var(--result-text-body-color)',
+                display: 'block',
                 lineHeight: 1.62,
               }}
             >
               {card.body}
-            </div>
+            </Typography>
           </div>
         ))}
       </div>

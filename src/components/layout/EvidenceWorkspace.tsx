@@ -1,3 +1,4 @@
+import { ContentBadge, SectionHeader, Typography } from '@wanteddev/wds';
 import AssetBalanceChart from '../charts/AssetBalanceChart';
 import PropertyAssetChart from '../charts/PropertyAssetChart';
 import type {
@@ -77,18 +78,16 @@ export default function EvidenceWorkspace({
   return (
     <section style={{ marginBottom: 'var(--result-space-5)' }}>
       {/* 섹션 레이블 */}
-      <div
+      <SectionHeader
+        headingContent="근거 확인"
+        size="small"
+        headingTag="h2"
         style={{
-          fontSize: 'var(--result-text-meta)',
-          fontWeight: 700,
-          color: 'var(--result-text-meta-color)',
-          marginBottom: 'var(--result-space-3)',
-          letterSpacing: '0.02em',
           textTransform: 'uppercase',
+          letterSpacing: '0.02em',
+          marginBottom: 'var(--result-space-3)',
         }}
-      >
-        근거 확인
-      </div>
+      />
 
       {/* 돈 흐름 */}
       <div
@@ -110,32 +109,26 @@ export default function EvidenceWorkspace({
           }}
         >
           <div>
-            <div
-              style={{
-                fontSize: 'var(--result-text-body)',
-                fontWeight: 700,
-                color: 'var(--result-text-strong-color)',
-                marginBottom: 4,
-              }}
+            <Typography
+              variant="body1"
+              weight="bold"
+              style={{ color: 'var(--result-text-strong-color)', display: 'block', marginBottom: 4 }}
             >
               돈 흐름
-            </div>
-            <div
-              style={{
-                fontSize: 'var(--result-text-meta)',
-                color: 'var(--result-text-meta-color)',
-                lineHeight: 1.55,
-                marginBottom: 10,
-              }}
+            </Typography>
+            <Typography
+              variant="caption1"
+              color="semantic.label.alternative"
+              style={{ display: 'block', lineHeight: 1.55, marginBottom: 10 }}
             >
               {chartInterpretation}
-            </div>
+            </Typography>
           </div>
           {hasRealEstate && (
-            <span
+            <ContentBadge
+              variant="solid"
+              size="xsmall"
               style={{
-                fontSize: 'var(--result-text-meta)',
-                fontWeight: 600,
                 color: 'var(--result-accent-strong)',
                 background: '#E1EDFF',
                 border: '1px solid rgba(49,130,246,0.24)',
@@ -143,10 +136,11 @@ export default function EvidenceWorkspace({
                 padding: '2px 8px',
                 whiteSpace: 'nowrap',
                 flexShrink: 0,
+                fontWeight: 600,
               }}
             >
               {strategyLabel}
-            </span>
+            </ContentBadge>
           )}
         </div>
 
@@ -172,16 +166,13 @@ export default function EvidenceWorkspace({
           marginBottom: 'var(--result-space-2)',
         }}
       >
-        <div
-          style={{
-            fontSize: 'var(--result-text-body)',
-            fontWeight: 700,
-            color: 'var(--result-text-strong-color)',
-            marginBottom: 10,
-          }}
+        <Typography
+          variant="body1"
+          weight="bold"
+          style={{ color: 'var(--result-text-strong-color)', display: 'block', marginBottom: 10 }}
         >
           나이별 주요 이벤트
-        </div>
+        </Typography>
         <CompactLifetimeTimeline events={keyEvents} />
       </div>
 
@@ -189,15 +180,19 @@ export default function EvidenceWorkspace({
       <details style={{ marginTop: 0 }}>
         <summary
           style={{
-            fontSize: 'var(--result-text-meta)',
-            fontWeight: 700,
-            color: 'var(--result-text-body-color)',
             cursor: 'pointer',
             userSelect: 'none',
             padding: '6px 2px',
           }}
         >
-          가정과 주의 보기
+          <Typography
+            as="span"
+            variant="caption1"
+            weight="bold"
+            style={{ color: 'var(--result-text-body-color)' }}
+          >
+            가정과 주의 보기
+          </Typography>
         </summary>
 
         <div
@@ -217,23 +212,18 @@ export default function EvidenceWorkspace({
 
           {assumptions.length > 0 && (
             <div style={{ marginBottom: filteredWarnings.length > 0 ? 'var(--result-space-2)' : 0 }}>
-              <div
-                style={{
-                  fontSize: 'var(--result-text-meta)',
-                  fontWeight: 700,
-                  color: 'var(--result-text-body-color)',
-                  marginBottom: 'var(--result-space-2)',
-                }}
+              <Typography
+                variant="caption1"
+                weight="bold"
+                style={{ color: 'var(--result-text-body-color)', display: 'block', marginBottom: 'var(--result-space-2)' }}
               >
                 주요 가정
-              </div>
+              </Typography>
               <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {assumptions.map((assumption, index) => (
                   <li
                     key={`${assumption.label}-${index}`}
                     style={{
-                      fontSize: 'var(--result-text-meta)',
-                      color: 'var(--result-text-body-color)',
                       lineHeight: 1.6,
                       display: 'flex',
                       alignItems: 'flex-start',
@@ -241,7 +231,9 @@ export default function EvidenceWorkspace({
                     }}
                   >
                     <span aria-hidden style={{ fontWeight: 700, flexShrink: 0 }}>•</span>
-                    <span>{assumption.label}: {assumption.value}</span>
+                    <Typography variant="caption1" style={{ color: 'var(--result-text-body-color)' }}>
+                      {assumption.label}: {assumption.value}
+                    </Typography>
                   </li>
                 ))}
               </ul>
@@ -250,16 +242,13 @@ export default function EvidenceWorkspace({
 
           {filteredWarnings.length > 0 && (
             <div>
-              <div
-                style={{
-                  fontSize: 'var(--result-text-meta)',
-                  fontWeight: 700,
-                  color: 'var(--result-text-body-color)',
-                  marginBottom: 'var(--result-space-2)',
-                }}
+              <Typography
+                variant="caption1"
+                weight="bold"
+                style={{ color: 'var(--result-text-body-color)', display: 'block', marginBottom: 'var(--result-space-2)' }}
               >
                 주의 사항
-              </div>
+              </Typography>
               <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {filteredWarnings.map((warning, index) => (
                   <li
@@ -268,14 +257,17 @@ export default function EvidenceWorkspace({
                       borderRadius: 8,
                       border: `1px solid ${warning.severity === 'critical' ? 'var(--ux-status-negative-soft)' : 'var(--ux-status-warning-soft)'}`,
                       background: warning.severity === 'critical' ? 'var(--ux-status-negative-bg)' : 'var(--ux-status-warning-bg)',
-                      color: 'var(--result-text-body-color)',
-                      fontSize: 'var(--result-text-meta)',
-                      fontWeight: 600,
                       lineHeight: 1.6,
                       padding: '8px 10px',
                     }}
                   >
-                    {warning.message}
+                    <Typography
+                      variant="caption1"
+                      weight="medium"
+                      style={{ color: 'var(--result-text-body-color)' }}
+                    >
+                      {warning.message}
+                    </Typography>
                   </li>
                 ))}
               </ul>

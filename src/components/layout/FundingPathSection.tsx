@@ -1,3 +1,4 @@
+import { SectionHeader, Typography } from '@wanteddev/wds';
 import type { FundingStage } from '../../types/calculationV2';
 
 interface FundingPathSectionProps {
@@ -61,18 +62,16 @@ export default function FundingPathSection({ fundingTimeline, lifeExpectancy, re
 
   return (
     <section style={{ marginBottom: 'var(--result-space-5)' }}>
-      <div
+      <SectionHeader
+        headingContent="돈이 어떻게 버텨주는지"
+        size="small"
+        headingTag="h2"
         style={{
-          fontSize: 'var(--result-text-meta)',
-          fontWeight: 700,
-          color: 'var(--result-text-meta-color)',
-          marginBottom: 'var(--result-space-3)',
-          letterSpacing: '0.02em',
           textTransform: 'uppercase',
+          letterSpacing: '0.02em',
+          marginBottom: 'var(--result-space-3)',
         }}
-      >
-        돈이 어떻게 버텨주는지
-      </div>
+      />
 
       {/* 나이 레이블 행 */}
       <div style={{ position: 'relative', marginBottom: 4 }}>
@@ -88,29 +87,31 @@ export default function FundingPathSection({ fundingTimeline, lifeExpectancy, re
                 key={`label-${idx}`}
                 style={{
                   width: `${widthPct}%`,
-                  fontSize: 11,
-                  color: 'var(--result-text-faint-color)',
                   lineHeight: 1.3,
                   paddingLeft: 4,
                   overflow: 'hidden',
                   whiteSpace: 'nowrap',
                 }}
               >
-                {stageFrom}세
+                <Typography
+                  variant="caption2"
+                  color="semantic.label.alternative"
+                  style={{ fontSize: 11 }}
+                >
+                  {stageFrom}세
+                </Typography>
               </div>
             );
           })}
           {/* 마지막 나이 */}
-          <div
-            style={{
-              position: 'absolute',
-              right: 0,
-              fontSize: 11,
-              color: 'var(--result-text-faint-color)',
-              lineHeight: 1.3,
-            }}
-          >
-            {lifeExpectancy}세
+          <div style={{ position: 'absolute', right: 0, lineHeight: 1.3 }}>
+            <Typography
+              variant="caption2"
+              color="semantic.label.alternative"
+              style={{ fontSize: 11 }}
+            >
+              {lifeExpectancy}세
+            </Typography>
           </div>
         </div>
       </div>
@@ -148,10 +149,11 @@ export default function FundingPathSection({ fundingTimeline, lifeExpectancy, re
               }}
             >
               {widthPct > 8 && (
-                <span
+                <Typography
+                  variant="caption2"
+                  weight="medium"
                   style={{
                     fontSize: 11,
-                    fontWeight: 600,
                     color: cfg.color,
                     whiteSpace: 'nowrap',
                     overflow: 'hidden',
@@ -160,7 +162,7 @@ export default function FundingPathSection({ fundingTimeline, lifeExpectancy, re
                   }}
                 >
                   {cfg.label}
-                </span>
+                </Typography>
               )}
             </div>
           );
@@ -189,8 +191,6 @@ export default function FundingPathSection({ fundingTimeline, lifeExpectancy, re
                 display: 'flex',
                 alignItems: 'center',
                 gap: 5,
-                fontSize: 12,
-                color: 'var(--result-text-body-color)',
               }}
             >
               <span
@@ -204,10 +204,19 @@ export default function FundingPathSection({ fundingTimeline, lifeExpectancy, re
                   display: 'inline-block',
                 }}
               />
-              <span style={{ color: cfg.color, fontWeight: 600 }}>{cfg.label}</span>
-              <span style={{ color: 'var(--result-text-faint-color)' }}>
+              <Typography
+                variant="caption2"
+                weight="medium"
+                style={{ color: cfg.color }}
+              >
+                {cfg.label}
+              </Typography>
+              <Typography
+                variant="caption2"
+                color="semantic.label.alternative"
+              >
                 {stageFrom}~{stageTo}세
-              </span>
+              </Typography>
             </div>
           );
         })}

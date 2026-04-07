@@ -9,6 +9,7 @@ import {
   ResponsiveContainer,
   Cell,
 } from 'recharts';
+import { Divider, Typography } from '@wanteddev/wds';
 import type { PropertyOptionResult } from '../../types/calculationV2';
 import { buildHouseDecisionRowsVM, type HouseDecisionStrategy } from './houseDecisionVM';
 import HouseDecisionRows from './HouseDecisionRows';
@@ -119,34 +120,32 @@ export default function HouseStrategyComparisonSection({
     >
       {/* 섹션 헤더 */}
       <div style={{ marginBottom: 'var(--result-space-4)' }}>
-        <div
-          style={{
-            fontSize: 'var(--result-text-title)',
-            fontWeight: 700,
-            color: 'var(--result-text-strong-color)',
-            marginBottom: 'var(--result-space-1)',
-          }}
+        <Typography
+          variant="headline1"
+          weight="bold"
+          style={{ color: 'var(--result-text-strong-color)', display: 'block', marginBottom: 'var(--result-space-1)' }}
         >
           집을 팔거나 대출받는 선택
-        </div>
-        <div style={{ fontSize: 'var(--result-text-meta)', color: 'var(--result-text-meta-color)', lineHeight: 1.55 }}>
+        </Typography>
+        <Typography
+          variant="caption1"
+          color="semantic.label.alternative"
+          style={{ display: 'block', lineHeight: 1.55 }}
+        >
           집을 그대로 둘지, 팔지, 담보대출을 받을지 비교해보세요.
-        </div>
+        </Typography>
       </div>
 
       {/* 전략 비교 막대 그래프 */}
       {chartData.length > 0 && (
         <div style={{ marginBottom: 'var(--result-space-4)' }}>
-          <div
-            style={{
-              fontSize: 'var(--result-text-meta)',
-              fontWeight: 600,
-              color: 'var(--result-text-body-color)',
-              marginBottom: 'var(--result-space-2)',
-            }}
+          <Typography
+            variant="caption1"
+            weight="medium"
+            style={{ color: 'var(--result-text-body-color)', display: 'block', marginBottom: 'var(--result-space-2)' }}
           >
             전략별 가능한 월 생활비
-          </div>
+          </Typography>
           <ResponsiveContainer width="100%" height={160}>
             <BarChart
               data={chartData}
@@ -188,19 +187,16 @@ export default function HouseStrategyComparisonSection({
       )}
 
       {/* 구분선 */}
-      <div style={{ borderTop: '1px solid var(--result-border-soft)', marginBottom: 'var(--result-space-3)' }} />
+      <Divider style={{ marginBottom: 'var(--result-space-3)' }} />
 
       {/* 전략 선택 행 */}
-      <div
-        style={{
-          fontSize: 'var(--result-text-meta)',
-          color: 'var(--result-text-meta-color)',
-          marginBottom: 'var(--result-space-2)',
-          lineHeight: 1.5,
-        }}
+      <Typography
+        variant="caption1"
+        color="semantic.label.alternative"
+        style={{ display: 'block', marginBottom: 'var(--result-space-2)', lineHeight: 1.5 }}
       >
         전략을 누르면 아래 근거 차트가 바뀌어요.
-      </div>
+      </Typography>
       <HouseDecisionRows rows={rows} onSelectStrategy={onSelectStrategy} />
     </section>
   );

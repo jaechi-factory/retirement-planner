@@ -4,7 +4,8 @@ import NumberInput from '../shared/NumberInput';
 import RateInput from '../shared/RateInput';
 import { estimateRetirementPension } from '../../../engine/pensionEstimation';
 import { fmtKRW } from '../../../utils/format';
-import { cardStyle, toggleBtnStyle } from './shared';
+import { Chip, Typography } from '@wanteddev/wds';
+import { cardStyle } from './shared';
 import { Row, Divider, TextBtn, ModeLabel } from './shared-components';
 
 export default function RetirementPensionCard() {
@@ -27,19 +28,19 @@ export default function RetirementPensionCard() {
     <div style={cardStyle}>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 8 }}>
         <div>
-          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--tds-gray-900)' }}>퇴직연금</div>
-          <div style={{ fontSize: 12, color: 'var(--tds-gray-400)', marginTop: 2 }}>회사에서 쌓인 퇴직연금 예상 월액이에요</div>
+          <Typography variant="label1" weight="bold" color="semantic.label.normal">퇴직연금</Typography>
+          <Typography variant="caption1" color="semantic.label.alternative" style={{ marginTop: 2, display: 'block' }}>회사에서 쌓인 퇴직연금 예상 월액이에요</Typography>
         </div>
         <ModeLabel text={isAuto ? '간편 계산' : '직접 입력'} />
       </div>
 
-      <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--tds-gray-700)', margin: '4px 0 2px' }}>
+      <Typography variant="headline1" weight="bold" color="semantic.label.normal" style={{ display: 'block', margin: '4px 0 2px' }}>
         월 {fmtKRW(displayValue)}
-      </div>
-      <div style={{ fontSize: 12, color: 'var(--tds-gray-400)' }}>
+      </Typography>
+      <Typography variant="caption1" color="semantic.label.alternative" style={{ display: 'block' }}>
         {startAge}세부터 {retirementPension.payoutYears}년간 받아요
         {!hasBalance && isAuto && ' · 적립금 입력 시 더 정확해져요'}
-      </div>
+      </Typography>
 
       <div style={{ marginTop: 6 }}>
         <TextBtn onClick={() => setShowDetail(v => !v)}>
@@ -51,12 +52,8 @@ export default function RetirementPensionCard() {
         <>
           <Divider />
           <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
-            <button style={toggleBtnStyle(isAuto)} onClick={() => setPension({ retirementPension: { ...retirementPension, mode: 'auto' } })}>
-              간편 계산
-            </button>
-            <button style={toggleBtnStyle(!isAuto)} onClick={() => setPension({ retirementPension: { ...retirementPension, mode: 'manual' } })}>
-              내가 직접 입력
-            </button>
+            <Chip size="small" active={isAuto} onClick={() => setPension({ retirementPension: { ...retirementPension, mode: 'auto' } })}>간편 계산</Chip>
+            <Chip size="small" active={!isAuto} onClick={() => setPension({ retirementPension: { ...retirementPension, mode: 'manual' } })}>내가 직접 입력</Chip>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>

@@ -8,6 +8,7 @@ import {
   estimatePrivatePensionProducts,
 } from '../../../engine/pensionEstimation';
 import { fmtKRW } from '../../../utils/format';
+import { Typography } from '@wanteddev/wds';
 import { cardStyle } from './shared';
 import { Row, TextBtn } from './shared-components';
 
@@ -40,7 +41,7 @@ function PrivatePensionProductCard({
       background: 'var(--tds-white)',
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-        <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--tds-gray-900)' }}>{product.label}</span>
+        <Typography variant="label1" weight="bold" color="semantic.label.normal">{product.label}</Typography>
         <button
           onClick={onDelete}
           style={{
@@ -141,15 +142,13 @@ export default function PrivatePensionCard() {
   const Header = (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
       <div>
-        <div style={{ fontSize: 13, fontWeight: 700, color: isEnabled ? 'var(--tds-gray-900)' : 'var(--tds-gray-400)' }}>
-          개인연금
-        </div>
-        <div style={{ fontSize: 12, color: 'var(--tds-gray-400)', marginTop: 2 }}>IRP · 연금저축펀드 · 연금보험 등</div>
+        <Typography variant="label1" weight="bold" color={isEnabled ? 'semantic.label.normal' : 'semantic.label.alternative'}>개인연금</Typography>
+        <Typography variant="caption1" color="semantic.label.alternative" style={{ marginTop: 2, display: 'block' }}>IRP · 연금저축펀드 · 연금보험 등</Typography>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <span style={{ fontSize: 12, fontWeight: 600, color: isEnabled ? 'var(--tds-blue-500)' : 'var(--tds-gray-400)' }}>
+        <Typography variant="caption1" weight="medium" color={isEnabled ? 'semantic.primary.normal' : 'semantic.label.alternative'}>
           {isEnabled ? '켜짐' : '꺼짐'}
-        </span>
+        </Typography>
         <div
           onClick={() => upd({ enabled: !isEnabled })}
           style={{
@@ -175,17 +174,15 @@ export default function PrivatePensionCard() {
       {Header}
 
       {!isEnabled ? (
-        <div style={{ fontSize: 12, color: 'var(--tds-gray-400)', lineHeight: 1.7 }}>
+        <Typography variant="caption1" color="semantic.label.alternative" style={{ lineHeight: 1.7, display: 'block' }}>
           개인연금이 있으면 위 토글을 켜서 입력해요.<br />
           없으면 넘어가도 괜찮아요.
-        </div>
+        </Typography>
 
       ) : isDetailMode ? (
         <>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-            <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--tds-gray-700)' }}>
-              합계 월 {fmtKRW(displayValue)}
-            </div>
+            <Typography variant="headline1" weight="bold" color="semantic.label.normal">합계 월 {fmtKRW(displayValue)}</Typography>
             <button
               onClick={exitDetailMode}
               style={{
@@ -235,12 +232,12 @@ export default function PrivatePensionCard() {
 
       ) : (
         <>
-          <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--tds-gray-700)', margin: '4px 0 2px' }}>
+          <Typography variant="headline1" weight="bold" color="semantic.label.normal" style={{ display: 'block', margin: '4px 0 2px' }}>
             월 {fmtKRW(displayValue)}
-          </div>
-          <div style={{ fontSize: 12, color: 'var(--tds-gray-400)', marginBottom: 12 }}>
+          </Typography>
+          <Typography variant="caption1" color="semantic.label.alternative" style={{ display: 'block', marginBottom: 12 }}>
             {privatePension.startAge}세부터 {privatePension.payoutYears}년간 받아요
-          </div>
+          </Typography>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             <Row>

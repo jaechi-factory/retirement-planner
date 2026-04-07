@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Typography } from '@wanteddev/wds';
 import { usePlannerStore } from '../../store/usePlannerStore';
 import { calcFinancialTotalAsset } from '../../engine/assetWeighting';
 import { PROPERTY_STRATEGY_LABELS } from '../../engine/propertyStrategiesV2';
@@ -28,9 +29,9 @@ function EmptyStateCard({ title, body }: { title: string; body: string }) {
         gap: 10,
       }}
     >
-      <div style={{ fontSize: 28, color: 'var(--ux-text-subtle)' }}>—</div>
-      <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--ux-text-base)', textAlign: 'center' }}>{title}</div>
-      <div style={{ fontSize: 14, color: 'var(--ux-text-subtle)', textAlign: 'center', lineHeight: 1.7 }}>{body}</div>
+      <Typography variant="headline1" color="semantic.label.alternative" style={{ fontSize: 28 }}>—</Typography>
+      <Typography variant="headline1" weight="bold" color="semantic.label.normal" style={{ textAlign: 'center' }}>{title}</Typography>
+      <Typography variant="body1" color="semantic.label.alternative" style={{ textAlign: 'center', lineHeight: 1.7 }}>{body}</Typography>
     </div>
   );
 }
