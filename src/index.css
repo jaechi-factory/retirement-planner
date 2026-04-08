@@ -13,7 +13,8 @@
   /* ── Surface ─────────────────────────────────────────────────── */
   --surface-page:        var(--palette-canvas);
   --surface-card:        var(--palette-card);
-  --surface-card-inner:  rgba(36, 39, 46, 0.05);
+  --surface-card-soft:   rgba(36, 39, 46, 0.04);
+  --surface-card-inner:  rgba(36, 39, 46, 0.06);
   --surface-hero:        var(--palette-ink);
 
   /* ── Text ────────────────────────────────────────────────────── */
@@ -25,9 +26,9 @@
   --text-on-dark-muted:  rgba(255, 253, 254, 0.68);
 
   /* ── Border ──────────────────────────────────────────────────── */
-  --border-soft:         rgba(36, 39, 46, 0.10);
-  --border-base:         rgba(36, 39, 46, 0.16);
-  --border-strong:       rgba(36, 39, 46, 0.24);
+  --border-soft:         rgba(36, 39, 46, 0.08);
+  --border-base:         rgba(36, 39, 46, 0.12);
+  --border-strong:       rgba(36, 39, 46, 0.18);
   --border-on-dark:      rgba(255, 253, 254, 0.10);
 
   /* ── Status ──────────────────────────────────────────────────── */
