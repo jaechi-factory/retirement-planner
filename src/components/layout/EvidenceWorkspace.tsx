@@ -134,8 +134,7 @@ export default function EvidenceWorkspace({
       <div
         style={{
           borderRadius: 12,
-          border: '1px solid var(--result-border-soft)',
-          background: 'var(--result-surface-base)',
+          background: 'var(--surface-card)',
           marginBottom: 'var(--result-space-2)',
         }}
       >
@@ -170,9 +169,9 @@ export default function EvidenceWorkspace({
               variant="solid"
               size="xsmall"
               style={{
-                color: 'var(--result-accent-strong)',
-                background: '#E1EDFF',
-                border: '1px solid rgba(49,130,246,0.24)',
+                color: 'var(--text-strong)',
+                background: 'var(--accent-selected-bg)',
+                border: 'none',
                 borderRadius: 999,
                 padding: '2px 8px',
                 whiteSpace: 'nowrap',
@@ -201,8 +200,7 @@ export default function EvidenceWorkspace({
       <div
         style={{
           borderRadius: 12,
-          border: '1px solid var(--result-border-soft)',
-          background: 'var(--result-surface-base)',
+          background: 'var(--surface-card)',
           padding: '12px 14px',
           marginBottom: 'var(--result-space-2)',
         }}
@@ -241,8 +239,7 @@ export default function EvidenceWorkspace({
             style={{
               marginTop: 'var(--result-space-2)',
               borderRadius: 10,
-              border: '1px solid var(--result-border-soft)',
-              background: 'var(--result-surface-base)',
+              background: 'var(--surface-card)',
               padding: '12px',
             }}
           >

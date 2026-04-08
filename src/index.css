@@ -86,7 +86,7 @@
   --result-text-value-muted-color:  var(--text-muted);
 
   --result-surface-base:     var(--surface-card);
-  --result-surface-soft:     var(--surface-card);
+  --result-surface-soft:     var(--surface-card-soft);
   --result-surface-metric:   var(--surface-card-inner);
   --result-surface-selected: var(--accent-selected-bg);
 

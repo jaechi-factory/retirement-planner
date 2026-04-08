@@ -17,7 +17,6 @@ export default function SectionCard({ title, subtitle, tier = 2, children }: Pro
         borderRadius: 16,
         padding: isPrimary ? '22px 20px 26px' : '18px 20px 22px',
         marginBottom: 16,
-        border: isPrimary ? '1.5px solid var(--border-base)' : '1px solid var(--border-soft)',
       }}
     >
       <div style={{ marginBottom: isPrimary ? 18 : 14 }}>

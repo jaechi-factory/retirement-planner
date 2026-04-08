@@ -63,7 +63,7 @@ export default function CurrentStatusSection() {
         <div style={{
           marginTop: 4,
           borderRadius: 10,
-          border: '1px solid #E6E0D8',
+          background: 'var(--surface-card-soft)',
           overflow: 'hidden',
         }}>
           {/* 헤더 */}

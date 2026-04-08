@@ -123,7 +123,6 @@ export default function FundingPathSection({ fundingTimeline, lifeExpectancy, re
           borderRadius: 8,
           overflow: 'hidden',
           height: 36,
-          border: '1px solid var(--result-border-subtle)',
         }}
       >
         {fundingTimeline.map((stage, idx) => {
@@ -140,7 +139,7 @@ export default function FundingPathSection({ fundingTimeline, lifeExpectancy, re
               style={{
                 width: `${widthPct}%`,
                 background: cfg.bg,
-                borderRight: idx < fundingTimeline.length - 1 ? `1px solid ${cfg.border}` : 'none',
+                borderRight: 'none',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',

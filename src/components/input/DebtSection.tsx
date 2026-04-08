@@ -176,9 +176,8 @@ export default function DebtSection() {
                 <div style={{
                   marginBottom: 14,
                   padding: '10px 14px',
-                  background: 'var(--surface-card-inner)',
+                  background: 'var(--surface-card-soft)',
                   borderRadius: 8,
-                  borderLeft: '3px solid var(--border-base)',
                 }}>
                   <p style={{ margin: 0, fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.6 }}>
                     {selectedDescription}
@@ -192,7 +191,7 @@ export default function DebtSection() {
                 <div style={{
                   marginTop: 4,
                   borderRadius: 10,
-                  border: '1px solid var(--border-soft)',
+                  background: 'var(--surface-card-soft)',
                   overflow: 'hidden',
                 }}>
                   <div style={{

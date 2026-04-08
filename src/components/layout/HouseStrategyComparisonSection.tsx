@@ -114,8 +114,7 @@ export default function HouseStrategyComparisonSection({
       style={{
         marginBottom: 'var(--result-space-5)',
         borderRadius: 16,
-        border: '1px solid var(--result-border-soft)',
-        background: 'var(--result-surface-base)',
+        background: 'var(--surface-card)',
         padding: 'var(--result-space-5)',
       }}
     >

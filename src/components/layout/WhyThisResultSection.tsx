@@ -116,8 +116,7 @@ export default function WhyThisResultSection({ summary, inputs, hasRealEstate }:
             key={card.title}
             style={{
               borderRadius: 10,
-              border: '1px solid var(--result-border-soft)',
-              background: 'var(--result-surface-base)',
+              background: 'var(--surface-card)',
               padding: 'var(--result-space-3) var(--result-space-4)',
               borderLeft: `3px solid ${cardAccentColor(card.tone)}`,
             }}

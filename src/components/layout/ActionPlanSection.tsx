@@ -83,7 +83,6 @@ export default function ActionPlanSection({ summary, inputs, hasRealEstate, prop
       <section
         style={{
           borderRadius: 16,
-          border: '1px solid var(--border-base)',
           background: 'var(--surface-card)',
           padding: '28px 28px',
         }}
@@ -133,7 +132,6 @@ export default function ActionPlanSection({ summary, inputs, hasRealEstate, prop
               gap: 'var(--result-space-3)',
               padding: '16px 20px',
               borderRadius: 12,
-              border: '1px solid var(--border-soft)',
               background: 'var(--surface-card-inner)',
             }}
           >
