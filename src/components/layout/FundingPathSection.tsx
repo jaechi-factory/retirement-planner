@@ -67,8 +67,7 @@ export default function FundingPathSection({ fundingTimeline, lifeExpectancy, re
         size="small"
         headingTag="h2"
         style={{
-          textTransform: 'uppercase',
-          letterSpacing: '0.02em',
+          letterSpacing: '0.01em',
           marginBottom: 'var(--result-space-3)',
         }}
       />

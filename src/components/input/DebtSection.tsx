@@ -46,8 +46,8 @@ function RepaymentTypeSelector({
               flex: 1,
               padding: '7px 4px',
               borderRadius: 8,
-              border: `1.5px solid ${isSelected ? 'var(--tds-blue-500)' : 'var(--tds-gray-100)'}`,
-              background: isSelected ? 'var(--tds-blue-50)' : 'var(--tds-white)',
+              border: isSelected ? '2px solid var(--accent-selected)' : '1.5px solid var(--border-soft)',
+              background: isSelected ? 'var(--accent-selected-bg)' : 'var(--surface-card)',
               cursor: 'pointer',
               transition: 'all 0.15s',
               fontFamily: 'inherit',
@@ -57,7 +57,7 @@ function RepaymentTypeSelector({
             <div style={{
               fontSize: 12,
               fontWeight: isSelected ? 700 : 600,
-              color: isSelected ? 'var(--tds-blue-500)' : 'var(--tds-gray-700)',
+              color: isSelected ? 'var(--text-strong)' : 'var(--text-base)',
               lineHeight: 1.3,
               whiteSpace: 'pre-wrap',
             }}>
@@ -66,7 +66,7 @@ function RepaymentTypeSelector({
             <div style={{
               fontSize: 11,
               fontWeight: 400,
-              color: isSelected ? 'var(--tds-blue-400)' : 'var(--tds-gray-400)',
+              color: isSelected ? 'var(--text-muted)' : 'var(--text-faint)',
               marginTop: 2,
             }}>
               {termLabels[type]}
@@ -91,13 +91,13 @@ export default function DebtSection() {
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            background: 'var(--tds-gray-50)',
+            background: 'var(--surface-card-inner)',
             borderRadius: 10,
             padding: '10px 14px',
           }}
         >
-          <span style={{ fontSize: 13, color: 'var(--tds-gray-500)', fontWeight: 600 }}>총부채</span>
-          <span style={{ fontSize: 15, fontWeight: 800, color: 'var(--tds-red-500, #F04452)' }}>
+          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 600 }}>총부채</span>
+          <span style={{ fontSize: 15, fontWeight: 800, color: 'var(--status-shortage-text)' }}>
             {result.totalDebt.toLocaleString('ko-KR')}만원
           </span>
         </div>
@@ -126,7 +126,7 @@ export default function DebtSection() {
               {/* 부채 이름 */}
               <p style={{
                 fontSize: 13, fontWeight: 600,
-                color: hasBalance ? 'var(--tds-gray-700)' : 'var(--tds-gray-400)',
+                color: hasBalance ? 'var(--text-base)' : 'var(--text-faint)',
                 margin: '0 0 12px 0',
               }}>
                 {DEBT_LABELS[key]}
@@ -159,7 +159,7 @@ export default function DebtSection() {
 
               {/* 상환방식 선택 */}
               <div style={{ marginBottom: 10 }}>
-                <p style={{ fontSize: 12, color: 'var(--tds-gray-500)', fontWeight: 600, margin: '0 0 8px 0' }}>
+                <p style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 600, margin: '0 0 8px 0' }}>
                   상환방식
                 </p>
                 <RepaymentTypeSelector
@@ -176,11 +176,11 @@ export default function DebtSection() {
                 <div style={{
                   marginBottom: 14,
                   padding: '10px 14px',
-                  background: 'var(--tds-gray-50)',
+                  background: 'var(--surface-card-inner)',
                   borderRadius: 8,
-                  borderLeft: '3px solid var(--tds-gray-200)',
+                  borderLeft: '3px solid var(--border-base)',
                 }}>
-                  <p style={{ margin: 0, fontSize: 12, color: 'var(--tds-gray-500)', lineHeight: 1.6 }}>
+                  <p style={{ margin: 0, fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.6 }}>
                     {selectedDescription}
                   </p>
                 </div>
@@ -192,28 +192,28 @@ export default function DebtSection() {
                 <div style={{
                   marginTop: 4,
                   borderRadius: 10,
-                  border: '1px solid var(--tds-gray-100)',
+                  border: '1px solid var(--border-soft)',
                   overflow: 'hidden',
                 }}>
                   <div style={{
-                    background: 'var(--tds-gray-50)',
+                    background: 'var(--surface-card-inner)',
                     padding: '8px 12px',
                     fontSize: 12,
                     fontWeight: 700,
-                    color: 'var(--tds-gray-500)',
+                    color: 'var(--text-muted)',
                   }}>
                     상환 미리보기
                   </div>
                   {/* 메인: 첫 달 / 첫 해 — 읽는 순서 1순위 */}
                   <div style={{ padding: '10px 12px 6px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                    <div style={{ padding: '8px 10px', background: 'var(--tds-gray-50)', borderRadius: 8 }}>
-                      <div style={{ fontSize: 11, color: 'var(--tds-gray-400)', marginBottom: 4 }}>첫 달 상환액</div>
+                    <div style={{ padding: '8px 10px', background: 'var(--surface-card-inner)', borderRadius: 8 }}>
+                      <div style={{ fontSize: 11, color: 'var(--text-faint)', marginBottom: 4 }}>첫 달 상환액</div>
                       <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--tds-gray-700)' }}>
                         −{Math.round(summary.firstMonthPayment).toLocaleString('ko-KR')}만원
                       </div>
                     </div>
-                    <div style={{ padding: '8px 10px', background: 'var(--tds-gray-50)', borderRadius: 8 }}>
-                      <div style={{ fontSize: 11, color: 'var(--tds-gray-400)', marginBottom: 4 }}>첫해 상환액</div>
+                    <div style={{ padding: '8px 10px', background: 'var(--surface-card-inner)', borderRadius: 8 }}>
+                      <div style={{ fontSize: 11, color: 'var(--text-faint)', marginBottom: 4 }}>첫해 상환액</div>
                       <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--tds-gray-600)' }}>
                         −{Math.round(summary.firstYearAnnualPayment).toLocaleString('ko-KR')}만원
                       </div>

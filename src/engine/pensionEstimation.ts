@@ -67,7 +67,7 @@ function computeNPSReplacement(currentAge: number, retirementAge: number, workSt
 }
 
 /**
- * 월단위 적립식 미래가치 — 개인연금 전용
+ * 월단위 적립식 미래가치 — 개인연금·퇴직연금 공용
  * 월이율은 연이율의 복리 동치: r_m = (1 + annual/100)^(1/12) - 1
  * PV 복리 팩터는 futureValue와 동일 ((1+r)^years), 차이는 기여금 납입 주기
  */

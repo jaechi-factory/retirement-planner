@@ -9,7 +9,7 @@ export default function App() {
         display: 'flex',
         flexDirection: 'column',
         height: '100vh',
-        background: 'var(--warm-canvas)',
+        background: 'var(--surface-page)',
       }}
     >
       {/* 헤더 — full width 흰 배경, 내부 텍스트는 90% 정렬 */}
@@ -37,7 +37,7 @@ export default function App() {
             style={{
               fontSize: 17,
               fontWeight: 800,
-              color: '#1C1814',
+              color: 'var(--text-strong)',
               letterSpacing: '-0.3px',
             }}
           >
@@ -47,7 +47,7 @@ export default function App() {
             style={{
               marginLeft: 10,
               fontSize: 12,
-              color: '#B0A99E',
+              color: 'var(--text-muted)',
               fontWeight: 400,
             }}
           >

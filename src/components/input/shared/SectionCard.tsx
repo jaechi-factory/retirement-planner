@@ -13,11 +13,11 @@ export default function SectionCard({ title, subtitle, tier = 2, children }: Pro
   return (
     <div
       style={{
-        background: '#FFFFFF',
+        background: 'var(--surface-card)',
         borderRadius: 16,
         padding: isPrimary ? '22px 20px 26px' : '18px 20px 22px',
         marginBottom: 16,
-        border: isPrimary ? '1.5px solid #DDD7CE' : '1px solid #E6E0D8',
+        border: isPrimary ? '1.5px solid var(--border-base)' : '1px solid var(--border-soft)',
       }}
     >
       <div style={{ marginBottom: isPrimary ? 18 : 14 }}>

@@ -79,15 +79,56 @@ export default function EvidenceWorkspace({
     <section style={{ marginBottom: 'var(--result-space-5)' }}>
       {/* 섹션 레이블 */}
       <SectionHeader
-        headingContent="근거 확인"
+        headingContent="자산 흐름"
         size="small"
         headingTag="h2"
         style={{
-          textTransform: 'uppercase',
-          letterSpacing: '0.02em',
+          letterSpacing: '0.01em',
           marginBottom: 'var(--result-space-3)',
         }}
       />
+
+      {/* 주의사항 — collapsible 밖으로 꺼내어 항상 표시 */}
+      {filteredWarnings.length > 0 && (
+        <div
+          style={{
+            borderRadius: 10,
+            border: '1px solid var(--ux-status-warning-soft)',
+            background: 'var(--ux-status-warning-bg)',
+            padding: '10px 14px',
+            marginBottom: 'var(--result-space-2)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 6,
+          }}
+        >
+          <Typography
+            variant="caption1"
+            weight="bold"
+            style={{ color: 'var(--ux-status-warning)', display: 'block', marginBottom: 2 }}
+          >
+            주의사항
+          </Typography>
+          {filteredWarnings.map((warning, index) => (
+            <div
+              key={index}
+              style={{
+                borderRadius: 6,
+                border: `1px solid ${warning.severity === 'critical' ? 'var(--ux-status-negative-soft)' : 'var(--ux-status-warning-soft)'}`,
+                background: warning.severity === 'critical' ? 'var(--ux-status-negative-bg)' : 'transparent',
+                padding: '6px 10px',
+              }}
+            >
+              <Typography
+                variant="caption1"
+                style={{ color: 'var(--result-text-body-color)', lineHeight: 1.6 }}
+              >
+                {warning.message}
+              </Typography>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* 돈 흐름 */}
       <div
@@ -176,105 +217,69 @@ export default function EvidenceWorkspace({
         <CompactLifetimeTimeline events={keyEvents} />
       </div>
 
-      {/* 가정과 주의 */}
-      <details style={{ marginTop: 0 }}>
-        <summary
-          style={{
-            cursor: 'pointer',
-            userSelect: 'none',
-            padding: '6px 2px',
-          }}
-        >
-          <Typography
-            as="span"
-            variant="caption1"
-            weight="bold"
-            style={{ color: 'var(--result-text-body-color)' }}
+      {/* 계산 가정 (collapsible) */}
+      {assumptions.length > 0 && (
+        <details style={{ marginTop: 0 }}>
+          <summary
+            style={{
+              cursor: 'pointer',
+              userSelect: 'none',
+              padding: '6px 2px',
+            }}
           >
-            가정과 주의 보기
-          </Typography>
-        </summary>
+            <Typography
+              as="span"
+              variant="caption1"
+              weight="bold"
+              style={{ color: 'var(--result-text-body-color)' }}
+            >
+              계산 가정 보기
+            </Typography>
+          </summary>
 
-        <div
-          style={{
-            marginTop: 'var(--result-space-2)',
-            borderRadius: 10,
-            border: '1px solid var(--result-border-soft)',
-            background: 'var(--result-surface-base)',
-            padding: '12px',
-          }}
-        >
-          {hasRealEstate && (
-            <div style={{ marginBottom: 'var(--result-space-3)' }}>
-              <PropertyAssetChart rows={chartRows} retirementAge={retirementAge} />
-            </div>
-          )}
+          <div
+            style={{
+              marginTop: 'var(--result-space-2)',
+              borderRadius: 10,
+              border: '1px solid var(--result-border-soft)',
+              background: 'var(--result-surface-base)',
+              padding: '12px',
+            }}
+          >
+            {hasRealEstate && (
+              <div style={{ marginBottom: 'var(--result-space-3)' }}>
+                <PropertyAssetChart rows={chartRows} retirementAge={retirementAge} />
+              </div>
+            )}
 
-          {assumptions.length > 0 && (
-            <div style={{ marginBottom: filteredWarnings.length > 0 ? 'var(--result-space-2)' : 0 }}>
-              <Typography
-                variant="caption1"
-                weight="bold"
-                style={{ color: 'var(--result-text-body-color)', display: 'block', marginBottom: 'var(--result-space-2)' }}
-              >
-                주요 가정
-              </Typography>
-              <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 6 }}>
-                {assumptions.map((assumption, index) => (
-                  <li
-                    key={`${assumption.label}-${index}`}
-                    style={{
-                      lineHeight: 1.6,
-                      display: 'flex',
-                      alignItems: 'flex-start',
-                      gap: 'var(--result-space-2)',
-                    }}
-                  >
-                    <span aria-hidden style={{ fontWeight: 700, flexShrink: 0 }}>•</span>
-                    <Typography variant="caption1" style={{ color: 'var(--result-text-body-color)' }}>
-                      {assumption.label}: {assumption.value}
-                    </Typography>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {filteredWarnings.length > 0 && (
-            <div>
-              <Typography
-                variant="caption1"
-                weight="bold"
-                style={{ color: 'var(--result-text-body-color)', display: 'block', marginBottom: 'var(--result-space-2)' }}
-              >
-                주의 사항
-              </Typography>
-              <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 6 }}>
-                {filteredWarnings.map((warning, index) => (
-                  <li
-                    key={index}
-                    style={{
-                      borderRadius: 8,
-                      border: `1px solid ${warning.severity === 'critical' ? 'var(--ux-status-negative-soft)' : 'var(--ux-status-warning-soft)'}`,
-                      background: warning.severity === 'critical' ? 'var(--ux-status-negative-bg)' : 'var(--ux-status-warning-bg)',
-                      lineHeight: 1.6,
-                      padding: '8px 10px',
-                    }}
-                  >
-                    <Typography
-                      variant="caption1"
-                      weight="medium"
-                      style={{ color: 'var(--result-text-body-color)' }}
-                    >
-                      {warning.message}
-                    </Typography>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </div>
-      </details>
+            <Typography
+              variant="caption1"
+              weight="bold"
+              style={{ color: 'var(--result-text-body-color)', display: 'block', marginBottom: 'var(--result-space-2)' }}
+            >
+              주요 가정
+            </Typography>
+            <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {assumptions.map((assumption, index) => (
+                <li
+                  key={`${assumption.label}-${index}`}
+                  style={{
+                    lineHeight: 1.6,
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: 'var(--result-space-2)',
+                  }}
+                >
+                  <span aria-hidden style={{ fontWeight: 700, flexShrink: 0 }}>•</span>
+                  <Typography variant="caption1" style={{ color: 'var(--result-text-body-color)' }}>
+                    {assumption.label}: {assumption.value}
+                  </Typography>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </details>
+      )}
     </section>
   );
 }

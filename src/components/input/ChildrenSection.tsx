@@ -21,9 +21,9 @@ export default function ChildrenSection() {
               flex: 1,
               height: 40,
               borderRadius: 8,
-              border: `1.5px solid ${children.hasChildren === value ? 'var(--tds-blue-500)' : 'var(--tds-gray-100)'}`,
-              background: children.hasChildren === value ? 'var(--tds-blue-50)' : 'var(--tds-white)',
-              color: children.hasChildren === value ? 'var(--tds-blue-500)' : 'var(--tds-gray-500)',
+              border: children.hasChildren === value ? '2px solid var(--accent-selected)' : '1.5px solid var(--border-soft)',
+              background: children.hasChildren === value ? 'var(--accent-selected-bg)' : 'var(--surface-card)',
+              color: children.hasChildren === value ? 'var(--text-strong)' : 'var(--text-muted)',
               fontSize: 14,
               fontWeight: children.hasChildren === value ? 700 : 400,
               cursor: 'pointer',
@@ -61,7 +61,7 @@ export default function ChildrenSection() {
             hint="이 나이 이후에는 자녀에게 드는 돈이 없는 것으로 계산해요."
           />
           <div style={{ display: 'grid', gap: 8 }}>
-            <div style={{ fontSize: 13, color: 'var(--tds-gray-500)' }}>자녀비 증가 방식</div>
+            <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>자녀비 증가 방식</div>
             <div style={{ display: 'flex', gap: 8 }}>
               {(
                 [
@@ -79,9 +79,9 @@ export default function ChildrenSection() {
                       flex: 1,
                       height: 36,
                       borderRadius: 8,
-                      border: `1.5px solid ${isActive ? 'var(--tds-blue-500)' : 'var(--tds-gray-100)'}`,
-                      background: isActive ? 'var(--tds-blue-50)' : 'var(--tds-white)',
-                      color: isActive ? 'var(--tds-blue-500)' : 'var(--tds-gray-500)',
+                      border: isActive ? '2px solid var(--accent-selected)' : '1.5px solid var(--border-soft)',
+                      background: isActive ? 'var(--accent-selected-bg)' : 'var(--surface-card)',
+                      color: isActive ? 'var(--text-strong)' : 'var(--text-muted)',
                       fontSize: 13,
                       fontWeight: isActive ? 700 : 400,
                       cursor: 'pointer',

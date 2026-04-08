@@ -53,7 +53,7 @@ export default function CurrentStatusSection() {
             onChange={(v) => setStatus({ expenseGrowthRate: v })}
           />
         </div>
-        <p style={{ fontSize: 12, color: 'var(--tds-gray-400)', margin: 0 }}>
+        <p style={{ fontSize: 12, color: 'var(--text-faint)', margin: 0 }}>
           앞으로 생활비가 얼마나 오를지 예상해서 입력해 주세요. 보통은 물가상승률과 비슷하게 잡아요.
         </p>
       </div>
@@ -72,7 +72,7 @@ export default function CurrentStatusSection() {
             padding: '8px 12px',
             fontSize: 12,
             fontWeight: 700,
-            color: 'var(--tds-gray-500)',
+            color: 'var(--text-muted)',
             letterSpacing: 0.2,
           }}>
             이번 달 돈 흐름
@@ -94,12 +94,12 @@ export default function CurrentStatusSection() {
 
             {/* 결과 */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--tds-gray-700)' }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-base)' }}>
                 매달 남는 돈
               </span>
               <span style={{
                 fontSize: 16, fontWeight: 800,
-                color: monthlySurplus >= 0 ? 'var(--tds-gray-900)' : 'var(--tds-red-500)',
+                color: monthlySurplus >= 0 ? 'var(--text-strong)' : 'var(--status-shortage-text)',
               }}>
                 {monthlySurplus >= 0 ? '+' : ''}{monthlySurplus.toLocaleString('ko-KR')}만원
               </span>
@@ -107,7 +107,7 @@ export default function CurrentStatusSection() {
 
             {/* 설명 */}
             <div style={{
-              fontSize: 12, color: 'var(--tds-gray-400)', lineHeight: 1.5,
+              fontSize: 12, color: 'var(--text-faint)', lineHeight: 1.5,
               padding: '6px 8px',
               background: monthlySurplus > 0 ? '#EBF4ED' : '#F6F0E2',
               borderRadius: 6,
@@ -131,7 +131,7 @@ function Row({
 }) {
   return (
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-      <span style={{ fontSize: 12, color: 'var(--tds-gray-500)' }}>{label}</span>
+      <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{label}</span>
       <span style={{ fontSize: 13, fontWeight: 600, color }}>
         {sign}{value.toLocaleString('ko-KR')}만원
       </span>

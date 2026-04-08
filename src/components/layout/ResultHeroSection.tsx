@@ -16,33 +16,33 @@ function getStatusBadge(summary: CalculationResultV2['summary']): StatusBadge {
   return 'stable';
 }
 
-// 검정 앵커 패널 위에서 읽히는 다크 배지 설정
+// Hero 다크 패널(#24272E) 위 배지 — palette 6색 기반
 const BADGE_CONFIG: Record<StatusBadge, { label: string; bg: string; color: string; border: string }> = {
   stable: {
     label: '안정적',
-    bg: 'rgba(61, 122, 74, 0.18)',
-    color: '#7DC88A',
-    border: 'rgba(61, 122, 74, 0.30)',
+    bg: 'rgba(255, 253, 254, 0.10)',
+    color: '#FFFDFE',
+    border: 'rgba(255, 253, 254, 0.22)',
   },
   adjust: {
     label: '조정 필요',
-    bg: 'rgba(142, 106, 24, 0.18)',
-    color: '#D4A84B',
-    border: 'rgba(142, 106, 24, 0.30)',
+    bg: 'rgba(203, 132, 114, 0.22)',
+    color: '#CB8472',
+    border: 'rgba(203, 132, 114, 0.38)',
   },
   shortage: {
     label: '부족',
-    bg: 'rgba(138, 53, 53, 0.18)',
-    color: '#D4837A',
-    border: 'rgba(138, 53, 53, 0.30)',
+    bg: 'rgba(255, 102, 0, 0.16)',
+    color: '#FF6600',
+    border: 'rgba(255, 102, 0, 0.32)',
   },
 };
 
-// 다크 배경 위 메트릭 tone 색상
+// 다크 패널 위 메트릭 tone 색상 — palette 6색 기반
 function metricToneColor(tone?: NarrativeMetric['tone']): string {
-  if (tone === 'positive') return '#7DC88A';
-  if (tone === 'negative') return '#D4837A';
-  return '#FFFFFF';
+  if (tone === 'positive') return '#F8CD33';
+  if (tone === 'negative') return '#FF6600';
+  return '#FFFDFE';
 }
 
 export default function ResultHeroSection({ summary, narrative, hasRealEstate }: ResultHeroSectionProps) {
@@ -53,7 +53,7 @@ export default function ResultHeroSection({ summary, narrative, hasRealEstate }:
     <section
       style={{
         borderRadius: 20,
-        background: '#1C1814',
+        background: 'var(--surface-hero)',
         padding: '32px 28px',
         marginBottom: 24,
       }}
@@ -75,7 +75,7 @@ export default function ResultHeroSection({ summary, narrative, hasRealEstate }:
         >
           {badgeCfg.label}
         </ContentBadge>
-        <Typography variant="caption1" style={{ color: 'rgba(255,255,255,0.45)' }}>
+        <Typography variant="caption1" style={{ color: 'var(--text-on-dark-muted)' }}>
           {hasRealEstate ? '추천 전략 기준' : '무주택 기준'} · 최대 생활비
         </Typography>
       </div>
@@ -86,7 +86,7 @@ export default function ResultHeroSection({ summary, narrative, hasRealEstate }:
         weight="bold"
         style={{
           fontSize: 'var(--result-text-display)',
-          color: '#FFFFFF',
+          color: 'var(--text-on-dark)',
           lineHeight: 1.26,
           letterSpacing: '-0.02em',
           marginBottom: 'var(--result-space-5)',
@@ -110,15 +110,15 @@ export default function ResultHeroSection({ summary, narrative, hasRealEstate }:
             key={metric.label}
             style={{
               borderRadius: 10,
-              border: '1px solid rgba(255,255,255,0.10)',
-              background: 'rgba(255,255,255,0.06)',
+              border: '1px solid var(--border-on-dark)',
+              background: 'rgba(255, 253, 254, 0.06)',
               padding: 'var(--result-space-3)',
               minHeight: 64,
             }}
           >
             <Typography
               variant="caption2"
-              style={{ display: 'block', marginBottom: 'var(--result-space-1)', color: 'rgba(255,255,255,0.45)' }}
+              style={{ display: 'block', marginBottom: 'var(--result-space-1)', color: 'var(--text-on-dark-muted)' }}
             >
               {metric.label}
             </Typography>
@@ -134,11 +134,11 @@ export default function ResultHeroSection({ summary, narrative, hasRealEstate }:
       </div>
 
       {/* 요약 액션 1줄 */}
-      <hr style={{ border: 'none', borderTop: '1px solid rgba(255,255,255,0.10)', margin: '0 0 var(--result-space-3) 0' }} />
+      <hr style={{ border: 'none', borderTop: '1px solid var(--border-on-dark)', margin: '0 0 var(--result-space-3) 0' }} />
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 'var(--result-space-2)' }}>
         <Typography
           variant="caption1"
-          style={{ flexShrink: 0, paddingTop: 2, color: 'rgba(255,255,255,0.45)' }}
+          style={{ flexShrink: 0, paddingTop: 2, color: 'var(--text-on-dark-muted)' }}
         >
           {hasRealEstate ? '권장 전략' : '현재 상태'}
         </Typography>
@@ -146,13 +146,13 @@ export default function ResultHeroSection({ summary, narrative, hasRealEstate }:
           <Typography
             variant="headline2"
             weight="bold"
-            style={{ color: '#FFFFFF', display: 'block' }}
+            style={{ color: 'var(--text-on-dark)', display: 'block' }}
           >
             {narrative.recommendedStrategyLabel}
           </Typography>
           <Typography
             variant="body1"
-            style={{ color: 'rgba(255,255,255,0.60)', lineHeight: 1.55, marginTop: 2, display: 'block' }}
+            style={{ color: 'var(--text-on-dark-muted)', lineHeight: 1.55, marginTop: 2, display: 'block' }}
           >
             {narrative.recommendationReasonLine}
           </Typography>

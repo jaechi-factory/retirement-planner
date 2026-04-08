@@ -83,8 +83,8 @@ export default function ActionPlanSection({ summary, inputs, hasRealEstate, prop
       <section
         style={{
           borderRadius: 16,
-          border: '1px solid #DDD7CE',
-          background: '#FFFFFF',
+          border: '1px solid var(--border-base)',
+          background: 'var(--surface-card)',
           padding: '28px 28px',
         }}
       >
@@ -133,8 +133,8 @@ export default function ActionPlanSection({ summary, inputs, hasRealEstate, prop
               gap: 'var(--result-space-3)',
               padding: '16px 20px',
               borderRadius: 12,
-              border: '1px solid #EDE8E2',
-              background: '#FAF8F4',
+              border: '1px solid var(--border-soft)',
+              background: 'var(--surface-card-inner)',
             }}
           >
             {/* 번호 — 테두리형 (Hero 검정 원과 구분) */}
@@ -144,8 +144,8 @@ export default function ActionPlanSection({ summary, inputs, hasRealEstate, prop
                 height: 24,
                 borderRadius: '50%',
                 background: 'transparent',
-                border: '2px solid #1C1814',
-                color: '#1C1814',
+                border: '2px solid var(--palette-ink)',
+                color: 'var(--palette-ink)',
                 fontSize: 11,
                 fontWeight: 700,
                 display: 'flex',

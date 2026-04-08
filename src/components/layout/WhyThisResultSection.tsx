@@ -100,8 +100,7 @@ export default function WhyThisResultSection({ summary, inputs, hasRealEstate }:
         size="small"
         headingTag="h2"
         style={{
-          textTransform: 'uppercase',
-          letterSpacing: '0.02em',
+          letterSpacing: '0.01em',
           marginBottom: 'var(--result-space-3)',
         }}
       />

@@ -46,7 +46,7 @@ function PrivatePensionProductCard({
           onClick={onDelete}
           style={{
             fontSize: 12, color: 'var(--tds-gray-400)', background: 'none',
-            border: '1px solid var(--tds-gray-200)', borderRadius: 6, cursor: 'pointer', padding: '2px 8px',
+            border: '1px solid var(--border-base)', borderRadius: 6, cursor: 'pointer', padding: '2px 8px',
           }}
         >
           삭제
@@ -153,9 +153,9 @@ export default function PrivatePensionCard() {
           onClick={() => upd({ enabled: !isEnabled })}
           style={{
             width: 40, height: 22, borderRadius: 11, flexShrink: 0,
-            background: isEnabled ? 'var(--tds-blue-500)' : 'var(--tds-gray-300)',
+            background: isEnabled ? 'var(--palette-ink)' : 'var(--border-base)',
             position: 'relative', cursor: 'pointer', transition: 'background 0.2s',
-            boxShadow: isEnabled ? '0 0 0 2px var(--tds-blue-50)' : 'none',
+            boxShadow: isEnabled ? '0 0 0 2px var(--accent-selected-bg)' : 'none',
           }}
         >
           <div style={{
@@ -170,7 +170,7 @@ export default function PrivatePensionCard() {
   );
 
   return (
-    <div style={{ ...cardStyle, background: isEnabled ? 'var(--tds-white)' : 'var(--tds-gray-50, #F7F8FA)' }}>
+    <div style={{ ...cardStyle, background: isEnabled ? 'var(--surface-card)' : 'var(--surface-card-inner)' }}>
       {Header}
 
       {!isEnabled ? (
@@ -186,8 +186,8 @@ export default function PrivatePensionCard() {
             <button
               onClick={exitDetailMode}
               style={{
-                fontSize: 12, fontWeight: 600, color: 'var(--tds-gray-500)',
-                background: 'none', border: '1px solid var(--tds-gray-200)',
+                fontSize: 12, fontWeight: 600, color: 'var(--text-muted)',
+                background: 'none', border: '1px solid var(--border-base)',
                 borderRadius: 6, padding: '3px 10px', cursor: 'pointer',
               }}
             >
@@ -212,7 +212,7 @@ export default function PrivatePensionCard() {
             </div>
           )}
 
-          <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--tds-gray-500)', marginBottom: 6 }}>상품 추가</div>
+          <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 6 }}>상품 추가</div>
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             {PRODUCT_LABELS.map(label => (
               <button
@@ -220,7 +220,7 @@ export default function PrivatePensionCard() {
                 onClick={() => addProduct(label)}
                 style={{
                   fontSize: 12, fontWeight: 600, padding: '5px 12px',
-                  border: '1.5px solid var(--tds-gray-200)', borderRadius: 20,
+                  border: '1.5px solid var(--border-base)', borderRadius: 20,
                   background: 'var(--tds-white)', color: 'var(--tds-gray-700)', cursor: 'pointer',
                 }}
               >
@@ -272,7 +272,7 @@ export default function PrivatePensionCard() {
             onClick={enterDetailMode}
             style={{
               marginTop: 12, width: '100%', fontSize: 12, fontWeight: 600,
-              color: 'var(--tds-blue-500)', background: 'var(--tds-blue-50)',
+              color: 'var(--text-strong)', background: 'var(--accent-selected-bg)',
               border: 'none', borderRadius: 8, padding: '9px 14px', cursor: 'pointer',
             }}
           >
