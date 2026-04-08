@@ -83,10 +83,9 @@ export default function ActionPlanSection({ summary, inputs, hasRealEstate, prop
       <section
         style={{
           borderRadius: 16,
-          border: '1px solid var(--result-border-soft)',
-          background: 'var(--result-surface-base)',
-          padding: 'var(--result-space-5)',
-          marginBottom: 'var(--result-space-5)',
+          border: '1px solid #DDD7CE',
+          background: '#FFFFFF',
+          padding: '28px 28px',
         }}
       >
         <SectionHeader
@@ -94,13 +93,12 @@ export default function ActionPlanSection({ summary, inputs, hasRealEstate, prop
           size="small"
           headingTag="h2"
           style={{
-            textTransform: 'uppercase',
-            letterSpacing: '0.02em',
+            letterSpacing: '0.01em',
             marginBottom: 'var(--result-space-3)',
           }}
         />
         <Typography variant="body1" style={{ color: 'var(--result-text-body-color)', lineHeight: 1.62 }}>
-          현재 입력 기준으로 추가 조정 없이 안정적인 계획이에요. 입력값이 바뀌면 다시 확인해보세요.
+          현재 입력 기준으로 안정적인 계획이에요. 입력값을 바꾸면 바로 다시 확인할 수 있어요.
         </Typography>
       </section>
     );
@@ -110,10 +108,9 @@ export default function ActionPlanSection({ summary, inputs, hasRealEstate, prop
     <section
       style={{
         borderRadius: 16,
-        border: '1px solid var(--result-border-soft)',
-        background: 'var(--result-surface-base)',
-        padding: 'var(--result-space-5)',
-        marginBottom: 'var(--result-space-5)',
+        border: '1px solid #DDD7CE',
+        background: '#FFFFFF',
+        padding: '28px 28px',
       }}
     >
       <SectionHeader
@@ -121,9 +118,8 @@ export default function ActionPlanSection({ summary, inputs, hasRealEstate, prop
         size="small"
         headingTag="h2"
         style={{
-          textTransform: 'uppercase',
-          letterSpacing: '0.02em',
-          marginBottom: 'var(--result-space-3)',
+          letterSpacing: '0.01em',
+          marginBottom: 'var(--result-space-4)',
         }}
       />
 
@@ -135,21 +131,22 @@ export default function ActionPlanSection({ summary, inputs, hasRealEstate, prop
               display: 'flex',
               alignItems: 'flex-start',
               gap: 'var(--result-space-3)',
-              padding: 'var(--result-space-3) var(--result-space-4)',
-              borderRadius: 10,
-              border: '1px solid var(--result-border-soft)',
-              background: 'var(--result-surface-metric)',
+              padding: '16px 20px',
+              borderRadius: 12,
+              border: '1px solid #EDE8E2',
+              background: '#FAF8F4',
             }}
           >
-            {/* 번호 — WDS에 numbered-step primitive 없음, 커스텀 유지 */}
+            {/* 번호 — 테두리형 (Hero 검정 원과 구분) */}
             <span
               style={{
                 width: 24,
                 height: 24,
                 borderRadius: '50%',
-                background: 'var(--result-accent-strong)',
-                color: '#fff',
-                fontSize: 12,
+                background: 'transparent',
+                border: '2px solid #1C1814',
+                color: '#1C1814',
+                fontSize: 11,
                 fontWeight: 700,
                 display: 'flex',
                 alignItems: 'center',
@@ -185,20 +182,6 @@ export default function ActionPlanSection({ summary, inputs, hasRealEstate, prop
                 </Typography>
               )}
             </div>
-
-            {/* 화살표 — 장식 요소, 커스텀 유지 */}
-            <span
-              aria-hidden
-              style={{
-                fontSize: 18,
-                color: 'var(--result-text-faint-color)',
-                flexShrink: 0,
-                lineHeight: 1,
-                marginTop: 3,
-              }}
-            >
-              →
-            </span>
           </div>
         ))}
       </div>

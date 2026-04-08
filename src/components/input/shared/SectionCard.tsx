@@ -3,22 +3,34 @@ import { Typography } from '@wanteddev/wds';
 interface Props {
   title: string;
   subtitle?: string;
+  tier?: 1 | 2;
   children: React.ReactNode;
 }
 
-export default function SectionCard({ title, subtitle, children }: Props) {
+export default function SectionCard({ title, subtitle, tier = 2, children }: Props) {
+  const isPrimary = tier === 1;
+
   return (
     <div
       style={{
-        background: 'var(--tds-white)',
+        background: '#FFFFFF',
         borderRadius: 16,
-        padding: '20px 20px 24px',
-        marginBottom: 12,
-        border: '1px solid var(--tds-gray-100)',
+        padding: isPrimary ? '22px 20px 26px' : '18px 20px 22px',
+        marginBottom: 16,
+        border: isPrimary ? '1.5px solid #DDD7CE' : '1px solid #E6E0D8',
       }}
     >
-      <div style={{ marginBottom: 16 }}>
-        <Typography as="h3" variant="headline2" weight="bold" color="semantic.label.normal" style={{ margin: subtitle ? '0 0 3px 0' : '0' }}>
+      <div style={{ marginBottom: isPrimary ? 18 : 14 }}>
+        <Typography
+          as="h3"
+          variant={isPrimary ? 'headline1' : 'headline2'}
+          weight="bold"
+          color="semantic.label.normal"
+          style={{
+            margin: subtitle ? '0 0 4px 0' : '0',
+            letterSpacing: '-0.2px',
+          }}
+        >
           {title}
         </Typography>
         {subtitle && (

@@ -17,7 +17,7 @@ export default function CurrentStatusSection() {
   const showCashflow = status.annualIncome > 0 && status.annualExpense > 0;
 
   return (
-    <SectionCard title="현재 상태" subtitle="지금 수입과 지출로 앞으로 얼마나 모을 수 있는지 계산해요">
+    <SectionCard title="현재 상태" subtitle="지금 수입과 지출로 앞으로 얼마나 모을 수 있는지 계산해요" tier={1}>
       <NumberInput
         label="현재 나이"
         value={status.currentAge}
@@ -63,12 +63,12 @@ export default function CurrentStatusSection() {
         <div style={{
           marginTop: 4,
           borderRadius: 10,
-          border: '1.5px solid var(--tds-gray-100)',
+          border: '1px solid #E6E0D8',
           overflow: 'hidden',
         }}>
           {/* 헤더 */}
           <div style={{
-            background: 'var(--tds-gray-50, #F7F8FA)',
+            background: '#FAF8F4',
             padding: '8px 12px',
             fontSize: 12,
             fontWeight: 700,
@@ -90,7 +90,7 @@ export default function CurrentStatusSection() {
             )}
 
             {/* 구분선 */}
-            <div style={{ height: 1, background: 'var(--tds-gray-100)', margin: '2px 0' }} />
+            <div style={{ height: 1, background: '#E6E0D8', margin: '2px 0' }} />
 
             {/* 결과 */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -109,7 +109,7 @@ export default function CurrentStatusSection() {
             <div style={{
               fontSize: 12, color: 'var(--tds-gray-400)', lineHeight: 1.5,
               padding: '6px 8px',
-              background: monthlySurplus > 0 ? 'var(--tds-blue-50)' : 'var(--tds-orange-50)',
+              background: monthlySurplus > 0 ? '#EBF4ED' : '#F6F0E2',
               borderRadius: 6,
             }}>
               {monthlySurplus > 0

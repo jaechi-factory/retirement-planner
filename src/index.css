@@ -80,6 +80,58 @@
   --result-border-subtle: #EEF2F6;
   --result-border-soft: #E9EDF2;
   --result-border-strong: #DDE4EC;
+
+  /* ── Warm Editorial Finance ──────────────────────────────────── */
+
+  /* 웜 캔버스 기반 팔레트 */
+  --warm-canvas:            #F5F0EA;
+  --warm-seam:              #E6E0D8;
+  --warm-seam-soft:         #EDE8E2;
+
+  /* 결과 패널 배경 → 웜 크림 */
+  --ux-surface-subtle:      #F5F0EA;
+  --ux-surface-muted:       #F2EDE7;
+
+  /* 테두리 → 웜 세임 */
+  --ux-border:              #E6E0D8;
+  --ux-border-strong:       #DDD7CE;
+  --result-border-soft:     #E6E0D8;
+  --result-border-subtle:   #EDE8E2;
+  --result-border-strong:   #D8D1C8;
+
+  /* 카드 내부 서피스 → 웜 */
+  --result-surface-metric:  #F9F6F1;
+  --result-surface-soft:    #FAF8F4;
+  --result-surface-selected: #F7F3EE;
+
+  /* 상태색 채도 낮춤 (신호등 → 금융 판단 기준) */
+  --ux-status-positive:        #3D7A4A;
+  --ux-status-positive-bg:     #EBF4ED;
+  --ux-status-positive-soft:   #C4DECA;
+  --ux-status-negative:        #8A3535;
+  --ux-status-negative-bg:     #F5ECEC;
+  --ux-status-negative-soft:   #DEC4C4;
+  --ux-status-warning:         #8E6A18;
+  --ux-status-warning-bg:      #F6F0E2;
+  --ux-status-warning-soft:    #DFC89A;
+
+  /* 강조색 → 차콜 (에디토리얼) */
+  --ux-accent:              #1C1814;
+  --ux-accent-soft:         #EEE9E2;
+  --result-accent-strong:   #1C1814;
+  --result-accent-soft:     #EEE9E2;
+  --result-accent-muted:    #6B6560;
+
+  /* 영웅 숫자 크기 업그레이드 */
+  --result-text-display:    44px;
+
+  /* 차트 전용 토큰 (Recharts) */
+  --chart-primary:           #1C1814;
+  --chart-secondary:         #B0A99E;
+  --chart-fill:              #E8E2D9;
+  --chart-grid:              #EDE8E2;
+  --chart-surplus:           #3D7A4A;
+  --chart-deficit:           #8A3535;
 }
 
 .house-decision-row-metrics {
@@ -149,7 +201,7 @@ html, body {
   margin: 0;
   padding: 0;
   font-family: 'Pretendard', sans-serif;
-  background-color: var(--tds-gray-50);
+  background-color: var(--warm-canvas);
   color: var(--tds-gray-900);
   font-size: 14px;
   line-height: 1.5;

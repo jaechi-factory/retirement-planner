@@ -9,7 +9,7 @@ export default function App() {
         display: 'flex',
         flexDirection: 'column',
         height: '100vh',
-        background: 'var(--tds-gray-100)',
+        background: 'var(--warm-canvas)',
       }}
     >
       {/* 헤더 — full width 흰 배경, 내부 텍스트는 90% 정렬 */}
@@ -18,7 +18,7 @@ export default function App() {
           height: 56,
           flexShrink: 0,
           background: 'var(--tds-white)',
-          borderBottom: '1px solid var(--tds-gray-100)',
+          borderBottom: '1px solid var(--ux-border)',
           display: 'flex',
           justifyContent: 'center',
           zIndex: 100,
@@ -37,7 +37,7 @@ export default function App() {
             style={{
               fontSize: 17,
               fontWeight: 800,
-              color: 'var(--tds-blue-500)',
+              color: '#1C1814',
               letterSpacing: '-0.3px',
             }}
           >
@@ -47,7 +47,7 @@ export default function App() {
             style={{
               marginLeft: 10,
               fontSize: 12,
-              color: 'var(--tds-gray-300)',
+              color: '#B0A99E',
               fontWeight: 400,
             }}
           >
@@ -71,9 +71,9 @@ export default function App() {
             width: '90%',
             maxWidth: 1440,
             overflow: 'hidden',
-            background: 'var(--tds-white)',
-            borderLeft: '1px solid var(--tds-gray-100)',
-            borderRight: '1px solid var(--tds-gray-100)',
+            background: 'transparent',
+            borderLeft: '1px solid var(--ux-border)',
+            borderRight: '1px solid var(--ux-border)',
           }}
         >
           <InputWorkbench />

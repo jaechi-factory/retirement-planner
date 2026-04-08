@@ -8,7 +8,7 @@ export default function RetirementGoalSection() {
   const { goal } = inputs;
 
   return (
-    <SectionCard title="은퇴 목표" subtitle="언제 은퇴하고, 매달 얼마를 쓰며 살지 정해요">
+    <SectionCard title="은퇴 목표" subtitle="언제 은퇴하고, 매달 얼마를 쓰며 살지 정해요" tier={1}>
       <NumberInput
         label="은퇴 나이"
         value={goal.retirementAge}

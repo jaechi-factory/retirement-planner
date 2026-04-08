@@ -149,9 +149,9 @@ export default function ResultWorkbench() {
         flex: 1,
         height: 'calc(100vh - 56px)',
         overflowY: 'auto',
-        padding: '32px 28px 64px',
+        padding: '40px 40px 80px',
         scrollbarWidth: 'thin',
-        borderLeft: '1px solid var(--ux-border-strong)',
+        borderLeft: '1px solid var(--ux-border)',
         background: 'var(--ux-surface-subtle)',
         position: 'relative',
         zIndex: 1,
@@ -178,18 +178,7 @@ export default function ResultWorkbench() {
         retirementAge={inputs.goal.retirementAge}
       />
 
-      {/* 4. 집을 팔거나 대출받는 선택 (집 있을 때만) */}
-      {hasSelectableHouseRows && (
-        <HouseStrategyComparisonSection
-          hasRealEstate={hasRealEstate}
-          propertyOptions={propertyOptions}
-          selectedStrategy={selectedStrategy}
-          lifeExpectancy={inputs.goal.lifeExpectancy}
-          onSelectStrategy={handleSelectStrategy}
-        />
-      )}
-
-      {/* 5. 근거 확인 */}
+      {/* 4. 자산 흐름 차트 — Why 바로 뒤에 배치해 설명과 근거를 이어서 읽도록 */}
       <EvidenceWorkspace
         hasRealEstate={hasRealEstate}
         chartRows={chartRows}
@@ -203,6 +192,17 @@ export default function ResultWorkbench() {
         timelineStrategyMode={timelineStrategyMode}
         selectedPropertyStrategy={selectedPropertyStrategy}
       />
+
+      {/* 5. 집을 팔거나 대출받는 선택 (집 있을 때만) */}
+      {hasSelectableHouseRows && (
+        <HouseStrategyComparisonSection
+          hasRealEstate={hasRealEstate}
+          propertyOptions={propertyOptions}
+          selectedStrategy={selectedStrategy}
+          lifeExpectancy={inputs.goal.lifeExpectancy}
+          onSelectStrategy={handleSelectStrategy}
+        />
+      )}
 
       {/* 6. 지금 해야 할 일 */}
       <ActionPlanSection
