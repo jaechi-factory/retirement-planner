@@ -1,8 +1,10 @@
-import { ContentBadge, SectionHeader, Typography } from '@wanteddev/wds';
+import { ContentBadge, Typography } from '@wanteddev/wds';
 import AssetBalanceChart from '../charts/AssetBalanceChart';
 import PropertyAssetChart from '../charts/PropertyAssetChart';
+import FundingPathSection from './FundingPathSection';
 import type {
   AssumptionItem,
+  FundingStage,
   WarningItem,
   PropertyOptionResult,
   YearlyAggregateV2,
@@ -24,6 +26,7 @@ interface EvidenceWorkspaceProps {
   warnings: WarningItem[];
   timelineStrategyMode: 'recommended' | 'selected';
   selectedPropertyStrategy: PropertyOptionResult['strategy'] | null;
+  fundingTimeline: FundingStage[];
 }
 
 function buildChartInterpretation(
@@ -62,6 +65,7 @@ export default function EvidenceWorkspace({
   warnings,
   timelineStrategyMode,
   selectedPropertyStrategy,
+  fundingTimeline,
 }: EvidenceWorkspaceProps) {
   const filteredWarnings = warnings.filter((warning) => warning.severity !== 'info');
   const chartInterpretation = buildChartInterpretation(summary, hasRealEstate, inputs.goal.lifeExpectancy);
@@ -76,17 +80,32 @@ export default function EvidenceWorkspace({
   );
 
   return (
-    <section style={{ marginBottom: 'var(--result-space-5)' }}>
+    <section style={{ marginBottom: 40 }}>
       {/* 섹션 레이블 */}
-      <SectionHeader
-        headingContent="자산 흐름"
-        size="small"
-        headingTag="h2"
-        style={{
-          letterSpacing: '0.01em',
-          marginBottom: 'var(--result-space-3)',
-        }}
-      />
+      <div style={{ marginBottom: 14 }}>
+        <span
+          style={{
+            fontSize: 10,
+            fontWeight: 700,
+            color: 'var(--text-faint)',
+            letterSpacing: '0.1em',
+            textTransform: 'uppercase',
+          }}
+        >
+          돈이 어떻게 흘러가나
+        </span>
+      </div>
+
+      {/* 자금 전환 타임라인 — FundingPath 통합 */}
+      {fundingTimeline.length > 0 && (
+        <div style={{ marginBottom: 12 }}>
+          <FundingPathSection
+            fundingTimeline={fundingTimeline}
+            lifeExpectancy={inputs.goal.lifeExpectancy}
+            retirementAge={retirementAge}
+          />
+        </div>
+      )}
 
       {/* 주의사항 — collapsible 밖으로 꺼내어 항상 표시 */}
       {filteredWarnings.length > 0 && (

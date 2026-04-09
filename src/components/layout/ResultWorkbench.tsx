@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Typography } from '@wanteddev/wds';
 import { usePlannerStore } from '../../store/usePlannerStore';
 import { calcFinancialTotalAsset } from '../../engine/assetWeighting';
 import { PROPERTY_STRATEGY_LABELS } from '../../engine/propertyStrategiesV2';
@@ -9,30 +8,94 @@ import type { HouseDecisionStrategy } from './houseDecisionVM';
 import { resolveSelectedStrategy } from './selectedStrategy';
 import ResultHeroSection from './ResultHeroSection';
 import WhyThisResultSection from './WhyThisResultSection';
-import FundingPathSection from './FundingPathSection';
-import HouseStrategyComparisonSection from './HouseStrategyComparisonSection';
 import EvidenceWorkspace from './EvidenceWorkspace';
 import ActionPlanSection from './ActionPlanSection';
 import VehicleComparisonCard from '../result/VehicleComparisonCard';
+import HouseStrategyComparisonSection from './HouseStrategyComparisonSection';
 
-function EmptyStateCard({ title, body }: { title: string; body: string }) {
+// ── 섹션 구분선 ────────────────────────────────────────────
+function SectionDivider({ label }: { label?: string }) {
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 12,
+        margin: '0 0 32px',
+      }}
+    >
+      <div style={{ flex: 1, height: 1, background: 'rgba(36,39,46,0.08)' }} />
+      {label && (
+        <span
+          style={{
+            fontSize: 10,
+            fontWeight: 600,
+            color: 'var(--text-faint)',
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {label}
+        </span>
+      )}
+      <div style={{ flex: 1, height: 1, background: 'rgba(36,39,46,0.08)' }} />
+    </div>
+  );
+}
+
+// ── 빈 상태 ────────────────────────────────────────────────
+function EmptyStateCard({ title, body, hint }: { title: string; body: string; hint?: string }) {
   return (
     <div
       style={{
         borderRadius: 20,
-        border: '1px solid var(--ux-border-strong)',
-        background: 'var(--ux-surface)',
-        padding: '56px 28px',
+        border: '1px solid rgba(36,39,46,0.08)',
+        background: 'var(--surface-card)',
+        boxShadow: 'var(--shadow-card)',
+        padding: '64px 32px',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
         gap: 10,
+        textAlign: 'center',
       }}
     >
-      <Typography variant="headline1" color="semantic.label.alternative" style={{ fontSize: 28 }}>—</Typography>
-      <Typography variant="headline1" weight="bold" color="semantic.label.normal" style={{ textAlign: 'center' }}>{title}</Typography>
-      <Typography variant="body1" color="semantic.label.alternative" style={{ textAlign: 'center', lineHeight: 1.7 }}>{body}</Typography>
+      <span style={{ fontSize: 32, lineHeight: 1 }}>—</span>
+      <span
+        style={{
+          fontSize: 18,
+          fontWeight: 800,
+          color: 'var(--text-strong)',
+          letterSpacing: '-0.02em',
+          lineHeight: 1.3,
+        }}
+      >
+        {title}
+      </span>
+      <span
+        style={{
+          fontSize: 14,
+          color: 'var(--text-muted)',
+          lineHeight: 1.7,
+          maxWidth: 360,
+        }}
+      >
+        {body}
+      </span>
+      {hint && (
+        <span
+          style={{
+            marginTop: 8,
+            fontSize: 12,
+            color: 'var(--text-faint)',
+            lineHeight: 1.5,
+          }}
+        >
+          {hint}
+        </span>
+      )}
     </div>
   );
 }
@@ -69,22 +132,24 @@ export default function ResultWorkbench() {
       currentSelected: selectedStrategy,
       recommendedStrategy,
     });
-
-    if (next && next !== selectedStrategy) {
-      setSelectedStrategy(next);
-    }
+    if (next && next !== selectedStrategy) setSelectedStrategy(next);
   }, [resultV2, hasRealEstate, recommendedStrategy, selectedStrategy]);
 
-  const handleSelectStrategy = (strategy: HouseDecisionStrategy) => {
-    setSelectedStrategy(strategy);
+  const panelStyle = {
+    flex: 1,
+    height: 'calc(100vh - 64px)',
+    overflowY: 'auto' as const,
+    padding: '40px 40px 80px',
+    scrollbarWidth: 'thin' as const,
+    background: 'var(--surface-page)',
   };
 
-  // — empty states —
+  // ── 에러/빈 상태 ──
   if (inputs.status.currentAge > 0 && inputs.goal.retirementAge > 0 && inputs.status.currentAge >= inputs.goal.retirementAge) {
     return (
-      <div style={{ flex: 1, height: 'calc(100vh - 56px)', overflowY: 'auto', padding: '24px 20px', borderLeft: '1px solid var(--ux-border-strong)' }}>
+      <div style={panelStyle}>
         <EmptyStateCard
-          title="이 계산기는 은퇴 전 준비 단계에 맞춰져 있어요"
+          title="은퇴 전 준비 단계 전용이에요"
           body="현재 나이가 은퇴 나이 이상으로 설정돼 있어요. 왼쪽에서 현재 나이 또는 은퇴 나이를 조정해 주세요."
         />
       </div>
@@ -93,10 +158,11 @@ export default function ResultWorkbench() {
 
   if (result.isValid && financialAssetTotal === 0) {
     return (
-      <div style={{ flex: 1, height: 'calc(100vh - 56px)', overflowY: 'auto', padding: '24px 20px', borderLeft: '1px solid var(--ux-border-strong)' }}>
+      <div style={panelStyle}>
         <EmptyStateCard
-          title="금융자산을 입력하면 결과를 볼 수 있어요"
-          body="현금·예적금·주식 중 하나 이상 입력해 주세요. 부동산만으로는 계산이 어려워요."
+          title="금융자산을 입력하면 결과가 나와요"
+          body="현금·예적금·주식 중 하나 이상을 입력해 주세요."
+          hint="부동산만으로는 생활비 시뮬레이션이 어려워요."
         />
       </div>
     );
@@ -104,10 +170,11 @@ export default function ResultWorkbench() {
 
   if (!resultV2 || !result.isValid) {
     return (
-      <div style={{ flex: 1, height: 'calc(100vh - 56px)', overflowY: 'auto', padding: '24px 20px', borderLeft: '1px solid var(--ux-border-strong)' }}>
+      <div style={panelStyle}>
         <EmptyStateCard
           title="입력하면 결과 리포트가 바로 나와요"
           body="왼쪽에서 나이, 은퇴 나이, 기대수명, 목표 생활비를 입력해 주세요."
+          hint="4가지만 넣어도 기본 판정이 나와요."
         />
       </div>
     );
@@ -135,31 +202,15 @@ export default function ResultWorkbench() {
     ? (PROPERTY_STRATEGY_LABELS[chartStrategy] ?? chartStrategy)
     : '집 없음(금융자산 기준)';
 
-  const narrative = buildResultNarrativeModel({
-    summary,
-    propertyOptions,
-    inputs,
-    hasRealEstate,
-  });
+  const narrative = buildResultNarrativeModel({ summary, propertyOptions, inputs, hasRealEstate });
 
   const selectedPropertyStrategy = hasRealEstate ? chartStrategy : null;
   const hasSelectableHouseRows = hasRealEstate && propertyOptions.some((option) => option.yearlyAggregates.length > 0);
 
   return (
-    <div
-      style={{
-        flex: 1,
-        height: 'calc(100vh - 56px)',
-        overflowY: 'auto',
-        padding: '64px 40px 80px',
-        scrollbarWidth: 'thin',
-        borderLeft: '1px solid var(--ux-border)',
-        background: 'var(--ux-surface-subtle)',
-        position: 'relative',
-        zIndex: 1,
-      }}
-    >
-      {/* 1. 현재 상태 */}
+    <div style={panelStyle}>
+
+      {/* 1. 핵심 판정 */}
       <ResultHeroSection
         summary={summary}
         narrative={narrative}
@@ -173,14 +224,9 @@ export default function ResultWorkbench() {
         hasRealEstate={hasRealEstate}
       />
 
-      {/* 3. 자금원 전환 타임라인 */}
-      <FundingPathSection
-        fundingTimeline={fundingTimeline}
-        lifeExpectancy={inputs.goal.lifeExpectancy}
-        retirementAge={inputs.goal.retirementAge}
-      />
+      <SectionDivider />
 
-      {/* 4. 자산 흐름 차트 — Why 바로 뒤에 배치해 설명과 근거를 이어서 읽도록 */}
+      {/* 3. 자금 흐름 + 차트 (FundingPath 통합) */}
       <EvidenceWorkspace
         hasRealEstate={hasRealEstate}
         chartRows={chartRows}
@@ -193,31 +239,41 @@ export default function ResultWorkbench() {
         warnings={warnings}
         timelineStrategyMode={timelineStrategyMode}
         selectedPropertyStrategy={selectedPropertyStrategy}
+        fundingTimeline={fundingTimeline}
       />
 
-      {/* 5. 집을 팔거나 대출받는 선택 (집 있을 때만) */}
+      <SectionDivider />
+
+      {/* 4. 집 전략 비교 (집 있을 때만) */}
       {hasSelectableHouseRows && (
-        <HouseStrategyComparisonSection
-          hasRealEstate={hasRealEstate}
-          propertyOptions={propertyOptions}
-          selectedStrategy={selectedStrategy}
-          lifeExpectancy={inputs.goal.lifeExpectancy}
-          onSelectStrategy={handleSelectStrategy}
-        />
+        <>
+          <HouseStrategyComparisonSection
+            hasRealEstate={hasRealEstate}
+            propertyOptions={propertyOptions}
+            selectedStrategy={selectedStrategy}
+            lifeExpectancy={inputs.goal.lifeExpectancy}
+            onSelectStrategy={setSelectedStrategy}
+          />
+          <SectionDivider />
+        </>
       )}
 
-      {/* 6. 자동차 영향 (차량 입력 시에만) */}
+      {/* 5. 자동차 영향 (차량 입력 시에만) */}
       {vehicleComparison && vehicleComparison.hasVehicle && (
-        <VehicleComparisonCard comparison={vehicleComparison} />
+        <>
+          <VehicleComparisonCard comparison={vehicleComparison} />
+          <SectionDivider />
+        </>
       )}
 
-      {/* 7. 지금 해야 할 일 */}
+      {/* 6. 지금 해야 할 일 */}
       <ActionPlanSection
         summary={summary}
         inputs={inputs}
         hasRealEstate={hasRealEstate}
         propertyOptions={propertyOptions}
       />
+
     </div>
   );
 }

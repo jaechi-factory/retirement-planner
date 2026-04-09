@@ -1,4 +1,4 @@
-import { SectionHeader, Typography } from '@wanteddev/wds';
+import { Typography } from '@wanteddev/wds';
 import type { FundingStage } from '../../types/calculationV2';
 
 interface FundingPathSectionProps {
@@ -61,17 +61,7 @@ export default function FundingPathSection({ fundingTimeline, lifeExpectancy, re
   if (totalSpan <= 0) return null;
 
   return (
-    <section style={{ marginBottom: 'var(--result-space-5)' }}>
-      <SectionHeader
-        headingContent="돈이 어떻게 버텨주는지"
-        size="small"
-        headingTag="h2"
-        style={{
-          letterSpacing: '0.01em',
-          marginBottom: 'var(--result-space-3)',
-        }}
-      />
-
+    <div>
       {/* 나이 레이블 행 */}
       <div style={{ position: 'relative', marginBottom: 4 }}>
         <div style={{ display: 'flex', width: '100%' }}>
@@ -219,6 +209,6 @@ export default function FundingPathSection({ fundingTimeline, lifeExpectancy, re
           );
         })}
       </div>
-    </section>
+    </div>
   );
 }

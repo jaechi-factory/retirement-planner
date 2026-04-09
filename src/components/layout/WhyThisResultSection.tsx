@@ -1,4 +1,4 @@
-import { SectionHeader, Typography } from '@wanteddev/wds';
+import { Typography } from '@wanteddev/wds';
 import { getTotalMonthlyPensionTodayValue } from '../../engine/pensionEstimation';
 import type { CalculationResultV2 } from '../../types/calculationV2';
 import type { PlannerInputs } from '../../types/inputs';
@@ -94,21 +94,28 @@ export default function WhyThisResultSection({ summary, inputs, hasRealEstate }:
   }
 
   return (
-    <section style={{ marginBottom: 'var(--result-space-5)' }}>
-      <SectionHeader
-        headingContent="이런 결과가 나온 이유"
-        size="small"
-        headingTag="h2"
-        style={{
-          letterSpacing: '0.01em',
-          marginBottom: 'var(--result-space-3)',
-        }}
-      />
+    <section style={{ marginBottom: 40 }}>
+      {/* 섹션 레이블 */}
+      <div style={{ marginBottom: 14 }}>
+        <span
+          style={{
+            fontSize: 10,
+            fontWeight: 700,
+            color: 'var(--text-faint)',
+            letterSpacing: '0.1em',
+            textTransform: 'uppercase',
+          }}
+        >
+          이런 결과가 나온 이유
+        </span>
+      </div>
+
+      {/* 3컬럼 가로 배치 */}
       <div
         style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 'var(--result-space-2)',
+          display: 'grid',
+          gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+          gap: 10,
         }}
       >
         {cards.map((card) => (
@@ -119,28 +126,32 @@ export default function WhyThisResultSection({ summary, inputs, hasRealEstate }:
               background: 'var(--surface-card)',
               boxShadow: 'var(--shadow-card-sm)',
               border: '1px solid rgba(36,39,46,0.06)',
-              padding: 'var(--result-space-3) var(--result-space-4)',
-              borderLeft: `3px solid ${cardAccentColor(card.tone)}`,
+              borderTop: `3px solid ${cardAccentColor(card.tone)}`,
+              padding: '16px 16px 18px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 6,
             }}
           >
             <Typography
-              variant="body1"
+              variant="body2"
               weight="bold"
               style={{
                 color: 'var(--result-text-strong-color)',
                 display: 'block',
-                marginBottom: 'var(--result-space-1)',
                 lineHeight: 1.4,
+                fontSize: 13,
               }}
             >
               {card.title}
             </Typography>
             <Typography
-              variant="body1"
+              variant="caption1"
               style={{
                 color: 'var(--result-text-body-color)',
                 display: 'block',
-                lineHeight: 1.62,
+                lineHeight: 1.65,
+                fontSize: 12,
               }}
             >
               {card.body}

@@ -1,4 +1,4 @@
-import { SectionHeader, Typography } from '@wanteddev/wds';
+import { Typography } from '@wanteddev/wds';
 import { getTotalMonthlyPensionTodayValue } from '../../engine/pensionEstimation';
 import type { CalculationResultV2, PropertyOptionResult } from '../../types/calculationV2';
 import type { PlannerInputs } from '../../types/inputs';
@@ -80,71 +80,73 @@ export default function ActionPlanSection({ summary, inputs, hasRealEstate, prop
 
   if (items.length === 0) {
     return (
-      <section
-        style={{
-          borderRadius: 20,
-          background: 'var(--surface-card)',
-          padding: '28px 28px',
-        }}
-      >
-        <SectionHeader
-          headingContent="지금 해야 할 일"
-          size="small"
-          headingTag="h2"
+      <section>
+        <div style={{ marginBottom: 14 }}>
+          <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-faint)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+            지금 해야 할 일
+          </span>
+        </div>
+        <div
           style={{
-            letterSpacing: '0.01em',
-            marginBottom: 'var(--result-space-3)',
+            padding: '20px 22px',
+            borderRadius: 14,
+            background: 'var(--surface-card)',
+            boxShadow: 'var(--shadow-card)',
+            border: '1px solid rgba(36,39,46,0.06)',
+            borderLeft: '4px solid var(--palette-yellow)',
           }}
-        />
-        <Typography variant="body1" style={{ color: 'var(--result-text-body-color)', lineHeight: 1.62 }}>
-          현재 입력 기준으로 안정적인 계획이에요. 입력값을 바꾸면 바로 다시 확인할 수 있어요.
-        </Typography>
+        >
+          <Typography variant="body1" style={{ color: 'var(--result-text-body-color)', lineHeight: 1.65, fontSize: 14 }}>
+            현재 입력 기준으로 안정적인 계획이에요. 입력값을 바꾸면 바로 다시 확인할 수 있어요.
+          </Typography>
+        </div>
       </section>
     );
   }
 
   return (
-    <section
-      style={{
-        borderRadius: 20,
-        background: 'var(--surface-card)',
-        padding: '28px 28px',
-      }}
-    >
-      <SectionHeader
-        headingContent="지금 해야 할 일"
-        size="small"
-        headingTag="h2"
-        style={{
-          letterSpacing: '0.01em',
-          marginBottom: 'var(--result-space-4)',
-        }}
-      />
+    <section>
+      {/* 섹션 레이블 */}
+      <div style={{ marginBottom: 14 }}>
+        <span
+          style={{
+            fontSize: 10,
+            fontWeight: 700,
+            color: 'var(--text-faint)',
+            letterSpacing: '0.1em',
+            textTransform: 'uppercase',
+          }}
+        >
+          지금 해야 할 일
+        </span>
+      </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--result-space-2)' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         {items.map((item, idx) => (
           <div
             key={item.id}
             style={{
               display: 'flex',
               alignItems: 'flex-start',
-              gap: 'var(--result-space-3)',
-              padding: '16px 20px',
-              borderRadius: 12,
-              background: 'var(--surface-card-inner)',
+              gap: 16,
+              padding: '18px 20px',
+              borderRadius: 14,
+              background: 'var(--surface-card)',
+              boxShadow: 'var(--shadow-card)',
+              border: '1px solid rgba(36,39,46,0.06)',
+              borderLeft: '4px solid var(--palette-ink)',
             }}
           >
-            {/* 번호 — 테두리형 (Hero 검정 원과 구분) */}
+            {/* 번호 필 */}
             <span
               style={{
-                width: 24,
-                height: 24,
+                width: 26,
+                height: 26,
                 borderRadius: '50%',
-                background: 'transparent',
-                border: '2px solid var(--palette-ink)',
-                color: 'var(--palette-ink)',
+                background: 'var(--palette-ink)',
+                color: 'var(--palette-card)',
                 fontSize: 11,
-                fontWeight: 700,
+                fontWeight: 800,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -164,7 +166,8 @@ export default function ActionPlanSection({ summary, inputs, hasRealEstate, prop
                   color: 'var(--result-text-strong-color)',
                   display: 'block',
                   lineHeight: 1.45,
-                  marginBottom: item.detail ? 4 : 0,
+                  marginBottom: item.detail ? 5 : 0,
+                  fontSize: 14,
                 }}
               >
                 {item.text}
@@ -173,7 +176,7 @@ export default function ActionPlanSection({ summary, inputs, hasRealEstate, prop
                 <Typography
                   variant="caption1"
                   color="semantic.label.alternative"
-                  style={{ display: 'block', lineHeight: 1.55 }}
+                  style={{ display: 'block', lineHeight: 1.6, fontSize: 12 }}
                 >
                   {item.detail}
                 </Typography>
