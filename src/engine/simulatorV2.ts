@@ -497,7 +497,13 @@ export function simulateMonthlyV2(
       const propertyDebtEnd      = propertySold
         ? 0
         : getRemainingMortgageBalance(debtSchedules, totalMonthIndex);
-      const nonMortgageDebtEnd   = getNonMortgageDebt(debtSchedules, totalMonthIndex);
+      // [W5] all_debts 모드에서 매각 시 신용·기타 대출도 일괄 상환됨.
+      // debtSchedules는 정적 사전계산이므로 이 이벤트가 반영되지 않는다.
+      // propertySold + all_debts 조합에서 강제 0으로 처리한다.
+      const nonMortgageDebtEnd = (
+        propertySold && propertyPolicy.saleDebtSettlementMode === 'all_debts'
+      ) ? 0
+        : getNonMortgageDebt(debtSchedules, totalMonthIndex);
 
       snapshots.push({
         ageYear,

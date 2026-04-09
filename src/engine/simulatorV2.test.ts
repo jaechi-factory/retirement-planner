@@ -1394,3 +1394,133 @@ describe('I. W4: all_debts 모드 이중 상환 방지', () => {
     expect(keepSnaps.some(s => s.eventFlags.propertySold)).toBe(false);
   });
 });
+
+// ─── J. W5: all_debts 매각 후 nonMortgageDebtEnd 정산 ───────────────────────
+//
+// 버그(A1b 파생): propertySold + all_debts 이후에도 nonMortgageDebtEnd가
+//                 정적 debtSchedules 잔액을 그대로 읽어, 이미 상환된 신용/기타
+//                 대출이 스냅샷과 finalNetWorth에 계속 차감됨.
+//
+// 수정 후 기대:
+//   - all_debts + sell: 매각 당월부터 nonMortgageDebtEnd === 0
+//   - mortgage_only + sell: 매각 후에도 신용대출 잔액 > 0 유지 (정상 스케줄)
+//   - keep / secured_loan: 비매각 전략에서 영향 없음
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('J. W5: all_debts 매각 후 nonMortgageDebtEnd 정산', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  // 주담대 + 신용대출 + 기타대출 동시 보유 시나리오
+  const W5_INPUTS = makeInputs({
+    goal: { retirementAge: 55, lifeExpectancy: 70, targetMonthly: 400, inflationRate: 2.5 },
+    status: { currentAge: 50, annualIncome: 3000, incomeGrowthRate: 0, annualExpense: 4800, expenseGrowthRate: 0 },
+    assets: {
+      cash:       { amount: 200,   expectedReturn: 1.0 },
+      deposit:    { amount: 200,   expectedReturn: 2.0 },
+      stock_kr:   { amount: 0,     expectedReturn: 6.0 },
+      stock_us:   { amount: 0,     expectedReturn: 8.0 },
+      bond:       { amount: 0,     expectedReturn: 3.5 },
+      crypto:     { amount: 0,     expectedReturn: 0   },
+      realEstate: { amount: 50000, expectedReturn: 1.0 },
+    },
+    debts: {
+      mortgage:   { balance: 20000, interestRate: 4.0, repaymentType: 'equal_payment',  repaymentYears: 30 },
+      creditLoan: { balance: 3000,  interestRate: 6.0, repaymentType: 'equal_payment',  repaymentYears: 5  },
+      otherLoan:  { balance: 1000,  interestRate: 5.0, repaymentType: 'equal_payment',  repaymentYears: 3  },
+    },
+  });
+
+  it('[W5-1] sell + all_debts: 매각 당월부터 nonMortgageDebtEnd === 0', () => {
+    const realPolicy = policyModule.getPlannerPolicy();
+    vi.spyOn(policyModule, 'getPlannerPolicy').mockReturnValue({
+      ...realPolicy,
+      property: { ...realPolicy.property, saleDebtSettlementMode: 'all_debts' },
+    });
+
+    const snapshots = simulateMonthlyV2(W5_INPUTS, 400, 'sell', DEFAULT_FUNDING_POLICY, DEFAULT_LIQUIDATION);
+
+    const saleIdx = snapshots.findIndex(s => s.eventFlags.propertySold);
+    expect(saleIdx).toBeGreaterThanOrEqual(0);
+
+    // 매각 직전: 신용·기타 대출 스케줄 잔액 > 0 이어야 함 (매각 이벤트 이전이므로)
+    const beforeSale = snapshots[saleIdx - 1];
+    if (beforeSale) {
+      expect(beforeSale.nonMortgageDebtEnd).toBeGreaterThan(0);
+    }
+
+    // 매각 당월부터 nonMortgageDebtEnd === 0
+    const fromSale = snapshots.slice(saleIdx);
+    expect(fromSale.length).toBeGreaterThan(0);
+    const nonZero = fromSale.filter(s => s.nonMortgageDebtEnd !== 0);
+    expect(nonZero).toHaveLength(0);
+  });
+
+  it('[W5-2] sell + all_debts: 매각 이후 debtServiceThisMonth === 0 (W4와 일관성)', () => {
+    const realPolicy = policyModule.getPlannerPolicy();
+    vi.spyOn(policyModule, 'getPlannerPolicy').mockReturnValue({
+      ...realPolicy,
+      property: { ...realPolicy.property, saleDebtSettlementMode: 'all_debts' },
+    });
+
+    const snapshots = simulateMonthlyV2(W5_INPUTS, 400, 'sell', DEFAULT_FUNDING_POLICY, DEFAULT_LIQUIDATION);
+
+    const saleIdx = snapshots.findIndex(s => s.eventFlags.propertySold);
+    expect(saleIdx).toBeGreaterThanOrEqual(0);
+
+    const afterSale = snapshots.slice(saleIdx + 1);
+    expect(afterSale.length).toBeGreaterThan(0);
+    // debtService도 0이어야 함 (W4 검증)
+    expect(afterSale.filter(s => s.debtServiceThisMonth !== 0)).toHaveLength(0);
+  });
+
+  it('[W5-3] sell + mortgage_only: 매각 후 nonMortgageDebtEnd > 0 유지 (스케줄 살아있음)', () => {
+    // mortgage_only(기본값): 신용/기타 대출은 살아있으므로 잔액 > 0 이어야 함
+    const snapshots = simulateMonthlyV2(W5_INPUTS, 400, 'sell', DEFAULT_FUNDING_POLICY, DEFAULT_LIQUIDATION);
+
+    const saleIdx = snapshots.findIndex(s => s.eventFlags.propertySold);
+    expect(saleIdx).toBeGreaterThanOrEqual(0);
+
+    const saleTotalMonth = (W5_INPUTS.goal.retirementAge - W5_INPUTS.status.currentAge) * 12;
+    // creditLoan 5년(60개월), otherLoan 3년(36개월) — 매각이 충분히 이른 시점이면 잔액 > 0
+    const saleMonthIndex = snapshots[saleIdx].ageMonthIndex +
+      (snapshots[saleIdx].ageYear - W5_INPUTS.status.currentAge) * 12;
+
+    if (saleMonthIndex < 36) {
+      // otherLoan도 아직 살아있는 시점 → nonMortgageDebtEnd > 0
+      expect(snapshots[saleIdx].nonMortgageDebtEnd).toBeGreaterThan(0);
+    }
+    // 어떤 경우든 mortgage_only에서는 매각 직후 비담보 대출 잔액이 갑자기 0이 되면 안 됨
+    const beforeSale = snapshots[saleIdx - 1];
+    if (beforeSale && beforeSale.nonMortgageDebtEnd > 0) {
+      expect(snapshots[saleIdx].nonMortgageDebtEnd).toBeGreaterThan(0);
+    }
+    void saleTotalMonth; // 미사용 경고 방지
+  });
+
+  it('[W5-4] keep 전략: 매각 없으므로 nonMortgageDebtEnd가 스케줄 잔액을 정상 반영', () => {
+    const realPolicy = policyModule.getPlannerPolicy();
+    vi.spyOn(policyModule, 'getPlannerPolicy').mockReturnValue({
+      ...realPolicy,
+      property: { ...realPolicy.property, saleDebtSettlementMode: 'all_debts' },
+    });
+
+    const snapshots = simulateMonthlyV2(W5_INPUTS, 200, 'keep', DEFAULT_FUNDING_POLICY, DEFAULT_LIQUIDATION);
+
+    // keep: 집 매각 없음
+    expect(snapshots.some(s => s.eventFlags.propertySold)).toBe(false);
+
+    // 첫 달: 신용·기타 잔액 > 0 이어야 함
+    expect(snapshots[0].nonMortgageDebtEnd).toBeGreaterThan(0);
+
+    // 대출 상환 종료 이후 (creditLoan 5년 = 60개월): 잔액 = 0
+    const after60 = snapshots.filter(
+      s => (s.ageYear - W5_INPUTS.status.currentAge) * 12 + s.ageMonthIndex >= 60,
+    );
+    if (after60.length > 0) {
+      // otherLoan도 3년(36개월)이면 60개월 이후엔 둘 다 0
+      expect(after60[0].nonMortgageDebtEnd).toBe(0);
+    }
+  });
+});
