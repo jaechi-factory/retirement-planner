@@ -52,7 +52,7 @@ export function buildYearlyVehicleCosts(
   currentAge: number,
   lifeExpectancy: number,
 ): number[] {
-  const totalYears = lifeExpectancy - currentAge;
+  const totalYears = lifeExpectancy - currentAge + 1; // inclusive: currentAge ~ lifeExpectancy
   if (totalYears <= 0 || vehicle.ownershipType === 'none') {
     return Array(Math.max(0, totalYears)).fill(0);
   }
@@ -83,8 +83,9 @@ export function buildYearlyVehicleCosts(
 
   if (vehicle.ownershipType === 'buying') {
     const purchaseStartMonth = Math.round(vehicle.purchaseYearsFromNow * 12);
+    // loanAmount = 할부로 빌리는 금액 (purchasePrice는 선수금/일시불 — 별도 필드)
     const monthlyLoan = calcMonthlyLoanPayment(
-      vehicle.purchasePrice, vehicle.loanRate, vehicle.loanMonths,
+      vehicle.loanAmount, vehicle.loanRate, vehicle.loanMonths,
     );
     const loanEndMonth = purchaseStartMonth + vehicle.loanMonths;
 
@@ -155,7 +156,7 @@ export function computeAvgRetirementVehicleMonthlyCost(
 
   const yearlyCosts = buildYearlyVehicleCosts(vehicle, currentAge, lifeExpectancy);
   const retirementStartYearIndex = retirementAge - currentAge;
-  const retirementYears = lifeExpectancy - retirementAge;
+  const retirementYears = lifeExpectancy - retirementAge + 1; // inclusive
 
   if (retirementYears <= 0) return 0;
 
@@ -218,7 +219,7 @@ export function computeVehicleComparison(
 
   const yearlyCosts = buildYearlyVehicleCosts(vehicle, currentAge, lifeExpectancy);
   const retirementStartYearIndex = retirementAge - currentAge;
-  const retirementYears = lifeExpectancy - retirementAge;
+  const retirementYears = lifeExpectancy - retirementAge + 1; // inclusive
 
   let avgMonthlyCost = 0;
   if (retirementYears > 0) {

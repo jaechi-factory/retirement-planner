@@ -88,7 +88,8 @@ export interface VehicleInfo {
 
   // buying only: 구매 시점 + 가격
   purchaseYearsFromNow: number;  // 몇 년 후 구매 (0 = 즉시)
-  purchasePrice: number;         // 구매가 또는 선수금 (만원)
+  purchasePrice: number;         // 선수금 / 현금 지불 금액 (만원) — 구매 시점 일시 지출
+  loanAmount: number;            // 대출 원금 (만원) — 할부로 빌리는 금액 (buying 전용)
 
   // lease only: 월 납입액 + 남은 기간
   leaseMonthlyPayment: number;   // 월 납입액 (만원)

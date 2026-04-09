@@ -188,18 +188,18 @@ export default function VehicleSection() {
                   max={50}
                 />
                 <NumberInput
-                  label="구매가 / 선수금"
+                  label="선수금"
+                  hint="구매 시 현금 지불 금액"
                   value={vehicle.purchasePrice}
                   onChange={(v) => setVehicle({ purchasePrice: v })}
                 />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '3fr 2fr', gap: 8 }}>
                 <NumberInput
-                  label="대출 기간"
-                  value={vehicle.loanMonths}
-                  onChange={(v) => setVehicle({ loanMonths: v })}
-                  unit="개월"
-                  max={120}
+                  label="대출 금액"
+                  hint="할부로 빌리는 금액"
+                  value={vehicle.loanAmount}
+                  onChange={(v) => setVehicle({ loanAmount: v })}
                 />
                 <RateInput
                   label="이율 (연)"
@@ -207,6 +207,13 @@ export default function VehicleSection() {
                   onChange={(v) => setVehicle({ loanRate: v })}
                 />
               </div>
+              <NumberInput
+                label="대출 기간"
+                value={vehicle.loanMonths}
+                onChange={(v) => setVehicle({ loanMonths: v })}
+                unit="개월"
+                max={120}
+              />
             </>
           )}
 

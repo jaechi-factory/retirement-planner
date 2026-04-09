@@ -58,7 +58,7 @@ function buildPropertyOption(
 
   const snapshots = simulateMonthlyV2(
     inputs,
-    inputs.goal.targetMonthly,
+    sustainableMonthly, // B6 fix: chart must use same value as headline, not targetMonthly
     strategy,
     fundingPolicy,
     liquidationPolicy,
@@ -81,7 +81,8 @@ function buildPropertyOption(
       lastYear.propertyValueEnd +
       lastYear.propertySaleProceedsBucketEnd -
       lastYear.securedLoanBalanceEnd -
-      (lastMonth?.propertyDebtEnd ?? 0)
+      (lastMonth?.propertyDebtEnd ?? 0) -
+      (lastMonth?.nonMortgageDebtEnd ?? 0) // A1b: 신용·기타 대출 잔액 차감
     : 0;
 
   const survivesToLifeExpectancy = failureAge === null;

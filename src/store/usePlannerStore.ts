@@ -56,6 +56,7 @@ export const defaultVehicle: VehicleInfo = {
   loanMonths: 0,
   purchaseYearsFromNow: 0,
   purchasePrice: 0,
+  loanAmount: 0,
   leaseMonthlyPayment: 0,
   leaseMonths: 0,
   monthlyMaintenance: 0,

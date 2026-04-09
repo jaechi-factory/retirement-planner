@@ -10,6 +10,7 @@ function createMonth(partial: Partial<MonthlySnapshotV2> = {}): MonthlySnapshotV
     financialInvestableEnd: 0,
     propertyValueEnd: 0,
     propertyDebtEnd: 0,
+    nonMortgageDebtEnd: 0,
     securedLoanBalanceEnd: 0,
     propertySaleProceedsBucketEnd: 0,
     propertySaleGrossProceedsThisMonth: 0,

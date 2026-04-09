@@ -205,6 +205,13 @@ function getRemainingMortgageBalance(schedules: DebtSchedules, scheduleIndex: nu
   return schedules.mortgage[scheduleIndex]?.remainingBalance ?? 0;
 }
 
+/** 비담보 대출(신용·기타) 잔액 합산 — A1b: finalNetWorth 차감 용 */
+function getNonMortgageDebt(schedules: DebtSchedules, scheduleIndex: number): number {
+  const get = (rows: { remainingBalance: number }[]) =>
+    rows[scheduleIndex]?.remainingBalance ?? 0;
+  return get(schedules.creditLoan) + get(schedules.otherLoan);
+}
+
 // ─── 메인 시뮬레이터 ──────────────────────────────────────────────────────────
 
 /** V2 월별 시뮬레이션 */
@@ -490,6 +497,7 @@ export function simulateMonthlyV2(
       const propertyDebtEnd      = propertySold
         ? 0
         : getRemainingMortgageBalance(debtSchedules, totalMonthIndex);
+      const nonMortgageDebtEnd   = getNonMortgageDebt(debtSchedules, totalMonthIndex);
 
       snapshots.push({
         ageYear,
@@ -498,6 +506,7 @@ export function simulateMonthlyV2(
         financialInvestableEnd,
         propertyValueEnd: propertyValue,
         propertyDebtEnd,
+        nonMortgageDebtEnd,
         securedLoanBalanceEnd: securedLoanBalance,
         propertySaleProceedsBucketEnd: propertySaleProceedsBucket,
         propertySaleGrossProceedsThisMonth,
