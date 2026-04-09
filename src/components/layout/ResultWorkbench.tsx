@@ -13,12 +13,13 @@ import FundingPathSection from './FundingPathSection';
 import HouseStrategyComparisonSection from './HouseStrategyComparisonSection';
 import EvidenceWorkspace from './EvidenceWorkspace';
 import ActionPlanSection from './ActionPlanSection';
+import VehicleComparisonCard from '../result/VehicleComparisonCard';
 
 function EmptyStateCard({ title, body }: { title: string; body: string }) {
   return (
     <div
       style={{
-        borderRadius: 14,
+        borderRadius: 20,
         border: '1px solid var(--ux-border-strong)',
         background: 'var(--ux-surface)',
         padding: '56px 28px',
@@ -40,6 +41,7 @@ export default function ResultWorkbench() {
   const resultV2 = usePlannerStore((state) => state.resultV2);
   const result = usePlannerStore((state) => state.result);
   const inputs = usePlannerStore((state) => state.inputs);
+  const vehicleComparison = usePlannerStore((state) => state.vehicleComparison);
   const recommendationMode = usePlannerStore((state) => state.recommendationMode);
   const setRecommendationMode = usePlannerStore((state) => state.setRecommendationMode);
 
@@ -149,7 +151,7 @@ export default function ResultWorkbench() {
         flex: 1,
         height: 'calc(100vh - 56px)',
         overflowY: 'auto',
-        padding: '40px 40px 80px',
+        padding: '64px 40px 80px',
         scrollbarWidth: 'thin',
         borderLeft: '1px solid var(--ux-border)',
         background: 'var(--ux-surface-subtle)',
@@ -204,7 +206,12 @@ export default function ResultWorkbench() {
         />
       )}
 
-      {/* 6. 지금 해야 할 일 */}
+      {/* 6. 자동차 영향 (차량 입력 시에만) */}
+      {vehicleComparison && vehicleComparison.hasVehicle && (
+        <VehicleComparisonCard comparison={vehicleComparison} />
+      )}
+
+      {/* 7. 지금 해야 할 일 */}
       <ActionPlanSection
         summary={summary}
         inputs={inputs}

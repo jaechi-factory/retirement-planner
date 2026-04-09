@@ -7,6 +7,7 @@ import AssetSection from '../input/AssetSection';
 import DebtSection from '../input/DebtSection';
 import ChildrenSection from '../input/ChildrenSection';
 import PensionSection from '../input/PensionSection';
+import VehicleSection from '../input/VehicleSection';
 
 export default function InputWorkbench() {
   const resetAll = usePlannerStore((s) => s.resetAll);
@@ -31,25 +32,31 @@ export default function InputWorkbench() {
         overflowY: 'auto',
         padding: '24px 20px',
         scrollbarWidth: 'thin',
-        borderRight: '1px solid var(--tds-gray-100)',
-        background: 'var(--tds-white)',
+        background: 'var(--surface-page)',
+        position: 'relative',
       }}
     >
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
+      <div style={{ position: 'absolute', top: 18, right: 20, zIndex: 10 }}>
         <Button
-          variant={confirmReset ? 'solid' : 'outlined'}
-          color={confirmReset ? 'primary' : 'assistive'}
+          variant="solid"
+          color="assistive"
           size="small"
           onClick={handleResetClick}
-          style={confirmReset ? { background: '#C0392B', borderColor: '#C0392B' } : undefined}
+          style={
+            confirmReset
+              ? { background: '#C0392B', borderColor: '#C0392B', color: '#fff' }
+              : { background: 'var(--palette-ink)', borderColor: 'var(--palette-ink)', color: 'var(--palette-card)' }
+          }
         >
           {confirmReset ? '정말 초기화할까요?' : '전체 초기화'}
         </Button>
       </div>
+      <div style={{ height: 40 }} />
       <RetirementGoalSection />
       <CurrentStatusSection />
       <AssetSection />
       <DebtSection />
+      <VehicleSection />
       <ChildrenSection />
       <PensionSection />
       <div style={{ height: 40 }} />

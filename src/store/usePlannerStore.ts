@@ -1,6 +1,7 @@
 import { create } from 'zustand';
-import type { PlannerInputs, AssetAllocation, DebtAllocation } from '../types/inputs';
+import type { PlannerInputs, AssetAllocation, DebtAllocation, VehicleInfo } from '../types/inputs';
 import type { PensionInputs } from '../types/pension';
+import { computeVehicleComparison, type VehicleComparisonResult } from '../engine/vehicleSchedule';
 import type { CalculationResult, HousingScenarioResult, HousingScenarioSet, Verdict } from '../types/calculation';
 import type { CalculationResultV2, YearlyAggregateV2, PropertyOptionResult, RecommendationModeV2 } from '../types/calculationV2';
 import type { HousingPolicy } from '../engine/housingPolicy';
@@ -47,6 +48,20 @@ const defaultPension: PensionInputs = {
   },
 };
 
+export const defaultVehicle: VehicleInfo = {
+  ownershipType: 'none',
+  costIncludedInExpense: 'separate',
+  loanBalance: 0,
+  loanRate: 0,
+  loanMonths: 0,
+  purchaseYearsFromNow: 0,
+  purchasePrice: 0,
+  leaseMonthlyPayment: 0,
+  leaseMonths: 0,
+  monthlyMaintenance: 0,
+  disposalValue: 0,
+};
+
 const defaultInputs: PlannerInputs = {
   goal: {
     retirementAge: 0,
@@ -84,6 +99,7 @@ const defaultInputs: PlannerInputs = {
     customGrowthRate: DEFAULT_INFLATION_RATE,
   },
   pension: defaultPension,
+  vehicle: defaultVehicle,
 };
 
 // ── V2 집계를 V1 차트 호환 스냅샷으로 변환 ────────────────────────────
@@ -248,6 +264,7 @@ function loadInputsFromStorage(): PlannerInputs {
       assets:   { ...defaultInputs.assets,   ...parsed.assets },
       debts:    migratedDebts,
       children: { ...defaultInputs.children, ...parsed.children },
+      vehicle:  { ...defaultVehicle, ...(parsed.vehicle ?? {}) },
       pension: parsed.pension
         ? {
             publicPension:     { ...defaultInputs.pension.publicPension,     ...parsed.pension.publicPension },
@@ -279,12 +296,14 @@ interface PlannerStore {
   fundingPolicy: FundingPolicy;
   liquidationPolicy: LiquidationPolicy;
   recommendationMode: RecommendationModeV2;
+  vehicleComparison: VehicleComparisonResult | null;
   setGoal: (partial: Partial<PlannerInputs['goal']>) => void;
   setStatus: (partial: Partial<PlannerInputs['status']>) => void;
   setAsset: (key: keyof AssetAllocation, partial: Partial<AssetAllocation[keyof AssetAllocation]>) => void;
   setDebt: (key: keyof DebtAllocation, partial: Partial<DebtAllocation[keyof DebtAllocation]>) => void;
   setChildren: (partial: Partial<PlannerInputs['children']>) => void;
   setPension: (partial: Partial<PensionInputs>) => void;
+  setVehicle: (partial: Partial<VehicleInfo>) => void;
   setFundingPolicy: (partial: Partial<FundingPolicy>) => void;
   setRecommendationMode: (mode: RecommendationModeV2) => void;
   toggleHousing: () => void;
@@ -296,7 +315,7 @@ const computeState = (
   fundingPolicy: FundingPolicy = DEFAULT_FUNDING_POLICY,
   liquidationPolicy: LiquidationPolicy = DEFAULT_LIQUIDATION_POLICY,
   recommendationMode: RecommendationModeV2 = 'max_sustainable',
-): Pick<PlannerStore, 'inputs' | 'result' | 'verdict' | 'resultV2'> => {
+): Pick<PlannerStore, 'inputs' | 'result' | 'verdict' | 'resultV2' | 'vehicleComparison'> => {
   const { goal, status } = inputs;
   const debtSchedules = precomputeDebtSchedules(inputs.debts);
   const totalAsset = calcTotalAsset(inputs.assets);
@@ -317,18 +336,30 @@ const computeState = (
   });
 
   const requiredMissing = status.currentAge <= 0 || goal.retirementAge <= 0 || goal.lifeExpectancy <= 0 || goal.targetMonthly <= 0;
-  if (requiredMissing) return { inputs, result: emptyResult(null), verdict: null, resultV2: null };
+  if (requiredMissing) return { inputs, result: emptyResult(null), verdict: null, resultV2: null, vehicleComparison: null };
 
   if (goal.retirementAge <= status.currentAge || goal.lifeExpectancy <= goal.retirementAge) {
-    return { inputs, result: emptyResult('은퇴 나이는 현재 나이보다, 기대수명은 은퇴 나이보다 커야 해요.'), verdict: null, resultV2: null };
+    return { inputs, result: emptyResult('은퇴 나이는 현재 나이보다, 기대수명은 은퇴 나이보다 커야 해요.'), verdict: null, resultV2: null, vehicleComparison: null };
   }
 
   const resultV2 = runCalculationV2(inputs, fundingPolicy, liquidationPolicy, debtSchedules, recommendationMode);
-  if (!resultV2) return { inputs, result: emptyResult(null), verdict: null, resultV2: null };
+  if (!resultV2) return { inputs, result: emptyResult(null), verdict: null, resultV2: null, vehicleComparison: null };
 
   const result = buildCompatResult(inputs, resultV2, debtSchedules);
   const verdict = judgeVerdict(goal.targetMonthly, result.possibleMonthly);
-  return { inputs, result, verdict, resultV2 };
+
+  const vehicle = inputs.vehicle ?? defaultVehicle;
+  const vehicleComparison = vehicle.ownershipType !== 'none'
+    ? computeVehicleComparison(
+        vehicle,
+        result.possibleMonthly,
+        status.currentAge,
+        goal.retirementAge,
+        goal.lifeExpectancy,
+      )
+    : null;
+
+  return { inputs, result, verdict, resultV2, vehicleComparison };
 };
 
 export const usePlannerStore = create<PlannerStore>((set, get) => ({
@@ -384,6 +415,14 @@ export const usePlannerStore = create<PlannerStore>((set, get) => ({
     const inputs: PlannerInputs = {
       ...get().inputs,
       pension: { ...get().inputs.pension, ...partial },
+    };
+    saveInputsToStorage(inputs);
+    set(computeState(inputs, get().fundingPolicy, get().liquidationPolicy, get().recommendationMode));
+  },
+  setVehicle: (partial) => {
+    const inputs: PlannerInputs = {
+      ...get().inputs,
+      vehicle: { ...(get().inputs.vehicle ?? defaultVehicle), ...partial },
     };
     saveInputsToStorage(inputs);
     set(computeState(inputs, get().fundingPolicy, get().liquidationPolicy, get().recommendationMode));

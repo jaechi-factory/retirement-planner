@@ -58,6 +58,47 @@ export interface ChildrenInfo {
 
 import type { PensionInputs } from './pension';
 
+// ─── 차량 ─────────────────────────────────────────────────────────────────────
+
+/** 차량 보유 유형 */
+export type VehicleOwnershipType = 'none' | 'owned' | 'buying' | 'lease';
+
+/**
+ * 차량 정보
+ *
+ * ownershipType별 활성 필드:
+ * - none    : (없음)
+ * - owned   : costIncludedInExpense, loanBalance, loanRate, loanMonths,
+ *             monthlyMaintenance, disposalValue
+ * - buying  : costIncludedInExpense, purchaseYearsFromNow, purchasePrice,
+ *             loanRate, loanMonths, monthlyMaintenance, disposalValue
+ * - lease   : costIncludedInExpense, leaseMonthlyPayment, leaseMonths,
+ *             monthlyMaintenance, disposalValue
+ */
+export interface VehicleInfo {
+  ownershipType: VehicleOwnershipType;
+
+  /** 연소비에 이미 포함 여부 ('included' | 'separate') */
+  costIncludedInExpense: 'included' | 'separate';
+
+  // owned: 잔여 대출 잔액 + 이율 + 남은 기간
+  loanBalance: number;       // 잔여 대출 잔액 (만원)
+  loanRate: number;          // 이율 (연 %)
+  loanMonths: number;        // 남은 상환 기간 (개월)
+
+  // buying only: 구매 시점 + 가격
+  purchaseYearsFromNow: number;  // 몇 년 후 구매 (0 = 즉시)
+  purchasePrice: number;         // 구매가 또는 선수금 (만원)
+
+  // lease only: 월 납입액 + 남은 기간
+  leaseMonthlyPayment: number;   // 월 납입액 (만원)
+  leaseMonths: number;           // 남은 기간 (개월)
+
+  // 공통 (none 제외)
+  monthlyMaintenance: number;    // 월 유지비 - 보험·주유·수리 (만원)
+  disposalValue: number;         // 종료 시 처분가 or 보증금 반환액 (만원)
+}
+
 export interface PlannerInputs {
   goal: RetirementGoal;
   status: CurrentStatus;
@@ -65,4 +106,5 @@ export interface PlannerInputs {
   debts: DebtAllocation;
   children: ChildrenInfo;
   pension: PensionInputs;
+  vehicle?: VehicleInfo;
 }
