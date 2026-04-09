@@ -224,8 +224,8 @@ export function extractEvents(
       } else {
         estimatedPrice = interventionMonth?.propertyValueEnd ?? yearRow?.propertyValueEnd ?? 0;
         const existingMortgage =
-          interventionMonth?.propertyDebtEnd ??
-          yearRow?.months?.[yearRow.months.length - 1]?.propertyDebtEnd ??
+          interventionMonth?.mortgageDebtEnd ??
+          yearRow?.months?.[yearRow.months.length - 1]?.mortgageDebtEnd ??
           0;
         const securedLoan =
           interventionMonth?.securedLoanBalanceEnd ??

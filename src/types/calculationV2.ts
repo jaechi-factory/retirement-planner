@@ -16,8 +16,9 @@ export interface MonthlySnapshotV2 {
   cashLikeEnd: number;                   // 현금성(cash+deposit) 잔고 (만원)
   financialInvestableEnd: number;        // 투자자산(주식+채권+코인) 잔고 (만원)
   propertyValueEnd: number;              // 부동산 평가액 (만원)
-  propertyDebtEnd: number;               // 부동산 관련 기존 부채 잔고 (만원)
-  nonMortgageDebtEnd: number;            // 비담보 대출(신용·기타) 잔고 (만원) — A1b
+  mortgageDebtEnd: number;               // 주담대 잔고 (만원) — sell 후 0, 매각 전까지 스케줄 잔액
+  nonMortgageDebtEnd: number;            // 비담보 대출(신용·기타) 잔고 (만원) — all_debts+sell 후 0
+  totalDebtEnd: number;                  // 부채 합계 = mortgageDebtEnd + nonMortgageDebtEnd (만원)
   securedLoanBalanceEnd: number;         // 담보대출 누적 잔고 (secured_loan 전략, 만원)
   propertySaleProceedsBucketEnd: number; // 매각 대금 버킷 잔고 (sell 전략, 만원)
   propertySaleGrossProceedsThisMonth: number; // 해당 월 집 매각 총액(헤어컷 적용 전, 만원)

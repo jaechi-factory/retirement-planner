@@ -14,7 +14,7 @@ export default function SectionCard({ title, subtitle, tier = 2, children }: Pro
     <div
       style={{
         background: 'var(--surface-card)',
-        borderRadius: 16,
+        borderRadius: 20,
         padding: isPrimary ? '22px 20px 26px' : '18px 20px 22px',
         marginBottom: 16,
       }}

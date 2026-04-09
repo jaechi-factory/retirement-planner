@@ -113,7 +113,7 @@ export default function HouseStrategyComparisonSection({
     <section
       style={{
         marginBottom: 'var(--result-space-5)',
-        borderRadius: 16,
+        borderRadius: 20,
         background: 'var(--surface-card)',
         padding: 'var(--result-space-5)',
       }}

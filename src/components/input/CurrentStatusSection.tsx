@@ -80,13 +80,13 @@ export default function CurrentStatusSection() {
 
           {/* 항목들 */}
           <div style={{ padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <Row label="월 수입" value={monthlyIncome} sign="+" color="var(--tds-gray-700)" />
-            <Row label="월 생활비" value={monthlyExpense} sign="−" color="var(--tds-gray-500)" />
+            <Row label="월 수입" value={monthlyIncome} sign="+" color="var(--text-base)" />
+            <Row label="월 생활비" value={monthlyExpense} sign="−" color="var(--text-muted)" />
             {monthlyDebt > 0 && (
-              <Row label="월 대출 상환" value={monthlyDebt} sign="−" color="var(--tds-gray-500)" />
+              <Row label="월 대출 상환" value={monthlyDebt} sign="−" color="var(--text-muted)" />
             )}
             {monthlyChild > 0 && (
-              <Row label="월 자녀 지출" value={monthlyChild} sign="−" color="var(--tds-gray-500)" />
+              <Row label="월 자녀 지출" value={monthlyChild} sign="−" color="var(--text-muted)" />
             )}
 
             {/* 구분선 */}

@@ -207,28 +207,28 @@ export default function DebtSection() {
                   <div style={{ padding: '10px 12px 6px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                     <div style={{ padding: '8px 10px', background: 'var(--surface-card-inner)', borderRadius: 8 }}>
                       <div style={{ fontSize: 11, color: 'var(--text-faint)', marginBottom: 4 }}>첫 달 상환액</div>
-                      <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--tds-gray-700)' }}>
+                      <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-base)' }}>
                         −{Math.round(summary.firstMonthPayment).toLocaleString('ko-KR')}만원
                       </div>
                     </div>
                     <div style={{ padding: '8px 10px', background: 'var(--surface-card-inner)', borderRadius: 8 }}>
                       <div style={{ fontSize: 11, color: 'var(--text-faint)', marginBottom: 4 }}>첫해 상환액</div>
-                      <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--tds-gray-600)' }}>
+                      <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-base)' }}>
                         −{Math.round(summary.firstYearAnnualPayment).toLocaleString('ko-KR')}만원
                       </div>
                     </div>
                   </div>
                   {/* 보조: 이자 총합 / 최대 월 — 읽는 순서 2순위, 인라인 텍스트 */}
                   <div style={{ padding: '2px 12px 10px', display: 'flex', gap: 14 }}>
-                    <span style={{ fontSize: 11, color: 'var(--tds-gray-400)' }}>
+                    <span style={{ fontSize: 11, color: 'var(--text-faint)' }}>
                       총이자{' '}
-                      <span style={{ fontWeight: 600, color: 'var(--tds-gray-500)' }}>
+                      <span style={{ fontWeight: 600, color: 'var(--text-muted)' }}>
                         −{Math.round(summary.totalInterest).toLocaleString('ko-KR')}만원
                       </span>
                     </span>
-                    <span style={{ fontSize: 11, color: 'var(--tds-gray-400)' }}>
+                    <span style={{ fontSize: 11, color: 'var(--text-faint)' }}>
                       최대 월 상환액{' '}
-                      <span style={{ fontWeight: 600, color: 'var(--tds-gray-500)' }}>
+                      <span style={{ fontWeight: 600, color: 'var(--text-muted)' }}>
                         −{Math.round(summary.maxMonthPayment).toLocaleString('ko-KR')}만원
                       </span>
                     </span>

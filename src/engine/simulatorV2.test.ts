@@ -1073,7 +1073,7 @@ describe('G. 매각 이벤트 메타데이터 및 부동산 부채 추적', () =
     expect(saleMonth!.propertySaleNetProceedsThisMonth).toBeCloseTo(95000, 2);
   });
 
-  it('propertyDebtEnd는 주담대 잔액만 반영해야 함 (신용/기타 대출 제외)', () => {
+  it('mortgageDebtEnd는 주담대 잔액만 반영해야 함 (신용/기타 대출 제외)', () => {
     const inputs = makeInputs({
       debts: {
         mortgage: {
@@ -1114,15 +1114,57 @@ describe('G. 매각 이벤트 메타데이터 및 부동산 부채 추적', () =
       (schedules.creditLoan[0]?.remainingBalance ?? 0) +
       (schedules.otherLoan[0]?.remainingBalance ?? 0);
 
-    expect(firstMonth.propertyDebtEnd).toBeCloseTo(mortgageOnly, 6);
-    expect(firstMonth.propertyDebtEnd).toBeLessThan(totalDebtBalance);
+    const nonMortgageOnly =
+      (schedules.creditLoan[0]?.remainingBalance ?? 0) +
+      (schedules.otherLoan[0]?.remainingBalance ?? 0);
+
+    // 주담대만 있을 때: mortgageDebtEnd > 0, nonMortgageDebtEnd = 0
+    // 신용/기타대출만 있을 때: mortgageDebtEnd = 0, nonMortgageDebtEnd > 0
+    // 둘 다 있을 때: totalDebtEnd = mortgageDebtEnd + nonMortgageDebtEnd
+    expect(firstMonth.mortgageDebtEnd).toBeCloseTo(mortgageOnly, 6);
+    expect(firstMonth.nonMortgageDebtEnd).toBeCloseTo(nonMortgageOnly, 6);
+    expect(firstMonth.totalDebtEnd).toBeCloseTo(totalDebtBalance, 6);
+    expect(firstMonth.mortgageDebtEnd).toBeLessThan(totalDebtBalance);
+    expect(firstMonth.nonMortgageDebtEnd).toBeGreaterThan(0);
   });
 
-  // ─── W1: sell 후 propertyDebtEnd → 0 ──────────────────────────────────────
+  it('주담대만 있을 때: mortgageDebtEnd > 0, nonMortgageDebtEnd = 0', () => {
+    const inputs = makeInputs({
+      debts: {
+        mortgage:   { balance: 10000, interestRate: 4.0, repaymentType: 'equal_payment',   repaymentYears: 10 },
+        creditLoan: { balance: 0,     interestRate: 0,   repaymentType: 'balloon_payment', repaymentYears: 0 },
+        otherLoan:  { balance: 0,     interestRate: 0,   repaymentType: 'balloon_payment', repaymentYears: 0 },
+      },
+    });
+    const schedules = precomputeDebtSchedules(inputs.debts);
+    const snapshots = simulateMonthlyV2(inputs, 200, 'keep', DEFAULT_FUNDING_POLICY, DEFAULT_LIQUIDATION, schedules);
+    const first = snapshots[0];
+    expect(first.mortgageDebtEnd).toBeGreaterThan(0);
+    expect(first.nonMortgageDebtEnd).toBe(0);
+    expect(first.totalDebtEnd).toBeCloseTo(first.mortgageDebtEnd, 6);
+  });
+
+  it('신용/기타대출만 있을 때: mortgageDebtEnd = 0, nonMortgageDebtEnd > 0', () => {
+    const inputs = makeInputs({
+      debts: {
+        mortgage:   { balance: 0,    interestRate: 0,   repaymentType: 'equal_payment',   repaymentYears: 0 },
+        creditLoan: { balance: 3000, interestRate: 6.0, repaymentType: 'equal_payment',   repaymentYears: 5 },
+        otherLoan:  { balance: 1000, interestRate: 5.0, repaymentType: 'equal_payment',   repaymentYears: 3 },
+      },
+    });
+    const schedules = precomputeDebtSchedules(inputs.debts);
+    const snapshots = simulateMonthlyV2(inputs, 200, 'keep', DEFAULT_FUNDING_POLICY, DEFAULT_LIQUIDATION, schedules);
+    const first = snapshots[0];
+    expect(first.mortgageDebtEnd).toBe(0);
+    expect(first.nonMortgageDebtEnd).toBeGreaterThan(0);
+    expect(first.totalDebtEnd).toBeCloseTo(first.nonMortgageDebtEnd, 6);
+  });
+
+  // ─── W1: sell 후 mortgageDebtEnd → 0 ──────────────────────────────────────
   //
   // 버그: 집 매각 시 netProceeds = grossProceedsAfterHaircut - remainingMortgage 로
   //       주담대를 일괄 상환함에도, 이후 스냅샷에서 debtSchedules 정적 배열을
-  //       그대로 읽어 propertyDebtEnd > 0이 유지되는 문제.
+  //       그대로 읽어 mortgageDebtEnd > 0이 유지되는 문제.
   //
   // 핵심: 20년 모기지 + 65세 은퇴 시나리오에서는 모기지가 이미 만료돼
   //       우연히 0이 되어 버그를 숨긴다. 버그를 잡으려면 반드시
@@ -1132,10 +1174,10 @@ describe('G. 매각 이벤트 메타데이터 및 부동산 부채 추적', () =
   //           자산 부족 → 은퇴 직후 집 매각 (totalMonthIndex ≈ 60~72)
   //           30년 모기지 잔액이 남아있는 시점에 매각 발생 → 버그 재현
   //
-  // 기대: propertySold 이후 모든 스냅샷의 propertyDebtEnd === 0
+  // 기대: propertySold 이후 모든 스냅샷의 mortgageDebtEnd === 0
   // ─────────────────────────────────────────────────────────────────────────
 
-  it('[W1] sell 전략: 30년 모기지 보유 중 매각 → 이후 모든 snapshot.propertyDebtEnd === 0', () => {
+  it('[W1] sell 전략: 30년 모기지 보유 중 매각 → 이후 모든 snapshot.mortgageDebtEnd === 0', () => {
     // 자산이 적어 은퇴 직후 집을 팔아야 하는 시나리오
     // 30년 모기지(360개월 스케줄)가 있으므로 매각 시점(totalMonthIndex≈60)에
     // 스케줄 잔액이 남아있어 버그가 재현된다
@@ -1167,13 +1209,13 @@ describe('G. 매각 이벤트 메타데이터 및 부동산 부채 추적', () =
     const saleMonth = snapshots[saleIdx];
     expect(saleMonth.ageYear).toBeLessThan(80); // 30년 모기지 만료 전에 팔아야 함
 
-    // 핵심 검증: 매각 이후 모든 스냅샷의 propertyDebtEnd === 0
+    // 핵심 검증: 매각 이후 모든 스냅샷의 mortgageDebtEnd === 0
     const afterSale = snapshots.slice(saleIdx);
-    const nonZero = afterSale.filter((s) => s.propertyDebtEnd !== 0);
+    const nonZero = afterSale.filter((s) => s.mortgageDebtEnd !== 0);
     expect(nonZero).toHaveLength(0);
   });
 
-  it('[W1] keep/secured_loan 전략: 주담대 있으면 propertyDebtEnd > 0 유지 (W1 영향 없음)', () => {
+  it('[W1] keep/secured_loan 전략: 주담대 있으면 mortgageDebtEnd > 0 유지 (W1 영향 없음)', () => {
     const inputs = makeInputs({
       debts: {
         mortgage:   { balance: 20000, interestRate: 4.0, repaymentType: 'equal_payment', repaymentYears: 20 },
@@ -1185,13 +1227,13 @@ describe('G. 매각 이벤트 메타데이터 및 부동산 부채 추적', () =
     const keepSnaps = simulateMonthlyV2(inputs, inputs.goal.targetMonthly, 'keep', DEFAULT_FUNDING_POLICY, DEFAULT_LIQUIDATION);
     const loanSnaps = simulateMonthlyV2(inputs, inputs.goal.targetMonthly, 'secured_loan', DEFAULT_FUNDING_POLICY, DEFAULT_LIQUIDATION);
 
-    // keep: 초기에 propertyDebtEnd > 0 이어야 함
-    expect(keepSnaps[0].propertyDebtEnd).toBeGreaterThan(0);
-    // secured_loan: 초기에 propertyDebtEnd > 0 이어야 함
-    expect(loanSnaps[0].propertyDebtEnd).toBeGreaterThan(0);
+    // keep: 초기에 mortgageDebtEnd > 0 이어야 함
+    expect(keepSnaps[0].mortgageDebtEnd).toBeGreaterThan(0);
+    // secured_loan: 초기에 mortgageDebtEnd > 0 이어야 함
+    expect(loanSnaps[0].mortgageDebtEnd).toBeGreaterThan(0);
   });
 
-  it('[W1] sell 전략: 주담대 없을 때도 매각 이후 propertyDebtEnd === 0 (기존 동작 유지)', () => {
+  it('[W1] sell 전략: 주담대 없을 때도 매각 이후 mortgageDebtEnd === 0 (기존 동작 유지)', () => {
     const inputs = makeInputs({
       goal: { retirementAge: 55, lifeExpectancy: 70, targetMonthly: 600, inflationRate: 2.5 },
       status: { currentAge: 50, annualIncome: 3000, incomeGrowthRate: 0, annualExpense: 4800, expenseGrowthRate: 0 },
@@ -1217,7 +1259,7 @@ describe('G. 매각 이벤트 메타데이터 및 부동산 부채 추적', () =
     if (saleIdx >= 0) {
       const afterSale = snapshots.slice(saleIdx);
       afterSale.forEach((s) => {
-        expect(s.propertyDebtEnd).toBe(0);
+        expect(s.mortgageDebtEnd).toBe(0);
       });
     }
   });

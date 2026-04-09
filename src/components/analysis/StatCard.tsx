@@ -10,12 +10,12 @@ export default function StatCard({ label, value, sub, valueColor }: Props) {
   return (
     <div
       style={{
-        background: 'var(--tds-gray-50)',
+        background: 'var(--surface-card-soft)',
         borderRadius: 12,
         padding: '14px 16px',
       }}
     >
-      <p style={{ margin: '0 0 4px', fontSize: 12, color: 'var(--tds-gray-500)' }}>
+      <p style={{ margin: '0 0 4px', fontSize: 12, color: 'var(--text-muted)' }}>
         {label}
       </p>
       <p
@@ -23,13 +23,13 @@ export default function StatCard({ label, value, sub, valueColor }: Props) {
           margin: 0,
           fontSize: 18,
           fontWeight: 700,
-          color: valueColor ?? 'var(--tds-gray-900)',
+          color: valueColor ?? 'var(--text-strong)',
         }}
       >
         {value}
       </p>
       {sub && (
-        <p style={{ margin: '2px 0 0', fontSize: 12, color: 'var(--tds-gray-300)' }}>
+        <p style={{ margin: '2px 0 0', fontSize: 12, color: 'var(--text-faint)' }}>
           {sub}
         </p>
       )}

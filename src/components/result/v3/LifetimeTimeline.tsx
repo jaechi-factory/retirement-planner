@@ -31,18 +31,18 @@ function PropertyEventCard({ data, isSell }: {
     return (
       <div
         style={{
-          background: '#F8F9FA',
+          background: 'var(--surface-card-soft)',
           borderRadius: 8,
           padding: '12px 14px',
           marginTop: 10,
           fontSize: 13,
-          color: 'var(--tds-gray-600)',
+          color: 'var(--text-base)',
           lineHeight: 1.7,
         }}
       >
         집은 유지하고, 집 담보대출로 부족한 생활비를 채워요.
         {lifeExpectancy > 0 && (
-          <div style={{ fontSize: 12, color: 'var(--tds-gray-400)', marginTop: 6 }}>
+          <div style={{ fontSize: 12, color: 'var(--text-faint)', marginTop: 6 }}>
             이 방식이면 {lifeExpectancy}세까지 이어질 수 있어요.
           </div>
         )}
@@ -54,27 +54,27 @@ function PropertyEventCard({ data, isSell }: {
   return (
     <div
       style={{
-        background: '#F8F9FA',
+        background: 'var(--surface-card-soft)',
         borderRadius: 8,
         padding: '12px 14px',
         marginTop: 10,
         fontSize: 13,
       }}
     >
-      <div style={{ color: 'var(--tds-gray-600)', marginBottom: 10, lineHeight: 1.6 }}>
+      <div style={{ color: 'var(--text-base)', marginBottom: 10, lineHeight: 1.6 }}>
         이 해에 집을 팔면 이렇게 계산돼요.
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-          <span style={{ color: 'var(--tds-gray-500)' }}>집 예상 가격</span>
-          <span style={{ fontWeight: 600, color: 'var(--tds-gray-800)' }}>
+          <span style={{ color: 'var(--text-muted)' }}>집 예상 가격</span>
+          <span style={{ fontWeight: 600, color: 'var(--text-strong)' }}>
             {estimatedPrice > 0 ? fmtKRW(estimatedPrice) : '—'}
           </span>
         </div>
         {mortgageBalance > 0 && (
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span style={{ color: 'var(--tds-gray-500)' }}>남은 주담대</span>
-            <span style={{ fontWeight: 600, color: 'var(--tds-gray-800)' }}>
+            <span style={{ color: 'var(--text-muted)' }}>남은 주담대</span>
+            <span style={{ fontWeight: 600, color: 'var(--text-strong)' }}>
               {fmtKRW(mortgageBalance)}
             </span>
           </div>
@@ -83,13 +83,13 @@ function PropertyEventCard({ data, isSell }: {
           style={{
             display: 'flex',
             justifyContent: 'space-between',
-            borderTop: '1px solid var(--tds-gray-200)',
+            borderTop: '1px solid var(--border-soft)',
             paddingTop: 8,
             marginTop: 2,
           }}
         >
-          <span style={{ color: 'var(--tds-gray-700)', fontWeight: 700 }}>내 손에 남는 돈</span>
-          <span style={{ fontWeight: 800, color: 'var(--tds-gray-900)' }}>
+          <span style={{ color: 'var(--text-base)', fontWeight: 700 }}>내 손에 남는 돈</span>
+          <span style={{ fontWeight: 800, color: 'var(--text-strong)' }}>
             {netProceeds > 0 ? fmtKRW(netProceeds) : '—'}
           </span>
         </div>
@@ -98,7 +98,7 @@ function PropertyEventCard({ data, isSell }: {
         <div
           style={{
             fontSize: 12,
-            color: 'var(--tds-gray-400)',
+            color: 'var(--text-faint)',
             marginTop: 10,
             lineHeight: 1.6,
           }}
@@ -117,15 +117,15 @@ function getEventStyle(type: EventType): { dotColor: string; headerColor: string
     case 'pension_public':
     case 'pension_retirement':
     case 'pension_private':
-      return { dotColor: 'var(--tds-gray-400)', headerColor: 'var(--tds-gray-800)' };
+      return { dotColor: 'var(--text-faint)', headerColor: 'var(--text-strong)' };
     case 'pension_retirement_end':
-      return { dotColor: 'var(--tds-gray-300)', headerColor: 'var(--tds-gray-600)' };
+      return { dotColor: 'var(--text-faint)', headerColor: 'var(--text-muted)' };
     case 'financial_exhaustion':
     case 'property_sell':
     case 'property_loan':
-      return { dotColor: '#E09400', headerColor: 'var(--tds-gray-800)' };
+      return { dotColor: 'var(--palette-pink)', headerColor: 'var(--text-strong)' };
     case 'failure':
-      return { dotColor: '#C0392B', headerColor: 'var(--tds-gray-800)' };
+      return { dotColor: 'var(--status-shortage-text)', headerColor: 'var(--text-strong)' };
   }
 }
 
@@ -275,8 +275,8 @@ export default function LifetimeTimeline({
   return (
     <div
       style={{
-        borderRadius: 14,
-        border: '1px solid var(--tds-gray-100)',
+        borderRadius: 20,
+        border: '1px solid var(--border-soft)',
         padding: '20px 22px',
         marginBottom: 16,
       }}
@@ -285,7 +285,7 @@ export default function LifetimeTimeline({
         style={{
           fontSize: 13,
           fontWeight: 700,
-          color: 'var(--tds-gray-700)',
+          color: 'var(--text-base)',
           marginBottom: 20,
           letterSpacing: 0.1,
         }}
@@ -319,7 +319,7 @@ export default function LifetimeTimeline({
                   <div
                     style={{
                       width: 1,
-                      background: 'var(--tds-gray-150, #E8E8E8)',
+                      background: 'var(--border-soft)',
                       flex: 1,
                       minHeight: 28,
                     }}
@@ -330,7 +330,7 @@ export default function LifetimeTimeline({
                   style={{
                     padding: '10px 0',
                     fontSize: 12,
-                    color: 'var(--tds-gray-400)',
+                    color: 'var(--text-faint)',
                     lineHeight: 1.5,
                   }}
                 >
@@ -381,7 +381,7 @@ export default function LifetimeTimeline({
                   <div
                     style={{
                       width: 1,
-                      background: 'var(--tds-gray-150, #E8E8E8)',
+                      background: 'var(--border-soft)',
                       flex: 1,
                       minHeight: 20,
                     }}
@@ -410,7 +410,7 @@ export default function LifetimeTimeline({
                 <div
                   style={{
                     fontSize: 13,
-                    color: 'var(--tds-gray-600)',
+                    color: 'var(--text-base)',
                     lineHeight: 1.6,
                   }}
                 >
@@ -421,11 +421,11 @@ export default function LifetimeTimeline({
                     style={{
                       marginTop: 8,
                       padding: '8px 12px',
-                      background: '#FFF8EC',
-                      border: '1px solid #FFE0B2',
+                      background: 'var(--status-adjust-bg)',
+                      border: '1px solid rgba(203, 132, 114, 0.3)',
                       borderRadius: 8,
                       fontSize: 12,
-                      color: '#8B4A00',
+                      color: 'var(--status-adjust-text)',
                       lineHeight: 1.6,
                     }}
                   >

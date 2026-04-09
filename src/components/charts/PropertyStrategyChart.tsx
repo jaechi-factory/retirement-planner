@@ -64,31 +64,30 @@ export default function PropertyStrategyChart({ options }: Props) {
   return (
     <div
       style={{
-        background: 'var(--tds-white)',
+        background: 'var(--surface-card)',
         borderRadius: 16,
         padding: '20px 20px 12px',
         marginBottom: 20,
-        border: '1px solid var(--tds-gray-100)',
       }}
     >
       {/* 지속가능 생활비 비교 */}
-      <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--tds-gray-700)', marginBottom: 12 }}>
+      <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-base)', marginBottom: 12 }}>
         방법별 최대 월 생활비
       </div>
       <ResponsiveContainer width="100%" height={140}>
         <ComposedChart data={barData} layout="vertical" margin={{ top: 0, right: 60, left: 60, bottom: 0 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="var(--tds-gray-100)" horizontal={false} />
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" horizontal={false} />
           <XAxis
             type="number"
             tickFormatter={(v) => `${v}만`}
-            tick={{ fontSize: 10, fill: 'var(--tds-gray-400)' }}
+            tick={{ fontSize: 10, fill: 'var(--text-faint)' }}
             tickLine={false}
             axisLine={false}
           />
           <YAxis
             type="category"
             dataKey="name"
-            tick={{ fontSize: 11, fill: 'var(--tds-gray-600)' }}
+            tick={{ fontSize: 11, fill: 'var(--text-base)' }}
             tickLine={false}
             axisLine={false}
             width={56}
@@ -107,23 +106,23 @@ export default function PropertyStrategyChart({ options }: Props) {
       </ResponsiveContainer>
 
       {/* 순자산 추이 오버레이 */}
-      <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--tds-gray-700)', padding: '16px 12px 10px', marginTop: 8 }}>
+      <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-base)', padding: '16px 12px 10px', marginTop: 8 }}>
         방법별 전체 자산 변화
       </div>
       <ResponsiveContainer width="100%" height={200}>
         <ComposedChart data={lineData} margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="var(--tds-gray-100)" />
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" />
           <XAxis
             dataKey="age"
             tickFormatter={(v) => `${v}세`}
-            tick={{ fontSize: 10, fill: 'var(--tds-gray-400)' }}
+            tick={{ fontSize: 10, fill: 'var(--text-faint)' }}
             tickLine={false}
             axisLine={false}
             interval="preserveStartEnd"
           />
           <YAxis
             tickFormatter={(v) => v >= 10000 ? `${(v / 10000).toFixed(0)}억` : `${v}`}
-            tick={{ fontSize: 10, fill: 'var(--tds-gray-400)' }}
+            tick={{ fontSize: 10, fill: 'var(--text-faint)' }}
             tickLine={false}
             axisLine={false}
             width={44}

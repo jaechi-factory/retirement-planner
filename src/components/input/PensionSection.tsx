@@ -13,18 +13,17 @@ export default function PensionSection() {
   return (
     <div
       style={{
-        background: 'var(--tds-white)',
-        borderRadius: 16,
+        background: 'var(--surface-card)',
+        borderRadius: 20,
         padding: '20px 20px 24px',
         marginBottom: 12,
-        border: '1px solid var(--tds-gray-100)',
       }}
     >
       <div style={{ marginBottom: 16 }}>
-        <h3 style={{ margin: '0 0 3px 0', fontSize: 15, fontWeight: 700, color: 'var(--tds-gray-900)' }}>
+        <h3 style={{ margin: '0 0 3px 0', fontSize: 15, fontWeight: 700, color: 'var(--text-strong)' }}>
           연금
         </h3>
-        <p style={{ margin: 0, fontSize: 12, color: 'var(--tds-gray-400)' }}>
+        <p style={{ margin: 0, fontSize: 12, color: 'var(--text-faint)' }}>
           은퇴 후 매달 들어오는 연금을 입력해 주세요.
         </p>
       </div>
@@ -38,19 +37,19 @@ export default function PensionSection() {
       {totalPension > 0 && (
         <div style={{
           marginTop: 14, padding: '10px 14px',
-          background: 'var(--tds-gray-50)', borderRadius: 10,
+          background: 'var(--surface-card-soft)', borderRadius: 10,
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         }}>
           <div>
-            <div style={{ fontSize: 11, color: 'var(--tds-gray-400)', marginBottom: 2 }}>
+            <div style={{ fontSize: 11, color: 'var(--text-faint)', marginBottom: 2 }}>
               현재 가치 기준 예상 연금
             </div>
-            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--tds-gray-600)' }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-base)' }}>
               월 {fmtKRW(totalPension)}이 생활비에 들어와요
             </div>
           </div>
           {coveragePct > 0 && (
-            <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--tds-gray-500)' }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-muted)' }}>
               {coveragePct}%
             </div>
           )}
@@ -59,7 +58,7 @@ export default function PensionSection() {
 
       <div style={{
         marginTop: 10,
-        fontSize: 12, color: 'var(--tds-gray-400)', lineHeight: 1.6,
+        fontSize: 12, color: 'var(--text-faint)', lineHeight: 1.6,
       }}>
         평균값으로 계산한 추정치예요 · 실제 수령액과 다를 수 있어요
       </div>

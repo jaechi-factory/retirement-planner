@@ -35,17 +35,17 @@ function PrivatePensionProductCard({
 
   return (
     <div style={{
-      border: '1.5px solid var(--tds-gray-100)',
+      border: '1px solid var(--border-soft)',
       borderRadius: 10,
       padding: '12px 14px',
-      background: 'var(--tds-white)',
+      background: 'var(--surface-card)',
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
         <Typography variant="label1" weight="bold" color="semantic.label.normal">{product.label}</Typography>
         <button
           onClick={onDelete}
           style={{
-            fontSize: 12, color: 'var(--tds-gray-400)', background: 'none',
+            fontSize: 12, color: 'var(--text-faint)', background: 'none',
             border: '1px solid var(--border-base)', borderRadius: 6, cursor: 'pointer', padding: '2px 8px',
           }}
         >
@@ -70,7 +70,7 @@ function PrivatePensionProductCard({
 
         {showAdvanced && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <div style={{ fontSize: 12, color: 'var(--tds-gray-400)' }}>
+            <div style={{ fontSize: 12, color: 'var(--text-faint)' }}>
               더 자세히 계산하고 싶을 때만 따로 설정해 주세요.
             </div>
             <Row>
@@ -196,7 +196,7 @@ export default function PrivatePensionCard() {
           </div>
 
           {privatePension.products.length === 0 ? (
-            <div style={{ fontSize: 12, color: 'var(--tds-gray-400)', marginBottom: 12 }}>
+            <div style={{ fontSize: 12, color: 'var(--text-faint)', marginBottom: 12 }}>
               아래에서 상품을 추가해 주세요.
             </div>
           ) : (
@@ -221,7 +221,7 @@ export default function PrivatePensionCard() {
                 style={{
                   fontSize: 12, fontWeight: 600, padding: '5px 12px',
                   border: '1.5px solid var(--border-base)', borderRadius: 20,
-                  background: 'var(--tds-white)', color: 'var(--tds-gray-700)', cursor: 'pointer',
+                  background: 'var(--surface-card)', color: 'var(--text-base)', cursor: 'pointer',
                 }}
               >
                 + {label}
@@ -257,7 +257,7 @@ export default function PrivatePensionCard() {
             </TextBtn>
             {showAdvancedRate && (
               <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <div style={{ fontSize: 12, color: 'var(--tds-gray-400)' }}>
+                <div style={{ fontSize: 12, color: 'var(--text-faint)' }}>
                   더 자세히 계산하고 싶을 때만 따로 설정해 주세요.
                 </div>
                 <Row>

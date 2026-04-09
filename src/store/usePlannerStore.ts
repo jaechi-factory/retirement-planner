@@ -108,8 +108,8 @@ function toYearlySnapshot(agg: YearlyAggregateV2, retirementAge: number) {
   const financialAssetEnd = agg.cashLikeEnd + agg.financialInvestableEnd + agg.propertySaleProceedsBucketEnd;
   const housingAssetEnd = agg.propertyValueEnd;
   const grossAssetEnd = financialAssetEnd + housingAssetEnd;
-  const propertyDebtEnd = agg.months[agg.months.length - 1]?.propertyDebtEnd ?? 0;
-  const remainingDebtEnd = agg.securedLoanBalanceEnd + propertyDebtEnd;
+  const totalDebtEnd = agg.months[agg.months.length - 1]?.totalDebtEnd ?? 0;
+  const remainingDebtEnd = agg.securedLoanBalanceEnd + totalDebtEnd;
   const netAssetEnd = grossAssetEnd - remainingDebtEnd;
   return {
     age: agg.ageYear,

@@ -133,7 +133,7 @@ export default function EvidenceWorkspace({
       {/* 돈 흐름 */}
       <div
         style={{
-          borderRadius: 12,
+          borderRadius: 20,
           background: 'var(--surface-card)',
           marginBottom: 'var(--result-space-2)',
         }}
@@ -199,7 +199,7 @@ export default function EvidenceWorkspace({
       {/* 나이별 주요 이벤트 */}
       <div
         style={{
-          borderRadius: 12,
+          borderRadius: 20,
           background: 'var(--surface-card)',
           padding: '12px 14px',
           marginBottom: 'var(--result-space-2)',
@@ -238,7 +238,7 @@ export default function EvidenceWorkspace({
           <div
             style={{
               marginTop: 'var(--result-space-2)',
-              borderRadius: 10,
+              borderRadius: 20,
               background: 'var(--surface-card)',
               padding: '12px',
             }}

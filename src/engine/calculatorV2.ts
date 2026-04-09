@@ -72,8 +72,8 @@ function buildPropertyOption(
   const lastYear = yearlyAggregates[yearlyAggregates.length - 1];
   // [W2] 기대수명 시점 순자산 = 모든 자산 합산 - 모든 부채 차감
   // - propertySaleProceedsBucketEnd: sell 전략 매각대금 운용 잔액 (이전에 누락)
-  // - propertyDebtEnd: 기존 주담대 잔액 (이전에 누락, W1에서 sell 후 0 보장됨)
-  // 주의: propertyDebtEnd는 YearlyAggregateV2에 없으므로 마지막 월 스냅샷에서 읽는다.
+  // - totalDebtEnd: 주담대 + 비담보 대출 합계 (mortgageDebtEnd + nonMortgageDebtEnd)
+  // 주의: totalDebtEnd는 YearlyAggregateV2에 없으므로 마지막 월 스냅샷에서 읽는다.
   const lastMonth = lastYear?.months[lastYear.months.length - 1];
   const finalNetWorth = lastYear
     ? lastYear.cashLikeEnd +
@@ -81,8 +81,7 @@ function buildPropertyOption(
       lastYear.propertyValueEnd +
       lastYear.propertySaleProceedsBucketEnd -
       lastYear.securedLoanBalanceEnd -
-      (lastMonth?.propertyDebtEnd ?? 0) -
-      (lastMonth?.nonMortgageDebtEnd ?? 0) // A1b: 신용·기타 대출 잔액 차감
+      (lastMonth?.totalDebtEnd ?? 0) // mortgageDebtEnd + nonMortgageDebtEnd 합산
     : 0;
 
   const survivesToLifeExpectancy = failureAge === null;

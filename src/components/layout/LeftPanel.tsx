@@ -27,7 +27,7 @@ export default function LeftPanel() {
             fontSize: 12,
             fontWeight: 600,
             color: 'white',
-            background: 'var(--tds-gray-500)',
+            background: 'var(--text-muted)',
             border: 'none',
             borderRadius: 8,
             padding: '6px 14px',

@@ -35,7 +35,8 @@
 ## 배포 방법
 ```bash
 git add [파일] && git commit -m "[type]: [설명]" && git push
-# Vercel이 main 브랜치 push 감지 후 자동 배포
+vercel --prod
+# 자동배포 사용 안 함 — 반드시 vercel --prod 직접 실행
 ```
 
 ## 특이사항

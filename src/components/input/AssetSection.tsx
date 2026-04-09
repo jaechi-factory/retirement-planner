@@ -22,13 +22,13 @@ export default function AssetSection() {
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            background: 'var(--tds-gray-50)',
+            background: 'var(--surface-card-soft)',
             borderRadius: 10,
             padding: '10px 14px',
           }}
         >
-          <span style={{ fontSize: 13, color: 'var(--tds-gray-600)', fontWeight: 600 }}>총자산</span>
-          <span style={{ fontSize: 15, fontWeight: 800, color: 'var(--tds-gray-900)' }}>
+          <span style={{ fontSize: 13, color: 'var(--text-base)', fontWeight: 600 }}>총자산</span>
+          <span style={{ fontSize: 15, fontWeight: 800, color: 'var(--text-strong)' }}>
             {result.totalAsset.toLocaleString('ko-KR')}만원
           </span>
         </div>
@@ -42,7 +42,7 @@ export default function AssetSection() {
               style={{
                 fontSize: 13,
                 fontWeight: 600,
-                color: inputs.assets[key].amount > 0 ? 'var(--tds-gray-700)' : 'var(--tds-gray-400)',
+                color: inputs.assets[key].amount > 0 ? 'var(--text-base)' : 'var(--text-faint)',
                 margin: '0 0 8px 0',
               }}
             >
@@ -62,7 +62,7 @@ export default function AssetSection() {
               />
             </div>
             {key === 'realEstate' && (
-              <p style={{ fontSize: 11, color: 'var(--tds-gray-400)', margin: '4px 0 0', lineHeight: 1.5 }}>
+              <p style={{ fontSize: 11, color: 'var(--text-faint)', margin: '4px 0 0', lineHeight: 1.5 }}>
                 실거주 집을 포함한 전체 부동산 가치를 입력해 주세요. 집을 그대로 둘지, 담보로
                 대출받을지, 팔지에 따라 결과가 달라져요.
               </p>

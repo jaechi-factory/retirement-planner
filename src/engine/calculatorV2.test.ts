@@ -110,13 +110,13 @@ function makeFullInputs(overrides: Partial<PlannerInputs> = {}): PlannerInputs {
 //
 // 버그: buildPropertyOption의 finalNetWorth에
 //   1) propertySaleProceedsBucketEnd 합산 누락 (sell 전략)
-//   2) propertyDebtEnd 차감 누락 (keep / secured_loan 전략)
+//   2) mortgageDebtEnd 차감 누락 (keep / secured_loan 전략)
 //
 // 기대 계산식:
 //   finalNetWorth = cashLikeEnd + financialInvestableEnd + propertyValueEnd
 //                + propertySaleProceedsBucketEnd
 //                - securedLoanBalanceEnd
-//                - propertyDebtEnd
+//                - mortgageDebtEnd
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe('[W2] finalNetWorth 완성', () => {
@@ -126,7 +126,7 @@ describe('[W2] finalNetWorth 완성', () => {
     // 자산 부족 → 집 매각 발생.
     // 은퇴 후 연금(400만원/월)이 생활비(200만원)를 커버하므로 매각대금 버킷을 인출하지 않음.
     // → propertySaleProceedsBucketEnd가 생애 말까지 남아 버킷 반영 여부를 검증 가능.
-    // 주담대 없음 → propertyDebtEnd = 0, sell 단독 검증.
+    // 주담대 없음 → mortgageDebtEnd = 0, sell 단독 검증.
     const inputs = makeFullInputs({
       goal: { retirementAge: 60, lifeExpectancy: 75, targetMonthly: 200, inflationRate: 2.5 },
       status: { currentAge: 50, annualIncome: 3000, incomeGrowthRate: 0, annualExpense: 4200, expenseGrowthRate: 0 },
@@ -177,7 +177,7 @@ describe('[W2] finalNetWorth 완성', () => {
       lastYear.propertyValueEnd +
       lastYear.propertySaleProceedsBucketEnd -
       lastYear.securedLoanBalanceEnd -
-      (lastMonth?.propertyDebtEnd ?? 0);
+      (lastMonth?.mortgageDebtEnd ?? 0);
 
     expect(sellOption.finalNetWorth).toBeCloseTo(expected, 1);
     // 구버그 확인: 매각대금 없이 계산한 값과는 달라야 함
@@ -189,9 +189,9 @@ describe('[W2] finalNetWorth 완성', () => {
     expect(sellOption.finalNetWorth).not.toBeCloseTo(oldFormula, 1);
   });
 
-  // ── keep 전략: propertyDebtEnd 차감 여부 ────────────────────────────────
+  // ── keep 전략: mortgageDebtEnd 차감 여부 ────────────────────────────────
 
-  it('[W2-2] keep 전략: propertyDebtEnd가 finalNetWorth에서 차감되어야 함', () => {
+  it('[W2-2] keep 전략: mortgageDebtEnd가 finalNetWorth에서 차감되어야 함', () => {
     // 30년 모기지 → lifeExpectancy(80세) 시점에 모기지 잔액 남음
     // currentAge=40, 30년 모기지 → 만료 나이=70 → lifeExpectancy=80보다 먼저 소멸
     // 따라서 50년 모기지 필요 → repaymentYears=50, currentAge=40, 만료=90 > 80
@@ -212,23 +212,24 @@ describe('[W2] finalNetWorth 완성', () => {
 
     const keepOption = result!.propertyOptions.find(o => o.strategy === 'keep')!;
     const lastYear = keepOption.yearlyAggregates[keepOption.yearlyAggregates.length - 1];
-    // propertyDebtEnd는 YearlyAggregateV2에 없으므로 마지막 월 스냅샷에서 읽는다
+    // mortgageDebtEnd는 YearlyAggregateV2에 없으므로 마지막 월 스냅샷에서 읽는다
     const lastMonth = lastYear.months[lastYear.months.length - 1];
 
     // 30년 모기지가 lifeExpectancy 시점에 아직 남아있어야 함 (테스트 전제 조건)
-    expect(lastMonth.propertyDebtEnd).toBeGreaterThan(0);
+    expect(lastMonth.mortgageDebtEnd).toBeGreaterThan(0);
 
-    // finalNetWorth는 propertyDebtEnd를 차감해야 함
+    // finalNetWorth는 totalDebtEnd(= mortgageDebtEnd + nonMortgageDebtEnd)를 차감해야 함
+    // 이 케이스는 비담보 대출 없으므로 totalDebtEnd = mortgageDebtEnd
     const expected =
       lastYear.cashLikeEnd +
       lastYear.financialInvestableEnd +
       lastYear.propertyValueEnd +
       lastYear.propertySaleProceedsBucketEnd -
       lastYear.securedLoanBalanceEnd -
-      lastMonth.propertyDebtEnd;
+      lastMonth.totalDebtEnd;
 
     expect(keepOption.finalNetWorth).toBeCloseTo(expected, 1);
-    // 구버그 확인: propertyDebtEnd 차감 없는 값보다 작아야 함
+    // 구버그 확인: mortgageDebtEnd 차감 없는 값보다 작아야 함
     const oldFormula =
       lastYear.cashLikeEnd +
       lastYear.financialInvestableEnd +
@@ -237,10 +238,10 @@ describe('[W2] finalNetWorth 완성', () => {
     expect(keepOption.finalNetWorth).toBeLessThan(oldFormula);
   });
 
-  // ── secured_loan: propertyDebtEnd + securedLoanBalanceEnd 동시 반영 ────
+  // ── secured_loan: mortgageDebtEnd + securedLoanBalanceEnd 동시 반영 ────
 
-  it('[W2-3] secured_loan 전략: propertyDebtEnd와 securedLoanBalanceEnd가 함께 차감되어야 함', () => {
-    // 30년 모기지(propertyDebtEnd > 0) + 자산 부족으로 담보대출 draw 발생(securedLoanBalanceEnd > 0)
+  it('[W2-3] secured_loan 전략: mortgageDebtEnd와 securedLoanBalanceEnd가 함께 차감되어야 함', () => {
+    // 30년 모기지(mortgageDebtEnd > 0) + 자산 부족으로 담보대출 draw 발생(securedLoanBalanceEnd > 0)
     const inputs = makeFullInputs({
       goal: { retirementAge: 65, lifeExpectancy: 80, targetMonthly: 400, inflationRate: 2.5 },
       status: { currentAge: 60, annualIncome: 4000, incomeGrowthRate: 0, annualExpense: 3600, expenseGrowthRate: 0 },
@@ -266,21 +267,21 @@ describe('[W2] finalNetWorth 완성', () => {
 
     const loanOption = result!.propertyOptions.find(o => o.strategy === 'secured_loan')!;
     const lastYear = loanOption.yearlyAggregates[loanOption.yearlyAggregates.length - 1];
-    // propertyDebtEnd는 YearlyAggregateV2에 없으므로 마지막 월 스냅샷에서 읽는다
+    // mortgageDebtEnd는 YearlyAggregateV2에 없으므로 마지막 월 스냅샷에서 읽는다
     const lastMonth = lastYear.months[lastYear.months.length - 1];
 
     // 전제 조건: 두 부채 모두 > 0이어야 이 테스트가 의미 있음
-    expect(lastMonth.propertyDebtEnd).toBeGreaterThan(0);
+    expect(lastMonth.mortgageDebtEnd).toBeGreaterThan(0);
     expect(lastYear.securedLoanBalanceEnd).toBeGreaterThan(0);
 
-    // finalNetWorth = 공식 검증
+    // finalNetWorth = 공식 검증 (totalDebtEnd = mortgageDebtEnd + nonMortgageDebtEnd)
     const expected =
       lastYear.cashLikeEnd +
       lastYear.financialInvestableEnd +
       lastYear.propertyValueEnd +
       lastYear.propertySaleProceedsBucketEnd -
       lastYear.securedLoanBalanceEnd -
-      lastMonth.propertyDebtEnd;
+      lastMonth.totalDebtEnd;
 
     expect(loanOption.finalNetWorth).toBeCloseTo(expected, 1);
   });
@@ -305,14 +306,105 @@ describe('calculatorV2 recommendation mode', () => {
     expect(result.summary.targetGap).toBe(result.summary.maxTargetGap);
   });
 
-  it('추천 전략 전환으로 summary가 흔들려도 maxSustainableMonthly는 소득 증가 시 감소하지 않아야 한다', () => {
+  it('소득 증가 시 maxSustainableMonthly는 감소하지 않아야 한다', () => {
     const lowIncome = runScenario(makeInputs(5000), 'keep_priority');
     const highIncome = runScenario(makeInputs(6000), 'keep_priority');
 
-    // keep_priority 정책에서는 추천 전략 전환으로 summary 값이 감소할 수 있음
-    expect(highIncome.summary.sustainableMonthly).toBeLessThan(lowIncome.summary.sustainableMonthly);
-    // 최대 기준은 단조성 유지
-    expect(highIncome.summary.maxSustainableMonthly).toBeGreaterThanOrEqual(lowIncome.summary.maxSustainableMonthly);
+    // B6 fix 이후: detail simulation = sustainableMonthly 기준으로 통일.
+    // 이전에는 targetMonthly 기준 detail simulation 결과가 strategy 추천에 영향을 줘서
+    // 소득이 높아도 sustainableMonthly가 역전되는 현상이 있었으나, 수정 후 제거됨.
+    // 핵심 불변: 모든 전략 중 최대값(maxSustainableMonthly)은 소득 증가 시 비감소.
+    expect(highIncome.summary.maxSustainableMonthly).toBeGreaterThanOrEqual(
+      lowIncome.summary.maxSustainableMonthly,
+    );
+    // 두 시나리오 모두 sustainableMonthly > 0 이어야 한다
+    expect(lowIncome.summary.sustainableMonthly).toBeGreaterThan(0);
+    expect(highIncome.summary.sustainableMonthly).toBeGreaterThan(0);
+  });
+});
+
+// ─── B6: 헤드라인-차트 기준 통일 ─────────────────────────────────────────────
+//
+// 수정: simulateMonthlyV2(inputs, inputs.goal.targetMonthly, ...)
+//    → simulateMonthlyV2(inputs, sustainableMonthly, ...)
+//
+// 이유: 한 전략 카드 안에서 헤드라인과 차트/연도집계가 서로 다른 월생활비
+//       기준(sustainableMonthly vs targetMonthly)을 참조하는 구조적 불일치 해소.
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('B6: 헤드라인-차트 기준 통일 (sustainableMonthly)', () => {
+  // targetMonthly(300) > sustainableMonthly 가 되도록 자산을 낮게 설정
+  function makeLowAssetInputs(targetMonthly: number): PlannerInputs {
+    return {
+      goal: { retirementAge: 60, lifeExpectancy: 85, targetMonthly, inflationRate: 2.5 },
+      status: { currentAge: 50, annualIncome: 4000, incomeGrowthRate: 0, annualExpense: 3600, expenseGrowthRate: 0 },
+      assets: {
+        cash:       { amount: 500,   expectedReturn: 1.0 },
+        deposit:    { amount: 500,   expectedReturn: 2.0 },
+        stock_kr:   { amount: 0,     expectedReturn: 6.0 },
+        stock_us:   { amount: 0,     expectedReturn: 8.0 },
+        bond:       { amount: 0,     expectedReturn: 3.5 },
+        crypto:     { amount: 0,     expectedReturn: 0   },
+        realEstate: { amount: 0,     expectedReturn: 3.0 },
+      },
+      debts: {
+        mortgage:   { balance: 0, interestRate: 0, repaymentType: 'equal_payment',   repaymentYears: 0 },
+        creditLoan: { balance: 0, interestRate: 0, repaymentType: 'balloon_payment', repaymentYears: 0 },
+        otherLoan:  { balance: 0, interestRate: 0, repaymentType: 'balloon_payment', repaymentYears: 0 },
+      },
+      children: { hasChildren: false, count: 0, monthlyPerChild: 0, independenceAge: 0 },
+      pension: {
+        publicPension:     { enabled: false, mode: 'auto', startAge: 65, manualMonthlyTodayValue: 0 },
+        retirementPension: {
+          enabled: false, mode: 'auto', startAge: 60, payoutYears: 20,
+          currentBalance: 0, accumulationReturnRate: 3.5, payoutReturnRate: 2.0, manualMonthlyTodayValue: 0,
+        },
+        privatePension: {
+          enabled: false, mode: 'auto', startAge: 65, payoutYears: 20,
+          currentBalance: 0, monthlyContribution: 0, expectedReturnRate: 3.5,
+          accumulationReturnRate: 3.5, payoutReturnRate: 2.0, manualMonthlyTodayValue: 0,
+          detailMode: false, products: [],
+        },
+      },
+    };
+  }
+
+  it('[B6-1] targetMonthly > sustainableMonthly: 차트 기준이 sustainableMonthly와 일치', () => {
+    // targetMonthly=300 이지만 자산이 부족해 sustainableMonthly < 300
+    const inputs = makeLowAssetInputs(300);
+    const schedules = precomputeDebtSchedules(inputs.debts);
+    const result = runCalculationV2(inputs, DEFAULT_FUNDING_POLICY, DEFAULT_LIQUIDATION_POLICY, schedules, 'keep_priority');
+    if (!result) throw new Error('runCalculationV2 returned null');
+
+    const keepOption = result.propertyOptions.find(o => o.strategy === 'keep');
+    if (!keepOption) throw new Error('keep option not found');
+
+    const sustainableMonthly = keepOption.sustainableMonthly;
+
+    // 자산이 낮으므로 sustainableMonthly < targetMonthly 여야 함
+    expect(sustainableMonthly).toBeLessThan(300);
+
+    // 차트 기준 검증: 연도집계의 expenseThisMonth 합산이 targetMonthly 기준이 아닌
+    // sustainableMonthly 기준으로 생성됐는지 확인.
+    // sustainableMonthly로 시뮬레이션하면 shortfall이 없어야 한다.
+    const hasShortfall = keepOption.yearlyAggregates.some(y => y.totalShortfall > 0);
+    expect(hasShortfall).toBe(false);
+  });
+
+  it('[B6-2] targetMonthly === sustainableMonthly: 결과가 변하지 않아야 함', () => {
+    // sustainableMonthly = targetMonthly 가 되도록 자산을 충분히 설정
+    const richInputs = makeFullInputs({ goal: { retirementAge: 65, lifeExpectancy: 80, targetMonthly: 200, inflationRate: 2.5 } });
+    const schedules = precomputeDebtSchedules(richInputs.debts);
+    const result = runCalculationV2(richInputs, DEFAULT_FUNDING_POLICY, DEFAULT_LIQUIDATION_POLICY, schedules, 'keep_priority');
+    if (!result) throw new Error('runCalculationV2 returned null');
+
+    const keepOption = result.propertyOptions.find(o => o.strategy === 'keep');
+    if (!keepOption) throw new Error('keep option not found');
+
+    // targetMonthly <= sustainableMonthly 인 경우 shortfall 없어야 함
+    const sustainableMonthly = keepOption.sustainableMonthly;
+    expect(sustainableMonthly).toBeGreaterThanOrEqual(richInputs.goal.targetMonthly);
+    expect(keepOption.yearlyAggregates.some(y => y.totalShortfall > 0)).toBe(false);
   });
 });
 

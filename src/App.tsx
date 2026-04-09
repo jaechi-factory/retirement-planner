@@ -17,8 +17,8 @@ export default function App() {
         style={{
           height: 56,
           flexShrink: 0,
-          background: 'var(--tds-white)',
-          borderBottom: '1px solid var(--ux-border)',
+          background: 'var(--palette-ink)',
+          borderBottom: 'none',
           display: 'flex',
           justifyContent: 'center',
           zIndex: 100,
@@ -37,7 +37,7 @@ export default function App() {
             style={{
               fontSize: 17,
               fontWeight: 800,
-              color: 'var(--text-strong)',
+              color: 'var(--text-on-dark)',
               letterSpacing: '-0.3px',
             }}
           >
@@ -47,7 +47,7 @@ export default function App() {
             style={{
               marginLeft: 10,
               fontSize: 12,
-              color: 'var(--text-muted)',
+              color: 'var(--text-on-dark-muted)',
               fontWeight: 400,
             }}
           >

@@ -193,23 +193,22 @@ function getMortgagePayment(schedules: DebtSchedules, scheduleIndex: number): nu
   return schedules.mortgage[scheduleIndex]?.payment ?? 0;
 }
 
-/** 잔여 부채 합계 */
-function getRemainingDebt(schedules: DebtSchedules, scheduleIndex: number): number {
-  const get = (rows: { remainingBalance: number }[]) =>
-    rows[scheduleIndex]?.remainingBalance ?? 0;
-  return get(schedules.mortgage) + get(schedules.creditLoan) + get(schedules.otherLoan);
-}
-
-/** 주담대 잔액만 반환 (집 매각 시 주담대만 상환하는 경우) */
-function getRemainingMortgageBalance(schedules: DebtSchedules, scheduleIndex: number): number {
+/** 주담대 잔액 — 스냅샷 mortgageDebtEnd 및 sell 시 상환액 계산용 */
+function getRemainingMortgageDebt(schedules: DebtSchedules, scheduleIndex: number): number {
   return schedules.mortgage[scheduleIndex]?.remainingBalance ?? 0;
 }
 
-/** 비담보 대출(신용·기타) 잔액 합산 — A1b: finalNetWorth 차감 용 */
-function getNonMortgageDebt(schedules: DebtSchedules, scheduleIndex: number): number {
+/** 비담보 대출(신용·기타) 잔액 합산 — 스냅샷 nonMortgageDebtEnd 계산용 */
+function getRemainingNonMortgageDebt(schedules: DebtSchedules, scheduleIndex: number): number {
   const get = (rows: { remainingBalance: number }[]) =>
     rows[scheduleIndex]?.remainingBalance ?? 0;
   return get(schedules.creditLoan) + get(schedules.otherLoan);
+}
+
+/** 전체 잔여 부채 합산 (mortgage + creditLoan + otherLoan) — all_debts 매각 상환액 계산용 */
+function getRemainingDebt(schedules: DebtSchedules, scheduleIndex: number): number {
+  return getRemainingMortgageDebt(schedules, scheduleIndex) +
+    getRemainingNonMortgageDebt(schedules, scheduleIndex);
 }
 
 // ─── 메인 시뮬레이터 ──────────────────────────────────────────────────────────
@@ -448,7 +447,7 @@ export function simulateMonthlyV2(
 
           const remainingMortgage = plannerPolicy.property.saleDebtSettlementMode === 'all_debts'
             ? getRemainingDebt(debtSchedules, totalMonthIndex)
-            : getRemainingMortgageBalance(debtSchedules, totalMonthIndex);
+            : getRemainingMortgageDebt(debtSchedules, totalMonthIndex);
           const salePrice = propertyValue;
           const grossProceedsAfterHaircut = salePrice * (1 - propertyPolicy.propertySaleHaircut);
           const netProceeds = Math.max(0, grossProceedsAfterHaircut - remainingMortgage);
@@ -494,16 +493,17 @@ export function simulateMonthlyV2(
       const financialInvestableEnd = FINANCIAL_KEYS.reduce((s, k) => s + buckets[k], 0);
       // [W1] sell 전략에서 집 매각 시 주담대를 일괄 상환하므로
       // 매각 이후에는 스케줄 잔액과 무관하게 0으로 강제한다.
-      const propertyDebtEnd      = propertySold
+      const mortgageDebtEnd = propertySold
         ? 0
-        : getRemainingMortgageBalance(debtSchedules, totalMonthIndex);
+        : getRemainingMortgageDebt(debtSchedules, totalMonthIndex);
       // [W5] all_debts 모드에서 매각 시 신용·기타 대출도 일괄 상환됨.
       // debtSchedules는 정적 사전계산이므로 이 이벤트가 반영되지 않는다.
       // propertySold + all_debts 조합에서 강제 0으로 처리한다.
       const nonMortgageDebtEnd = (
         propertySold && propertyPolicy.saleDebtSettlementMode === 'all_debts'
       ) ? 0
-        : getNonMortgageDebt(debtSchedules, totalMonthIndex);
+        : getRemainingNonMortgageDebt(debtSchedules, totalMonthIndex);
+      const totalDebtEnd = mortgageDebtEnd + nonMortgageDebtEnd;
 
       snapshots.push({
         ageYear,
@@ -511,8 +511,9 @@ export function simulateMonthlyV2(
         cashLikeEnd,
         financialInvestableEnd,
         propertyValueEnd: propertyValue,
-        propertyDebtEnd,
+        mortgageDebtEnd,
         nonMortgageDebtEnd,
+        totalDebtEnd,
         securedLoanBalanceEnd: securedLoanBalance,
         propertySaleProceedsBucketEnd: propertySaleProceedsBucket,
         propertySaleGrossProceedsThisMonth,
