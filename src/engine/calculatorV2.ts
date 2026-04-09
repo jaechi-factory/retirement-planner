@@ -32,6 +32,7 @@ import {
   getTotalMonthlyPensionTodayValue,
 } from './pensionEstimation';
 import { getPlannerPolicy } from '../policy/policyTable';
+import { getVehicleMonthlyCost } from './vehicleSchedule';
 
 const STRATEGIES: PropertyStrategyV2[] = ['keep', 'secured_loan', 'sell'];
 const STRATEGY_TIE_BREAK_PRIORITY: Record<PropertyStrategyV2, number> = {
@@ -273,6 +274,10 @@ function buildWarnings(
   debtSchedules: DebtSchedules,
 ): WarningItem[] {
   const warnings: WarningItem[] = [];
+  const annualVehicleCost = inputs.vehicle?.costIncludedInExpense === 'separate'
+    ? Array.from({ length: 12 }, (_, monthIndex) => getVehicleMonthlyCost(inputs.vehicle, monthIndex))
+        .reduce((sum, cost) => sum + cost, 0)
+    : 0;
 
   // 은퇴 전 유동성 위기: 현재 수입으로 지출+대출을 감당 못할 때
   // 단일 source: 외부에서 받은 debtSchedules 사용
@@ -283,11 +288,18 @@ function buildWarnings(
         ? inputs.children.count * inputs.children.monthlyPerChild * 12
         : 0;
     const annualNetSavings =
-      inputs.status.annualIncome - inputs.status.annualExpense - totalAnnualRepayment - childExpense;
+      inputs.status.annualIncome -
+      inputs.status.annualExpense -
+      totalAnnualRepayment -
+      childExpense -
+      annualVehicleCost;
     if (annualNetSavings < 0) {
+      const fixedCostLabel = annualVehicleCost > 0
+        ? '생활비와 차량비, 대출 상환'
+        : '생활비와 대출 상환';
       warnings.push({
         severity: 'warning',
-        message: `현재 수입으로는 생활비와 대출 상환을 감당하기 어려워요. 월 ${Math.round(Math.abs(annualNetSavings) / 12).toLocaleString()}만원이 부족해요.`,
+        message: `현재 수입으로는 ${fixedCostLabel}을 감당하기 어려워요. 월 ${Math.round(Math.abs(annualNetSavings) / 12).toLocaleString()}만원이 부족해요.`,
       });
     }
   }

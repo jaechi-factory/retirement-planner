@@ -1,7 +1,11 @@
 import { create } from 'zustand';
 import type { PlannerInputs, AssetAllocation, DebtAllocation, VehicleInfo } from '../types/inputs';
 import type { PensionInputs } from '../types/pension';
-import { computeVehicleComparison, type VehicleComparisonResult } from '../engine/vehicleSchedule';
+import {
+  computeVehicleComparison,
+  getVehicleMonthlyCost,
+  type VehicleComparisonResult,
+} from '../engine/vehicleSchedule';
 import type { CalculationResult, HousingScenarioResult, HousingScenarioSet, Verdict } from '../types/calculation';
 import type { CalculationResultV2, YearlyAggregateV2, PropertyOptionResult, RecommendationModeV2 } from '../types/calculationV2';
 import type { HousingPolicy } from '../engine/housingPolicy';
@@ -170,7 +174,12 @@ function buildCompatResult(
   const annualChildExpense = children.hasChildren ? children.count * children.monthlyPerChild * 12 : 0;
   const childExpenseForSavings = children.hasChildren && status.currentAge <= children.independenceAge
     ? annualChildExpense : 0;
-  const annualNetSavings = status.annualIncome - status.annualExpense - totalAnnualRepayment - childExpenseForSavings;
+  const annualVehicleCost = inputs.vehicle?.costIncludedInExpense === 'separate'
+    ? Array.from({ length: 12 }, (_, monthIndex) => getVehicleMonthlyCost(inputs.vehicle, monthIndex))
+        .reduce((sum, cost) => sum + cost, 0)
+    : 0;
+  const annualNetSavings =
+    status.annualIncome - status.annualExpense - totalAnnualRepayment - childExpenseForSavings - annualVehicleCost;
 
   const yearsToRetirement = goal.retirementAge - status.currentAge;
   const requiredMonthlyAtRetirement = goal.targetMonthly * Math.pow(1 + goal.inflationRate / 100, yearsToRetirement);
@@ -350,15 +359,42 @@ const computeState = (
   const verdict = judgeVerdict(goal.targetMonthly, result.possibleMonthly);
 
   const vehicle = inputs.vehicle ?? defaultVehicle;
-  const vehicleComparison = vehicle.ownershipType !== 'none'
-    ? computeVehicleComparison(
-        vehicle,
-        result.possibleMonthly,
-        status.currentAge,
-        goal.retirementAge,
-        goal.lifeExpectancy,
-      )
-    : null;
+  let vehicleComparison: VehicleComparisonResult | null = null;
+  if (vehicle.ownershipType !== 'none') {
+    vehicleComparison = computeVehicleComparison(
+      vehicle,
+      result.possibleMonthly,
+      status.currentAge,
+      goal.retirementAge,
+      goal.lifeExpectancy,
+    );
+
+    if (vehicle.costIncludedInExpense === 'separate') {
+      const inputsWithoutVehicle: PlannerInputs = {
+        ...inputs,
+        vehicle: { ...vehicle, ownershipType: 'none' },
+      };
+
+      const withoutVehicleResultV2 = runCalculationV2(
+        inputsWithoutVehicle,
+        fundingPolicy,
+        liquidationPolicy,
+        debtSchedules,
+        recommendationMode,
+      );
+
+      if (withoutVehicleResultV2) {
+        const withoutVehicle = withoutVehicleResultV2.summary.sustainableMonthly;
+        vehicleComparison = {
+          withVehicle: result.possibleMonthly,
+          withoutVehicle,
+          monthlyReduction: Math.max(0, withoutVehicle - result.possibleMonthly),
+          hasVehicle: true,
+          isIncluded: false,
+        };
+      }
+    }
+  }
 
   return { inputs, result, verdict, resultV2, vehicleComparison };
 };

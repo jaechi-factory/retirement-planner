@@ -46,6 +46,7 @@ import { precomputeDebtSchedules } from './assetWeighting';
 import type { DebtSchedules } from './debtSchedule';
 import { getAnnualPensionIncomeForAge } from './pensionEstimation';
 import { calcNetWorth } from './netWorth';
+import { getVehicleMonthlyCost } from './vehicleSchedule';
 
 // ─── 버킷 타입 ────────────────────────────────────────────────────────────────
 
@@ -240,7 +241,7 @@ export function simulateMonthlyV2(
   _liquidationPolicy: LiquidationPolicy,
   prebuiltSchedules?: DebtSchedules,
 ): MonthlySnapshotV2[] {
-  const { goal, status, assets, debts, children, pension } = inputs;
+  const { goal, status, assets, debts, children, pension, vehicle } = inputs;
   const { retirementAge, lifeExpectancy, inflationRate } = goal;
   const { currentAge, annualIncome, incomeGrowthRate, annualExpense, expenseGrowthRate } = status;
 
@@ -349,6 +350,12 @@ export function simulateMonthlyV2(
         expenseThisMonth =
           retirementMonthlyNominal * Math.pow(1 + monthlyInflation, monthsAfterRetirement);
       }
+
+      const vehicleCostThisMonth =
+        vehicle?.costIncludedInExpense === 'separate'
+          ? getVehicleMonthlyCost(vehicle, totalMonthIndex)
+          : 0;
+      expenseThisMonth += vehicleCostThisMonth;
 
       // [P4] 부채상환: schedule index = totalMonthIndex (offset 없음, 첫 달부터 적용)
       // sell 전략 + all_debts: 매각 시 전체 잔존부채를 일괄 상환 → 이후 월 납입 0.
