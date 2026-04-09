@@ -31,6 +31,7 @@ import { findMaxSustainableMonthlyV2 } from './binarySearchV2';
 import { calcHousingAnnuityMonthly } from './housingAnnuity';
 import { precomputeDebtSchedules } from './assetWeighting';
 import { runCalculationV2 } from './calculatorV2';
+import { calcNetWorth } from './netWorth';
 import { DEFAULT_FUNDING_POLICY as CALC_FUNDING_POLICY, DEFAULT_LIQUIDATION_POLICY as CALC_LIQUIDATION_POLICY } from './fundingPolicy';
 
 // ─── 기본 입력 픽스처 ─────────────────────────────────────────────────────────
@@ -1434,17 +1435,67 @@ describe('H2. YearlyAggregateV2 부채/순자산 정합성', () => {
 
     yearly.forEach((year) => {
       const lastMonth = year.months[year.months.length - 1];
-      const expectedNetWorth =
-        lastMonth.cashLikeEnd +
-        lastMonth.financialInvestableEnd +
-        lastMonth.propertyValueEnd +
-        lastMonth.propertySaleProceedsBucketEnd -
-        lastMonth.securedLoanBalanceEnd -
-        lastMonth.totalDebtEnd;
-
-      expect(year.netWorthEnd).toBeCloseTo(expectedNetWorth, 6);
+      expect(year.netWorthEnd).toBeCloseTo(calcNetWorth(lastMonth), 6);
+      expect(year.netWorthEnd).toBeCloseTo(calcNetWorth(year), 6);
     });
   });
+
+  it('[W7-3] 연도 집계 말잔액 필드는 마지막 월 snapshot을 그대로 복사해야 함', () => {
+    const snapshots = simulateMonthlyV2(
+      DEBT_AGG_INPUTS,
+      DEBT_AGG_INPUTS.goal.targetMonthly,
+      'keep',
+      DEFAULT_FUNDING_POLICY,
+      DEFAULT_LIQUIDATION,
+    );
+    const yearly = aggregateToYearly(snapshots);
+
+    yearly.forEach((year) => {
+      const lastMonth = year.months[year.months.length - 1];
+      expect(year.mortgageDebtEnd).toBeCloseTo(lastMonth.mortgageDebtEnd, 6);
+      expect(year.nonMortgageDebtEnd).toBeCloseTo(lastMonth.nonMortgageDebtEnd, 6);
+      expect(year.totalDebtEnd).toBeCloseTo(lastMonth.totalDebtEnd, 6);
+      expect(year.netWorthEnd).toBeCloseTo(calcNetWorth(lastMonth), 6);
+    });
+  });
+});
+
+const SALE_BOUNDARY_INPUTS = makeInputs({
+  goal: { retirementAge: 65, lifeExpectancy: 67, targetMonthly: 200, inflationRate: 0 },
+  status: { currentAge: 65, annualIncome: 0, incomeGrowthRate: 0, annualExpense: 0, expenseGrowthRate: 0 },
+  assets: {
+    cash:       { amount: 400,   expectedReturn: 0 },
+    deposit:    { amount: 0,     expectedReturn: 0 },
+    stock_kr:   { amount: 0,     expectedReturn: 0 },
+    stock_us:   { amount: 0,     expectedReturn: 0 },
+    bond:       { amount: 0,     expectedReturn: 0 },
+    crypto:     { amount: 0,     expectedReturn: 0 },
+    realEstate: { amount: 50000, expectedReturn: 0 },
+  },
+  debts: {
+    mortgage:   { balance: 12000, interestRate: 4.0, repaymentType: 'equal_payment', repaymentYears: 10 },
+    creditLoan: { balance: 3000, interestRate: 6.0, repaymentType: 'equal_payment', repaymentYears: 5 },
+    otherLoan:  { balance: 0, interestRate: 0, repaymentType: 'balloon_payment', repaymentYears: 0 },
+  },
+});
+
+const REFUND_CONSERVATION_INPUTS = makeInputs({
+  goal: { retirementAge: 65, lifeExpectancy: 66, targetMonthly: 0, inflationRate: 0 },
+  status: { currentAge: 65, annualIncome: 0, incomeGrowthRate: 0, annualExpense: 0, expenseGrowthRate: 0 },
+  assets: {
+    cash:       { amount: 0,     expectedReturn: 0 },
+    deposit:    { amount: 0,     expectedReturn: 0 },
+    stock_kr:   { amount: 0,     expectedReturn: 0 },
+    stock_us:   { amount: 0,     expectedReturn: 0 },
+    bond:       { amount: 0,     expectedReturn: 0 },
+    crypto:     { amount: 0,     expectedReturn: 0 },
+    realEstate: { amount: 50000, expectedReturn: 0 },
+  },
+  debts: {
+    mortgage:   { balance: 12000, interestRate: 4.0, repaymentType: 'equal_payment', repaymentYears: 10 },
+    creditLoan: { balance: 0, interestRate: 0, repaymentType: 'balloon_payment', repaymentYears: 0 },
+    otherLoan:  { balance: 0, interestRate: 0, repaymentType: 'balloon_payment', repaymentYears: 0 },
+  },
 });
 
 // ─── I. W4: all_debts 모드 이중 상환 방지 ────────────────────────────────────
@@ -1548,6 +1599,74 @@ describe('I. W4: all_debts 모드 이중 상환 방지', () => {
 
     // 집 매각 이벤트가 발생하지 않아야 함
     expect(keepSnaps.some(s => s.eventFlags.propertySold)).toBe(false);
+  });
+
+  it('[W4-4] all_debts: 매각 당월 debtService 취소가 가짜 현금을 만들면 안 됨', () => {
+    const realPolicy = policyModule.getPlannerPolicy();
+    vi.spyOn(policyModule, 'getPlannerPolicy').mockReturnValue({
+      ...realPolicy,
+      property: { ...realPolicy.property, saleDebtSettlementMode: 'all_debts' },
+    });
+
+    const snapshots = simulateMonthlyV2(
+      REFUND_CONSERVATION_INPUTS,
+      REFUND_CONSERVATION_INPUTS.goal.targetMonthly,
+      'sell',
+      DEFAULT_FUNDING_POLICY,
+      DEFAULT_LIQUIDATION,
+    );
+
+    const saleIdx = snapshots.findIndex((s) => s.eventFlags.propertySold);
+    expect(saleIdx).toBe(0);
+
+    const saleMonth = snapshots[saleIdx];
+    expect(saleMonth.debtServiceThisMonth).toBe(0);
+    expect(saleMonth.cashLikeEnd).toBe(0);
+    expect(saleMonth.financialInvestableEnd).toBe(0);
+    expect(saleMonth.propertySaleProceedsBucketEnd).toBeGreaterThan(0);
+  });
+
+  it('[W4-5] all_debts: 매각 직전/당월/다음월 경계에서 totalDebt와 debtService가 정확해야 함', () => {
+    const realPolicy = policyModule.getPlannerPolicy();
+    vi.spyOn(policyModule, 'getPlannerPolicy').mockReturnValue({
+      ...realPolicy,
+      property: { ...realPolicy.property, saleDebtSettlementMode: 'all_debts' },
+    });
+
+    const snapshots = simulateMonthlyV2(
+      SALE_BOUNDARY_INPUTS,
+      SALE_BOUNDARY_INPUTS.goal.targetMonthly,
+      'sell',
+      DEFAULT_FUNDING_POLICY,
+      DEFAULT_LIQUIDATION,
+    );
+    const schedules = precomputeDebtSchedules(SALE_BOUNDARY_INPUTS.debts);
+
+    const saleIdx = snapshots.findIndex((s) => s.eventFlags.propertySold);
+    expect(saleIdx).toBeGreaterThan(0);
+    expect(saleIdx + 1).toBeLessThan(snapshots.length);
+
+    const beforeSale = snapshots[saleIdx - 1];
+    const saleMonth = snapshots[saleIdx];
+    const nextMonth = snapshots[saleIdx + 1];
+
+    const beforeMonthIndex =
+      (beforeSale.ageYear - SALE_BOUNDARY_INPUTS.status.currentAge) * 12 + beforeSale.ageMonthIndex;
+    const expectedBeforeDebtService =
+      (schedules.mortgage[beforeMonthIndex]?.payment ?? 0) +
+      (schedules.creditLoan[beforeMonthIndex]?.payment ?? 0) +
+      (schedules.otherLoan[beforeMonthIndex]?.payment ?? 0);
+
+    expect(beforeSale.totalDebtEnd).toBeGreaterThan(0);
+    expect(beforeSale.debtServiceThisMonth).toBeCloseTo(expectedBeforeDebtService, 6);
+    expect(saleMonth.mortgageDebtEnd).toBe(0);
+    expect(saleMonth.nonMortgageDebtEnd).toBe(0);
+    expect(saleMonth.totalDebtEnd).toBe(0);
+    expect(saleMonth.debtServiceThisMonth).toBe(0);
+    expect(nextMonth.mortgageDebtEnd).toBe(0);
+    expect(nextMonth.nonMortgageDebtEnd).toBe(0);
+    expect(nextMonth.totalDebtEnd).toBe(0);
+    expect(nextMonth.debtServiceThisMonth).toBe(0);
   });
 });
 
@@ -1766,5 +1885,52 @@ describe('J. W5: all_debts 매각 후 nonMortgageDebtEnd 정산', () => {
       expect(s.totalDebtEnd).toBeCloseTo(s.mortgageDebtEnd + s.nonMortgageDebtEnd, 6);
       expect(s.totalDebtEnd).toBeCloseTo(s.nonMortgageDebtEnd, 6);
     });
+  });
+
+  it('[W5-C] mortgage_only: 매각 직전/당월/다음월 debtService 경계가 정확해야 함', () => {
+    const snapshots = simulateMonthlyV2(
+      SALE_BOUNDARY_INPUTS,
+      SALE_BOUNDARY_INPUTS.goal.targetMonthly,
+      'sell',
+      DEFAULT_FUNDING_POLICY,
+      DEFAULT_LIQUIDATION,
+    );
+    const schedules = precomputeDebtSchedules(SALE_BOUNDARY_INPUTS.debts);
+
+    const saleIdx = snapshots.findIndex((s) => s.eventFlags.propertySold);
+    expect(saleIdx).toBeGreaterThan(0);
+    expect(saleIdx + 1).toBeLessThan(snapshots.length);
+
+    const beforeSale = snapshots[saleIdx - 1];
+    const saleMonth = snapshots[saleIdx];
+    const nextMonth = snapshots[saleIdx + 1];
+
+    const beforeMonthIndex =
+      (beforeSale.ageYear - SALE_BOUNDARY_INPUTS.status.currentAge) * 12 + beforeSale.ageMonthIndex;
+    const saleMonthIndex =
+      (saleMonth.ageYear - SALE_BOUNDARY_INPUTS.status.currentAge) * 12 + saleMonth.ageMonthIndex;
+    const nextMonthIndex =
+      (nextMonth.ageYear - SALE_BOUNDARY_INPUTS.status.currentAge) * 12 + nextMonth.ageMonthIndex;
+
+    const expectedBeforeDebtService =
+      (schedules.mortgage[beforeMonthIndex]?.payment ?? 0) +
+      (schedules.creditLoan[beforeMonthIndex]?.payment ?? 0) +
+      (schedules.otherLoan[beforeMonthIndex]?.payment ?? 0);
+    const expectedSaleDebtService =
+      (schedules.creditLoan[saleMonthIndex]?.payment ?? 0) +
+      (schedules.otherLoan[saleMonthIndex]?.payment ?? 0);
+    const expectedNextDebtService =
+      (schedules.creditLoan[nextMonthIndex]?.payment ?? 0) +
+      (schedules.otherLoan[nextMonthIndex]?.payment ?? 0);
+
+    expect(beforeSale.mortgageDebtEnd).toBeGreaterThan(0);
+    expect(beforeSale.debtServiceThisMonth).toBeCloseTo(expectedBeforeDebtService, 6);
+    expect(saleMonth.mortgageDebtEnd).toBe(0);
+    expect(saleMonth.nonMortgageDebtEnd).toBeGreaterThan(0);
+    expect(saleMonth.totalDebtEnd).toBeCloseTo(saleMonth.nonMortgageDebtEnd, 6);
+    expect(saleMonth.debtServiceThisMonth).toBeCloseTo(expectedSaleDebtService, 6);
+    expect(nextMonth.mortgageDebtEnd).toBe(0);
+    expect(nextMonth.totalDebtEnd).toBeCloseTo(nextMonth.nonMortgageDebtEnd, 6);
+    expect(nextMonth.debtServiceThisMonth).toBeCloseTo(expectedNextDebtService, 6);
   });
 });
