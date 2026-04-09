@@ -47,8 +47,12 @@ export interface YearlyAggregateV2 {
   cashLikeEnd: number;                   // 연말 현금성 잔고
   financialInvestableEnd: number;        // 연말 투자자산 잔고
   propertyValueEnd: number;              // 연말 부동산 평가액
+  mortgageDebtEnd: number;               // 연말 주담대 잔고
+  nonMortgageDebtEnd: number;            // 연말 비담보 대출 잔고
+  totalDebtEnd: number;                  // 연말 총부채 = mortgageDebtEnd + nonMortgageDebtEnd
   securedLoanBalanceEnd: number;         // 연말 담보대출 잔고
   propertySaleProceedsBucketEnd: number; // 연말 매각대금 운용 잔액 (연 4% 복리 적용)
+  netWorthEnd: number;                   // 연말 순자산 = 자산합 - totalDebtEnd - securedLoanBalanceEnd
   totalShortfall: number;                // 연간 미충당 합계
   totalIncome: number;                   // 연간 근로소득
   totalPension: number;                  // 연간 연금

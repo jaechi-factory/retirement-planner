@@ -8,8 +8,12 @@ function createYear(ageYear: number): YearlyAggregateV2 {
     cashLikeEnd: 1000,
     financialInvestableEnd: 2000,
     propertyValueEnd: 3000,
+    mortgageDebtEnd: 0,
+    nonMortgageDebtEnd: 0,
+    totalDebtEnd: 0,
     securedLoanBalanceEnd: 0,
     propertySaleProceedsBucketEnd: 0,
+    netWorthEnd: 6000,
     totalShortfall: 0,
     totalIncome: 0,
     totalPension: 0,
@@ -98,4 +102,3 @@ describe('buildCashflowByAgeMaps', () => {
     expect(maps.monthlyNetByAge.get(55)).toBe(245);
   });
 });
-

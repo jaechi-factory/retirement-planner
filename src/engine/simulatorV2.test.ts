@@ -866,6 +866,42 @@ describe('기본 동작', () => {
     expect(snapshots.length).toBe(612);
   });
 
+  it('[W6] currentAge=30, lifeExpectancy=90이면 총 732개월이어야 함', () => {
+    const inputs = makeInputs({
+      status: { currentAge: 30, annualIncome: 6000, incomeGrowthRate: 2.0, annualExpense: 3600, expenseGrowthRate: 2.0 },
+      goal: { retirementAge: 65, lifeExpectancy: 90, targetMonthly: 300, inflationRate: 2.5 },
+    });
+    const snapshots = simulateMonthlyV2(
+      inputs,
+      inputs.goal.targetMonthly,
+      'keep',
+      DEFAULT_FUNDING_POLICY,
+      DEFAULT_LIQUIDATION,
+    );
+
+    expect(snapshots.length).toBe(732);
+    expect(snapshots[snapshots.length - 1]?.ageYear).toBe(90);
+    expect(snapshots[snapshots.length - 1]?.ageMonthIndex).toBe(11);
+  });
+
+  it('[W6] currentAge=64, lifeExpectancy=67이면 총 48개월이어야 함', () => {
+    const inputs = makeInputs({
+      status: { currentAge: 64, annualIncome: 6000, incomeGrowthRate: 2.0, annualExpense: 3600, expenseGrowthRate: 2.0 },
+      goal: { retirementAge: 65, lifeExpectancy: 67, targetMonthly: 300, inflationRate: 2.5 },
+    });
+    const snapshots = simulateMonthlyV2(
+      inputs,
+      inputs.goal.targetMonthly,
+      'keep',
+      DEFAULT_FUNDING_POLICY,
+      DEFAULT_LIQUIDATION,
+    );
+
+    expect(snapshots.length).toBe(48);
+    expect(snapshots[snapshots.length - 1]?.ageYear).toBe(67);
+    expect(snapshots[snapshots.length - 1]?.ageMonthIndex).toBe(11);
+  });
+
   it('모든 스냅샷의 cashLikeEnd / financialInvestableEnd는 음수가 없어야 함', () => {
     const inputs = makeInputs();
     const snapshots = simulateMonthlyV2(inputs, inputs.goal.targetMonthly, 'keep', DEFAULT_FUNDING_POLICY, DEFAULT_LIQUIDATION);
@@ -1320,6 +1356,20 @@ describe('H. W3: YearlyAggregateV2 totalRentalCost 집계', () => {
     }
   });
 
+  it('[W3-4] sell 전략: 월세가 발생한 연도의 yearly.totalRentalCost는 0이 아니고 월합과 같다', () => {
+    const snapshots = simulateMonthlyV2(SELL_INPUTS, 300, 'sell', DEFAULT_FUNDING_POLICY, DEFAULT_LIQUIDATION);
+    const yearly = aggregateToYearly(snapshots);
+
+    const yearsWithRent = yearly.filter((year) => year.months.some((m) => m.rentalCostThisMonth > 0));
+    expect(yearsWithRent.length).toBeGreaterThan(0);
+
+    yearsWithRent.forEach((year) => {
+      const monthlySum = year.months.reduce((sum, m) => sum + m.rentalCostThisMonth, 0);
+      expect(year.totalRentalCost).toBeGreaterThan(0);
+      expect(year.totalRentalCost).toBeCloseTo(monthlySum, 6);
+    });
+  });
+
   it('[W3-3] keep/secured_loan 전략: 임대 없으므로 모든 연도 totalRentalCost === 0', () => {
     const keepSnaps = simulateMonthlyV2(SELL_INPUTS, 300, 'keep', DEFAULT_FUNDING_POLICY, DEFAULT_LIQUIDATION);
     const loanSnaps = simulateMonthlyV2(SELL_INPUTS, 300, 'secured_loan', DEFAULT_FUNDING_POLICY, DEFAULT_LIQUIDATION);
@@ -1330,6 +1380,70 @@ describe('H. W3: YearlyAggregateV2 totalRentalCost 집계', () => {
     for (const year of aggregateToYearly(loanSnaps)) {
       expect(year.totalRentalCost).toBe(0);
     }
+  });
+});
+
+describe('H2. YearlyAggregateV2 부채/순자산 정합성', () => {
+  const DEBT_AGG_INPUTS = makeInputs({
+    goal: { retirementAge: 65, lifeExpectancy: 68, targetMonthly: 300, inflationRate: 2.5 },
+    status: { currentAge: 64, annualIncome: 3000, incomeGrowthRate: 0, annualExpense: 3600, expenseGrowthRate: 0 },
+    assets: {
+      cash:       { amount: 1000,  expectedReturn: 1.0 },
+      deposit:    { amount: 1000,  expectedReturn: 2.0 },
+      stock_kr:   { amount: 0,     expectedReturn: 6.0 },
+      stock_us:   { amount: 0,     expectedReturn: 8.0 },
+      bond:       { amount: 0,     expectedReturn: 3.5 },
+      crypto:     { amount: 0,     expectedReturn: 0   },
+      realEstate: { amount: 50000, expectedReturn: 1.0 },
+    },
+    debts: {
+      mortgage:   { balance: 12000, interestRate: 4.0, repaymentType: 'equal_payment', repaymentYears: 10 },
+      creditLoan: { balance: 3000,  interestRate: 6.0, repaymentType: 'equal_payment', repaymentYears: 5 },
+      otherLoan:  { balance: 1000,  interestRate: 5.0, repaymentType: 'equal_payment', repaymentYears: 3 },
+    },
+  });
+
+  it('[W7-1] 연도 집계에서도 totalDebtEnd = mortgageDebtEnd + nonMortgageDebtEnd가 유지되어야 함', () => {
+    const snapshots = simulateMonthlyV2(
+      DEBT_AGG_INPUTS,
+      DEBT_AGG_INPUTS.goal.targetMonthly,
+      'keep',
+      DEFAULT_FUNDING_POLICY,
+      DEFAULT_LIQUIDATION,
+    );
+    const yearly = aggregateToYearly(snapshots);
+
+    yearly.forEach((year) => {
+      const lastMonth = year.months[year.months.length - 1];
+      expect(year.mortgageDebtEnd).toBeCloseTo(lastMonth.mortgageDebtEnd, 6);
+      expect(year.nonMortgageDebtEnd).toBeCloseTo(lastMonth.nonMortgageDebtEnd, 6);
+      expect(year.totalDebtEnd).toBeCloseTo(lastMonth.totalDebtEnd, 6);
+      expect(year.totalDebtEnd).toBeCloseTo(year.mortgageDebtEnd + year.nonMortgageDebtEnd, 6);
+    });
+  });
+
+  it('[W7-2] netWorthEnd는 마지막 월 스냅샷 기준 순자산과 같아야 함', () => {
+    const snapshots = simulateMonthlyV2(
+      DEBT_AGG_INPUTS,
+      DEBT_AGG_INPUTS.goal.targetMonthly,
+      'keep',
+      DEFAULT_FUNDING_POLICY,
+      DEFAULT_LIQUIDATION,
+    );
+    const yearly = aggregateToYearly(snapshots);
+
+    yearly.forEach((year) => {
+      const lastMonth = year.months[year.months.length - 1];
+      const expectedNetWorth =
+        lastMonth.cashLikeEnd +
+        lastMonth.financialInvestableEnd +
+        lastMonth.propertyValueEnd +
+        lastMonth.propertySaleProceedsBucketEnd -
+        lastMonth.securedLoanBalanceEnd -
+        lastMonth.totalDebtEnd;
+
+      expect(year.netWorthEnd).toBeCloseTo(expectedNetWorth, 6);
+    });
   });
 });
 
@@ -1474,6 +1588,27 @@ describe('J. W5: all_debts 매각 후 nonMortgageDebtEnd 정산', () => {
     },
   });
 
+  // 매각이 즉시 발생하도록 설계한 settlement mode 전용 케이스
+  // (매각 당월 규칙 검증: 부채잔액/월상환액)
+  const SETTLEMENT_MODE_INPUTS = makeInputs({
+    goal: { retirementAge: 65, lifeExpectancy: 70, targetMonthly: 700, inflationRate: 2.5 },
+    status: { currentAge: 65, annualIncome: 0, incomeGrowthRate: 0, annualExpense: 8400, expenseGrowthRate: 0 },
+    assets: {
+      cash:       { amount: 0,     expectedReturn: 1.0 },
+      deposit:    { amount: 0,     expectedReturn: 2.0 },
+      stock_kr:   { amount: 0,     expectedReturn: 6.0 },
+      stock_us:   { amount: 0,     expectedReturn: 8.0 },
+      bond:       { amount: 0,     expectedReturn: 3.5 },
+      crypto:     { amount: 0,     expectedReturn: 0   },
+      realEstate: { amount: 50000, expectedReturn: 1.0 },
+    },
+    debts: {
+      mortgage:   { balance: 20000, interestRate: 4.0, repaymentType: 'equal_payment', repaymentYears: 30 },
+      creditLoan: { balance: 3000,  interestRate: 6.0, repaymentType: 'equal_payment', repaymentYears: 5 },
+      otherLoan:  { balance: 1000,  interestRate: 5.0, repaymentType: 'equal_payment', repaymentYears: 3 },
+    },
+  });
+
   it('[W5-1] sell + all_debts: 매각 당월부터 nonMortgageDebtEnd === 0', () => {
     const realPolicy = policyModule.getPlannerPolicy();
     vi.spyOn(policyModule, 'getPlannerPolicy').mockReturnValue({
@@ -1564,5 +1699,72 @@ describe('J. W5: all_debts 매각 후 nonMortgageDebtEnd 정산', () => {
       // otherLoan도 3년(36개월)이면 60개월 이후엔 둘 다 0
       expect(after60[0].nonMortgageDebtEnd).toBe(0);
     }
+  });
+
+  it('[W5-A] all_debts: 매각 당월부터 mortgage/non-mortgage/totalDebt/debtService 모두 0', () => {
+    const realPolicy = policyModule.getPlannerPolicy();
+    vi.spyOn(policyModule, 'getPlannerPolicy').mockReturnValue({
+      ...realPolicy,
+      property: { ...realPolicy.property, saleDebtSettlementMode: 'all_debts' },
+    });
+
+    const snapshots = simulateMonthlyV2(
+      SETTLEMENT_MODE_INPUTS,
+      SETTLEMENT_MODE_INPUTS.goal.targetMonthly,
+      'sell',
+      DEFAULT_FUNDING_POLICY,
+      DEFAULT_LIQUIDATION,
+    );
+
+    const saleIdx = snapshots.findIndex((s) => s.eventFlags.propertySold);
+    expect(saleIdx).toBeGreaterThanOrEqual(0);
+
+    const fromSale = snapshots.slice(saleIdx);
+    expect(fromSale.length).toBeGreaterThan(0);
+
+    fromSale.forEach((s) => {
+      expect(s.mortgageDebtEnd).toBe(0);
+      expect(s.nonMortgageDebtEnd).toBe(0);
+      expect(s.totalDebtEnd).toBe(0);
+      expect(s.debtServiceThisMonth).toBe(0);
+    });
+  });
+
+  it('[W5-B] mortgage_only: 매각 당월부터 주담대 0 + 비주담보 유지 + debtService는 비주담보만', () => {
+    // 기본 정책(mortgage_only) 검증
+    const snapshots = simulateMonthlyV2(
+      SETTLEMENT_MODE_INPUTS,
+      SETTLEMENT_MODE_INPUTS.goal.targetMonthly,
+      'sell',
+      DEFAULT_FUNDING_POLICY,
+      DEFAULT_LIQUIDATION,
+    );
+    const schedules = precomputeDebtSchedules(SETTLEMENT_MODE_INPUTS.debts);
+
+    const saleIdx = snapshots.findIndex((s) => s.eventFlags.propertySold);
+    expect(saleIdx).toBeGreaterThanOrEqual(0);
+
+    const saleMonth = snapshots[saleIdx];
+    const saleMonthIndex =
+      (saleMonth.ageYear - SETTLEMENT_MODE_INPUTS.status.currentAge) * 12 + saleMonth.ageMonthIndex;
+    const expectedNonMortgageService =
+      (schedules.creditLoan[saleMonthIndex]?.payment ?? 0) +
+      (schedules.otherLoan[saleMonthIndex]?.payment ?? 0);
+
+    // 매각 당월: 주담대는 정산 0, 비주담보는 유지
+    expect(saleMonth.mortgageDebtEnd).toBe(0);
+    expect(saleMonth.nonMortgageDebtEnd).toBeGreaterThan(0);
+    expect(saleMonth.totalDebtEnd).toBeCloseTo(saleMonth.nonMortgageDebtEnd, 6);
+    expect(saleMonth.debtServiceThisMonth).toBeCloseTo(expectedNonMortgageService, 6);
+    expect(saleMonth.debtServiceThisMonth).toBeGreaterThan(0);
+
+    // 매각 이후: totalDebtEnd = mortgageDebtEnd + nonMortgageDebtEnd 불변
+    //           mortgage_only에서는 mortgageDebtEnd가 계속 0
+    const fromSale = snapshots.slice(saleIdx);
+    fromSale.forEach((s) => {
+      expect(s.mortgageDebtEnd).toBe(0);
+      expect(s.totalDebtEnd).toBeCloseTo(s.mortgageDebtEnd + s.nonMortgageDebtEnd, 6);
+      expect(s.totalDebtEnd).toBeCloseTo(s.nonMortgageDebtEnd, 6);
+    });
   });
 });

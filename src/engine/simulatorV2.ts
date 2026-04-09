@@ -40,6 +40,7 @@ import type { PlannerInputs } from '../types/inputs';
 import type { MonthlySnapshotV2, SnapshotEventFlags, YearlyAggregateV2 } from '../types/calculationV2';
 import type { FundingPolicy, LiquidationPolicy } from './fundingPolicy';
 import type { PropertyStrategyV2 } from './propertyStrategiesV2';
+import type { DebtSettlementMode } from '../policy/policyTable';
 import { getPlannerPolicy } from '../policy/policyTable';
 import { precomputeDebtSchedules } from './assetWeighting';
 import type { DebtSchedules } from './debtSchedule';
@@ -188,9 +189,25 @@ function getMonthlyDebtService(schedules: DebtSchedules, scheduleIndex: number):
   return get(schedules.mortgage) + get(schedules.creditLoan) + get(schedules.otherLoan);
 }
 
-/** 주담대 월 납입액만 반환 (집 매각 후 이중 상환 방지용) */
-function getMortgagePayment(schedules: DebtSchedules, scheduleIndex: number): number {
-  return schedules.mortgage[scheduleIndex]?.payment ?? 0;
+/** 비주담보(신용·기타) 대출 월 납입액 합산 */
+function getMonthlyNonMortgageDebtService(schedules: DebtSchedules, scheduleIndex: number): number {
+  const get = (rows: { payment: number }[]) => rows[scheduleIndex]?.payment ?? 0;
+  return get(schedules.creditLoan) + get(schedules.otherLoan);
+}
+
+/**
+ * 집 매각 이후 적용할 월 부채상환액.
+ * - all_debts: 매각으로 전체 정산 → 0
+ * - mortgage_only: 매각으로 주담대만 정산 → 비주담보 상환만 유지
+ */
+function getDebtServiceAfterPropertySale(
+  schedules: DebtSchedules,
+  scheduleIndex: number,
+  settlementMode: DebtSettlementMode,
+): number {
+  return settlementMode === 'all_debts'
+    ? 0
+    : getMonthlyNonMortgageDebtService(schedules, scheduleIndex);
 }
 
 /** 주담대 잔액 — 스냅샷 mortgageDebtEnd 및 sell 시 상환액 계산용 */
@@ -336,10 +353,12 @@ export function simulateMonthlyV2(
       // sell 전략 + all_debts: 매각 시 전체 잔존부채를 일괄 상환 → 이후 월 납입 0.
       // sell 전략 + mortgage_only: 주담대만 일괄 상환 → 이후 신용/기타 대출 납입은 유지.
       // [W4] all_debts 모드에서 이미 정산된 신용/기타 대출의 이중 상환 방지.
-      const debtServiceThisMonth = propertySold
-        ? propertyPolicy.saleDebtSettlementMode === 'all_debts'
-          ? 0
-          : getMonthlyDebtService(debtSchedules, totalMonthIndex) - getMortgagePayment(debtSchedules, totalMonthIndex)
+      let debtServiceThisMonth = propertySold
+        ? getDebtServiceAfterPropertySale(
+            debtSchedules,
+            totalMonthIndex,
+            propertyPolicy.saleDebtSettlementMode,
+          )
         : getMonthlyDebtService(debtSchedules, totalMonthIndex);
 
       const childExpenseThisMonth =
@@ -444,6 +463,20 @@ export function simulateMonthlyV2(
             eventFlags.propertyInterventionStarted = true;
           }
           eventFlags.propertySold = true;
+
+          const debtServiceAfterSale = getDebtServiceAfterPropertySale(
+            debtSchedules,
+            totalMonthIndex,
+            propertyPolicy.saleDebtSettlementMode,
+          );
+          const debtServiceRefund = Math.max(0, debtServiceThisMonth - debtServiceAfterSale);
+          debtServiceThisMonth = debtServiceAfterSale;
+          if (debtServiceRefund > 0) {
+            // 같은 달에 매각으로 부채를 정산했으므로, 선차감된 상환액을 환급해
+            // snapshot 월상환액/버킷흐름/미충당금이 동일 기준을 따르도록 맞춘다.
+            buckets.cash += debtServiceRefund;
+            uncoveredAmount = Math.max(0, uncoveredAmount - debtServiceRefund);
+          }
 
           const remainingMortgage = plannerPolicy.property.saleDebtSettlementMode === 'all_debts'
             ? getRemainingDebt(debtSchedules, totalMonthIndex)
@@ -582,6 +615,13 @@ export function aggregateToYearly(snapshots: MonthlySnapshotV2[]): YearlyAggrega
   const result: YearlyAggregateV2[] = [];
   for (const [ageYear, months] of byYear) {
     const last = months[months.length - 1];
+    const netWorthEnd =
+      last.cashLikeEnd +
+      last.financialInvestableEnd +
+      last.propertyValueEnd +
+      last.propertySaleProceedsBucketEnd -
+      last.securedLoanBalanceEnd -
+      last.totalDebtEnd;
     const eventSummary: string[] = [];
     if (months.some((m) => m.eventFlags.financialSellStarted))    eventSummary.push('주식·채권 팔기 시작');
     if (months.some((m) => m.eventFlags.financialExhausted))      eventSummary.push('주식·채권 소진');
@@ -594,8 +634,12 @@ export function aggregateToYearly(snapshots: MonthlySnapshotV2[]): YearlyAggrega
       cashLikeEnd: last.cashLikeEnd,
       financialInvestableEnd: last.financialInvestableEnd,
       propertyValueEnd: last.propertyValueEnd,
+      mortgageDebtEnd: last.mortgageDebtEnd,
+      nonMortgageDebtEnd: last.nonMortgageDebtEnd,
+      totalDebtEnd: last.totalDebtEnd,
       securedLoanBalanceEnd: last.securedLoanBalanceEnd,
       propertySaleProceedsBucketEnd: last.propertySaleProceedsBucketEnd,
+      netWorthEnd,
       totalShortfall:    months.reduce((s, m) => s + m.shortfallThisMonth, 0),
       totalIncome:       months.reduce((s, m) => s + m.incomeThisMonth, 0),
       totalPension:      months.reduce((s, m) => s + m.pensionThisMonth, 0),

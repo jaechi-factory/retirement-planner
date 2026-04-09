@@ -8,8 +8,12 @@ function createYear(ageYear: number): YearlyAggregateV2 {
     cashLikeEnd: 0,
     financialInvestableEnd: 0,
     propertyValueEnd: 0,
+    mortgageDebtEnd: 0,
+    nonMortgageDebtEnd: 0,
+    totalDebtEnd: 0,
     securedLoanBalanceEnd: 0,
     propertySaleProceedsBucketEnd: 0,
+    netWorthEnd: 0,
     totalShortfall: 0,
     totalIncome: 0,
     totalPension: 0,
@@ -87,4 +91,3 @@ describe('selected strategy helpers', () => {
     expect(selected).toBe('keep');
   });
 });
-
