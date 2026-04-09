@@ -31,6 +31,22 @@ function calcMonthlyLoanPayment(
     (Math.pow(1 + r, totalMonths) - 1);
 }
 
+/** 해당 월(0-based)에 실제 발생하는 차량 비용 */
+export function getVehicleMonthlyCost(
+  vehicle: VehicleInfo | undefined,
+  monthIndex: number,
+): number {
+  if (!vehicle || vehicle.ownershipType !== 'owned' || monthIndex < 0) return 0;
+
+  const monthlyLoan = calcMonthlyLoanPayment(
+    vehicle.loanBalance,
+    vehicle.loanRate,
+    vehicle.loanMonths,
+  );
+
+  return (monthIndex < vehicle.loanMonths ? monthlyLoan : 0) + vehicle.monthlyMaintenance;
+}
+
 /**
  * 연도별(0-based, currentAge 기준) 연간 차량 비용 배열을 생성한다.
  *
@@ -239,14 +255,13 @@ export function computeVehicleComparison(
       hasVehicle: true,
       isIncluded: true,
     };
-  } else {
-    // possibleMonthly는 차 비용 미포함 → with = possibleMonthly - avgMonthlyCost
-    return {
-      withVehicle: Math.max(0, Math.round(possibleMonthly - avgMonthlyCost)),
-      withoutVehicle: possibleMonthly,
-      monthlyReduction: Math.round(avgMonthlyCost),
-      hasVehicle: true,
-      isIncluded: false,
-    };
   }
+
+  return {
+    withVehicle: possibleMonthly,
+    withoutVehicle: Math.round(possibleMonthly + avgMonthlyCost),
+    monthlyReduction: Math.round(avgMonthlyCost),
+    hasVehicle: true,
+    isIncluded: false,
+  };
 }

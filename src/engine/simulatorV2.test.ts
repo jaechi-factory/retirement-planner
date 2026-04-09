@@ -144,6 +144,78 @@ describe('[P1] 버킷별 개별 수익률', () => {
   });
 });
 
+describe('[V] 차량 비용 메인 엔진 반영', () => {
+  it('[V-1] separate 차량은 월 지출에 실제로 추가되어야 함', () => {
+    const inputs = makeInputs({
+      goal: { retirementAge: 65, lifeExpectancy: 66, targetMonthly: 100, inflationRate: 0 },
+      status: { currentAge: 65, annualIncome: 0, incomeGrowthRate: 0, annualExpense: 0, expenseGrowthRate: 0 },
+      assets: {
+        cash:       { amount: 10000, expectedReturn: 0 },
+        deposit:    { amount: 0, expectedReturn: 0 },
+        stock_kr:   { amount: 0, expectedReturn: 0 },
+        stock_us:   { amount: 0, expectedReturn: 0 },
+        bond:       { amount: 0, expectedReturn: 0 },
+        crypto:     { amount: 0, expectedReturn: 0 },
+        realEstate: { amount: 0, expectedReturn: 0 },
+      },
+      vehicle: {
+        ownershipType: 'owned',
+        costIncludedInExpense: 'separate',
+        loanBalance: 1200,
+        loanRate: 0,
+        loanMonths: 12,
+        purchaseYearsFromNow: 0,
+        purchasePrice: 0,
+        loanAmount: 0,
+        leaseMonthlyPayment: 0,
+        leaseMonths: 0,
+        monthlyMaintenance: 12,
+        disposalValue: 0,
+      },
+    });
+
+    const snapshots = simulateMonthlyV2(inputs, 100, 'keep', DEFAULT_FUNDING_POLICY, DEFAULT_LIQUIDATION);
+
+    expect(snapshots[0].expenseThisMonth).toBe(212);
+    expect(snapshots[12].expenseThisMonth).toBe(112);
+  });
+
+  it('[V-2] included 차량은 메인 지출에 별도로 추가되지 않아야 함', () => {
+    const inputs = makeInputs({
+      goal: { retirementAge: 65, lifeExpectancy: 66, targetMonthly: 100, inflationRate: 0 },
+      status: { currentAge: 65, annualIncome: 0, incomeGrowthRate: 0, annualExpense: 0, expenseGrowthRate: 0 },
+      assets: {
+        cash:       { amount: 10000, expectedReturn: 0 },
+        deposit:    { amount: 0, expectedReturn: 0 },
+        stock_kr:   { amount: 0, expectedReturn: 0 },
+        stock_us:   { amount: 0, expectedReturn: 0 },
+        bond:       { amount: 0, expectedReturn: 0 },
+        crypto:     { amount: 0, expectedReturn: 0 },
+        realEstate: { amount: 0, expectedReturn: 0 },
+      },
+      vehicle: {
+        ownershipType: 'owned',
+        costIncludedInExpense: 'included',
+        loanBalance: 1200,
+        loanRate: 0,
+        loanMonths: 12,
+        purchaseYearsFromNow: 0,
+        purchasePrice: 0,
+        loanAmount: 0,
+        leaseMonthlyPayment: 0,
+        leaseMonths: 0,
+        monthlyMaintenance: 12,
+        disposalValue: 0,
+      },
+    });
+
+    const snapshots = simulateMonthlyV2(inputs, 100, 'keep', DEFAULT_FUNDING_POLICY, DEFAULT_LIQUIDATION);
+
+    expect(snapshots[0].expenseThisMonth).toBe(100);
+    expect(snapshots[12].expenseThisMonth).toBe(100);
+  });
+});
+
 // ─── [P2] 잉여 재투자 비중 고정 ──────────────────────────────────────────────
 
 describe('[P2] 잉여 재투자 — initialRatios 고정, realEstate 제외', () => {

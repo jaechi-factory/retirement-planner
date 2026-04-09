@@ -287,6 +287,110 @@ describe('[W2] finalNetWorth 완성', () => {
   });
 });
 
+describe('[V] 차량 입력이 sustainableMonthly에 반영되어야 함', () => {
+  it('[V-3] separate 차량이 있으면 sustainableMonthly가 내려가야 함', () => {
+    const baseInputs = makeFullInputs({
+      goal: { retirementAge: 65, lifeExpectancy: 67, targetMonthly: 200, inflationRate: 0 },
+      status: { currentAge: 64, annualIncome: 0, incomeGrowthRate: 0, annualExpense: 0, expenseGrowthRate: 0 },
+      assets: {
+        cash:       { amount: 5000, expectedReturn: 0 },
+        deposit:    { amount: 0, expectedReturn: 0 },
+        stock_kr:   { amount: 0, expectedReturn: 0 },
+        stock_us:   { amount: 0, expectedReturn: 0 },
+        bond:       { amount: 0, expectedReturn: 0 },
+        crypto:     { amount: 0, expectedReturn: 0 },
+        realEstate: { amount: 0, expectedReturn: 0 },
+      },
+      vehicle: {
+        ownershipType: 'none',
+        costIncludedInExpense: 'separate',
+        loanBalance: 0,
+        loanRate: 0,
+        loanMonths: 0,
+        purchaseYearsFromNow: 0,
+        purchasePrice: 0,
+        loanAmount: 0,
+        leaseMonthlyPayment: 0,
+        leaseMonths: 0,
+        monthlyMaintenance: 0,
+        disposalValue: 0,
+      },
+    });
+
+    const withVehicle = runScenario({
+      ...baseInputs,
+      vehicle: {
+        ownershipType: 'owned',
+        costIncludedInExpense: 'separate',
+        loanBalance: 1200,
+        loanRate: 0,
+        loanMonths: 12,
+        purchaseYearsFromNow: 0,
+        purchasePrice: 0,
+        loanAmount: 0,
+        leaseMonthlyPayment: 0,
+        leaseMonths: 0,
+        monthlyMaintenance: 12,
+        disposalValue: 0,
+      },
+    }, 'max_sustainable');
+    const withoutVehicle = runScenario(baseInputs, 'max_sustainable');
+
+    expect(withVehicle.summary.sustainableMonthly).toBeLessThan(withoutVehicle.summary.sustainableMonthly);
+  });
+
+  it('[V-4] included 차량은 annualExpense를 그대로 둘 때 sustainableMonthly를 추가로 바꾸지 않아야 함', () => {
+    const baseInputs = makeFullInputs({
+      goal: { retirementAge: 65, lifeExpectancy: 67, targetMonthly: 200, inflationRate: 0 },
+      status: { currentAge: 64, annualIncome: 0, incomeGrowthRate: 0, annualExpense: 0, expenseGrowthRate: 0 },
+      assets: {
+        cash:       { amount: 5000, expectedReturn: 0 },
+        deposit:    { amount: 0, expectedReturn: 0 },
+        stock_kr:   { amount: 0, expectedReturn: 0 },
+        stock_us:   { amount: 0, expectedReturn: 0 },
+        bond:       { amount: 0, expectedReturn: 0 },
+        crypto:     { amount: 0, expectedReturn: 0 },
+        realEstate: { amount: 0, expectedReturn: 0 },
+      },
+      vehicle: {
+        ownershipType: 'none',
+        costIncludedInExpense: 'separate',
+        loanBalance: 0,
+        loanRate: 0,
+        loanMonths: 0,
+        purchaseYearsFromNow: 0,
+        purchasePrice: 0,
+        loanAmount: 0,
+        leaseMonthlyPayment: 0,
+        leaseMonths: 0,
+        monthlyMaintenance: 0,
+        disposalValue: 0,
+      },
+    });
+
+    const withIncludedVehicle = runScenario({
+      ...baseInputs,
+      vehicle: {
+        ownershipType: 'owned',
+        costIncludedInExpense: 'included',
+        loanBalance: 1200,
+        loanRate: 0,
+        loanMonths: 12,
+        purchaseYearsFromNow: 0,
+        purchasePrice: 0,
+        loanAmount: 0,
+        leaseMonthlyPayment: 0,
+        leaseMonths: 0,
+        monthlyMaintenance: 12,
+        disposalValue: 0,
+      },
+    }, 'max_sustainable');
+    const withoutVehicle = runScenario(baseInputs, 'max_sustainable');
+
+    expect(withIncludedVehicle.summary.sustainableMonthly).toBe(withoutVehicle.summary.sustainableMonthly);
+  });
+});
+
 describe('calculatorV2 recommendation mode', () => {
   it('keep_priority 모드에서도 maxSustainableMonthly를 별도 제공해야 한다', () => {
     const result = runScenario(makeInputs(6000), 'keep_priority');
@@ -407,4 +511,3 @@ describe('B6: 헤드라인-차트 기준 통일 (sustainableMonthly)', () => {
     expect(keepOption.yearlyAggregates.some(y => y.totalShortfall > 0)).toBe(false);
   });
 });
-
