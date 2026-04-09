@@ -8,8 +8,6 @@ import SectionCard from './shared/SectionCard';
 const OWNERSHIP_OPTIONS: { value: VehicleOwnershipType; label: string; desc: string }[] = [
   { value: 'none',   label: '없음',       desc: '차량 없음' },
   { value: 'owned',  label: '이미 보유',  desc: '지금 갖고 있음' },
-  { value: 'buying', label: '구매 예정',  desc: '앞으로 살 예정' },
-  { value: 'lease',  label: '리스·렌트',  desc: '월 납입 방식' },
 ];
 
 /** 유형 선택 버튼 */
@@ -21,7 +19,7 @@ function OwnershipSelector({
   onChange: (v: VehicleOwnershipType) => void;
 }) {
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6 }}>
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 6 }}>
       {OWNERSHIP_OPTIONS.map((opt) => {
         const selected = value === opt.value;
         return (
@@ -176,78 +174,13 @@ export default function VehicleSection() {
             </>
           )}
 
-          {/* ── 구매 예정 ──────────────────────────────────────── */}
-          {type === 'buying' && (
-            <>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                <NumberInput
-                  label="구매 시점"
-                  value={vehicle.purchaseYearsFromNow}
-                  onChange={(v) => setVehicle({ purchaseYearsFromNow: v })}
-                  unit="년 후"
-                  max={50}
-                />
-                <NumberInput
-                  label="선수금"
-                  hint="구매 시 현금 지불 금액"
-                  value={vehicle.purchasePrice}
-                  onChange={(v) => setVehicle({ purchasePrice: v })}
-                />
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '3fr 2fr', gap: 8 }}>
-                <NumberInput
-                  label="대출 금액"
-                  hint="할부로 빌리는 금액"
-                  value={vehicle.loanAmount}
-                  onChange={(v) => setVehicle({ loanAmount: v })}
-                />
-                <RateInput
-                  label="이율 (연)"
-                  value={vehicle.loanRate}
-                  onChange={(v) => setVehicle({ loanRate: v })}
-                />
-              </div>
-              <NumberInput
-                label="대출 기간"
-                value={vehicle.loanMonths}
-                onChange={(v) => setVehicle({ loanMonths: v })}
-                unit="개월"
-                max={120}
-              />
-            </>
-          )}
-
-          {/* ── 리스·렌트 ──────────────────────────────────────── */}
-          {type === 'lease' && (
-            <div style={{ display: 'grid', gridTemplateColumns: '3fr 2fr', gap: 8 }}>
-              <NumberInput
-                label="월 납입액"
-                value={vehicle.leaseMonthlyPayment}
-                onChange={(v) => setVehicle({ leaseMonthlyPayment: v })}
-              />
-              <NumberInput
-                label="남은 기간"
-                value={vehicle.leaseMonths}
-                onChange={(v) => setVehicle({ leaseMonths: v })}
-                unit="개월"
-                max={120}
-              />
-            </div>
-          )}
-
           {/* ── 공통 ───────────────────────────────────────────── */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 8 }}>
             <NumberInput
               label="월 유지비"
               value={vehicle.monthlyMaintenance}
               onChange={(v) => setVehicle({ monthlyMaintenance: v })}
               hint="보험·주유·수리 등"
-            />
-            <NumberInput
-              label={type === 'lease' ? '보증금 반환액' : '처분 예상가'}
-              value={vehicle.disposalValue}
-              onChange={(v) => setVehicle({ disposalValue: v })}
-              hint={type === 'lease' ? '리스 만료 시 돌려받는 금액' : '차 팔 때 받을 금액'}
             />
           </div>
 

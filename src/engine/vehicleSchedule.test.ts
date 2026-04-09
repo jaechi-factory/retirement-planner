@@ -13,13 +13,7 @@ function makeVehicle(overrides: Partial<VehicleInfo> = {}): VehicleInfo {
     loanBalance: 1200,
     loanRate: 12,
     loanMonths: 12,
-    purchaseYearsFromNow: 0,
-    purchasePrice: 0,
-    loanAmount: 0,
-    leaseMonthlyPayment: 0,
-    leaseMonths: 0,
     monthlyMaintenance: 10,
-    disposalValue: 0,
     ...overrides,
   };
 }

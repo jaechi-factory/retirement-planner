@@ -58,13 +58,7 @@ export const defaultVehicle: VehicleInfo = {
   loanBalance: 0,
   loanRate: 0,
   loanMonths: 0,
-  purchaseYearsFromNow: 0,
-  purchasePrice: 0,
-  loanAmount: 0,
-  leaseMonthlyPayment: 0,
-  leaseMonths: 0,
   monthlyMaintenance: 0,
-  disposalValue: 0,
 };
 
 const defaultInputs: PlannerInputs = {
@@ -254,6 +248,26 @@ function migrateDebtItem(
   return { ...rest, repaymentType };
 }
 
+function sanitizeVehicle(raw: unknown): VehicleInfo {
+  const candidate = (raw && typeof raw === 'object') ? raw as Record<string, unknown> : {};
+  const ownershipType = candidate.ownershipType === 'owned' ? 'owned' : 'none';
+  const costIncludedInExpense = candidate.costIncludedInExpense === 'included' ? 'included' : 'separate';
+
+  const getNumber = (key: keyof VehicleInfo): number => {
+    const value = candidate[key];
+    return typeof value === 'number' && Number.isFinite(value) ? value : 0;
+  };
+
+  return {
+    ownershipType,
+    costIncludedInExpense,
+    loanBalance: getNumber('loanBalance'),
+    loanRate: getNumber('loanRate'),
+    loanMonths: getNumber('loanMonths'),
+    monthlyMaintenance: getNumber('monthlyMaintenance'),
+  };
+}
+
 function loadInputsFromStorage(): PlannerInputs {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -274,7 +288,7 @@ function loadInputsFromStorage(): PlannerInputs {
       assets:   { ...defaultInputs.assets,   ...parsed.assets },
       debts:    migratedDebts,
       children: { ...defaultInputs.children, ...parsed.children },
-      vehicle:  { ...defaultVehicle, ...(parsed.vehicle ?? {}) },
+      vehicle:  sanitizeVehicle(parsed.vehicle),
       pension: parsed.pension
         ? {
             publicPension:     { ...defaultInputs.pension.publicPension,     ...parsed.pension.publicPension },
@@ -374,7 +388,6 @@ const computeState = (
         ...inputs,
         vehicle: { ...vehicle, ownershipType: 'none' },
       };
-
       const withoutVehicleResultV2 = runCalculationV2(
         inputsWithoutVehicle,
         fundingPolicy,

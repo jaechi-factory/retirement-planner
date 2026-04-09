@@ -307,13 +307,7 @@ describe('[V] 차량 입력이 sustainableMonthly에 반영되어야 함', () =>
         loanBalance: 0,
         loanRate: 0,
         loanMonths: 0,
-        purchaseYearsFromNow: 0,
-        purchasePrice: 0,
-        loanAmount: 0,
-        leaseMonthlyPayment: 0,
-        leaseMonths: 0,
         monthlyMaintenance: 0,
-        disposalValue: 0,
       },
     });
 
@@ -325,13 +319,7 @@ describe('[V] 차량 입력이 sustainableMonthly에 반영되어야 함', () =>
         loanBalance: 1200,
         loanRate: 0,
         loanMonths: 12,
-        purchaseYearsFromNow: 0,
-        purchasePrice: 0,
-        loanAmount: 0,
-        leaseMonthlyPayment: 0,
-        leaseMonths: 0,
         monthlyMaintenance: 12,
-        disposalValue: 0,
       },
     }, 'max_sustainable');
     const withoutVehicle = runScenario(baseInputs, 'max_sustainable');
@@ -358,13 +346,7 @@ describe('[V] 차량 입력이 sustainableMonthly에 반영되어야 함', () =>
         loanBalance: 0,
         loanRate: 0,
         loanMonths: 0,
-        purchaseYearsFromNow: 0,
-        purchasePrice: 0,
-        loanAmount: 0,
-        leaseMonthlyPayment: 0,
-        leaseMonths: 0,
         monthlyMaintenance: 0,
-        disposalValue: 0,
       },
     });
 
@@ -376,13 +358,7 @@ describe('[V] 차량 입력이 sustainableMonthly에 반영되어야 함', () =>
         loanBalance: 1200,
         loanRate: 0,
         loanMonths: 12,
-        purchaseYearsFromNow: 0,
-        purchasePrice: 0,
-        loanAmount: 0,
-        leaseMonthlyPayment: 0,
-        leaseMonths: 0,
         monthlyMaintenance: 12,
-        disposalValue: 0,
       },
     }, 'max_sustainable');
     const withoutVehicle = runScenario(baseInputs, 'max_sustainable');

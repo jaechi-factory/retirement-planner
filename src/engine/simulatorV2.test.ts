@@ -164,13 +164,7 @@ describe('[V] 차량 비용 메인 엔진 반영', () => {
         loanBalance: 1200,
         loanRate: 0,
         loanMonths: 12,
-        purchaseYearsFromNow: 0,
-        purchasePrice: 0,
-        loanAmount: 0,
-        leaseMonthlyPayment: 0,
-        leaseMonths: 0,
         monthlyMaintenance: 12,
-        disposalValue: 0,
       },
     });
 
@@ -199,13 +193,7 @@ describe('[V] 차량 비용 메인 엔진 반영', () => {
         loanBalance: 1200,
         loanRate: 0,
         loanMonths: 12,
-        purchaseYearsFromNow: 0,
-        purchasePrice: 0,
-        loanAmount: 0,
-        leaseMonthlyPayment: 0,
-        leaseMonths: 0,
         monthlyMaintenance: 12,
-        disposalValue: 0,
       },
     });
 
