@@ -44,7 +44,7 @@ export default function PublicPensionCard() {
         </Typography>
         <Typography variant="caption1" color="semantic.label.alternative" style={{ marginTop: 2, display: 'block' }}>
           {isAuto
-            ? `${publicPension.startAge}세부터 수령 · ${workStartAge}세 취업 기준 추정`
+            ? `${publicPension.startAge}세부터 수령 · 공단 예상월액표 기준 추정 (${workStartAge}세 취업 가정)`
             : `${publicPension.startAge}세부터 수령 · 실제 수령액과 다를 수 있어요`}
         </Typography>
       </div>

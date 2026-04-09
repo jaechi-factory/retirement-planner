@@ -14,6 +14,7 @@ const DEFAULT_NET_TO_GROSS_RATIO = pensionPolicy.netToGrossRatio;
 const ASSUMED_CAREER_START_AGE  = pensionPolicy.assumedCareerStartAge;
 const NPS_MIN_MONTHLY           = pensionPolicy.npsMinMonthly;
 const NPS_MAX_MONTHLY           = pensionPolicy.npsMaxMonthly;
+const NPS_AVERAGE_MONTHLY_INCOME = pensionPolicy.npsAverageMonthlyIncomeValue;
 const NPS_PRE_2026_REPLACEMENT_RATE  = pensionPolicy.npsPreReformReplacementRate;
 const NPS_POST_2026_REPLACEMENT_RATE = pensionPolicy.npsPostReformReplacementRate;
 const NPS_REFORM_YEAR           = pensionPolicy.npsReformYear;
@@ -101,6 +102,7 @@ export function estimatePublicPensionWithMeta(
     `세후 소득을 세전으로 역산했어요 (역산 비율 ${Math.round(DEFAULT_NET_TO_GROSS_RATIO * 100)}%)`,
     `국민연금 가입 시작 나이를 만 ${workStartAge}세로 가정했어요`,
     `예상 가입기간 ${contributionYears}년 (만 ${workStartAge}세~${contributionEndAge}세)`,
+    `공단 예상연금월액표 구조를 따라 A값 ${NPS_AVERAGE_MONTHLY_INCOME.toLocaleString('ko-KR')}만원과 내 소득(B값)을 함께 반영했어요`,
     ...(pre2026Years > 0 && post2026Years > 0
       ? [`2026년 개혁 전 ${pre2026Years}년(소득대체율 41.5%) + 이후 ${post2026Years}년(43%) 분리 적용`]
       : pre2026Years > 0

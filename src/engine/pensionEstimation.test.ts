@@ -23,6 +23,8 @@ import type { PensionInputs, PrivatePensionInput } from '../types/pension';
 // ─── 국민연금 기여기간 경계값 ──────────────────────────────────────────────────
 
 describe('estimatePublicPension — 기여기간 경계값', () => {
+  const MAX_PENSIONABLE_NET_INCOME = 637 * 12 * 0.78;
+
   /**
    * 기여기간 = min(60, retirementAge) - workStartAge
    * 10년 미만이면 연금 수령 불가 → 0 반환
@@ -76,6 +78,29 @@ describe('estimatePublicPension — 기여기간 경계값', () => {
     expect(meta.base).toBe(0);
     expect(meta.conservative).toBe(0);
     expect(meta.optimistic).toBe(0);
+  });
+
+  it('공단 상한소득·40년 가입 가정이면 월 206만원 수준이어야 함', () => {
+    const result = estimatePublicPension(
+      MAX_PENSIONABLE_NET_INCOME,
+      20,
+      65,
+      20,
+    );
+
+    expect(result).toBe(206);
+  });
+
+  it('저소득 구간에서는 월 지급액이 기준소득월액을 넘지 않아야 함', () => {
+    const lowIncomeNet = 40 * 12 * 0.78;
+    const result = estimatePublicPension(
+      lowIncomeNet,
+      20,
+      65,
+      20,
+    );
+
+    expect(result).toBe(40);
   });
 });
 
@@ -179,6 +204,55 @@ describe('연금 지급 기간 경계값', () => {
       0,
     );
     expect(total).toBe(0);
+  });
+});
+
+describe('국민연금 물가연동 경로', () => {
+  const publicOnlyFixture: PensionInputs = {
+    publicPension: {
+      enabled: true,
+      mode: 'manual',
+      startAge: 65,
+      manualMonthlyTodayValue: 205.615,
+      workStartAge: 26,
+    },
+    retirementPension: {
+      enabled: false,
+      mode: 'auto',
+      startAge: 60,
+      payoutYears: 20,
+      currentBalance: 0,
+      accumulationReturnRate: 3.5,
+      payoutReturnRate: 2.0,
+      manualMonthlyTodayValue: 0,
+    },
+    privatePension: {
+      enabled: false,
+      mode: 'auto',
+      startAge: 60,
+      payoutYears: 20,
+      currentBalance: 0,
+      monthlyContribution: 0,
+      expectedReturnRate: 3.5,
+      accumulationReturnRate: 3.5,
+      payoutReturnRate: 3.5,
+      manualMonthlyTodayValue: 0,
+      detailMode: false,
+      products: [],
+    },
+  };
+
+  it('현재가치 월 205.615만원은 물가 3.5%에서 30년 뒤 약 577만원이 된다', () => {
+    const annualIncome = getAnnualPensionIncomeForAge(
+      publicOnlyFixture,
+      65,
+      95,
+      3.5,
+      0,
+      65,
+    );
+
+    expect(annualIncome / 12).toBeCloseTo(577.119, 3);
   });
 });
 

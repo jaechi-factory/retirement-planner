@@ -5,6 +5,7 @@ export interface PensionPolicy {
   assumedCareerStartAge: number;
   npsMinMonthly: number;
   npsMaxMonthly: number;
+  npsAverageMonthlyIncomeValue: number;
   npsPreReformReplacementRate: number;
   npsPostReformReplacementRate: number;
   npsReformYear: number;
@@ -38,6 +39,7 @@ const POLICY_TABLE: PlannerPolicyVersion[] = [
       assumedCareerStartAge: 26,
       npsMinMonthly: 40,
       npsMaxMonthly: 637,
+      npsAverageMonthlyIncomeValue: 319.3511,
       npsPreReformReplacementRate: 0.415,
       npsPostReformReplacementRate: 0.43,
       npsReformYear: 2026,

@@ -7,6 +7,7 @@ const DEFAULT_NET_TO_GROSS_RATIO = pensionPolicy.netToGrossRatio;
 const ASSUMED_CAREER_START_AGE = pensionPolicy.assumedCareerStartAge;
 const NPS_MIN_MONTHLY = pensionPolicy.npsMinMonthly;    // 40만원 (하한)
 const NPS_MAX_MONTHLY = pensionPolicy.npsMaxMonthly;    // 637만원 (상한)
+const NPS_AVERAGE_MONTHLY_INCOME = pensionPolicy.npsAverageMonthlyIncomeValue; // 319.3511만원 (2026 공단 표 A값)
 const NPS_PRE_2026_REPLACEMENT_RATE = pensionPolicy.npsPreReformReplacementRate;   // 2026년 개혁 이전 소득대체율
 const NPS_POST_2026_REPLACEMENT_RATE = pensionPolicy.npsPostReformReplacementRate; // 2026년 개혁 이후 소득대체율
 const NPS_REFORM_YEAR = pensionPolicy.npsReformYear;
@@ -99,8 +100,16 @@ export function estimatePublicPension(
   const grossAnnualIncome = annualNetIncome / DEFAULT_NET_TO_GROSS_RATIO;
   const grossMonthlyIncome = grossAnnualIncome / 12;
   const pensionableMonthly = Math.min(Math.max(grossMonthlyIncome, NPS_MIN_MONTHLY), NPS_MAX_MONTHLY);
-  const { replacementRate } = computeNPSReplacement(currentAge, retirementAge, workStartAge);
-  return Math.round(pensionableMonthly * replacementRate);
+  const { contributionYears, replacementRate } = computeNPSReplacement(currentAge, retirementAge, workStartAge);
+
+  if (contributionYears < 10 || replacementRate <= 0) return 0;
+
+  // 국민연금공단 예상연금월액표(2026 기준)는 A값+B값 재분배 구조를 반영한다.
+  // 월액 근사:
+  //   0.5 * 소득대체율 * (A + B)
+  // 그리고 공단 안내에 따라 월지급액은 기준소득월액(B)을 넘지 않도록 상한을 둔다.
+  const redistributedMonthly = 0.5 * replacementRate * (NPS_AVERAGE_MONTHLY_INCOME + pensionableMonthly);
+  return Math.round(Math.min(redistributedMonthly, pensionableMonthly));
 }
 
 export function estimateRetirementPension(

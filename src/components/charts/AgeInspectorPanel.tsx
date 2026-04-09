@@ -219,6 +219,9 @@ export default function AgeInspectorPanel({ data, hasRealEstate, hasSaleProceeds
         {/* 왼쪽: 수입 내역 + 지출 내역 */}
         <div style={{ padding: '10px 14px', borderRight: '1px solid var(--ux-border)' }}>
           <SectionTitle>수입 내역</SectionTitle>
+          <div style={{ fontSize: 11, color: 'var(--ux-text-subtle)', marginBottom: 4 }}>
+            연금·생활비는 해당 나이 기준 금액이에요
+          </div>
           <DetailRow label="근로소득" value={data.monthlySalary} />
           <DetailRow label="연금 합계" value={data.monthlyPension} />
           <DetailRow label="국민연금" value={data.monthlyPublicPension} indent />
