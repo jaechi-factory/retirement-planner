@@ -55,18 +55,20 @@ function metricToneColor(tone?: NarrativeMetric['tone']): string {
   return 'var(--text-on-dark)';
 }
 
-// "월 621만원" → { prefix: "月", main: "621", suffix: "만원" }
-function parseHeadlineNumber(headline: string): { pre: string; num: string; post: string } | null {
-  // "월 XXX만원" 패턴 탐지
-  const match = headline.match(/^(월\s*)([\d,]+)(만원.*)$/);
-  if (match) return { pre: match[1].trim(), num: match[2], post: match[3] };
+// "월 621만원" → { num: "621", suffix: "만원" }
+function parseMonthlyValue(value: string): { num: string; suffix: string } | null {
+  const match = value.match(/^월\s*([\d,]+)(만원.*)$/);
+  if (match) return { num: match[1], suffix: match[2] };
   return null;
 }
 
 export default function ResultHeroSection({ summary, narrative, hasRealEstate }: ResultHeroSectionProps) {
   const badge = getStatusBadge(summary);
   const cfg = STATUS_CONFIG[badge];
-  const parsed = parseHeadlineNumber(narrative.headline);
+  // metrics[0] = 가능한 월 생활비 ("월 608만원")
+  const mainMetric = narrative.metrics[0];
+  const parsed = mainMetric ? parseMonthlyValue(mainMetric.value) : null;
+  const auxMetrics = narrative.metrics.slice(1);
 
   return (
     <section style={{ marginBottom: 40 }}>
@@ -122,52 +124,67 @@ export default function ResultHeroSection({ summary, narrative, hasRealEstate }:
           padding: '32px 28px 28px',
         }}
       >
-        {/* 핵심 숫자 */}
+        {/* ── 핵심 숫자 블록 ── */}
         <div style={{ marginBottom: 28 }}>
+          {/* 레이블 */}
+          <span
+            style={{
+              fontSize: 11,
+              fontWeight: 600,
+              color: 'var(--text-on-dark-muted)',
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              display: 'block',
+              marginBottom: 8,
+            }}
+          >
+            {mainMetric?.label ?? '가능한 월 생활비'}
+          </span>
+
+          {/* 대형 숫자 */}
           {parsed ? (
-            <div style={{ lineHeight: 1 }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, flexWrap: 'wrap', lineHeight: 1 }}>
               <span
                 style={{
-                  fontSize: 14,
-                  fontWeight: 600,
+                  fontSize: 18,
+                  fontWeight: 700,
                   color: 'var(--text-on-dark-muted)',
-                  display: 'block',
-                  marginBottom: 6,
-                  letterSpacing: '0.04em',
-                  textTransform: 'uppercase',
+                  letterSpacing: '-0.01em',
+                  alignSelf: 'flex-end',
+                  paddingBottom: 6,
                 }}
               >
-                {parsed.pre}
+                월
               </span>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, flexWrap: 'wrap' }}>
-                <span
-                  style={{
-                    fontSize: 64,
-                    fontWeight: 900,
-                    color: 'var(--text-on-dark)',
-                    letterSpacing: '-0.04em',
-                    lineHeight: 1,
-                  }}
-                >
-                  {parsed.num}
-                </span>
-                <span
-                  style={{
-                    fontSize: 28,
-                    fontWeight: 700,
-                    color: 'var(--text-on-dark)',
-                    letterSpacing: '-0.02em',
-                    lineHeight: 1,
-                  }}
-                >
-                  {parsed.post}
-                </span>
-              </div>
+              <span
+                style={{
+                  fontSize: 68,
+                  fontWeight: 900,
+                  color: 'var(--text-on-dark)',
+                  letterSpacing: '-0.04em',
+                  lineHeight: 1,
+                }}
+              >
+                {parsed.num}
+              </span>
+              <span
+                style={{
+                  fontSize: 26,
+                  fontWeight: 700,
+                  color: 'var(--text-on-dark)',
+                  letterSpacing: '-0.02em',
+                  lineHeight: 1,
+                  alignSelf: 'flex-end',
+                  paddingBottom: 4,
+                }}
+              >
+                {parsed.suffix}
+              </span>
             </div>
           ) : (
             <span
               style={{
-                fontSize: 40,
+                fontSize: 32,
                 fontWeight: 900,
                 color: 'var(--text-on-dark)',
                 letterSpacing: '-0.03em',
@@ -175,21 +192,35 @@ export default function ResultHeroSection({ summary, narrative, hasRealEstate }:
                 display: 'block',
               }}
             >
-              {narrative.headline}
+              {mainMetric?.value ?? ''}
             </span>
           )}
+
+          {/* 서브타이틀 — narrative headline */}
+          <span
+            style={{
+              fontSize: 14,
+              color: 'var(--text-on-dark-muted)',
+              lineHeight: 1.5,
+              display: 'block',
+              marginTop: 10,
+            }}
+          >
+            {narrative.headline}
+          </span>
         </div>
 
-        {/* 보조 지표 3개 */}
+        {/* ── 보조 지표 2개 ── */}
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+            gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
             gap: 8,
             marginBottom: 24,
           }}
         >
-          {narrative.metrics.map((metric) => (
+          {auxMetrics.map((metric) => (
+
             <div
               key={metric.label}
               style={{
