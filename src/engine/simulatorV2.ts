@@ -45,6 +45,7 @@ import { getPlannerPolicy } from '../policy/policyTable';
 import { precomputeDebtSchedules } from './assetWeighting';
 import type { DebtSchedules } from './debtSchedule';
 import { getAnnualPensionIncomeForAge } from './pensionEstimation';
+import { calcNetWorth } from './netWorth';
 
 // ─── 버킷 타입 ────────────────────────────────────────────────────────────────
 
@@ -387,46 +388,62 @@ export function simulateMonthlyV2(
         expenseThisMonth - debtServiceThisMonth -
         childExpenseThisMonth - rentalCostThisMonth;
 
-      let uncoveredAmount = 0;
+      const bucketsBeforeCashflow: FinancialBuckets = { ...buckets };
+      const financialSellStartedBeforeCashflow = financialSellState.everStarted;
+      const financialEverExhaustedBeforeCashflow: boolean = financialEverExhausted;
 
-      if (!isRetired) {
-        // ── 은퇴 전: 단순 잉여/부족 처리, 버퍼 없음 ──────────────────
-        if (netFlow >= 0) {
-          distributeSurplus(buckets, netFlow, initialRatios);
-        } else {
-          uncoveredAmount = drawFromBuckets(buckets, -netFlow, financialSellState, eventFlags);
-          // 금융 버킷 소진 후에도 부족하면 매각 대금 운용 잔액에서 추가 인출
-          if (uncoveredAmount > 0 && propertySold && saleInvestBalance > 0) {
-            const drawFromSale = Math.min(uncoveredAmount, saleInvestBalance);
-            saleInvestBalance -= drawFromSale;
-            uncoveredAmount -= drawFromSale;
+      const applyMonthlyCashflow = (monthNetFlow: number): number => {
+        let remainingShortfall = 0;
+
+        if (!isRetired) {
+          // 은퇴 전: surplus 분배 / deficit 인출
+          if (monthNetFlow >= 0) {
+            distributeSurplus(buckets, monthNetFlow, initialRatios);
+          } else {
+            remainingShortfall = drawFromBuckets(
+              buckets,
+              -monthNetFlow,
+              financialSellState,
+              eventFlags,
+            );
+            if (remainingShortfall > 0 && propertySold && saleInvestBalance > 0) {
+              const drawFromSale = Math.min(remainingShortfall, saleInvestBalance);
+              saleInvestBalance -= drawFromSale;
+              remainingShortfall -= drawFromSale;
+            }
           }
+          return remainingShortfall;
         }
-      } else {
-        // ── 은퇴 후: [P6] 과매도 방지 — 부족 시 통합 인출 ───────────
+
+        // 은퇴 후: deficit 처리 후 버퍼 top-up
         const monthsAfterRetirement = (ageYear - retirementAge) * 12 + ageMonthIndex;
         const currentExpenseNominal =
           retirementMonthlyNominal * Math.pow(1 + monthlyInflation, monthsAfterRetirement);
         const buffer = currentExpenseNominal * fundingPolicy.liquidityBufferMonths;
 
-        if (netFlow >= 0) {
-          // 잉여: 버킷 분배 후, 버퍼 top-up (재배분이므로 이중 인출 아님)
-          distributeSurplus(buckets, netFlow, initialRatios);
+        if (monthNetFlow >= 0) {
+          distributeSurplus(buckets, monthNetFlow, initialRatios);
           topUpCashBuffer(buckets, buffer, financialSellState, eventFlags);
-        } else {
-          // 부족: shortfall은 생활비(deficit)만으로 판정 → 이진탐색 단조성 보장
-          // 그 후 버퍼 top-up을 별도 수행 (shortfall 계산에 영향 없음)
-          const deficit = -netFlow;
-          uncoveredAmount = drawFromBuckets(buckets, deficit, financialSellState, eventFlags);
-          // 금융 버킷 소진 후에도 부족하면 매각 대금 운용 잔액에서 추가 인출
-          if (uncoveredAmount > 0 && propertySold && saleInvestBalance > 0) {
-            const drawFromSale = Math.min(uncoveredAmount, saleInvestBalance);
-            saleInvestBalance -= drawFromSale;
-            uncoveredAmount -= drawFromSale;
-          }
-          topUpCashBuffer(buckets, buffer, financialSellState, eventFlags);
+          return 0;
         }
-      }
+
+        const deficit = -monthNetFlow;
+        remainingShortfall = drawFromBuckets(
+          buckets,
+          deficit,
+          financialSellState,
+          eventFlags,
+        );
+        if (remainingShortfall > 0 && propertySold && saleInvestBalance > 0) {
+          const drawFromSale = Math.min(remainingShortfall, saleInvestBalance);
+          saleInvestBalance -= drawFromSale;
+          remainingShortfall -= drawFromSale;
+        }
+        topUpCashBuffer(buckets, buffer, financialSellState, eventFlags);
+        return remainingShortfall;
+      };
+
+      let uncoveredAmount = applyMonthlyCashflow(netFlow);
 
       // 투자자산 소진 이벤트
       const financialTotal = FINANCIAL_KEYS.reduce((s, k) => s + buckets[k], 0);
@@ -469,13 +486,22 @@ export function simulateMonthlyV2(
             totalMonthIndex,
             propertyPolicy.saleDebtSettlementMode,
           );
-          const debtServiceRefund = Math.max(0, debtServiceThisMonth - debtServiceAfterSale);
-          debtServiceThisMonth = debtServiceAfterSale;
-          if (debtServiceRefund > 0) {
-            // 같은 달에 매각으로 부채를 정산했으므로, 선차감된 상환액을 환급해
-            // snapshot 월상환액/버킷흐름/미충당금이 동일 기준을 따르도록 맞춘다.
-            buckets.cash += debtServiceRefund;
-            uncoveredAmount = Math.max(0, uncoveredAmount - debtServiceRefund);
+          if (debtServiceThisMonth !== debtServiceAfterSale) {
+            // 매각 당월에는 실제 정산 모드 기준 debtService로 같은 달 현금흐름을 다시 계산한다.
+            // 이렇게 해야 상환 취소분이 가짜 현금으로 남거나 surplus가 누락되지 않는다.
+            debtServiceThisMonth = debtServiceAfterSale;
+            Object.assign(buckets, bucketsBeforeCashflow);
+            financialSellState.everStarted = financialSellStartedBeforeCashflow;
+            financialEverExhausted = financialEverExhaustedBeforeCashflow;
+            delete eventFlags.financialSellStarted;
+            delete eventFlags.financialExhausted;
+
+            const recalculatedNetFlow =
+              incomeThisMonth + pensionThisMonth -
+              expenseThisMonth - debtServiceThisMonth -
+              childExpenseThisMonth - rentalCostThisMonth;
+
+            uncoveredAmount = applyMonthlyCashflow(recalculatedNetFlow);
           }
 
           const remainingMortgage = plannerPolicy.property.saleDebtSettlementMode === 'all_debts'
@@ -615,13 +641,7 @@ export function aggregateToYearly(snapshots: MonthlySnapshotV2[]): YearlyAggrega
   const result: YearlyAggregateV2[] = [];
   for (const [ageYear, months] of byYear) {
     const last = months[months.length - 1];
-    const netWorthEnd =
-      last.cashLikeEnd +
-      last.financialInvestableEnd +
-      last.propertyValueEnd +
-      last.propertySaleProceedsBucketEnd -
-      last.securedLoanBalanceEnd -
-      last.totalDebtEnd;
+    const netWorthEnd = calcNetWorth(last);
     const eventSummary: string[] = [];
     if (months.some((m) => m.eventFlags.financialSellStarted))    eventSummary.push('주식·채권 팔기 시작');
     if (months.some((m) => m.eventFlags.financialExhausted))      eventSummary.push('주식·채권 소진');

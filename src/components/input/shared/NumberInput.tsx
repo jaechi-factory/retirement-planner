@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { TextField, TextFieldContent, Typography } from '@wanteddev/wds';
+import { TextField, TextFieldContent } from '@wanteddev/wds';
 
 interface Props {
   label: string;
@@ -54,10 +54,17 @@ export default function NumberInput({
     : (value === 0 ? '' : value.toLocaleString('ko-KR'));
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0 }}>
-      <Typography as="label" variant="label2" weight="medium" color="semantic.label.alternative">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, minWidth: 0 }}>
+      <label
+        style={{
+          fontSize: 12,
+          fontWeight: 600,
+          color: 'var(--text-muted)',
+          letterSpacing: '0.01em',
+        }}
+      >
         {label}
-      </Typography>
+      </label>
       <TextField
         type="text"
         inputMode="numeric"
@@ -71,9 +78,15 @@ export default function NumberInput({
         }
       />
       {hint && (
-        <Typography variant="caption1" color="semantic.label.alternative" style={{ margin: 0 }}>
+        <span
+          style={{
+            fontSize: 11,
+            color: 'var(--text-faint)',
+            lineHeight: 1.4,
+          }}
+        >
           {hint}
-        </Typography>
+        </span>
       )}
     </div>
   );
