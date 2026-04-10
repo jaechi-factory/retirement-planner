@@ -3,14 +3,29 @@ import NumberInput from './shared/NumberInput';
 import RateInput from './shared/RateInput';
 import SectionCard from './shared/SectionCard';
 
-export default function RetirementGoalSection() {
+interface Props {
+  onComplete?: () => void;
+}
+
+export default function RetirementGoalSection({ onComplete }: Props) {
   const { inputs, setGoal } = usePlannerStore();
   const { goal } = inputs;
 
+  // 완료 조건: 4개 모두 > 0
+  const canComplete =
+    goal.retirementAge > 0 &&
+    goal.lifeExpectancy > 0 &&
+    goal.targetMonthly > 0 &&
+    goal.inflationRate > 0;
+
   return (
-    <SectionCard title="은퇴 목표" subtitle="언제 은퇴하고, 매달 얼마를 쓰며 살지 정해요" tier={1}>
+    <SectionCard
+      title="목표를 먼저 세워볼까요?"
+      canComplete={canComplete}
+      onComplete={onComplete}
+    >
       <NumberInput
-        label="은퇴 나이"
+        label="언제 은퇴하고 싶나요?"
         value={goal.retirementAge}
         onChange={(v) => setGoal({ retirementAge: v })}
         unit="세"
@@ -18,7 +33,7 @@ export default function RetirementGoalSection() {
         max={100}
       />
       <NumberInput
-        label="기대수명"
+        label="기대 수명을 알려주세요"
         value={goal.lifeExpectancy}
         onChange={(v) => setGoal({ lifeExpectancy: v })}
         unit="세"
@@ -26,15 +41,16 @@ export default function RetirementGoalSection() {
         max={120}
       />
       <NumberInput
-        label="목표 생활비 (월·현재 가치)"
+        label="은퇴 후 한달에 얼마를 쓰고 싶나요?"
         value={goal.targetMonthly}
         onChange={(v) => setGoal({ targetMonthly: v })}
         unit="만원"
       />
       <RateInput
-        label="물가상승률 (연평균)"
+        label="물가 상승율을 얼마로 잡을까요?"
         value={goal.inflationRate}
         onChange={(v) => setGoal({ inflationRate: v })}
+        hint="평균적으로 매년 3.5%정도 올라요"
       />
     </SectionCard>
   );

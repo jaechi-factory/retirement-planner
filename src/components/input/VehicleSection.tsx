@@ -1,4 +1,3 @@
-import { Typography } from '@wanteddev/wds';
 import { usePlannerStore, defaultVehicle } from '../../store/usePlannerStore';
 import type { VehicleOwnershipType } from '../../types/inputs';
 import NumberInput from './shared/NumberInput';
@@ -10,7 +9,6 @@ const OWNERSHIP_OPTIONS: { value: VehicleOwnershipType; label: string; desc: str
   { value: 'owned',  label: '이미 보유',  desc: '지금 갖고 있음' },
 ];
 
-/** 유형 선택 버튼 */
 function OwnershipSelector({
   value,
   onChange,
@@ -61,7 +59,6 @@ function OwnershipSelector({
   );
 }
 
-/** 연소비 포함 여부 선택 */
 function InclusionSelector({
   value,
   onChange,
@@ -76,10 +73,14 @@ function InclusionSelector({
 
   return (
     <div>
-      <Typography variant="label2" weight="medium" color="semantic.label.alternative"
-        style={{ display: 'block', marginBottom: 8 }}>
+      <p style={{
+        fontSize: 12,
+        fontWeight: 500,
+        color: 'var(--text-muted)',
+        margin: '0 0 8px 0',
+      }}>
         이 비용이 위에서 입력한 연소비에 포함되어 있나요?
-      </Typography>
+      </p>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
         {options.map((opt) => {
           const selected = value === opt.value;
@@ -123,33 +124,37 @@ function InclusionSelector({
   );
 }
 
-export default function VehicleSection() {
+interface Props {
+  onComplete?: () => void;
+}
+
+export default function VehicleSection({ onComplete }: Props) {
   const { inputs, setVehicle } = usePlannerStore();
   const vehicle = inputs.vehicle ?? defaultVehicle;
   const type = vehicle.ownershipType;
   const hasVehicle = type !== 'none';
 
+  // 완료 조건: ownershipType 선택됨 (none도 유효)
+  const canComplete = true;
+
   return (
     <SectionCard
       title="자동차"
-      subtitle="차량 비용이 노후 생활비에 얼마나 영향을 주는지 계산해요"
+      canComplete={canComplete}
+      onComplete={onComplete}
     >
-      {/* 유형 선택 */}
       <OwnershipSelector
         value={type}
         onChange={(v) => setVehicle({ ownershipType: v })}
       />
 
-      {/* 차량 있을 때만 나머지 입력 표시 */}
       {hasVehicle && (
         <>
-          {/* 연소비 포함 여부 — 반드시 선택 */}
           <InclusionSelector
             value={vehicle.costIncludedInExpense}
             onChange={(v) => setVehicle({ costIncludedInExpense: v })}
           />
 
-          {/* ── 이미 보유 ──────────────────────────────────────── */}
           {type === 'owned' && (
             <>
               <div style={{ display: 'grid', gridTemplateColumns: '3fr 2fr', gap: 8 }}>
@@ -174,28 +179,23 @@ export default function VehicleSection() {
             </>
           )}
 
-          {/* ── 공통 ───────────────────────────────────────────── */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 8 }}>
-            <NumberInput
-              label="월 유지비"
-              value={vehicle.monthlyMaintenance}
-              onChange={(v) => setVehicle({ monthlyMaintenance: v })}
-              hint="보험·주유·수리 등"
-            />
-          </div>
+          <NumberInput
+            label="월 유지비"
+            value={vehicle.monthlyMaintenance}
+            onChange={(v) => setVehicle({ monthlyMaintenance: v })}
+            hint="보험·주유·수리 등"
+          />
 
-          {/* 포함 여부 안내 callout */}
           <div style={{
             padding: '10px 14px',
             background: 'var(--surface-card-soft)',
             borderRadius: 8,
           }}>
-            <Typography variant="caption1" color="semantic.label.alternative"
-              style={{ margin: 0, lineHeight: 1.6 }}>
+            <p style={{ margin: 0, fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.6 }}>
               {vehicle.costIncludedInExpense === 'included'
                 ? '연소비에 이미 포함된 비용이에요. 결과 화면에서 "차 없을 때 생활비"가 얼마나 늘어나는지 확인할 수 있어요.'
                 : '연소비와 별도로 계산돼요. 결과 화면에서 차 때문에 줄어드는 월 생활비를 확인할 수 있어요.'}
-            </Typography>
+            </p>
           </div>
         </>
       )}

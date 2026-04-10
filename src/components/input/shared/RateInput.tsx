@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { TextField, TextFieldContent, Typography } from '@wanteddev/wds';
 
 interface Props {
   label: string;
@@ -36,27 +35,103 @@ export default function RateInput({ label, value, onChange, hint }: Props) {
     }
   };
 
+  const isEmpty = value === 0 && !focused;
+  const displayValue = focused ? draft : (value === 0 ? '' : String(value));
+
+  const borderColor = focused
+    ? 'var(--fig-input-border-focus)'
+    : isEmpty
+      ? 'var(--fig-input-border-empty)'
+      : 'var(--fig-input-border-filled)';
+
+  const textColor = isEmpty ? 'var(--fig-placeholder-color)' : 'var(--fig-label-color)';
+  const fontWeight = isEmpty ? 400 : 600;
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0 }}>
-      <Typography as="label" variant="label2" weight="medium" color="semantic.label.alternative">
+    <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+      {/* 라벨 */}
+      <label
+        style={{
+          fontSize: 20,
+          fontWeight: 600,
+          color: 'var(--fig-label-color)',
+          letterSpacing: '0.12px',
+          lineHeight: 1,
+          marginBottom: 16,
+          display: 'block',
+          whiteSpace: 'nowrap',
+        }}
+      >
         {label}
-      </Typography>
-      <TextField
-        type="text"
-        inputMode="decimal"
-        value={focused ? draft : (value === 0 ? '' : String(value))}
-        onFocus={handleFocus}
-        onBlur={handleBlur}
-        onChange={handleChange}
-        placeholder="0"
-        trailingContent={
-          <TextFieldContent variant="text">%</TextFieldContent>
-        }
-      />
+      </label>
+
+      {/* Input 컨테이너 */}
+      <div
+        style={{
+          height: 68,
+          borderRadius: 20,
+          border: `2px solid ${borderColor}`,
+          background: '#ffffff',
+          boxShadow: focused ? 'var(--fig-input-shadow-focus)' : 'none',
+          display: 'flex',
+          alignItems: 'center',
+          padding: '14px 18px',
+          gap: 8,
+          transition: 'border-color 0.15s, box-shadow 0.15s',
+          boxSizing: 'border-box',
+        }}
+      >
+        <input
+          type="text"
+          inputMode="decimal"
+          value={displayValue}
+          placeholder={isEmpty ? '0' : ''}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
+          onChange={handleChange}
+          style={{
+            flex: 1,
+            border: 'none',
+            outline: 'none',
+            background: 'transparent',
+            fontSize: 20,
+            fontWeight,
+            color: textColor,
+            fontFamily: 'Pretendard, sans-serif',
+            letterSpacing: '0.0798px',
+            paddingLeft: 4,
+            minWidth: 0,
+          }}
+        />
+        <span
+          style={{
+            fontSize: 20,
+            fontWeight: 600,
+            color: isEmpty ? 'var(--fig-placeholder-color)' : 'var(--fig-label-color)',
+            fontFamily: 'Pretendard, sans-serif',
+            letterSpacing: '0.0798px',
+            flexShrink: 0,
+            lineHeight: '21px',
+          }}
+        >
+          %
+        </span>
+      </div>
+
+      {/* 힌트 */}
       {hint && (
-        <Typography variant="caption1" color="semantic.label.alternative" style={{ margin: 0 }}>
+        <span
+          style={{
+            fontSize: 14,
+            fontWeight: 400,
+            color: 'var(--fig-hint-color)',
+            lineHeight: 1.5,
+            marginTop: 8,
+            fontFamily: 'Pretendard, sans-serif',
+          }}
+        >
           {hint}
-        </Typography>
+        </span>
       )}
     </div>
   );

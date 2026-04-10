@@ -3,31 +3,26 @@ import { fmtKRW } from '../../utils/format';
 import PublicPensionCard from './pension/PublicPensionCard';
 import RetirementPensionCard from './pension/RetirementPensionCard';
 import PrivatePensionCard from './pension/PrivatePensionCard';
+import SectionCard from './shared/SectionCard';
 
-export default function PensionSection() {
+interface Props {
+  onComplete?: () => void;
+  isLast?: boolean;
+}
+
+export default function PensionSection({ onComplete, isLast }: Props) {
   const { inputs, result } = usePlannerStore();
   const totalPension = result.totalMonthlyPensionTodayValue ?? 0;
   const targetMonthly = inputs.goal.targetMonthly;
   const coveragePct = targetMonthly > 0 ? Math.round((totalPension / targetMonthly) * 100) : 0;
 
   return (
-    <div
-      style={{
-        background: 'var(--surface-card)',
-        borderRadius: 20,
-        padding: '20px 20px 24px',
-        marginBottom: 12,
-      }}
+    <SectionCard
+      title="연금"
+      canComplete={true}
+      onComplete={onComplete}
+      isLast={isLast}
     >
-      <div style={{ marginBottom: 16 }}>
-        <h3 style={{ margin: '0 0 3px 0', fontSize: 15, fontWeight: 700, color: 'var(--text-strong)' }}>
-          연금
-        </h3>
-        <p style={{ margin: 0, fontSize: 12, color: 'var(--text-faint)' }}>
-          은퇴 후 매달 들어오는 연금을 입력해 주세요.
-        </p>
-      </div>
-
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         <PublicPensionCard />
         <RetirementPensionCard />
@@ -36,7 +31,7 @@ export default function PensionSection() {
 
       {totalPension > 0 && (
         <div style={{
-          marginTop: 14, padding: '10px 14px',
+          padding: '10px 14px',
           background: 'var(--surface-card-soft)', borderRadius: 10,
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         }}>
@@ -56,12 +51,9 @@ export default function PensionSection() {
         </div>
       )}
 
-      <div style={{
-        marginTop: 10,
-        fontSize: 12, color: 'var(--text-faint)', lineHeight: 1.6,
-      }}>
+      <div style={{ fontSize: 12, color: 'var(--text-faint)', lineHeight: 1.6 }}>
         평균값으로 계산한 추정치예요 · 실제 수령액과 다를 수 있어요
       </div>
-    </div>
+    </SectionCard>
   );
 }

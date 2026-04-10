@@ -78,13 +78,21 @@ function RepaymentTypeSelector({
   );
 }
 
-export default function DebtSection() {
+interface Props {
+  onComplete?: () => void;
+}
+
+export default function DebtSection({ onComplete }: Props) {
   const { inputs, setDebt, result } = usePlannerStore();
 
   const rows: DebtKey[] = ['mortgage', 'creditLoan', 'otherLoan'];
 
   return (
-    <SectionCard title="부채 구성" subtitle="대출을 갚는 데 쓰는 돈이 생활비에 얼마나 영향을 주는지 계산해요">
+    <SectionCard
+      title="부채 구성"
+      canComplete={true}
+      onComplete={onComplete}
+    >
       {result.totalDebt > 0 && (
         <div
           style={{

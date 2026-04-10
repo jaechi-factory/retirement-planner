@@ -1,77 +1,94 @@
-import { Typography } from '@wanteddev/wds';
-
 interface Props {
   title: string;
-  subtitle?: string;
-  tier?: 1 | 2;
   children: React.ReactNode;
+  /** "다음" 버튼 활성 여부 */
+  canComplete?: boolean;
+  /** "다음" 버튼 클릭 시 호출 — 없으면 버튼 미표시 */
+  onComplete?: () => void;
+  /** 마지막 섹션인 경우 버튼 텍스트 변경 */
+  isLast?: boolean;
 }
 
-export default function SectionCard({ title, subtitle, tier = 2, children }: Props) {
-  const isPrimary = tier === 1;
+import React from 'react';
 
+export default function SectionCard({
+  title,
+  children,
+  canComplete,
+  onComplete,
+  isLast = false,
+}: Props) {
   return (
     <div
       style={{
-        background: 'var(--surface-card)',
-        borderRadius: 16,
-        border: '1px solid rgba(36,39,46,0.06)',
-        boxShadow: 'var(--shadow-card)',
-        padding: isPrimary ? '24px 22px 28px' : '20px 22px 24px',
-        marginBottom: 14,
+        background: 'var(--fig-card-bg)',
+        borderRadius: 'var(--fig-card-radius)',
+        width: '100%',
+        paddingTop: 48,
+        paddingBottom: 48,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        boxSizing: 'border-box',
       }}
     >
-      {/* 섹션 헤더 */}
+      {/* 카드 내 콘텐츠 폭 504px 고정 */}
       <div
         style={{
-          marginBottom: isPrimary ? 20 : 16,
-          paddingBottom: isPrimary ? 16 : 12,
-          borderBottom: '1px solid rgba(36,39,46,0.06)',
+          width: 504,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 40,
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          {isPrimary && (
-            <div
-              style={{
-                width: 4,
-                height: 18,
-                borderRadius: 2,
-                background: 'var(--palette-yellow)',
-                flexShrink: 0,
-              }}
-            />
-          )}
-          <Typography
-            as="h3"
-            variant={isPrimary ? 'headline1' : 'headline2'}
-            weight="bold"
-            color="semantic.label.normal"
-            style={{
-              margin: 0,
-              letterSpacing: '-0.3px',
-              fontSize: isPrimary ? 16 : 14,
-            }}
-          >
-            {title}
-          </Typography>
-        </div>
-        {subtitle && (
-          <Typography
-            variant="caption1"
-            color="semantic.label.alternative"
-            style={{
-              margin: isPrimary ? '5px 0 0 12px' : '4px 0 0',
-              lineHeight: 1.45,
-              display: 'block',
-            }}
-          >
-            {subtitle}
-          </Typography>
-        )}
-      </div>
+        {/* 섹션 타이틀 */}
+        <h2
+          style={{
+            margin: 0,
+            fontSize: 32,
+            fontWeight: 700,
+            color: 'var(--fig-title-color)',
+            fontFamily: 'Pretendard, sans-serif',
+            lineHeight: 1.5,
+          }}
+        >
+          {title}
+        </h2>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-        {children}
+        {/* 필드 영역 */}
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 40,
+          }}
+        >
+          {children}
+        </div>
+
+        {/* 다음 버튼 */}
+        {onComplete !== undefined && (
+          <button
+            disabled={!canComplete}
+            onClick={canComplete ? onComplete : undefined}
+            style={{
+              height: 'var(--fig-btn-height)',
+              borderRadius: 'var(--fig-btn-radius)',
+              border: 'none',
+              background: canComplete ? 'var(--fig-btn-active-bg)' : 'var(--fig-btn-disabled-bg)',
+              color: canComplete ? 'var(--fig-btn-active-text)' : 'var(--fig-btn-disabled-text)',
+              fontSize: canComplete ? 20 : 16,
+              fontWeight: 700,
+              fontFamily: 'Pretendard, sans-serif',
+              cursor: canComplete ? 'pointer' : 'not-allowed',
+              width: '100%',
+              transition: 'background 0.15s, color 0.15s, font-size 0.1s',
+              letterSpacing: canComplete ? '0.114px' : '0.0912px',
+            }}
+          >
+            {isLast ? '결과 보기' : '다음'}
+          </button>
+        )}
       </div>
     </div>
   );
