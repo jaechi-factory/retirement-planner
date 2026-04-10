@@ -116,7 +116,7 @@ export default function RightPanel() {
             {coveragePct}%
           </div>
           <div style={{ fontSize: 13, color: 'var(--tds-gray-600)' }}>
-            생활비 목표의 {coveragePct}%를 메워줘요
+            오늘 가치 생활비 목표의 {coveragePct}%를 메워줘요
           </div>
           <div style={{ fontSize: 12, color: 'var(--tds-gray-400)', marginTop: 2 }}>
             전체 연금 합산 월 {result.totalMonthlyPensionTodayValue.toLocaleString('ko-KR')}만원

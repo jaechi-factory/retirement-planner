@@ -16,7 +16,6 @@ function createInputs(): PlannerInputs {
       annualIncome: 7200,
       incomeGrowthRate: 3,
       annualExpense: 3600,
-      expenseGrowthRate: 2,
     },
     assets: {
       cash: { amount: 1000, expectedReturn: 1 },
@@ -150,6 +149,7 @@ describe('buildResultNarrativeModel', () => {
     expect(model.metrics[2].tone).toBe('positive');
     expect(model.recommendedStrategyLabel).toBe('집을 그대로 둘 때');
     expect(model.insightLines).toHaveLength(3);
+    expect(model.insightLines[1]).toContain('오늘 가치');
   });
 
   it('집 활용 시나리오에서는 추천 전략 라벨이 담보대출 문구로 노출되어야 한다', () => {

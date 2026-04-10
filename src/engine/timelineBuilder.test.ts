@@ -102,7 +102,6 @@ describe('timelineBuilder — 매각 이벤트 데이터 정합성', () => {
         annualIncome: 0,
         incomeGrowthRate: 0,
         annualExpense: 0,
-        expenseGrowthRate: 0,
       },
       assets: {
         cash:       { amount: 0, expectedReturn: 0 },
@@ -193,7 +192,7 @@ describe('extractKeyDecisionEvents', () => {
   it('의사결정 핵심 이벤트만 나이순으로 반환한다', () => {
     const inputs: PlannerInputs = {
       goal: { retirementAge: 60, lifeExpectancy: 90, targetMonthly: 400, inflationRate: 2 },
-      status: { currentAge: 35, annualIncome: 7000, incomeGrowthRate: 3, annualExpense: 3000, expenseGrowthRate: 2 },
+      status: { currentAge: 35, annualIncome: 7000, incomeGrowthRate: 3, annualExpense: 3000},
       assets: {
         cash: { amount: 1000, expectedReturn: 2 },
         deposit: { amount: 1000, expectedReturn: 2 },
@@ -275,7 +274,7 @@ describe('extractKeyDecisionEvents', () => {
   it('은퇴~기대수명 범위를 벗어난 이벤트는 제외한다', () => {
     const inputs: PlannerInputs = {
       goal: { retirementAge: 60, lifeExpectancy: 70, targetMonthly: 300, inflationRate: 2 },
-      status: { currentAge: 40, annualIncome: 5000, incomeGrowthRate: 2, annualExpense: 2000, expenseGrowthRate: 2 },
+      status: { currentAge: 40, annualIncome: 5000, incomeGrowthRate: 2, annualExpense: 2000},
       assets: {
         cash: { amount: 1000, expectedReturn: 2 },
         deposit: { amount: 1000, expectedReturn: 2 },

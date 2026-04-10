@@ -243,14 +243,13 @@ export function simulateMonthlyV2(
 ): MonthlySnapshotV2[] {
   const { goal, status, assets, debts, children, pension, vehicle } = inputs;
   const { retirementAge, lifeExpectancy, inflationRate } = goal;
-  const { currentAge, annualIncome, incomeGrowthRate, annualExpense, expenseGrowthRate } = status;
+  const { currentAge, annualIncome, incomeGrowthRate, annualExpense } = status;
   const currentAgeMonth = status.currentAgeMonth ?? 0;
   const retirementStartMonth = goal.retirementStartMonth ?? 0;
   const childIndependenceMonth = children.independenceMonth ?? 11;
 
   const monthlyInflation    = annualToMonthlyRate(inflationRate);
   const monthlyIncomeGrowth = annualToMonthlyRate(incomeGrowthRate);
-  const monthlyExpenseGrowth = annualToMonthlyRate(expenseGrowthRate);
 
   const plannerPolicy          = getPlannerPolicy();
   const propertyPolicy         = plannerPolicy.property;
@@ -293,13 +292,16 @@ export function simulateMonthlyV2(
   const financialSellState = { everStarted: false };
   let financialEverExhausted = false;
 
-  // 은퇴 시점 명목 월 생활비 (현재가치 → 은퇴 시점 명목)
+  // 입력한 현재 생활비는 오늘 가치 기준이고,
+  // 매월 스냅샷의 expenseThisMonth는 해당 시점의 명목 생활비다.
+  const baseMonthlyExpenseTodayValue = annualExpense / 12;
+  const inflateTodayValueToNominal = (todayValue: number, monthIndex: number) =>
+    todayValue * Math.pow(1 + monthlyInflation, monthIndex);
+
   const retirementMonthIndex = Math.max(
     0,
     (retirementAge - currentAge) * 12 + retirementStartMonth - currentAgeMonth,
   );
-  const retirementMonthlyNominal =
-    testMonthlyInCurrentValue * Math.pow(1 + monthlyInflation, retirementMonthIndex);
 
   const childIndependenceMonthIndex = Math.max(
     0,
@@ -359,15 +361,14 @@ export function simulateMonthlyV2(
       ).totalNominal;
 
       // ── 3. 지출 계산 ──────────────────────────────────────────────────
-      let expenseThisMonth = 0;
-      if (!isRetired) {
-        expenseThisMonth =
-          (annualExpense / 12) * Math.pow(1 + monthlyExpenseGrowth, monthsFromNow);
-      } else {
-        const monthsAfterRetirement = totalMonthIndex - retirementMonthIndex;
-        expenseThisMonth =
-          retirementMonthlyNominal * Math.pow(1 + monthlyInflation, monthsAfterRetirement);
-      }
+      const livingExpenseBaseTodayValue = !isRetired
+        ? baseMonthlyExpenseTodayValue
+        : testMonthlyInCurrentValue;
+      const expenseThisMonthNominal = inflateTodayValueToNominal(
+        livingExpenseBaseTodayValue,
+        monthsFromNow,
+      );
+      let expenseThisMonth = expenseThisMonthNominal;
 
       const vehicleCostThisMonth =
         vehicle?.costIncludedInExpense === 'separate'
@@ -441,9 +442,10 @@ export function simulateMonthlyV2(
         }
 
         // 은퇴 후: deficit 처리 후 버퍼 top-up
-        const monthsAfterRetirement = totalMonthIndex - retirementMonthIndex;
-        const currentExpenseNominal =
-          retirementMonthlyNominal * Math.pow(1 + monthlyInflation, monthsAfterRetirement);
+        const currentExpenseNominal = inflateTodayValueToNominal(
+          testMonthlyInCurrentValue,
+          monthsFromNow,
+        );
         const buffer = currentExpenseNominal * fundingPolicy.liquidityBufferMonths;
 
         if (monthNetFlow >= 0) {

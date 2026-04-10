@@ -53,7 +53,6 @@ function makeBaseInput(
       annualIncome,
       incomeGrowthRate: 2.0,
       annualExpense: 4800,
-      expenseGrowthRate: 2.0,
     },
     assets: {
       cash: { amount: financialTotal * w.cash, expectedReturn: 2.0 },
@@ -322,7 +321,6 @@ function makeRandomInput(rand: () => number): PlannerInputs {
       annualIncome,
       incomeGrowthRate: randInt(rand, 0, 6),
       annualExpense,
-      expenseGrowthRate: randInt(rand, 0, 6),
     },
     assets: {
       cash: { amount: financialTotal * w.cash, expectedReturn: 1.5 + randInt(rand, 0, 3) },

@@ -11,8 +11,7 @@ export interface CurrentStatus {
   currentAgeMonth?: number;    // 현재 월(0~11, default 0)
   annualIncome: number;        // 세후 연소득 (만원, 실수령 기준 — 소득세·4대보험 공제 후)
   incomeGrowthRate: number;    // 수입 증가율 (%)
-  annualExpense: number;       // 연소비 (만원)
-  expenseGrowthRate: number;   // 은퇴 전 지출 증가율 (%)
+  annualExpense: number;       // 연소비 (만원, 오늘 가치 기준)
 }
 
 export interface AssetItem {

@@ -87,7 +87,7 @@ export function buildResultNarrativeModel(params: {
       : `은퇴 뒤 수입은 오늘 가치로 환산한 연금 월 ${fmtKRW(pensionMonthly)}만 잡았어요.`;
 
   const expenseLine =
-    `생활비 목표는 월 ${fmtKRW(inputs.goal.targetMonthly)}으로 계산했어요.`;
+    `생활비 목표(오늘 가치)는 월 ${fmtKRW(inputs.goal.targetMonthly)}으로 계산했어요.`;
 
   const transitionLine = buildTransitionLine(summary, inputs, hasRealEstate);
 

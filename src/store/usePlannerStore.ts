@@ -12,7 +12,7 @@ import type { HousingPolicy } from '../engine/housingPolicy';
 import type { FundingPolicy, LiquidationPolicy } from '../engine/fundingPolicy';
 import type { DebtSchedules } from '../engine/debtSchedule';
 import { DEFAULT_FUNDING_POLICY, DEFAULT_LIQUIDATION_POLICY } from '../engine/fundingPolicy';
-import { DEFAULT_INFLATION_RATE, DEFAULT_INCOME_GROWTH_RATE, DEFAULT_EXPENSE_GROWTH_RATE, DEFAULT_ASSET_RETURNS } from '../utils/constants';
+import { DEFAULT_INFLATION_RATE, DEFAULT_INCOME_GROWTH_RATE, DEFAULT_ASSET_RETURNS } from '../utils/constants';
 import { calcTotalAsset, calcTotalDebt, calcWeightedReturn, precomputeDebtSchedules, calcTotalAnnualRepaymentFromSchedules } from '../engine/assetWeighting';
 import { judgeVerdict } from '../engine/verdictEngine';
 import { getTotalMonthlyPensionTodayValue, getPensionMonthlyAtRetirementStart, getNPSStartAgeByBirthYear } from '../engine/pensionEstimation';
@@ -82,7 +82,6 @@ const defaultInputs: PlannerInputs = {
     annualIncome: 0,
     incomeGrowthRate: DEFAULT_INCOME_GROWTH_RATE,
     annualExpense: 0,
-    expenseGrowthRate: DEFAULT_EXPENSE_GROWTH_RATE,
   },
   assets: {
     cash:       { amount: 0, expectedReturn: DEFAULT_ASSET_RETURNS.cash },
@@ -296,9 +295,33 @@ function loadInputsFromStorage(): PlannerInputs {
       otherLoan:  { ...defaultInputs.debts.otherLoan,  ...migrateDebtItem(rawDebts.otherLoan  ?? {}, false) },
     };
 
+    const rawStatus = (parsed.status ?? {}) as unknown as Record<string, unknown>;
+    const migratedStatus: PlannerInputs['status'] = {
+      currentAge:
+        typeof rawStatus.currentAge === 'number' && Number.isFinite(rawStatus.currentAge)
+          ? rawStatus.currentAge
+          : defaultInputs.status.currentAge,
+      currentAgeMonth:
+        typeof rawStatus.currentAgeMonth === 'number' && Number.isFinite(rawStatus.currentAgeMonth)
+          ? rawStatus.currentAgeMonth
+          : defaultInputs.status.currentAgeMonth,
+      annualIncome:
+        typeof rawStatus.annualIncome === 'number' && Number.isFinite(rawStatus.annualIncome)
+          ? rawStatus.annualIncome
+          : defaultInputs.status.annualIncome,
+      incomeGrowthRate:
+        typeof rawStatus.incomeGrowthRate === 'number' && Number.isFinite(rawStatus.incomeGrowthRate)
+          ? rawStatus.incomeGrowthRate
+          : defaultInputs.status.incomeGrowthRate,
+      annualExpense:
+        typeof rawStatus.annualExpense === 'number' && Number.isFinite(rawStatus.annualExpense)
+          ? rawStatus.annualExpense
+          : defaultInputs.status.annualExpense,
+    };
+
     return {
       goal:     { ...defaultInputs.goal,     ...parsed.goal },
-      status:   { ...defaultInputs.status,   ...parsed.status },
+      status:   migratedStatus,
       assets:   { ...defaultInputs.assets,   ...parsed.assets },
       debts:    migratedDebts,
       children: { ...defaultInputs.children, ...parsed.children },

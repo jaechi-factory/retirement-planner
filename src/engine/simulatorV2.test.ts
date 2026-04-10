@@ -53,7 +53,6 @@ function makeInputs(overrides: Partial<PlannerInputs> = {}): PlannerInputs {
       annualIncome: 6000,
       incomeGrowthRate: 2.0,
       annualExpense: 3600,
-      expenseGrowthRate: 2.0,
     },
     assets: {
       cash:       { amount: 1000,  expectedReturn: 1.0 },
@@ -122,7 +121,6 @@ describe('[P1] 버킷별 개별 수익률', () => {
         annualIncome: 0,
         incomeGrowthRate: 0,
         annualExpense: 0,
-        expenseGrowthRate: 0,
       },
       assets: {
         cash:       { amount: 10000, expectedReturn: 1.0 },
@@ -148,7 +146,7 @@ describe('[V] 차량 비용 메인 엔진 반영', () => {
   it('[V-1] separate 차량은 월 지출에 실제로 추가되어야 함', () => {
     const inputs = makeInputs({
       goal: { retirementAge: 65, lifeExpectancy: 66, targetMonthly: 100, inflationRate: 0 },
-      status: { currentAge: 65, annualIncome: 0, incomeGrowthRate: 0, annualExpense: 0, expenseGrowthRate: 0 },
+      status: { currentAge: 65, annualIncome: 0, incomeGrowthRate: 0, annualExpense: 0},
       assets: {
         cash:       { amount: 10000, expectedReturn: 0 },
         deposit:    { amount: 0, expectedReturn: 0 },
@@ -177,7 +175,7 @@ describe('[V] 차량 비용 메인 엔진 반영', () => {
   it('[V-2] included 차량은 메인 지출에 별도로 추가되지 않아야 함', () => {
     const inputs = makeInputs({
       goal: { retirementAge: 65, lifeExpectancy: 66, targetMonthly: 100, inflationRate: 0 },
-      status: { currentAge: 65, annualIncome: 0, incomeGrowthRate: 0, annualExpense: 0, expenseGrowthRate: 0 },
+      status: { currentAge: 65, annualIncome: 0, incomeGrowthRate: 0, annualExpense: 0},
       assets: {
         cash:       { amount: 10000, expectedReturn: 0 },
         deposit:    { amount: 0, expectedReturn: 0 },
@@ -204,6 +202,79 @@ describe('[V] 차량 비용 메인 엔진 반영', () => {
   });
 });
 
+describe('[E] 생활비는 은퇴 전후 모두 물가연동만 따라야 함', () => {
+  it('[E-1] inflationRate=0이면 생활비가 은퇴 전후 모두 변하지 않아야 함', () => {
+    const inputs = makeInputs({
+      goal: { retirementAge: 60, retirementStartMonth: 0, lifeExpectancy: 61, targetMonthly: 100, inflationRate: 0 },
+      status: { currentAge: 59, annualIncome: 0, incomeGrowthRate: 0, annualExpense: 1200 },
+      assets: {
+        cash:       { amount: 10000, expectedReturn: 0 },
+        deposit:    { amount: 0, expectedReturn: 0 },
+        stock_kr:   { amount: 0, expectedReturn: 0 },
+        stock_us:   { amount: 0, expectedReturn: 0 },
+        bond:       { amount: 0, expectedReturn: 0 },
+        crypto:     { amount: 0, expectedReturn: 0 },
+        realEstate: { amount: 0, expectedReturn: 0 },
+      },
+    });
+
+    const snapshots = simulateMonthlyV2(inputs, 100, 'keep', DEFAULT_FUNDING_POLICY, DEFAULT_LIQUIDATION);
+
+    expect(snapshots.every((snapshot) => snapshot.expenseThisMonth === 100)).toBe(true);
+  });
+
+  it('[E-2] inflationRate=3이면 은퇴 전후 모두 같은 월 물가 복리로 증가해야 함', () => {
+    const inputs = makeInputs({
+      goal: { retirementAge: 60, retirementStartMonth: 0, lifeExpectancy: 61, targetMonthly: 100, inflationRate: 3 },
+      status: { currentAge: 59, annualIncome: 0, incomeGrowthRate: 0, annualExpense: 1200 },
+      assets: {
+        cash:       { amount: 10000, expectedReturn: 0 },
+        deposit:    { amount: 0, expectedReturn: 0 },
+        stock_kr:   { amount: 0, expectedReturn: 0 },
+        stock_us:   { amount: 0, expectedReturn: 0 },
+        bond:       { amount: 0, expectedReturn: 0 },
+        crypto:     { amount: 0, expectedReturn: 0 },
+        realEstate: { amount: 0, expectedReturn: 0 },
+      },
+    });
+
+    const snapshots = simulateMonthlyV2(inputs, 100, 'keep', DEFAULT_FUNDING_POLICY, DEFAULT_LIQUIDATION);
+    const monthlyInflation = Math.pow(1 + 0.03, 1 / 12) - 1;
+
+    expect(snapshots[0].expenseThisMonth).toBeCloseTo(100, 6);
+    expect(snapshots[5].expenseThisMonth).toBeCloseTo(100 * Math.pow(1 + monthlyInflation, 5), 6);
+    expect(snapshots[12].expenseThisMonth).toBeCloseTo(100 * Math.pow(1 + monthlyInflation, 12), 6);
+    expect(snapshots[18].expenseThisMonth).toBeCloseTo(100 * Math.pow(1 + monthlyInflation, 18), 6);
+  });
+
+  it('[E-3] 은퇴 경계 월에서도 생활비 증가 규칙이 끊기지 않아야 함', () => {
+    const inputs = makeInputs({
+      goal: { retirementAge: 60, retirementStartMonth: 6, lifeExpectancy: 61, targetMonthly: 100, inflationRate: 3 },
+      status: { currentAge: 59, annualIncome: 0, incomeGrowthRate: 0, annualExpense: 1200 },
+      assets: {
+        cash:       { amount: 10000, expectedReturn: 0 },
+        deposit:    { amount: 0, expectedReturn: 0 },
+        stock_kr:   { amount: 0, expectedReturn: 0 },
+        stock_us:   { amount: 0, expectedReturn: 0 },
+        bond:       { amount: 0, expectedReturn: 0 },
+        crypto:     { amount: 0, expectedReturn: 0 },
+        realEstate: { amount: 0, expectedReturn: 0 },
+      },
+    });
+
+    const snapshots = simulateMonthlyV2(inputs, 100, 'keep', DEFAULT_FUNDING_POLICY, DEFAULT_LIQUIDATION);
+    const monthlyInflation = Math.pow(1 + 0.03, 1 / 12) - 1;
+    const retirementMonthIndex = 18;
+
+    const beforeRetirement = snapshots[retirementMonthIndex - 1];
+    const atRetirement = snapshots[retirementMonthIndex];
+    const afterRetirement = snapshots[retirementMonthIndex + 1];
+
+    expect(atRetirement.expenseThisMonth / beforeRetirement.expenseThisMonth).toBeCloseTo(1 + monthlyInflation, 6);
+    expect(afterRetirement.expenseThisMonth / atRetirement.expenseThisMonth).toBeCloseTo(1 + monthlyInflation, 6);
+  });
+});
+
 // ─── [P2] 잉여 재투자 비중 고정 ──────────────────────────────────────────────
 
 describe('[P2] 잉여 재투자 — initialRatios 고정, realEstate 제외', () => {
@@ -214,7 +285,6 @@ describe('[P2] 잉여 재투자 — initialRatios 고정, realEstate 제외', ()
         annualIncome: 8000,
         incomeGrowthRate: 2.0,
         annualExpense: 3000,
-        expenseGrowthRate: 2.0,
       },
       assets: {
         cash:       { amount: 500,  expectedReturn: 1.0 },
@@ -247,7 +317,6 @@ describe('[P2] 잉여 재투자 — initialRatios 고정, realEstate 제외', ()
         annualIncome: 8000,
         incomeGrowthRate: 2.0,
         annualExpense: 3000,
-        expenseGrowthRate: 2.0,
       },
       assets: {
         cash:       { amount: 1000,  expectedReturn: 1.0 },
@@ -288,7 +357,6 @@ describe('[P3] 매도 우선순위 (cash → deposit → bond → stock_kr → s
         annualIncome: 0,
         incomeGrowthRate: 0,
         annualExpense: 0,
-        expenseGrowthRate: 0,
       },
       assets: {
         cash:       { amount: 50000, expectedReturn: 0   },
@@ -322,7 +390,6 @@ describe('[P3] 매도 우선순위 (cash → deposit → bond → stock_kr → s
         annualIncome: 0,
         incomeGrowthRate: 0,
         annualExpense: 0,
-        expenseGrowthRate: 0,
       },
       assets: {
         cash:       { amount: 0,    expectedReturn: 0   },
@@ -350,7 +417,6 @@ describe('[P3] 매도 우선순위 (cash → deposit → bond → stock_kr → s
         annualIncome: 0,
         incomeGrowthRate: 0,
         annualExpense: 0,
-        expenseGrowthRate: 0,
       },
       assets: {
         cash:       { amount: 5000, expectedReturn: 0   },
@@ -383,7 +449,7 @@ describe('[P3] 매도 우선순위 (cash → deposit → bond → stock_kr → s
   it('[P3 강화] 개별 버킷 잔고로 cash → deposit → bond 차감 순서를 직접 검증', () => {
     const inputs = makeInputs({
       goal: { retirementAge: 65, lifeExpectancy: 90, targetMonthly: 350, inflationRate: 0 },
-      status: { currentAge: 65, annualIncome: 0, incomeGrowthRate: 0, annualExpense: 0, expenseGrowthRate: 0 },
+      status: { currentAge: 65, annualIncome: 0, incomeGrowthRate: 0, annualExpense: 0},
       assets: {
         cash:       { amount: 200,  expectedReturn: 0 },
         deposit:    { amount: 100,  expectedReturn: 0 },
@@ -414,7 +480,7 @@ describe('[P3] 매도 우선순위 (cash → deposit → bond → stock_kr → s
     // bond=300, stock_kr=10000, 필요 인출 > 300 인 상황
     const inputs = makeInputs({
       goal: { retirementAge: 65, lifeExpectancy: 90, targetMonthly: 500, inflationRate: 0 },
-      status: { currentAge: 65, annualIncome: 0, incomeGrowthRate: 0, annualExpense: 0, expenseGrowthRate: 0 },
+      status: { currentAge: 65, annualIncome: 0, incomeGrowthRate: 0, annualExpense: 0},
       assets: {
         cash:       { amount: 0,     expectedReturn: 0 },
         deposit:    { amount: 0,     expectedReturn: 0 },
@@ -474,7 +540,6 @@ describe('[P4] 첫 해 정상 처리 — 첫 달(month=0)부터 소득·부채 �
         annualIncome: 6000,
         incomeGrowthRate: 2.0,
         annualExpense: 3600,
-        expenseGrowthRate: 2.0,
       },
     });
 
@@ -512,7 +577,7 @@ describe('[P5] 담보대출 이자 — draw 당월 이자 없음, 다음 달부�
   it('처음 대출 발생 전 securedLoanBalanceEnd = 0이어야 함', () => {
     const inputs = makeInputs({
       goal: { retirementAge: 41, lifeExpectancy: 90, targetMonthly: 100, inflationRate: 0 },
-      status: { currentAge: 40, annualIncome: 0, incomeGrowthRate: 0, annualExpense: 0, expenseGrowthRate: 0 },
+      status: { currentAge: 40, annualIncome: 0, incomeGrowthRate: 0, annualExpense: 0},
       assets: {
         cash:       { amount: 0,      expectedReturn: 0 },
         deposit:    { amount: 0,      expectedReturn: 0 },
@@ -538,7 +603,7 @@ describe('[P5] 담보대출 이자 — draw 당월 이자 없음, 다음 달부�
   it('대출 발생 이후 잔고가 단조 증가해야 함 (이자 + draw 누적)', () => {
     const inputs = makeInputs({
       goal: { retirementAge: 41, lifeExpectancy: 90, targetMonthly: 100, inflationRate: 0 },
-      status: { currentAge: 40, annualIncome: 0, incomeGrowthRate: 0, annualExpense: 0, expenseGrowthRate: 0 },
+      status: { currentAge: 40, annualIncome: 0, incomeGrowthRate: 0, annualExpense: 0},
       assets: {
         cash:       { amount: 0,      expectedReturn: 0 },
         deposit:    { amount: 0,      expectedReturn: 0 },
@@ -566,7 +631,7 @@ describe('[P5] 담보대출 이자 — draw 당월 이자 없음, 다음 달부�
   it('대출 첫 달 잔고 = draw 금액 (이자 붙기 전)', () => {
     const inputs = makeInputs({
       goal: { retirementAge: 41, lifeExpectancy: 90, targetMonthly: 100, inflationRate: 0 },
-      status: { currentAge: 40, annualIncome: 0, incomeGrowthRate: 0, annualExpense: 0, expenseGrowthRate: 0 },
+      status: { currentAge: 40, annualIncome: 0, incomeGrowthRate: 0, annualExpense: 0},
       assets: {
         cash:       { amount: 0,      expectedReturn: 0 },
         deposit:    { amount: 0,      expectedReturn: 0 },
@@ -608,7 +673,7 @@ describe('[P6] 과매도 방지 — 부족 상황에서 단 1번 인출', () => 
     // 자산이 충분하면 drawFromBuckets 1번으로 모든 부족분 해결 → shortfall=0
     const inputs = makeInputs({
       goal: { retirementAge: 41, lifeExpectancy: 90, targetMonthly: 100, inflationRate: 0 },
-      status: { currentAge: 40, annualIncome: 0, incomeGrowthRate: 0, annualExpense: 0, expenseGrowthRate: 0 },
+      status: { currentAge: 40, annualIncome: 0, incomeGrowthRate: 0, annualExpense: 0},
       assets: {
         cash:       { amount: 100000, expectedReturn: 0 }, // 충분한 현금
         deposit:    { amount: 0,      expectedReturn: 0 },
@@ -630,7 +695,7 @@ describe('[P6] 과매도 방지 — 부족 상황에서 단 1번 인출', () => 
   it('모든 자산 소진 시 shortfallThisMonth > 0이어야 함 (failureOccurred)', () => {
     const inputs = makeInputs({
       goal: { retirementAge: 41, lifeExpectancy: 90, targetMonthly: 1000, inflationRate: 0 },
-      status: { currentAge: 40, annualIncome: 0, incomeGrowthRate: 0, annualExpense: 0, expenseGrowthRate: 0 },
+      status: { currentAge: 40, annualIncome: 0, incomeGrowthRate: 0, annualExpense: 0},
       assets: {
         cash:       { amount: 100, expectedReturn: 0 }, // 매우 적은 자산
         deposit:    { amount: 0,   expectedReturn: 0 },
@@ -684,7 +749,7 @@ describe('[P6] 과매도 방지 — 부족 상황에서 단 1번 인출', () => 
   it('[P6 강화] deficit(100)만 포트폴리오에서 차감되고 buffer top-up은 내부 리밸런싱임을 검증', () => {
     const inputs = makeInputs({
       goal: { retirementAge: 65, lifeExpectancy: 90, targetMonthly: 100, inflationRate: 0 },
-      status: { currentAge: 65, annualIncome: 0, incomeGrowthRate: 0, annualExpense: 0, expenseGrowthRate: 0 },
+      status: { currentAge: 65, annualIncome: 0, incomeGrowthRate: 0, annualExpense: 0},
       assets: {
         cash:       { amount: 300,    expectedReturn: 0 }, // cashLike=300 < buffer(600)
         deposit:    { amount: 0,      expectedReturn: 0 },
@@ -781,7 +846,7 @@ describe('F. 매각 후 임대비 물가 연동', () => {
       goal: { retirementAge: 65, lifeExpectancy: 90, targetMonthly: 400, inflationRate: 2.5 },
       status: {
         currentAge: 40, annualIncome: 6000, incomeGrowthRate: 2.0,
-        annualExpense: 4800, expenseGrowthRate: 2.0,
+        annualExpense: 4800,
       },
       assets: {
         cash:       { amount: 100,   expectedReturn: 1.0 },
@@ -820,7 +885,7 @@ describe('연봉별 시나리오 (고소득일수록 은퇴 자산·지속가능
   it('연봉이 높을수록 은퇴 시점 자산이 더 많아야 함', () => {
     const assetsAtRetirement = incomes.map((income) => {
       const inputs = makeInputs({
-        status: { currentAge: 40, annualIncome: income, incomeGrowthRate: 2.0, annualExpense: 3600, expenseGrowthRate: 2.0 },
+        status: { currentAge: 40, annualIncome: income, incomeGrowthRate: 2.0, annualExpense: 3600},
       });
       const snapshots = simulateMonthlyV2(inputs, inputs.goal.targetMonthly, 'keep', DEFAULT_FUNDING_POLICY, DEFAULT_LIQUIDATION);
       const atRetirement = snapshots.find(s => s.ageYear === 65 && s.ageMonthIndex === 0);
@@ -835,7 +900,7 @@ describe('연봉별 시나리오 (고소득일수록 은퇴 자산·지속가능
   it('연봉이 높을수록 지속가능 월 생활비가 더 높아야 함', () => {
     const sustainables = incomes.map((income) => {
       const inputs = makeInputs({
-        status: { currentAge: 40, annualIncome: income, incomeGrowthRate: 2.0, annualExpense: 3600, expenseGrowthRate: 2.0 },
+        status: { currentAge: 40, annualIncome: income, incomeGrowthRate: 2.0, annualExpense: 3600},
       });
       return findMaxSustainableMonthlyV2(inputs, 'keep', DEFAULT_FUNDING_POLICY, DEFAULT_LIQUIDATION);
     });
@@ -929,7 +994,7 @@ describe('기본 동작', () => {
 
   it('[W6] currentAge=30, lifeExpectancy=90이면 총 732개월이어야 함', () => {
     const inputs = makeInputs({
-      status: { currentAge: 30, annualIncome: 6000, incomeGrowthRate: 2.0, annualExpense: 3600, expenseGrowthRate: 2.0 },
+      status: { currentAge: 30, annualIncome: 6000, incomeGrowthRate: 2.0, annualExpense: 3600},
       goal: { retirementAge: 65, lifeExpectancy: 90, targetMonthly: 300, inflationRate: 2.5 },
     });
     const snapshots = simulateMonthlyV2(
@@ -947,7 +1012,7 @@ describe('기본 동작', () => {
 
   it('[W6] currentAge=64, lifeExpectancy=67이면 총 48개월이어야 함', () => {
     const inputs = makeInputs({
-      status: { currentAge: 64, annualIncome: 6000, incomeGrowthRate: 2.0, annualExpense: 3600, expenseGrowthRate: 2.0 },
+      status: { currentAge: 64, annualIncome: 6000, incomeGrowthRate: 2.0, annualExpense: 3600},
       goal: { retirementAge: 65, lifeExpectancy: 67, targetMonthly: 300, inflationRate: 2.5 },
     });
     const snapshots = simulateMonthlyV2(
@@ -983,7 +1048,7 @@ describe('기본 동작', () => {
   it('isSustainableV2: 자산 없이 지출이 많으면 false를 반환해야 함', () => {
     const inputs = makeInputs({
       goal: { retirementAge: 41, lifeExpectancy: 90, targetMonthly: 1000, inflationRate: 2.5 },
-      status: { currentAge: 40, annualIncome: 0, incomeGrowthRate: 0, annualExpense: 0, expenseGrowthRate: 0 },
+      status: { currentAge: 40, annualIncome: 0, incomeGrowthRate: 0, annualExpense: 0},
       assets: {
         cash:       { amount: 100, expectedReturn: 0 },
         deposit:    { amount: 0,   expectedReturn: 0 },
@@ -1000,7 +1065,7 @@ describe('기본 동작', () => {
 
   it('은퇴 전 incomeThisMonth > 0, 은퇴 후 incomeThisMonth = 0이어야 함', () => {
     const inputs = makeInputs({
-      status: { currentAge: 40, annualIncome: 6000, incomeGrowthRate: 2.0, annualExpense: 3600, expenseGrowthRate: 2.0 },
+      status: { currentAge: 40, annualIncome: 6000, incomeGrowthRate: 2.0, annualExpense: 3600},
       goal: { retirementAge: 65, lifeExpectancy: 90, targetMonthly: 300, inflationRate: 2.5 },
     });
 
@@ -1103,7 +1168,7 @@ describe('[단조성] 투자자산 증가 → 지속가능 생활비 ≥ 유지 
    */
   const makeMonotoneInputs = (stock_us_amount: number): PlannerInputs =>
     makeInputs({
-      status: { currentAge: 45, annualIncome: 6000, annualExpense: 3600, incomeGrowthRate: 2, expenseGrowthRate: 2 },
+      status: { currentAge: 45, annualIncome: 6000, annualExpense: 3600, incomeGrowthRate: 2},
       goal: { retirementAge: 65, lifeExpectancy: 85, targetMonthly: 400, inflationRate: 2 },
       assets: {
         cash:       { amount: 0,     expectedReturn: 0 },
@@ -1125,7 +1190,7 @@ describe('[단조성] 투자자산 증가 → 지속가능 생활비 ≥ 유지 
 
   it('stock_kr=5000 지속가능액 ≥ stock_kr=500 (국내주식 많을수록 생활비 ↑)', () => {
     const makeKr = (amount: number) => makeInputs({
-      status: { currentAge: 45, annualIncome: 6000, annualExpense: 3600, incomeGrowthRate: 2, expenseGrowthRate: 2 },
+      status: { currentAge: 45, annualIncome: 6000, annualExpense: 3600, incomeGrowthRate: 2},
       goal: { retirementAge: 65, lifeExpectancy: 85, targetMonthly: 400, inflationRate: 2 },
       assets: {
         cash:       { amount: 0,     expectedReturn: 0 },
@@ -1148,7 +1213,7 @@ describe('G. 매각 이벤트 메타데이터 및 부동산 부채 추적', () =
   it('sell 전략 매각 월에 순매각대금 메타데이터가 보존되어야 함', () => {
     const inputs = makeInputs({
       goal: { retirementAge: 65, lifeExpectancy: 90, targetMonthly: 500, inflationRate: 0 },
-      status: { currentAge: 65, annualIncome: 0, incomeGrowthRate: 0, annualExpense: 0, expenseGrowthRate: 0 },
+      status: { currentAge: 65, annualIncome: 0, incomeGrowthRate: 0, annualExpense: 0},
       assets: {
         cash:       { amount: 0,      expectedReturn: 0 },
         deposit:    { amount: 0,      expectedReturn: 0 },
@@ -1280,7 +1345,7 @@ describe('G. 매각 이벤트 메타데이터 및 부동산 부채 추적', () =
     // 스케줄 잔액이 남아있어 버그가 재현된다
     const inputs = makeInputs({
       goal: { retirementAge: 55, lifeExpectancy: 70, targetMonthly: 600, inflationRate: 2.5 },
-      status: { currentAge: 50, annualIncome: 3000, incomeGrowthRate: 0, annualExpense: 4800, expenseGrowthRate: 0 },
+      status: { currentAge: 50, annualIncome: 3000, incomeGrowthRate: 0, annualExpense: 4800},
       assets: {
         cash:       { amount: 200,   expectedReturn: 1.0 },
         deposit:    { amount: 200,   expectedReturn: 2.0 },
@@ -1333,7 +1398,7 @@ describe('G. 매각 이벤트 메타데이터 및 부동산 부채 추적', () =
   it('[W1] sell 전략: 주담대 없을 때도 매각 이후 mortgageDebtEnd === 0 (기존 동작 유지)', () => {
     const inputs = makeInputs({
       goal: { retirementAge: 55, lifeExpectancy: 70, targetMonthly: 600, inflationRate: 2.5 },
-      status: { currentAge: 50, annualIncome: 3000, incomeGrowthRate: 0, annualExpense: 4800, expenseGrowthRate: 0 },
+      status: { currentAge: 50, annualIncome: 3000, incomeGrowthRate: 0, annualExpense: 4800},
       assets: {
         cash:       { amount: 200,   expectedReturn: 1.0 },
         deposit:    { amount: 200,   expectedReturn: 2.0 },
@@ -1373,7 +1438,7 @@ describe('H. W3: YearlyAggregateV2 totalRentalCost 집계', () => {
   // sell 전략 + 매각 후 임대비 발생 시나리오 공통 입력
   const SELL_INPUTS = makeInputs({
     goal: { retirementAge: 55, lifeExpectancy: 70, targetMonthly: 300, inflationRate: 2.5 },
-    status: { currentAge: 50, annualIncome: 3000, incomeGrowthRate: 0, annualExpense: 4800, expenseGrowthRate: 0 },
+    status: { currentAge: 50, annualIncome: 3000, incomeGrowthRate: 0, annualExpense: 4800},
     assets: {
       cash:       { amount: 200,   expectedReturn: 1.0 },
       deposit:    { amount: 200,   expectedReturn: 2.0 },
@@ -1447,7 +1512,7 @@ describe('H. W3: YearlyAggregateV2 totalRentalCost 집계', () => {
 describe('H2. YearlyAggregateV2 부채/순자산 정합성', () => {
   const DEBT_AGG_INPUTS = makeInputs({
     goal: { retirementAge: 65, lifeExpectancy: 68, targetMonthly: 300, inflationRate: 2.5 },
-    status: { currentAge: 64, annualIncome: 3000, incomeGrowthRate: 0, annualExpense: 3600, expenseGrowthRate: 0 },
+    status: { currentAge: 64, annualIncome: 3000, incomeGrowthRate: 0, annualExpense: 3600},
     assets: {
       cash:       { amount: 1000,  expectedReturn: 1.0 },
       deposit:    { amount: 1000,  expectedReturn: 2.0 },
@@ -1522,7 +1587,7 @@ describe('H2. YearlyAggregateV2 부채/순자산 정합성', () => {
 
 const SALE_BOUNDARY_INPUTS = makeInputs({
   goal: { retirementAge: 65, lifeExpectancy: 67, targetMonthly: 200, inflationRate: 0 },
-  status: { currentAge: 65, annualIncome: 0, incomeGrowthRate: 0, annualExpense: 0, expenseGrowthRate: 0 },
+  status: { currentAge: 65, annualIncome: 0, incomeGrowthRate: 0, annualExpense: 0},
   assets: {
     cash:       { amount: 400,   expectedReturn: 0 },
     deposit:    { amount: 0,     expectedReturn: 0 },
@@ -1541,7 +1606,7 @@ const SALE_BOUNDARY_INPUTS = makeInputs({
 
 const REFUND_CONSERVATION_INPUTS = makeInputs({
   goal: { retirementAge: 65, lifeExpectancy: 66, targetMonthly: 0, inflationRate: 0 },
-  status: { currentAge: 65, annualIncome: 0, incomeGrowthRate: 0, annualExpense: 0, expenseGrowthRate: 0 },
+  status: { currentAge: 65, annualIncome: 0, incomeGrowthRate: 0, annualExpense: 0},
   assets: {
     cash:       { amount: 0,     expectedReturn: 0 },
     deposit:    { amount: 0,     expectedReturn: 0 },
@@ -1580,7 +1645,7 @@ describe('I. W4: all_debts 모드 이중 상환 방지', () => {
   // 주담대 + 신용대출 동시 보유 시나리오 (매각 전 두 대출 모두 active)
   const DEBT_SELL_INPUTS = makeInputs({
     goal: { retirementAge: 55, lifeExpectancy: 70, targetMonthly: 400, inflationRate: 2.5 },
-    status: { currentAge: 50, annualIncome: 3000, incomeGrowthRate: 0, annualExpense: 4800, expenseGrowthRate: 0 },
+    status: { currentAge: 50, annualIncome: 3000, incomeGrowthRate: 0, annualExpense: 4800},
     assets: {
       cash:       { amount: 200,   expectedReturn: 1.0 },
       deposit:    { amount: 200,   expectedReturn: 2.0 },
@@ -1750,7 +1815,7 @@ describe('J. W5: all_debts 매각 후 nonMortgageDebtEnd 정산', () => {
   // 주담대 + 신용대출 + 기타대출 동시 보유 시나리오
   const W5_INPUTS = makeInputs({
     goal: { retirementAge: 55, lifeExpectancy: 70, targetMonthly: 400, inflationRate: 2.5 },
-    status: { currentAge: 50, annualIncome: 3000, incomeGrowthRate: 0, annualExpense: 4800, expenseGrowthRate: 0 },
+    status: { currentAge: 50, annualIncome: 3000, incomeGrowthRate: 0, annualExpense: 4800},
     assets: {
       cash:       { amount: 200,   expectedReturn: 1.0 },
       deposit:    { amount: 200,   expectedReturn: 2.0 },
@@ -1771,7 +1836,7 @@ describe('J. W5: all_debts 매각 후 nonMortgageDebtEnd 정산', () => {
   // (매각 당월 규칙 검증: 부채잔액/월상환액)
   const SETTLEMENT_MODE_INPUTS = makeInputs({
     goal: { retirementAge: 65, lifeExpectancy: 70, targetMonthly: 700, inflationRate: 2.5 },
-    status: { currentAge: 65, annualIncome: 0, incomeGrowthRate: 0, annualExpense: 8400, expenseGrowthRate: 0 },
+    status: { currentAge: 65, annualIncome: 0, incomeGrowthRate: 0, annualExpense: 8400},
     assets: {
       cash:       { amount: 0,     expectedReturn: 1.0 },
       deposit:    { amount: 0,     expectedReturn: 2.0 },
@@ -2011,7 +2076,6 @@ describe('K. 월경계: 은퇴/공적연금/자녀비', () => {
         annualIncome: 1200,
         incomeGrowthRate: 0,
         annualExpense: 0,
-        expenseGrowthRate: 0,
       },
       children: {
         hasChildren: false,
@@ -2049,7 +2113,6 @@ describe('K. 월경계: 은퇴/공적연금/자녀비', () => {
         annualIncome: 0,
         incomeGrowthRate: 0,
         annualExpense: 0,
-        expenseGrowthRate: 0,
       },
       children: {
         hasChildren: false,
@@ -2087,7 +2150,6 @@ describe('K. 월경계: 은퇴/공적연금/자녀비', () => {
         annualIncome: 0,
         incomeGrowthRate: 0,
         annualExpense: 0,
-        expenseGrowthRate: 0,
       },
       children: {
         hasChildren: true,

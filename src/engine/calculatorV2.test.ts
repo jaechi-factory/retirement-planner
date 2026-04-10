@@ -7,7 +7,7 @@ import { DEFAULT_FUNDING_POLICY, DEFAULT_LIQUIDATION_POLICY } from './fundingPol
 function makeInputs(annualIncome: number): PlannerInputs {
   return {
     goal: { retirementAge: 60, lifeExpectancy: 90, targetMonthly: 300, inflationRate: 2.5 },
-    status: { currentAge: 40, annualIncome, incomeGrowthRate: 2.0, annualExpense: 4800, expenseGrowthRate: 2.0 },
+    status: { currentAge: 40, annualIncome, incomeGrowthRate: 2.0, annualExpense: 4800},
     assets: {
       cash: { amount: 2250, expectedReturn: 2.0 },
       deposit: { amount: 1500, expectedReturn: 3.5 },
@@ -73,7 +73,7 @@ function runScenario(inputs: PlannerInputs, mode: 'keep_priority' | 'max_sustain
 function makeFullInputs(overrides: Partial<PlannerInputs> = {}): PlannerInputs {
   const base: PlannerInputs = {
     goal: { retirementAge: 65, lifeExpectancy: 80, targetMonthly: 200, inflationRate: 2.5 },
-    status: { currentAge: 40, annualIncome: 8000, incomeGrowthRate: 2.0, annualExpense: 3600, expenseGrowthRate: 2.0 },
+    status: { currentAge: 40, annualIncome: 8000, incomeGrowthRate: 2.0, annualExpense: 3600},
     assets: {
       cash:       { amount: 5000,  expectedReturn: 1.0 },
       deposit:    { amount: 5000,  expectedReturn: 2.0 },
@@ -129,7 +129,7 @@ describe('[W2] finalNetWorth 완성', () => {
     // 주담대 없음 → mortgageDebtEnd = 0, sell 단독 검증.
     const inputs = makeFullInputs({
       goal: { retirementAge: 60, lifeExpectancy: 75, targetMonthly: 200, inflationRate: 2.5 },
-      status: { currentAge: 50, annualIncome: 3000, incomeGrowthRate: 0, annualExpense: 4200, expenseGrowthRate: 0 },
+      status: { currentAge: 50, annualIncome: 3000, incomeGrowthRate: 0, annualExpense: 4200},
       assets: {
         cash:       { amount: 300,   expectedReturn: 1.0 },
         deposit:    { amount: 300,   expectedReturn: 2.0 },
@@ -198,7 +198,7 @@ describe('[W2] finalNetWorth 완성', () => {
     // 대신: currentAge=60, 30년 모기지(만료=90), lifeExpectancy=80 사용
     const inputs = makeFullInputs({
       goal: { retirementAge: 65, lifeExpectancy: 80, targetMonthly: 200, inflationRate: 2.5 },
-      status: { currentAge: 60, annualIncome: 8000, incomeGrowthRate: 2.0, annualExpense: 3600, expenseGrowthRate: 2.0 },
+      status: { currentAge: 60, annualIncome: 8000, incomeGrowthRate: 2.0, annualExpense: 3600},
       debts: {
         mortgage:   { balance: 20000, interestRate: 3.5, repaymentType: 'equal_payment', repaymentYears: 30 },
         creditLoan: { balance: 0, interestRate: 0, repaymentType: 'balloon_payment', repaymentYears: 0 },
@@ -244,7 +244,7 @@ describe('[W2] finalNetWorth 완성', () => {
     // 30년 모기지(mortgageDebtEnd > 0) + 자산 부족으로 담보대출 draw 발생(securedLoanBalanceEnd > 0)
     const inputs = makeFullInputs({
       goal: { retirementAge: 65, lifeExpectancy: 80, targetMonthly: 400, inflationRate: 2.5 },
-      status: { currentAge: 60, annualIncome: 4000, incomeGrowthRate: 0, annualExpense: 3600, expenseGrowthRate: 0 },
+      status: { currentAge: 60, annualIncome: 4000, incomeGrowthRate: 0, annualExpense: 3600},
       assets: {
         cash:       { amount: 500,   expectedReturn: 1.0 },
         deposit:    { amount: 500,   expectedReturn: 2.0 },
@@ -291,7 +291,7 @@ describe('[V] 차량 입력이 sustainableMonthly에 반영되어야 함', () =>
   it('[V-3] separate 차량이 있으면 sustainableMonthly가 내려가야 함', () => {
     const baseInputs = makeFullInputs({
       goal: { retirementAge: 65, lifeExpectancy: 67, targetMonthly: 200, inflationRate: 0 },
-      status: { currentAge: 64, annualIncome: 0, incomeGrowthRate: 0, annualExpense: 0, expenseGrowthRate: 0 },
+      status: { currentAge: 64, annualIncome: 0, incomeGrowthRate: 0, annualExpense: 0},
       assets: {
         cash:       { amount: 5000, expectedReturn: 0 },
         deposit:    { amount: 0, expectedReturn: 0 },
@@ -330,7 +330,7 @@ describe('[V] 차량 입력이 sustainableMonthly에 반영되어야 함', () =>
   it('[V-4] included 차량은 annualExpense를 그대로 둘 때 sustainableMonthly를 추가로 바꾸지 않아야 함', () => {
     const baseInputs = makeFullInputs({
       goal: { retirementAge: 65, lifeExpectancy: 67, targetMonthly: 200, inflationRate: 0 },
-      status: { currentAge: 64, annualIncome: 0, incomeGrowthRate: 0, annualExpense: 0, expenseGrowthRate: 0 },
+      status: { currentAge: 64, annualIncome: 0, incomeGrowthRate: 0, annualExpense: 0},
       assets: {
         cash:       { amount: 5000, expectedReturn: 0 },
         deposit:    { amount: 0, expectedReturn: 0 },
@@ -417,7 +417,7 @@ describe('B6: 헤드라인-차트 기준 통일 (sustainableMonthly)', () => {
   function makeLowAssetInputs(targetMonthly: number): PlannerInputs {
     return {
       goal: { retirementAge: 60, lifeExpectancy: 85, targetMonthly, inflationRate: 2.5 },
-      status: { currentAge: 50, annualIncome: 4000, incomeGrowthRate: 0, annualExpense: 3600, expenseGrowthRate: 0 },
+      status: { currentAge: 50, annualIncome: 4000, incomeGrowthRate: 0, annualExpense: 3600},
       assets: {
         cash:       { amount: 500,   expectedReturn: 1.0 },
         deposit:    { amount: 500,   expectedReturn: 2.0 },

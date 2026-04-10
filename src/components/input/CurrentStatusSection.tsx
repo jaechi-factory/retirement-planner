@@ -39,22 +39,15 @@ export default function CurrentStatusSection() {
         onChange={(v) => setStatus({ incomeGrowthRate: v })}
       />
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '3fr 2fr', gap: 8 }}>
-          <NumberInput
-            label="한 달 생활비"
-            value={status.annualExpense > 0 ? Math.round(status.annualExpense / 12) : 0}
-            onChange={(v) => setStatus({ annualExpense: v * 12 })}
-            unit="만원"
-            hint="주거비를 빼고, 매달 평균적으로 쓰는 돈을 입력해 주세요."
-          />
-          <RateInput
-            label="생활비 증가율 (연)"
-            value={status.expenseGrowthRate}
-            onChange={(v) => setStatus({ expenseGrowthRate: v })}
-          />
-        </div>
+        <NumberInput
+          label="한 달 생활비 (오늘 가치)"
+          value={status.annualExpense > 0 ? Math.round(status.annualExpense / 12) : 0}
+          onChange={(v) => setStatus({ annualExpense: v * 12 })}
+          unit="만원"
+          hint="주거비를 빼고, 오늘 가치 기준으로 매달 평균적으로 쓰는 돈을 입력해 주세요."
+        />
         <p style={{ fontSize: 12, color: 'var(--text-faint)', margin: 0 }}>
-          앞으로 생활비가 얼마나 오를지 예상해서 입력해 주세요. 보통은 물가상승률과 비슷하게 잡아요.
+          입력한 생활비는 오늘 가치 기준이고, 미래에는 물가상승률로 자동 반영돼요.
         </p>
       </div>
 

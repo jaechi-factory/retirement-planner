@@ -233,7 +233,10 @@ export default function AgeInspectorPanel({ data, hasRealEstate, hasSaleProceeds
 
           <div style={{ marginTop: 12 }}>
             <SectionTitle>지출 내역</SectionTitle>
-            <DetailRow label="생활비" value={data.monthlyLivingExpense} />
+            <div style={{ fontSize: 11, color: 'var(--ux-text-subtle)', marginBottom: 4 }}>
+              지출은 선택한 나이 기준 명목금액이에요
+            </div>
+            <DetailRow label="생활비 (명목)" value={data.monthlyLivingExpense} />
             <DetailRow label="부채상환" value={data.monthlyDebtService} />
             <DetailRow label="자녀비" value={data.monthlyChildExpense} />
             <DetailRow label="주거비" value={data.monthlyRent} />

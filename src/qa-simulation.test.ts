@@ -22,7 +22,6 @@ const BASE: PlannerInputs = {
     annualIncome: 8000, // 세후 8000만원
     incomeGrowthRate: 2,
     annualExpense: 4800, // 연 4800만원 (월 400)
-    expenseGrowthRate: 2,
   },
   assets: {
     cash:       { amount: 3000, expectedReturn: 1.5 },
