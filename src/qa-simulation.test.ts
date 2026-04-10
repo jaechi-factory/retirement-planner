@@ -258,7 +258,6 @@ describe('E. 실전 케이스', () => {
       },
     };
     const r = run(inputs);
-    const rec = r.propertyOptions.find((o) => o.isRecommended)!;
     // 무주택 경고
     const noPropertyWarn = r.warnings.some((w) => w.message.includes('부동산 자산이 없어서'));
     expect(noPropertyWarn).toBe(true);
@@ -375,7 +374,6 @@ describe('F. 코드 구조 검증', () => {
     };
     const r = run(poorInputs);
     const sellOpt = r.propertyOptions.find((o) => o.strategy === 'sell')!;
-    const keepOpt = r.propertyOptions.find((o) => o.strategy === 'keep')!;
 
     // sell이 항상 keep보다 좋지는 않음 (임대비 때문에)
     // 하지만 부동산이 충분히 크면 sell이 더 좋을 수 있음
