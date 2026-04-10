@@ -1,6 +1,6 @@
 /**
  * QA 시뮬레이션 테스트 — 입력 변화에 따른 단조성·방향성 검증
- * 이번 턴: 수정 없음, 분석만
+ * 대형 회귀 검증용이라 출력 노이즈 없이 단언만 유지한다
  */
 
 import { describe, it, expect } from 'vitest';
@@ -103,11 +103,6 @@ describe('A. 연봉 축 단조성', () => {
       return { income: inc, sustainable: r.summary.sustainableMonthly };
     });
 
-    console.log('\n[A] 연봉 축:');
-    results.forEach((r) =>
-      console.log(`  연봉 ${r.income.toLocaleString()}만원 → 지속가능 월 ${r.sustainable}만원`)
-    );
-
     for (let i = 1; i < results.length; i++) {
       expect(results[i].sustainable).toBeGreaterThanOrEqual(results[i - 1].sustainable);
     }
@@ -120,9 +115,6 @@ describe('A. 연봉 축 단조성', () => {
       const rec = r.propertyOptions.find((o) => o.isRecommended)!;
       return { income: inc, strategy: rec.strategy, rank: strategyRank[rec.strategy] ?? 0 };
     });
-
-    console.log('\n  추천 전략:');
-    results.forEach((r) => console.log(`  연봉 ${r.income.toLocaleString()}만원 → ${r.strategy}`));
 
     // 연봉이 높아졌을 때 rank가 크게 낮아지면 이상 (단조적 보장은 어렵지만 급락은 안 됨)
     // 정확한 단조성 대신 최저 연봉보다 최고 연봉의 rank가 작으면 경고
@@ -140,11 +132,6 @@ describe('B. 금융자산 축 단조성', () => {
       return { financial: amt, sustainable: r.summary.sustainableMonthly };
     });
 
-    console.log('\n[B] 금융자산 축:');
-    results.forEach((r) =>
-      console.log(`  금융자산 ${r.financial.toLocaleString()}만원 → 지속가능 월 ${r.sustainable}만원`)
-    );
-
     for (let i = 1; i < results.length; i++) {
       expect(results[i].sustainable).toBeGreaterThanOrEqual(results[i - 1].sustainable);
     }
@@ -155,11 +142,6 @@ describe('B. 금융자산 축 단조성', () => {
       const r = run(withFinancialAssets(BASE, amt));
       return { financial: amt, exhaustionAge: r.summary.financialExhaustionAge };
     });
-
-    console.log('\n  투자자산 소진 나이:');
-    results.forEach((r) =>
-      console.log(`  금융자산 ${r.financial.toLocaleString()}만원 → 소진 ${r.exhaustionAge ?? 'N/A(유지)'}세`)
-    );
 
     for (let i = 1; i < results.length; i++) {
       const prev = results[i - 1].exhaustionAge ?? Infinity;
@@ -187,13 +169,6 @@ describe('C. 부동산 축', () => {
       };
     });
 
-    console.log('\n[C] 부동산 축:');
-    results.forEach((r) =>
-      console.log(
-        `  부동산 ${r.re.toLocaleString()}만원 → keep:${r.keep} / loan:${r.secured_loan} / sell:${r.sell}만원`
-      )
-    );
-
     // 부동산이 늘면 secured_loan과 sell이 커지거나 같아야 함
     for (let i = 1; i < results.length; i++) {
       expect(results[i].secured_loan).toBeGreaterThanOrEqual(results[i - 1].secured_loan);
@@ -207,7 +182,6 @@ describe('C. 부동산 축', () => {
     const keepM = opts.find((o) => o.strategy === 'keep')!.sustainableMonthly;
     const loanM = opts.find((o) => o.strategy === 'secured_loan')!.sustainableMonthly;
     const sellM = opts.find((o) => o.strategy === 'sell')!.sustainableMonthly;
-    console.log(`\n  부동산 0 → keep:${keepM} / loan:${loanM} / sell:${sellM}`);
     // secured_loan은 집이 없으면 담보가 없으므로 keep과 동일해야 함
     expect(loanM).toBe(keepM);
     // sell도 집이 없으면 keep과 동일
@@ -225,11 +199,6 @@ describe('D. 목표 생활비 축 (단조성)', () => {
       return { target: t, gap: r.summary.targetGap, sustainable: r.summary.sustainableMonthly };
     });
 
-    console.log('\n[D] 목표 생활비 축:');
-    results.forEach((r) =>
-      console.log(`  목표 ${r.target}만원 → 지속가능 ${r.sustainable}만원 / gap ${r.gap >= 0 ? '+' : ''}${r.gap}만원`)
-    );
-
     // targetGap = sustainableMonthly - targetMonthly
     // 목표가 높아지면 gap이 줄어야 함
     for (let i = 1; i < results.length; i++) {
@@ -242,11 +211,6 @@ describe('D. 목표 생활비 축 (단조성)', () => {
       const r = run(withTargetMonthly(BASE, t));
       return { target: t, failureAge: r.summary.failureAge };
     });
-
-    console.log('\n  고갈 나이:');
-    results.forEach((r) =>
-      console.log(`  목표 ${r.target}만원 → 고갈 ${r.failureAge ?? 'N/A(유지)'}세`)
-    );
 
     for (let i = 1; i < results.length; i++) {
       const prev = results[i - 1].failureAge ?? Infinity;
@@ -274,8 +238,6 @@ describe('E. 실전 케이스', () => {
     };
     const r = run(inputs);
     const rec = r.propertyOptions.find((o) => o.isRecommended)!;
-    console.log(`\n[E1] 저연봉/큰집/적은금융자산 → 추천: ${rec.strategy}, 지속가능 월 ${rec.sustainableMonthly}만원`);
-    console.log(`  failureAge(keep): ${r.propertyOptions.find(o=>o.strategy==='keep')!.failureAge}`);
     // 저연봉이고 금융자산 적으면 keep만으로는 부족할 가능성 높음
     // 집이 크면 secured_loan 또는 sell 전략이 유리해야 함
     expect(['secured_loan', 'sell', 'keep']).toContain(rec.strategy);
@@ -298,10 +260,8 @@ describe('E. 실전 케이스', () => {
     };
     const r = run(inputs);
     const rec = r.propertyOptions.find((o) => o.isRecommended)!;
-    console.log(`\n[E2] 무주택/금융자산 많음 → 추천: ${rec.strategy}, 지속가능 월 ${rec.sustainableMonthly}만원`);
     // 무주택 경고
     const noPropertyWarn = r.warnings.some((w) => w.message.includes('부동산 자산이 없어서'));
-    console.log(`  부동산 없음 경고: ${noPropertyWarn}`);
     expect(noPropertyWarn).toBe(true);
     // 3전략이 모두 동일한 sustainableMonthly
     const opts = r.propertyOptions;
@@ -322,8 +282,6 @@ describe('E. 실전 케이스', () => {
     };
     const r = run(inputs);
     const rec = r.propertyOptions.find((o) => o.isRecommended)!;
-    console.log(`\n[E3] 고연봉/고부채/자녀2명 → 추천: ${rec.strategy}, 지속가능 월 ${rec.sustainableMonthly}만원`);
-    console.log(`  failureAge: ${r.summary.failureAge ?? 'N/A'}`);
     expect(rec.sustainableMonthly).toBeGreaterThan(0);
   });
 
@@ -335,11 +293,6 @@ describe('E. 실전 케이스', () => {
       const rec = r.propertyOptions.find((o) => o.isRecommended)!;
       return { age, sustainable: rec.sustainableMonthly };
     });
-
-    console.log('\n[E4] 은퇴 나이 비교:');
-    results.forEach((r) =>
-      console.log(`  은퇴 ${r.age}세 → 지속가능 월 ${r.sustainable}만원`)
-    );
 
     // 늦게 은퇴할수록 더 많이 저축 → sustainableMonthly가 증가해야 함
     for (let i = 1; i < results.length; i++) {
@@ -354,9 +307,6 @@ describe('E. 실전 케이스', () => {
       children: { hasChildren: true, count: 2, monthlyPerChild: 100, independenceAge: 55 },
     };
     const withChildResult = run(withChild);
-
-    console.log(`\n[E5] 자녀 없음 → ${noChild.summary.sustainableMonthly}만원`);
-    console.log(`  자녀 2명(월 100만원씩, 55세 독립) → ${withChildResult.summary.sustainableMonthly}만원`);
 
     expect(withChildResult.summary.sustainableMonthly)
       .toBeLessThanOrEqual(noChild.summary.sustainableMonthly);
@@ -387,9 +337,6 @@ describe('F. 코드 구조 검증', () => {
     };
     const withDebtResult = run(withDebt);
 
-    console.log(`\n[F2] 부채 없음 → ${noDebt.summary.sustainableMonthly}만원`);
-    console.log(`  주담대 2억(4%, 20년) → ${withDebtResult.summary.sustainableMonthly}만원`);
-
     expect(withDebtResult.summary.sustainableMonthly)
       .toBeLessThanOrEqual(noDebt.summary.sustainableMonthly);
   });
@@ -406,9 +353,6 @@ describe('F. 코드 구조 검증', () => {
     const noPensionResult = run(noPension);
     const withPensionResult = run(BASE);
 
-    console.log(`\n[F3] 연금 없음 → ${noPensionResult.summary.sustainableMonthly}만원`);
-    console.log(`  연금 있음 → ${withPensionResult.summary.sustainableMonthly}만원`);
-
     expect(withPensionResult.summary.sustainableMonthly)
       .toBeGreaterThanOrEqual(noPensionResult.summary.sustainableMonthly);
   });
@@ -419,7 +363,6 @@ describe('F. 코드 구조 검증', () => {
     const r = run(richInputs);
     const keepOpt = r.propertyOptions.find((o) => o.strategy === 'keep')!;
     const rec = r.propertyOptions.find((o) => o.isRecommended)!;
-    console.log(`\n[F4] 금융자산 20억 → keep 생존여부: ${keepOpt.survivesToLifeExpectancy}, 추천: ${rec.strategy}`);
     if (keepOpt.survivesToLifeExpectancy) {
       expect(rec.strategy).toBe('keep');
     }
@@ -435,9 +378,6 @@ describe('F. 코드 구조 검증', () => {
     const sellOpt = r.propertyOptions.find((o) => o.strategy === 'sell')!;
     const keepOpt = r.propertyOptions.find((o) => o.strategy === 'keep')!;
 
-    console.log(`\n[F5] 금융자산 적음/목표 높음:`);
-    console.log(`  keep: ${keepOpt.sustainableMonthly}만원 (failureAge: ${keepOpt.failureAge})`);
-    console.log(`  sell: ${sellOpt.sustainableMonthly}만원 (failureAge: ${sellOpt.failureAge})`);
     // sell이 항상 keep보다 좋지는 않음 (임대비 때문에)
     // 하지만 부동산이 충분히 크면 sell이 더 좋을 수 있음
     expect(sellOpt.sustainableMonthly).toBeGreaterThanOrEqual(0);
@@ -449,7 +389,6 @@ describe('G. 연도별 데이터 일관성', () => {
   it('G1: detailYearlyAggregates가 현재나이~기대수명 구간을 다 포함해야 한다', () => {
     const r = run(BASE);
     const ages = r.detailYearlyAggregates.map((a) => a.ageYear);
-    console.log(`\n[G1] 연도별 데이터 범위: ${ages[0]}세 ~ ${ages[ages.length - 1]}세 (${ages.length}개 연도)`);
     expect(ages[0]).toBe(BASE.status.currentAge);
     expect(ages[ages.length - 1]).toBe(BASE.goal.lifeExpectancy);
   });
@@ -457,7 +396,6 @@ describe('G. 연도별 데이터 일관성', () => {
   it('G2: totalShortfall이 없는 케이스에서 sustainableMonthly가 targetMonthly 이상이어야 한다', () => {
     const r = run(BASE);
     const hasShortfall = r.detailYearlyAggregates.some((a) => a.totalShortfall > 0);
-    console.log(`\n[G2] shortfall 발생 여부: ${hasShortfall}`);
     if (!hasShortfall) {
       expect(r.summary.sustainableMonthly).toBeGreaterThanOrEqual(BASE.goal.targetMonthly);
     }
@@ -473,8 +411,6 @@ describe('G. 연도별 데이터 일관성', () => {
     const firstTotal = firstRetired.cashLikeEnd + firstRetired.financialInvestableEnd;
     const lastTotal = lastRetired.cashLikeEnd + lastRetired.financialInvestableEnd;
 
-    console.log(`\n[G3] 은퇴 첫 해(${firstRetired.ageYear}세) 유동자산: ${Math.round(firstTotal)}만원`);
-    console.log(`  기대수명(${lastRetired.ageYear}세) 유동자산: ${Math.round(lastTotal)}만원`);
     // 은퇴 후 생활비 소비하므로 일반적으로 감소, 하지만 연금+수익이 충분하면 유지도 가능
     // 단조성 보장은 어렵지만 기록
     expect(firstTotal).toBeGreaterThanOrEqual(0);

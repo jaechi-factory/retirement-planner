@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { usePlannerStore } from '../../../store/usePlannerStore';
+import { getPlannerPolicy } from '../../../policy/policyTable';
 import NumberInput from '../shared/NumberInput';
 import { estimatePublicPensionWithMeta } from '../../../engine/pensionMeta';
 import { fmtKRW } from '../../../utils/format';
@@ -14,7 +15,14 @@ export default function PublicPensionCard() {
   const { status, goal } = inputs;
 
   const workStartAge = publicPension.workStartAge ?? 26;
-  const meta = estimatePublicPensionWithMeta(status.annualIncome, status.currentAge, goal.retirementAge, workStartAge);
+  const valuationYear = publicPension.valuationYear ?? Number.parseInt(getPlannerPolicy().effectiveDate.slice(0, 4), 10);
+  const meta = estimatePublicPensionWithMeta(
+    status.annualIncome,
+    status.currentAge,
+    goal.retirementAge,
+    workStartAge,
+    valuationYear,
+  );
   const isAuto = publicPension.mode === 'auto';
   const displayValue = isAuto
     ? meta.base
@@ -30,7 +38,7 @@ export default function PublicPensionCard() {
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 8 }}>
         <div>
           <Typography variant="label1" weight="bold" color="semantic.label.normal">국민연금</Typography>
-          <Typography variant="caption1" color="semantic.label.alternative" style={{ marginTop: 2, display: 'block' }}>지금 기준 예상 월액이에요</Typography>
+          <Typography variant="caption1" color="semantic.label.alternative" style={{ marginTop: 2, display: 'block' }}>수령 시작 월액의 오늘 가치예요</Typography>
         </div>
         <ModeLabel text={isAuto ? '간편 계산' : '직접 입력'} />
       </div>
@@ -44,7 +52,7 @@ export default function PublicPensionCard() {
         </Typography>
         <Typography variant="caption1" color="semantic.label.alternative" style={{ marginTop: 2, display: 'block' }}>
           {isAuto
-            ? `${publicPension.startAge}세부터 수령 · 공단 예상월액표 기준 추정 (${workStartAge}세 취업 가정)`
+            ? `${publicPension.startAge}세부터 수령 · 공단 예상월액표 기준 추정 (${workStartAge}세 취업, 평가연도 ${publicPension.valuationYear ?? valuationYear})`
             : `${publicPension.startAge}세부터 수령 · 실제 수령액과 다를 수 있어요`}
         </Typography>
       </div>

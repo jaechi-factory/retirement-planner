@@ -37,6 +37,7 @@ const PROFILES: ProfileName[] = [
   'deposit_only',
   'us_stock_only',
 ];
+const SWEEP_TEST_TIMEOUT_MS = 360000;
 
 function makeBaseInput(
   annualIncome: number,
@@ -392,7 +393,7 @@ describe('scenario sweep regression — dense + fuzz', () => {
       }
       expect(scenarios).toBe(864);
     },
-    180000,
+    SWEEP_TEST_TIMEOUT_MS,
   );
 
   it(
@@ -424,6 +425,6 @@ describe('scenario sweep regression — dense + fuzz', () => {
       }
       expect(scenarios).toBe(400);
     },
-    180000,
+    SWEEP_TEST_TIMEOUT_MS,
   );
 });

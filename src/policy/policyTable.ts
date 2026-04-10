@@ -1,7 +1,19 @@
 export type DebtSettlementMode = 'mortgage_only' | 'all_debts';
 
+export interface PayrollPolicy {
+  defaultFamilyCount: number;
+  defaultChildCount: number;
+  defaultNonTaxableMonthly: number;
+  defaultWithholdingRatePercent: 80 | 100 | 120;
+  nationalPensionEmployeeRateByYear: Record<number, number>;
+  healthInsuranceEmployeeRateByYear: Record<number, number>;
+  /** 직장가입자 본인부담 건강보험료에 곱하는 장기요양보험료율(%) */
+  longTermCareRateByYear: Record<number, number>;
+  employmentInsuranceEmployeeRateByYear: Record<number, number>;
+  withholdingTaxTableVersionByYear: Record<number, string>;
+}
+
 export interface PensionPolicy {
-  netToGrossRatio: number;
   assumedCareerStartAge: number;
   npsMinMonthly: number;
   npsMaxMonthly: number;
@@ -26,6 +38,7 @@ export interface PropertyPolicy {
 export interface PlannerPolicyVersion {
   version: string;
   effectiveDate: string;
+  payroll: PayrollPolicy;
   pension: PensionPolicy;
   property: PropertyPolicy;
 }
@@ -34,8 +47,68 @@ const POLICY_TABLE: PlannerPolicyVersion[] = [
   {
     version: '2026-04',
     effectiveDate: '2026-04-01',
+    payroll: {
+      defaultFamilyCount: 1,
+      defaultChildCount: 0,
+      defaultNonTaxableMonthly: 0,
+      defaultWithholdingRatePercent: 100,
+      nationalPensionEmployeeRateByYear: {
+        2025: 4.5,
+        2026: 4.75,
+        2027: 5.0,
+        2028: 5.25,
+        2029: 5.5,
+        2030: 5.75,
+        2031: 6.0,
+        2032: 6.25,
+        2033: 6.5,
+      },
+      healthInsuranceEmployeeRateByYear: {
+        2025: 3.545,
+        2026: 3.595,
+        2027: 3.595,
+        2028: 3.595,
+        2029: 3.595,
+        2030: 3.595,
+        2031: 3.595,
+        2032: 3.595,
+        2033: 3.595,
+      },
+      longTermCareRateByYear: {
+        2025: 12.95,
+        2026: 13.14,
+        2027: 13.14,
+        2028: 13.14,
+        2029: 13.14,
+        2030: 13.14,
+        2031: 13.14,
+        2032: 13.14,
+        2033: 13.14,
+      },
+      employmentInsuranceEmployeeRateByYear: {
+        2025: 0.9,
+        2026: 0.9,
+        2027: 0.9,
+        2028: 0.9,
+        2029: 0.9,
+        2030: 0.9,
+        2031: 0.9,
+        2032: 0.9,
+        2033: 0.9,
+      },
+      withholdingTaxTableVersionByYear: {
+        2025: '2024-02-29',
+        2026: '2024-02-29',
+        2027: '2024-02-29',
+        2028: '2024-02-29',
+        2029: '2024-02-29',
+        2030: '2024-02-29',
+        2031: '2024-02-29',
+        2032: '2024-02-29',
+        2033: '2024-02-29',
+      },
+    },
     pension: {
-      netToGrossRatio: 0.78,
       assumedCareerStartAge: 26,
       npsMinMonthly: 40,
       npsMaxMonthly: 637,

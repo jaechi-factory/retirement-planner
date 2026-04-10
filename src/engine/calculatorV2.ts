@@ -339,6 +339,7 @@ function buildWarnings(
     inputs.goal.retirementAge,
     inputs.status.annualIncome,
     inputs.goal.inflationRate,
+    inputs.goal.retirementStartMonth ?? 0,
   );
   if (pension === 0) {
     warnings.push({

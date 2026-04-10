@@ -1,17 +1,24 @@
+import type { PayrollReverseContext } from '../engine/payrollReverse';
+
 export type PensionInputMode = 'auto' | 'manual';
 
 export interface PublicPensionInput {
   enabled: boolean;
   mode: PensionInputMode;
   startAge: number;                  // default 65
+  startMonth?: number;               // default 0
   manualMonthlyTodayValue: number;   // 0 = 미입력, 단위: 만원
   workStartAge?: number;             // 국민연금 납부 시작 나이 (default 26)
+  valuationYear?: number;
+  pensionableMonthlyOverride?: number | null;
+  payrollReverse?: Partial<PayrollReverseContext>;
 }
 
 export interface RetirementPensionInput {
   enabled: boolean;
   mode: PensionInputMode;
   startAge: number;                  // default max(55, retirementAge)
+  startMonth?: number;               // default 0
   payoutYears: number;               // default 20
   currentBalance: number;            // 현재 적립금 (만원), 0 = 모름
   accumulationReturnRate: number;    // 적립 수익률 (%), default 3.5
@@ -26,6 +33,7 @@ export interface PrivatePensionProduct {
   currentBalance: number;
   monthlyContribution: number;
   startAge: number;
+  startMonth?: number;
   payoutYears: number;
   expectedReturnRate: number;        // 기본 단일 수익률
   accumulationReturnRate: number;    // 고급 설정: 모으는 동안
@@ -38,6 +46,7 @@ export interface PrivatePensionInput {
 
   // 기본 모드 입력값
   startAge: number;
+  startMonth?: number;
   payoutYears: number;
   currentBalance: number;
   monthlyContribution: number;

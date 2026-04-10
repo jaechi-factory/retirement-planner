@@ -262,7 +262,7 @@ describe('extractKeyDecisionEvents', () => {
     expect(events.some((event) => event.text === '70세 퇴직연금이 끝나요')).toBe(true);
     expect(events.some((event) => event.text === '66세 개인연금이 시작돼요')).toBe(true);
     expect(events.some((event) => event.text === '75세 개인연금이 끝나요')).toBe(true);
-    expect(events.some((event) => event.text === '69세 자녀 지출이 끝나요')).toBe(true);
+    expect(events.some((event) => event.text === '68세 자녀 지출이 끝나요')).toBe(true);
     expect(events.some((event) => event.text === '74세 집을 담보로 빌려 생활비를 보태야 해요')).toBe(true);
     expect(events.some((event) => event.text === '72세 금융자산이 부족해지기 시작해요')).toBe(true);
     expect(events.some((event) => event.text === '83세 생활비가 부족해지기 시작해요')).toBe(true);

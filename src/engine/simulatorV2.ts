@@ -44,7 +44,7 @@ import type { DebtSettlementMode } from '../policy/policyTable';
 import { getPlannerPolicy } from '../policy/policyTable';
 import { precomputeDebtSchedules } from './assetWeighting';
 import type { DebtSchedules } from './debtSchedule';
-import { getAnnualPensionIncomeForAge } from './pensionEstimation';
+import { getPensionMonthlyBreakdownForMonthIndex } from './pensionEstimation';
 import { calcNetWorth } from './netWorth';
 import { getVehicleMonthlyCost } from './vehicleSchedule';
 
@@ -244,6 +244,9 @@ export function simulateMonthlyV2(
   const { goal, status, assets, debts, children, pension, vehicle } = inputs;
   const { retirementAge, lifeExpectancy, inflationRate } = goal;
   const { currentAge, annualIncome, incomeGrowthRate, annualExpense, expenseGrowthRate } = status;
+  const currentAgeMonth = status.currentAgeMonth ?? 0;
+  const retirementStartMonth = goal.retirementStartMonth ?? 0;
+  const childIndependenceMonth = children.independenceMonth ?? 11;
 
   const monthlyInflation    = annualToMonthlyRate(inflationRate);
   const monthlyIncomeGrowth = annualToMonthlyRate(incomeGrowthRate);
@@ -291,9 +294,19 @@ export function simulateMonthlyV2(
   let financialEverExhausted = false;
 
   // 은퇴 시점 명목 월 생활비 (현재가치 → 은퇴 시점 명목)
-  const yearsToRetirement = Math.max(0, retirementAge - currentAge);
+  const retirementMonthIndex = Math.max(
+    0,
+    (retirementAge - currentAge) * 12 + retirementStartMonth - currentAgeMonth,
+  );
   const retirementMonthlyNominal =
-    testMonthlyInCurrentValue * Math.pow(1 + inflationRate / 100, yearsToRetirement);
+    testMonthlyInCurrentValue * Math.pow(1 + monthlyInflation, retirementMonthIndex);
+
+  const childIndependenceMonthIndex = Math.max(
+    0,
+    (children.independenceAge - currentAge) * 12 + childIndependenceMonth - currentAgeMonth,
+  );
+  // 자녀비는 독립월 직전까지만 반영한다.
+  // totalMonthIndex < childIndependenceMonthIndex 이면 발생, 그 달부터는 0.
 
   // 자녀 연 지출 (현재가치)
   const annualChildExpense =
@@ -302,16 +315,13 @@ export function simulateMonthlyV2(
   const snapshots: MonthlySnapshotV2[] = [];
 
   for (let ageYear = currentAge; ageYear <= lifeExpectancy; ageYear++) {
-    // 연금은 ageYear만 달라지고 ageMonthIndex에는 무관 → 연도별 1회만 계산
-    const annualPensionForYear = getAnnualPensionIncomeForAge(
-      pension, currentAge, ageYear, inflationRate, annualIncome, retirementAge,
-    );
+    const startMonth = ageYear === currentAge ? currentAgeMonth : 0;
 
-    for (let ageMonthIndex = 0; ageMonthIndex < 12; ageMonthIndex++) {
+    for (let ageMonthIndex = startMonth; ageMonthIndex < 12; ageMonthIndex++) {
 
       // [P4] totalMonthIndex = 0부터 시작, offset 없음
-      const totalMonthIndex = (ageYear - currentAge) * 12 + ageMonthIndex;
-      const isRetired = ageYear >= retirementAge;
+      const totalMonthIndex = (ageYear - currentAge) * 12 + (ageMonthIndex - currentAgeMonth);
+      const isRetired = totalMonthIndex >= retirementMonthIndex;
       const monthsFromNow = totalMonthIndex;
 
       const eventFlags: SnapshotEventFlags = {};
@@ -338,7 +348,15 @@ export function simulateMonthlyV2(
         ? (annualIncome / 12) * Math.pow(1 + monthlyIncomeGrowth, monthsFromNow)
         : 0;
 
-      const pensionThisMonth = annualPensionForYear / 12;
+      const pensionThisMonth = getPensionMonthlyBreakdownForMonthIndex(
+        pension,
+        currentAge,
+        totalMonthIndex,
+        inflationRate,
+        annualIncome,
+        retirementAge,
+        retirementStartMonth,
+      ).totalNominal;
 
       // ── 3. 지출 계산 ──────────────────────────────────────────────────
       let expenseThisMonth = 0;
@@ -346,7 +364,7 @@ export function simulateMonthlyV2(
         expenseThisMonth =
           (annualExpense / 12) * Math.pow(1 + monthlyExpenseGrowth, monthsFromNow);
       } else {
-        const monthsAfterRetirement = (ageYear - retirementAge) * 12 + ageMonthIndex;
+        const monthsAfterRetirement = totalMonthIndex - retirementMonthIndex;
         expenseThisMonth =
           retirementMonthlyNominal * Math.pow(1 + monthlyInflation, monthsAfterRetirement);
       }
@@ -370,7 +388,7 @@ export function simulateMonthlyV2(
         : getMonthlyDebtService(debtSchedules, totalMonthIndex);
 
       const childExpenseThisMonth =
-        children.hasChildren && ageYear <= children.independenceAge
+        children.hasChildren && totalMonthIndex < childIndependenceMonthIndex
           ? (() => {
               const growthMode = children.costGrowthMode ?? 'inflation';
               if (growthMode === 'fixed') return annualChildExpense / 12;
@@ -423,7 +441,7 @@ export function simulateMonthlyV2(
         }
 
         // 은퇴 후: deficit 처리 후 버퍼 top-up
-        const monthsAfterRetirement = (ageYear - retirementAge) * 12 + ageMonthIndex;
+        const monthsAfterRetirement = totalMonthIndex - retirementMonthIndex;
         const currentExpenseNominal =
           retirementMonthlyNominal * Math.pow(1 + monthlyInflation, monthsAfterRetirement);
         const buffer = currentExpenseNominal * fundingPolicy.liquidityBufferMonths;

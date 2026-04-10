@@ -15,7 +15,7 @@ import {
 } from 'recharts';
 import type { YearlyAggregateV2 } from '../../types/calculationV2';
 import type { PlannerInputs } from '../../types/inputs';
-import { getPensionBreakdown, getPensionMonthlyBreakdownForAge } from '../../engine/pensionEstimation';
+import { getPensionBreakdown, getPensionMonthlyBreakdownForMonthIndex } from '../../engine/pensionEstimation';
 import { fmtKRW, fmtKRWAxis } from '../../utils/format';
 import {
   buildCashflowByAgeMaps,
@@ -46,7 +46,14 @@ function buildPensionStartMap(inputs: PlannerInputs, retirementAge: number): Map
   };
   const { currentAge, annualIncome } = inputs.status;
   const inflationRate = inputs.goal.inflationRate;
-  const breakdown = getPensionBreakdown(inputs.pension, currentAge, retirementAge, annualIncome, inflationRate);
+  const breakdown = getPensionBreakdown(
+    inputs.pension,
+    currentAge,
+    retirementAge,
+    annualIncome,
+    inflationRate,
+    inputs.goal.retirementStartMonth ?? 0,
+  );
   if (inputs.pension.publicPension.enabled && breakdown.publicMonthly > 0) {
     add(inputs.pension.publicPension.startAge, '국민연금', breakdown.publicMonthly);
   }
@@ -61,22 +68,56 @@ function buildPensionStartMap(inputs: PlannerInputs, retirementAge: number): Map
 
 function buildPensionByAgeMaps(rows: YearlyAggregateV2[], inputs: PlannerInputs, retirementAge: number) {
   const monthlyPublicPensionByAge = new Map<number, number>();
+  const monthlyPublicPensionRealByAge = new Map<number, number>();
   const monthlyRetirementPensionByAge = new Map<number, number>();
+  const monthlyRetirementPensionRealByAge = new Map<number, number>();
   const monthlyPrivatePensionByAge = new Map<number, number>();
+  const monthlyPrivatePensionRealByAge = new Map<number, number>();
+  const currentAgeMonth = inputs.status.currentAgeMonth ?? 0;
   rows.forEach((row) => {
-    const breakdown = getPensionMonthlyBreakdownForAge(
-      inputs.pension,
-      inputs.status.currentAge,
-      row.ageYear,
-      inputs.goal.inflationRate,
-      inputs.status.annualIncome,
-      retirementAge,
-    );
-    monthlyPublicPensionByAge.set(row.ageYear, breakdown.publicMonthly);
-    monthlyRetirementPensionByAge.set(row.ageYear, breakdown.retirementMonthly);
-    monthlyPrivatePensionByAge.set(row.ageYear, breakdown.privateMonthly);
+    const totals = row.months.reduce((acc, month) => {
+      const monthIndex =
+        (month.ageYear - inputs.status.currentAge) * 12 + (month.ageMonthIndex - currentAgeMonth);
+      const breakdown = getPensionMonthlyBreakdownForMonthIndex(
+        inputs.pension,
+        inputs.status.currentAge,
+        monthIndex,
+        inputs.goal.inflationRate,
+        inputs.status.annualIncome,
+        retirementAge,
+        inputs.goal.retirementStartMonth ?? 0,
+      );
+      acc.publicNominal += breakdown.publicMonthlyNominal;
+      acc.publicReal += breakdown.publicMonthlyRealTodayValue;
+      acc.retirementNominal += breakdown.retirementMonthlyNominal;
+      acc.retirementReal += breakdown.retirementMonthlyRealTodayValue;
+      acc.privateNominal += breakdown.privateMonthlyNominal;
+      acc.privateReal += breakdown.privateMonthlyRealTodayValue;
+      return acc;
+    }, {
+      publicNominal: 0,
+      publicReal: 0,
+      retirementNominal: 0,
+      retirementReal: 0,
+      privateNominal: 0,
+      privateReal: 0,
+    });
+    const count = Math.max(1, row.months.length);
+    monthlyPublicPensionByAge.set(row.ageYear, totals.publicNominal / count);
+    monthlyPublicPensionRealByAge.set(row.ageYear, totals.publicReal / count);
+    monthlyRetirementPensionByAge.set(row.ageYear, totals.retirementNominal / count);
+    monthlyRetirementPensionRealByAge.set(row.ageYear, totals.retirementReal / count);
+    monthlyPrivatePensionByAge.set(row.ageYear, totals.privateNominal / count);
+    monthlyPrivatePensionRealByAge.set(row.ageYear, totals.privateReal / count);
   });
-  return { monthlyPublicPensionByAge, monthlyRetirementPensionByAge, monthlyPrivatePensionByAge };
+  return {
+    monthlyPublicPensionByAge,
+    monthlyPublicPensionRealByAge,
+    monthlyRetirementPensionByAge,
+    monthlyRetirementPensionRealByAge,
+    monthlyPrivatePensionByAge,
+    monthlyPrivatePensionRealByAge,
+  };
 }
 
 // ── Hover Tooltip (요약 5줄) ──────────────────────────────────────────────────
@@ -147,7 +188,14 @@ export default function AssetBalanceChart({
   if (rows.length === 0) return null;
 
   const pensionStartMap = buildPensionStartMap(inputs, retirementAge);
-  const { monthlyPublicPensionByAge, monthlyRetirementPensionByAge, monthlyPrivatePensionByAge } =
+  const {
+    monthlyPublicPensionByAge,
+    monthlyPublicPensionRealByAge,
+    monthlyRetirementPensionByAge,
+    monthlyRetirementPensionRealByAge,
+    monthlyPrivatePensionByAge,
+    monthlyPrivatePensionRealByAge,
+  } =
     buildPensionByAgeMaps(rows, inputs, retirementAge);
 
   const hasRealEstate = inputs.assets.realEstate.amount > 0;
@@ -188,8 +236,11 @@ export default function AssetBalanceChart({
     rows,
     cashflow,
     monthlyPublicPensionByAge,
+    monthlyPublicPensionRealByAge,
     monthlyRetirementPensionByAge,
+    monthlyRetirementPensionRealByAge,
     monthlyPrivatePensionByAge,
+    monthlyPrivatePensionRealByAge,
     pensionStartMap,
   });
 

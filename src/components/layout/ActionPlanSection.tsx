@@ -32,6 +32,7 @@ function buildActionItems(
     retirementAge,
     annualIncome,
     inflationRate,
+    inputs.goal.retirementStartMonth ?? 0,
   );
 
   // 1. 생활비 부족 시 (최우선)

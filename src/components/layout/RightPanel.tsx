@@ -21,6 +21,7 @@ export default function RightPanel() {
     inputs.goal.retirementAge,
     inputs.status.annualIncome,
     inputs.goal.inflationRate,
+    inputs.goal.retirementStartMonth ?? 0,
   );
   const coveragePct = Math.round(result.pensionCoverageRate * 100);
 
@@ -31,6 +32,7 @@ export default function RightPanel() {
     inputs.status.annualIncome,
     inputs.goal.targetMonthly,
     inputs.goal.inflationRate,
+    inputs.goal.retirementStartMonth ?? 0,
   );
 
   return (
@@ -96,7 +98,7 @@ export default function RightPanel() {
           연금이 생활비를 메워주는 비율
         </div>
         <div style={{ fontSize: 12, color: 'var(--tds-gray-400)', marginBottom: 14 }}>
-          추정값 · 지금 기준
+          수령 시작 월액은 오늘 가치 기준
         </div>
 
         {/* 커버율 대표 숫자 */}
@@ -125,7 +127,7 @@ export default function RightPanel() {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 14 }}>
           <div style={{ padding: '10px 12px', background: 'var(--tds-gray-50)', borderRadius: 10 }}>
             <div style={{ fontSize: 11, color: 'var(--tds-gray-400)', fontWeight: 600, marginBottom: 4 }}>
-              은퇴 직후
+              은퇴 시작월 (오늘 가치)
             </div>
             <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--tds-gray-700)' }}>
               월 {result.monthlyPensionAtRetirementStart.toLocaleString('ko-KR')}만원
@@ -133,7 +135,7 @@ export default function RightPanel() {
           </div>
           <div style={{ padding: '10px 12px', background: 'var(--tds-gray-50)', borderRadius: 10 }}>
             <div style={{ fontSize: 11, color: 'var(--tds-gray-400)', fontWeight: 600, marginBottom: 4 }}>
-              모든 연금 개시 후
+              모든 연금 개시 후 (오늘 가치)
             </div>
             <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--tds-gray-700)' }}>
               월 {result.totalMonthlyPensionTodayValue.toLocaleString('ko-KR')}만원
@@ -154,7 +156,7 @@ export default function RightPanel() {
             <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ fontSize: 12, color: 'var(--tds-gray-500)' }}>
                 {label}
-                {enabled && <span style={{ fontSize: 12, color: 'var(--tds-gray-300)', marginLeft: 4 }}>({startAge}세~)</span>}
+                {enabled && <span style={{ fontSize: 12, color: 'var(--tds-gray-300)', marginLeft: 4 }}>({startAge}세 시작 · 오늘 가치)</span>}
               </span>
               <span style={{ fontSize: 13, fontWeight: 600, color: enabled ? 'var(--tds-gray-900)' : 'var(--tds-gray-300)' }}>
                 {enabled ? `월 ${value.toLocaleString('ko-KR')}만원` : '미반영'}

@@ -115,8 +115,8 @@ export default function PrivatePensionCard() {
   const isDetailMode = privatePension.detailMode;
 
   const autoValue = isDetailMode && privatePension.products.length > 0
-    ? estimatePrivatePensionProducts(privatePension.products, status.currentAge)
-    : estimatePrivatePension(privatePension, status.currentAge);
+    ? estimatePrivatePensionProducts(privatePension.products, status.currentAge, status.currentAgeMonth ?? 0)
+    : estimatePrivatePension(privatePension, status.currentAge, status.currentAgeMonth ?? 0);
   const displayValue = privatePension.mode === 'manual' && privatePension.manualMonthlyTodayValue > 0
     ? privatePension.manualMonthlyTodayValue
     : autoValue;

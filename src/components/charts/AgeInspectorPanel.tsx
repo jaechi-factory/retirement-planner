@@ -220,13 +220,16 @@ export default function AgeInspectorPanel({ data, hasRealEstate, hasSaleProceeds
         <div style={{ padding: '10px 14px', borderRight: '1px solid var(--ux-border)' }}>
           <SectionTitle>수입 내역</SectionTitle>
           <div style={{ fontSize: 11, color: 'var(--ux-text-subtle)', marginBottom: 4 }}>
-            연금·생활비는 해당 나이 기준 금액이에요
+            연금은 해당 나이 기준 명목금액과 오늘 가치 환산을 함께 보여줘요
           </div>
           <DetailRow label="근로소득" value={data.monthlySalary} />
-          <DetailRow label="연금 합계" value={data.monthlyPension} />
-          <DetailRow label="국민연금" value={data.monthlyPublicPension} indent />
-          <DetailRow label="퇴직연금" value={data.monthlyRetirementPension} indent />
-          <DetailRow label="개인연금" value={data.monthlyPrivatePension} indent />
+          <DetailRow label="연금 합계 (명목)" value={data.monthlyPension} />
+          <DetailRow label="국민연금 (명목)" value={data.monthlyPublicPension} indent />
+          <DetailRow label="국민연금 (오늘 가치)" value={data.monthlyPublicPensionRealTodayValue} indent />
+          <DetailRow label="퇴직연금 (명목)" value={data.monthlyRetirementPension} indent />
+          <DetailRow label="퇴직연금 (오늘 가치)" value={data.monthlyRetirementPensionRealTodayValue} indent />
+          <DetailRow label="개인연금 (명목)" value={data.monthlyPrivatePension} indent />
+          <DetailRow label="개인연금 (오늘 가치)" value={data.monthlyPrivatePensionRealTodayValue} indent />
 
           <div style={{ marginTop: 12 }}>
             <SectionTitle>지출 내역</SectionTitle>

@@ -17,7 +17,13 @@ export default function RetirementPensionCard() {
   const isAuto = retirementPension.mode === 'auto';
   const startAge = retirementPension.startAge;
 
-  const autoValue = estimateRetirementPension(retirementPension, status.annualIncome, status.currentAge, goal.retirementAge);
+  const autoValue = estimateRetirementPension(
+    retirementPension,
+    status.annualIncome,
+    status.currentAge,
+    goal.retirementAge,
+    goal.retirementStartMonth ?? 0,
+  );
   const displayValue = isAuto
     ? autoValue
     : (retirementPension.manualMonthlyTodayValue > 0 ? retirementPension.manualMonthlyTodayValue : autoValue);

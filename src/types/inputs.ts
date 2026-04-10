@@ -1,5 +1,6 @@
 export interface RetirementGoal {
   retirementAge: number;       // 은퇴나이
+  retirementStartMonth?: number; // 은퇴 시작 월 (0~11, default 0)
   lifeExpectancy: number;      // 기대수명
   targetMonthly: number;       // 목표 월 생활비 (만원, 현재가치)
   inflationRate: number;       // 물가상승률 (%)
@@ -7,6 +8,7 @@ export interface RetirementGoal {
 
 export interface CurrentStatus {
   currentAge: number;          // 현재나이
+  currentAgeMonth?: number;    // 현재 월(0~11, default 0)
   annualIncome: number;        // 세후 연소득 (만원, 실수령 기준 — 소득세·4대보험 공제 후)
   incomeGrowthRate: number;    // 수입 증가율 (%)
   annualExpense: number;       // 연소비 (만원)
@@ -52,6 +54,7 @@ export interface ChildrenInfo {
   count: number;
   monthlyPerChild: number;     // 1인당 월 지출 (만원)
   independenceAge: number;     // 자녀 독립 시 사용자 나이
+  independenceMonth?: number;  // 자녀비 종료 월 (0~11, default 11)
   costGrowthMode?: 'inflation' | 'fixed' | 'custom';
   customGrowthRate?: number;
 }

@@ -33,6 +33,7 @@ export default function WhyThisResultSection({ summary, inputs, hasRealEstate }:
     retirementAge,
     annualIncome,
     inflationRate,
+    inputs.goal.retirementStartMonth ?? 0,
   );
 
   const cards: ReasonCard[] = [];
@@ -42,7 +43,7 @@ export default function WhyThisResultSection({ summary, inputs, hasRealEstate }:
     const coverageRatio = targetMonthly > 0 ? Math.round((pensionMonthly / targetMonthly) * 100) : 0;
     cards.push({
       title: '연금이 생활비를 얼마나 받쳐주나요',
-      body: `연금으로 월 ${fmtKRW(pensionMonthly)}을 받을 수 있어요. 목표 생활비(월 ${fmtKRW(targetMonthly)})의 ${coverageRatio}%를 커버해요.`,
+      body: `오늘 가치로 환산한 연금이 월 ${fmtKRW(pensionMonthly)}이에요. 목표 생활비(월 ${fmtKRW(targetMonthly)})의 ${coverageRatio}%를 커버해요.`,
       tone: coverageRatio >= 70 ? 'positive' : coverageRatio >= 40 ? 'neutral' : 'warning',
     });
   } else {

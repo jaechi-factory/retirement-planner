@@ -82,6 +82,7 @@ export function extractEvents(
     retirementAge,
     inputs.status.annualIncome,
     inputs.goal.inflationRate,
+    inputs.goal.retirementStartMonth ?? 0,
   );
 
   // 1. 은퇴 + 연금 공백기 경고
@@ -114,7 +115,7 @@ export function extractEvents(
         type: 'pension_public',
         header: `${startAge}세 — 국민연금 시작`,
         description: monthly > 0
-          ? `이때부터 국민연금 월 ${fmtKRW(monthly)}이 들어와요.`
+          ? `이때부터 국민연금 시작 월액(오늘 가치) ${fmtKRW(monthly)}이 들어와요.`
           : '이때부터 국민연금이 들어와요.',
       });
     }
@@ -130,7 +131,7 @@ export function extractEvents(
         type: 'pension_retirement',
         header: `${startAge}세 — 퇴직연금 시작`,
         description: monthly > 0
-          ? `이때부터 퇴직연금 월 ${fmtKRW(monthly)}이 추가돼요.`
+          ? `이때부터 퇴직연금 시작 월액(오늘 가치) ${fmtKRW(monthly)}이 추가돼요.`
           : '이때부터 퇴직연금이 들어와요.',
       });
     }
@@ -159,7 +160,7 @@ export function extractEvents(
         type: 'pension_private',
         header: `${startAge}세 — 개인연금 시작`,
         description: monthly > 0
-          ? `이때부터 개인연금 월 ${fmtKRW(monthly)}이 추가돼요.`
+          ? `이때부터 개인연금 시작 월액(오늘 가치) ${fmtKRW(monthly)}이 추가돼요.`
           : '이때부터 개인연금이 들어와요.',
       });
     }
@@ -368,11 +369,12 @@ export function extractKeyDecisionEvents(
   }
 
   if (inputs.children.hasChildren && inputs.children.count > 0) {
-    const childExpenseEndAge = inputs.children.independenceAge + 1;
+    const childExpenseEndAge = inputs.children.independenceAge;
     add({
       kind: 'child_expense_end',
       age: childExpenseEndAge,
       text: `${childExpenseEndAge}세 자녀 지출이 끝나요`,
+      note: `${inputs.children.independenceMonth ?? 11}월부터 자녀비를 0으로 계산해요.`,
     });
   }
 

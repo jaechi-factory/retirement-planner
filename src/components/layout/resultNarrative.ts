@@ -75,6 +75,7 @@ export function buildResultNarrativeModel(params: {
     inputs.goal.retirementAge,
     inputs.status.annualIncome,
     inputs.goal.inflationRate,
+    inputs.goal.retirementStartMonth ?? 0,
   );
 
   const gapTone: NarrativeTone = summary.targetGap >= 0 ? 'positive' : 'negative';
@@ -82,8 +83,8 @@ export function buildResultNarrativeModel(params: {
 
   const incomeLine =
     inputs.status.annualIncome > 0
-      ? `은퇴 뒤 고정 수입은 연금 월 ${fmtKRW(pensionMonthly)}이에요.`
-      : `은퇴 뒤 수입은 연금 월 ${fmtKRW(pensionMonthly)}만 잡았어요.`;
+      ? `은퇴 뒤 고정 수입은 오늘 가치로 환산한 연금 월 ${fmtKRW(pensionMonthly)}이에요.`
+      : `은퇴 뒤 수입은 오늘 가치로 환산한 연금 월 ${fmtKRW(pensionMonthly)}만 잡았어요.`;
 
   const expenseLine =
     `생활비 목표는 월 ${fmtKRW(inputs.goal.targetMonthly)}으로 계산했어요.`;

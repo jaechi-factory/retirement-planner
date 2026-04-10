@@ -7,8 +7,11 @@ export interface AgeSnapshotData {
   monthlySalary: number;
   monthlyPension: number;
   monthlyPublicPension: number;
+  monthlyPublicPensionRealTodayValue: number;
   monthlyRetirementPension: number;
+  monthlyRetirementPensionRealTodayValue: number;
   monthlyPrivatePension: number;
+  monthlyPrivatePensionRealTodayValue: number;
   monthlyIncome: number;
   // expense
   monthlyLivingExpense: number;
@@ -103,13 +106,18 @@ export function getAgeSnapshot(params: {
   rows: YearlyAggregateV2[];
   cashflow: CashflowByAgeMaps;
   monthlyPublicPensionByAge: Map<number, number>;
+  monthlyPublicPensionRealByAge: Map<number, number>;
   monthlyRetirementPensionByAge: Map<number, number>;
+  monthlyRetirementPensionRealByAge: Map<number, number>;
   monthlyPrivatePensionByAge: Map<number, number>;
+  monthlyPrivatePensionRealByAge: Map<number, number>;
   pensionStartMap: Map<number, Array<{ name: string; monthly: number }>>;
 }): AgeSnapshotData | null {
   const {
     age, retirementAge, rows, cashflow,
-    monthlyPublicPensionByAge, monthlyRetirementPensionByAge, monthlyPrivatePensionByAge,
+    monthlyPublicPensionByAge, monthlyPublicPensionRealByAge,
+    monthlyRetirementPensionByAge, monthlyRetirementPensionRealByAge,
+    monthlyPrivatePensionByAge, monthlyPrivatePensionRealByAge,
     pensionStartMap,
   } = params;
   const row = rows.find((r) => r.ageYear === age);
@@ -118,8 +126,11 @@ export function getAgeSnapshot(params: {
   const monthlySalary = cashflow.monthlySalaryByAge.get(age) ?? 0;
   const monthlyPension = cashflow.monthlyPensionByAge.get(age) ?? 0;
   const monthlyPublicPension = monthlyPublicPensionByAge.get(age) ?? 0;
+  const monthlyPublicPensionRealTodayValue = monthlyPublicPensionRealByAge.get(age) ?? 0;
   const monthlyRetirementPension = monthlyRetirementPensionByAge.get(age) ?? 0;
+  const monthlyRetirementPensionRealTodayValue = monthlyRetirementPensionRealByAge.get(age) ?? 0;
   const monthlyPrivatePension = monthlyPrivatePensionByAge.get(age) ?? 0;
+  const monthlyPrivatePensionRealTodayValue = monthlyPrivatePensionRealByAge.get(age) ?? 0;
   const monthlyIncome = cashflow.monthlyIncomeByAge.get(age) ?? 0;
   const monthlyLivingExpense = cashflow.monthlyLivingExpenseByAge.get(age) ?? 0;
   const monthlyRent = cashflow.monthlyRentByAge.get(age) ?? 0;
@@ -139,8 +150,11 @@ export function getAgeSnapshot(params: {
     monthlySalary,
     monthlyPension,
     monthlyPublicPension,
+    monthlyPublicPensionRealTodayValue,
     monthlyRetirementPension,
+    monthlyRetirementPensionRealTodayValue,
     monthlyPrivatePension,
+    monthlyPrivatePensionRealTodayValue,
     monthlyIncome,
     monthlyLivingExpense,
     monthlyRent,
@@ -156,4 +170,3 @@ export function getAgeSnapshot(params: {
     pensionEvents: pensionStartMap.get(age) ?? [],
   };
 }
-

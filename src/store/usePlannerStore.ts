@@ -17,19 +17,25 @@ import { calcTotalAsset, calcTotalDebt, calcWeightedReturn, precomputeDebtSchedu
 import { judgeVerdict } from '../engine/verdictEngine';
 import { getTotalMonthlyPensionTodayValue, getPensionMonthlyAtRetirementStart, getNPSStartAgeByBirthYear } from '../engine/pensionEstimation';
 import { runCalculationV2 } from '../engine/calculatorV2';
+import { getPlannerPolicy } from '../policy/policyTable';
 
 const defaultPension: PensionInputs = {
   publicPension: {
     enabled: true,
     mode: 'auto',
     startAge: 65,
+    startMonth: 0,
     manualMonthlyTodayValue: 0,
     workStartAge: 26,
+    valuationYear: Number.parseInt(getPlannerPolicy().effectiveDate.slice(0, 4), 10),
+    pensionableMonthlyOverride: null,
+    payrollReverse: undefined,
   },
   retirementPension: {
     enabled: true,
     mode: 'auto',
     startAge: 60,
+    startMonth: 0,
     payoutYears: 20,
     currentBalance: 0,
     accumulationReturnRate: 3.5,
@@ -40,6 +46,7 @@ const defaultPension: PensionInputs = {
     enabled: false,
     mode: 'auto',
     startAge: 60,
+    startMonth: 0,
     payoutYears: 20,
     currentBalance: 0,
     monthlyContribution: 0,
@@ -64,12 +71,14 @@ export const defaultVehicle: VehicleInfo = {
 const defaultInputs: PlannerInputs = {
   goal: {
     retirementAge: 0,
+    retirementStartMonth: 0,
     lifeExpectancy: 0,
     targetMonthly: 0,
     inflationRate: DEFAULT_INFLATION_RATE,
   },
   status: {
     currentAge: 0,
+    currentAgeMonth: 0,
     annualIncome: 0,
     incomeGrowthRate: DEFAULT_INCOME_GROWTH_RATE,
     annualExpense: 0,
@@ -94,6 +103,7 @@ const defaultInputs: PlannerInputs = {
     count: 0,
     monthlyPerChild: 0,
     independenceAge: 0,
+    independenceMonth: 11,
     costGrowthMode: 'inflation',
     customGrowthRate: DEFAULT_INFLATION_RATE,
   },
@@ -166,8 +176,12 @@ function buildCompatResult(
 
   const totalAnnualRepayment = calcTotalAnnualRepaymentFromSchedules(debtSchedules, 0);
   const annualChildExpense = children.hasChildren ? children.count * children.monthlyPerChild * 12 : 0;
-  const childExpenseForSavings = children.hasChildren && status.currentAge <= children.independenceAge
-    ? annualChildExpense : 0;
+  const childExpenseForSavings = children.hasChildren && (
+    status.currentAge < children.independenceAge ||
+    (status.currentAge === children.independenceAge && (status.currentAgeMonth ?? 0) < (children.independenceMonth ?? 11))
+  )
+    ? annualChildExpense
+    : 0;
   const annualVehicleCost = inputs.vehicle?.costIncludedInExpense === 'separate'
     ? Array.from({ length: 12 }, (_, monthIndex) => getVehicleMonthlyCost(inputs.vehicle, monthIndex))
         .reduce((sum, cost) => sum + cost, 0)
@@ -179,10 +193,10 @@ function buildCompatResult(
   const requiredMonthlyAtRetirement = goal.targetMonthly * Math.pow(1 + goal.inflationRate / 100, yearsToRetirement);
 
   const totalMonthlyPensionTodayValue = getTotalMonthlyPensionTodayValue(
-    pension, status.currentAge, goal.retirementAge, status.annualIncome, goal.inflationRate,
+    pension, status.currentAge, goal.retirementAge, status.annualIncome, goal.inflationRate, goal.retirementStartMonth ?? 0,
   );
   const monthlyPensionAtRetirementStart = getPensionMonthlyAtRetirementStart(
-    pension, status.currentAge, goal.retirementAge, status.annualIncome, goal.inflationRate,
+    pension, status.currentAge, goal.retirementAge, status.annualIncome, goal.inflationRate, goal.retirementStartMonth ?? 0,
   );
   const pensionCoverageRate = goal.targetMonthly > 0 ? totalMonthlyPensionTodayValue / goal.targetMonthly : 0;
 
@@ -429,11 +443,16 @@ export const usePlannerStore = create<PlannerStore>((set, get) => ({
     const current = get().inputs;
     let newPension = current.pension;
     if (partial.currentAge !== undefined && partial.currentAge > 0) {
-      const birthYear = new Date().getFullYear() - partial.currentAge;
+      const valuationYear = Number.parseInt(getPlannerPolicy().effectiveDate.slice(0, 4), 10);
+      const birthYear = valuationYear - partial.currentAge;
       const npsStartAge = getNPSStartAgeByBirthYear(birthYear);
       newPension = {
         ...newPension,
-        publicPension: { ...newPension.publicPension, startAge: npsStartAge },
+        publicPension: {
+          ...newPension.publicPension,
+          startAge: npsStartAge,
+          valuationYear,
+        },
       };
     }
     const inputs: PlannerInputs = { ...current, status: { ...current.status, ...partial }, pension: newPension };

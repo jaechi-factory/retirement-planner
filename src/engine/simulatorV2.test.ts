@@ -1994,3 +1994,120 @@ describe('J. W5: all_debts 매각 후 nonMortgageDebtEnd 정산', () => {
     expect(nextMonth.debtServiceThisMonth).toBeCloseTo(expectedNextDebtService, 6);
   });
 });
+
+describe('K. 월경계: 은퇴/공적연금/자녀비', () => {
+  it('[M1] retirementStartMonth=6이면 60세 0~5월은 소득이 있고 6~11월은 0이어야 함', () => {
+    const inputs = makeInputs({
+      goal: {
+        retirementAge: 60,
+        retirementStartMonth: 6,
+        lifeExpectancy: 61,
+        targetMonthly: 100,
+        inflationRate: 0,
+      },
+      status: {
+        currentAge: 59,
+        currentAgeMonth: 0,
+        annualIncome: 1200,
+        incomeGrowthRate: 0,
+        annualExpense: 0,
+        expenseGrowthRate: 0,
+      },
+      children: {
+        hasChildren: false,
+        count: 0,
+        monthlyPerChild: 0,
+        independenceAge: 0,
+        independenceMonth: 11,
+      },
+      pension: {
+        publicPension: { enabled: false, mode: 'auto', startAge: 65, startMonth: 0, manualMonthlyTodayValue: 0 },
+        retirementPension: { enabled: false, mode: 'auto', startAge: 60, startMonth: 0, payoutYears: 20, currentBalance: 0, accumulationReturnRate: 3.5, payoutReturnRate: 2, manualMonthlyTodayValue: 0 },
+        privatePension: { enabled: false, mode: 'auto', startAge: 60, startMonth: 0, payoutYears: 20, currentBalance: 0, monthlyContribution: 0, expectedReturnRate: 3.5, accumulationReturnRate: 3.5, payoutReturnRate: 2, manualMonthlyTodayValue: 0, detailMode: false, products: [] },
+      },
+    });
+
+    const snapshots = simulateMonthlyV2(inputs, inputs.goal.targetMonthly, 'keep', DEFAULT_FUNDING_POLICY, DEFAULT_LIQUIDATION);
+    const age60 = snapshots.filter((snapshot) => snapshot.ageYear === 60);
+
+    expect(age60.slice(0, 6).every((snapshot) => snapshot.incomeThisMonth > 0)).toBe(true);
+    expect(age60.slice(6).every((snapshot) => snapshot.incomeThisMonth === 0)).toBe(true);
+  });
+
+  it('[M2] publicPension.startMonth=3이면 해당 월 전엔 0, 그 월부터 지급되어야 함', () => {
+    const inputs = makeInputs({
+      goal: {
+        retirementAge: 60,
+        retirementStartMonth: 0,
+        lifeExpectancy: 61,
+        targetMonthly: 100,
+        inflationRate: 0,
+      },
+      status: {
+        currentAge: 59,
+        currentAgeMonth: 0,
+        annualIncome: 0,
+        incomeGrowthRate: 0,
+        annualExpense: 0,
+        expenseGrowthRate: 0,
+      },
+      children: {
+        hasChildren: false,
+        count: 0,
+        monthlyPerChild: 0,
+        independenceAge: 0,
+        independenceMonth: 11,
+      },
+      pension: {
+        publicPension: { enabled: true, mode: 'manual', startAge: 60, startMonth: 3, manualMonthlyTodayValue: 100 },
+        retirementPension: { enabled: false, mode: 'auto', startAge: 60, startMonth: 0, payoutYears: 20, currentBalance: 0, accumulationReturnRate: 3.5, payoutReturnRate: 2, manualMonthlyTodayValue: 0 },
+        privatePension: { enabled: false, mode: 'auto', startAge: 60, startMonth: 0, payoutYears: 20, currentBalance: 0, monthlyContribution: 0, expectedReturnRate: 3.5, accumulationReturnRate: 3.5, payoutReturnRate: 2, manualMonthlyTodayValue: 0, detailMode: false, products: [] },
+      },
+    });
+
+    const snapshots = simulateMonthlyV2(inputs, inputs.goal.targetMonthly, 'keep', DEFAULT_FUNDING_POLICY, DEFAULT_LIQUIDATION);
+    const age60 = snapshots.filter((snapshot) => snapshot.ageYear === 60);
+
+    expect(age60.slice(0, 3).every((snapshot) => snapshot.pensionThisMonth === 0)).toBe(true);
+    expect(age60.slice(3).every((snapshot) => snapshot.pensionThisMonth === 100)).toBe(true);
+  });
+
+  it('[M3] children.independenceMonth=2이면 0~1월까지만 자녀비가 발생하고 2월부터 0이어야 함', () => {
+    const inputs = makeInputs({
+      goal: {
+        retirementAge: 65,
+        retirementStartMonth: 0,
+        lifeExpectancy: 41,
+        targetMonthly: 100,
+        inflationRate: 0,
+      },
+      status: {
+        currentAge: 40,
+        currentAgeMonth: 0,
+        annualIncome: 0,
+        incomeGrowthRate: 0,
+        annualExpense: 0,
+        expenseGrowthRate: 0,
+      },
+      children: {
+        hasChildren: true,
+        count: 1,
+        monthlyPerChild: 10,
+        independenceAge: 40,
+        independenceMonth: 2,
+      },
+      pension: {
+        publicPension: { enabled: false, mode: 'auto', startAge: 65, startMonth: 0, manualMonthlyTodayValue: 0 },
+        retirementPension: { enabled: false, mode: 'auto', startAge: 60, startMonth: 0, payoutYears: 20, currentBalance: 0, accumulationReturnRate: 3.5, payoutReturnRate: 2, manualMonthlyTodayValue: 0 },
+        privatePension: { enabled: false, mode: 'auto', startAge: 60, startMonth: 0, payoutYears: 20, currentBalance: 0, monthlyContribution: 0, expectedReturnRate: 3.5, accumulationReturnRate: 3.5, payoutReturnRate: 2, manualMonthlyTodayValue: 0, detailMode: false, products: [] },
+      },
+    });
+
+    const snapshots = simulateMonthlyV2(inputs, inputs.goal.targetMonthly, 'keep', DEFAULT_FUNDING_POLICY, DEFAULT_LIQUIDATION);
+    const age40 = snapshots.filter((snapshot) => snapshot.ageYear === 40);
+
+    expect(age40[0]?.childExpenseThisMonth).toBe(10);
+    expect(age40[1]?.childExpenseThisMonth).toBe(10);
+    expect(age40.slice(2).every((snapshot) => snapshot.childExpenseThisMonth === 0)).toBe(true);
+  });
+});
