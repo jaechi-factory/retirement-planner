@@ -24,7 +24,7 @@ export default function InputWorkbench() {
         position: 'sticky',
         top: scrolled ? 24 : 0,
         transition: 'top 0.2s ease',
-        height: 'calc(100vh / 0.85)',
+        maxHeight: '100vh',
         overflowY: 'auto',
         overflowX: 'visible',
         scrollbarWidth: 'none',
