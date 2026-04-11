@@ -111,8 +111,9 @@ export default function ReinvestmentExplainerSection({ inputs, annualNetSavings,
           </>
         ) : (
           <>
-            <div
+            <p
               style={{
+                margin: 0,
                 fontSize: 20,
                 fontWeight: 700,
                 color: '#191f28',
@@ -120,9 +121,8 @@ export default function ReinvestmentExplainerSection({ inputs, annualNetSavings,
                 lineHeight: 1.5,
               }}
             >
-              <p style={{ margin: 0 }}>일할 때, 매월 월급에서 남은 돈을 투자 자산의 기존 비율대로</p>
-              <p style={{ margin: 0 }}>계속 투자한다고 가정하고, 계산한 결과예요</p>
-            </div>
+              월급에서 남은 돈은 기존 투자 비율대로 계속 투자한다고 가정했어요
+            </p>
             <p
               style={{
                 margin: 0,
