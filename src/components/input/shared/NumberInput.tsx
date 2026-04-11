@@ -91,7 +91,7 @@ export default function NumberInput({
           boxShadow: focused ? 'var(--fig-input-shadow-focus)' : 'none',
           display: 'flex',
           alignItems: 'center',
-          padding: '13px 16px',
+          padding: '11px 14px',
           gap: 8,
           transition: 'border-color 0.15s, box-shadow 0.15s',
           boxSizing: 'border-box',

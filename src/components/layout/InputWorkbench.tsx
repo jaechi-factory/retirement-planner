@@ -147,7 +147,7 @@ export default function InputWorkbench({ allDone, onAllDone }: Props) {
           style={{
             margin: 0,
             fontSize: 35,
-            fontWeight: 500,
+            fontWeight: 700,
             color: 'var(--fig-title-color)',
             fontFamily: 'Pretendard, sans-serif',
             lineHeight: 1.5,
