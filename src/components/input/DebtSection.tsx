@@ -13,7 +13,6 @@ import {
   OTHER_REPAYMENT_LABELS,
   OTHER_REPAYMENT_DESCRIPTIONS,
 } from '../../utils/constants';
-import { buildMonthlyDebtSchedule, summarizeDebtSchedule } from '../../engine/debtSchedule';
 
 type DebtKey = 'mortgage' | 'creditLoan';
 
@@ -57,77 +56,85 @@ function RepaymentSelect({
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       {/* 트리거 박스 */}
-      <div
-        onClick={() => setOpen((o) => !o)}
-        style={{
-          height: 54,
-          border: '2px solid var(--fig-input-border-filled)',
-          borderRadius: 16,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '0 16px',
-          cursor: 'pointer',
-          background: '#ffffff',
-        }}
-      >
-        <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--fig-label-color)' }}>
-          {termLabels[value]}
-        </span>
-        <svg
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          style={{
-            transform: open ? 'rotate(180deg)' : 'none',
-            transition: 'transform 0.15s',
-            flexShrink: 0,
-          }}
-        >
-          <path
-            d="M6 9L12 15L18 9"
-            stroke="var(--fig-label-color)"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      </div>
-
-      {/* 드롭다운 옵션 */}
-      {open && (
+      <div style={{ position: 'relative' }}>
         <div
+          onClick={() => setOpen((o) => !o)}
           style={{
-            border: '1px solid rgba(36,39,46,0.12)',
-            borderRadius: 12,
+            height: 54,
+            border: '2px solid var(--fig-input-border-filled)',
+            borderRadius: 16,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '0 16px',
+            cursor: 'pointer',
             background: '#ffffff',
-            overflow: 'hidden',
-            boxShadow: '0 4px 16px rgba(36,39,46,0.12)',
           }}
         >
-          {types.map((type, i) => (
-            <div
-              key={type}
-              onClick={() => {
-                onChange(type as RepaymentType);
-                setOpen(false);
-              }}
-              style={{
-                padding: '12px 16px',
-                cursor: 'pointer',
-                background: value === type ? 'var(--accent-selected-bg)' : '#ffffff',
-                borderBottom: i < types.length - 1 ? '1px solid rgba(36,39,46,0.06)' : 'none',
-                fontSize: 14,
-                fontWeight: value === type ? 600 : 400,
-                color: 'var(--fig-label-color)',
-              }}
-            >
-              {termLabels[type]}
-            </div>
-          ))}
+          <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--fig-label-color)' }}>
+            {termLabels[value]}
+          </span>
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            style={{
+              transform: open ? 'rotate(180deg)' : 'none',
+              transition: 'transform 0.15s',
+              flexShrink: 0,
+            }}
+          >
+            <path
+              d="M6 9L12 15L18 9"
+              stroke="var(--fig-label-color)"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
         </div>
-      )}
+
+        {/* 드롭다운 옵션 — absolute로 아래 인풋 밀지 않음 */}
+        {open && (
+          <div
+            style={{
+              position: 'absolute',
+              top: '100%',
+              left: 0,
+              right: 0,
+              marginTop: 4,
+              border: '1px solid rgba(36,39,46,0.12)',
+              borderRadius: 12,
+              background: '#ffffff',
+              overflow: 'hidden',
+              boxShadow: '0 4px 16px rgba(36,39,46,0.12)',
+              zIndex: 10,
+            }}
+          >
+            {types.map((type, i) => (
+              <div
+                key={type}
+                onClick={() => {
+                  onChange(type as RepaymentType);
+                  setOpen(false);
+                }}
+                style={{
+                  padding: '12px 16px',
+                  cursor: 'pointer',
+                  background: value === type ? 'var(--accent-selected-bg)' : '#ffffff',
+                  borderBottom: i < types.length - 1 ? '1px solid rgba(36,39,46,0.06)' : 'none',
+                  fontSize: 14,
+                  fontWeight: value === type ? 600 : 400,
+                  color: 'var(--fig-label-color)',
+                }}
+              >
+                {termLabels[type]}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* 설명 텍스트 */}
       {descriptions[value] && (
@@ -145,12 +152,6 @@ function LoanRow({ debtKey }: { debtKey: DebtKey }) {
   const config = DEBT_CONFIG[debtKey];
   const debt = inputs.debts[debtKey];
   const [hasLoan, setHasLoan] = useState(debt.balance > 0);
-
-  const schedule =
-    hasLoan && debt.balance > 0 && debt.repaymentYears > 0
-      ? buildMonthlyDebtSchedule(debt)
-      : [];
-  const summary = summarizeDebtSchedule(schedule);
 
   const handleToggle = (v: boolean) => {
     setHasLoan(v);
@@ -194,79 +195,6 @@ function LoanRow({ debtKey }: { debtKey: DebtKey }) {
         max={50}
       />
 
-      {/* 상환 미리보기 */}
-      {debt.balance > 0 && debt.repaymentYears > 0 && summary.firstMonthPayment > 0 && (
-        <div
-          style={{
-            borderRadius: 10,
-            background: 'var(--surface-card-soft)',
-            overflow: 'hidden',
-          }}
-        >
-          <div
-            style={{
-              background: 'var(--surface-card-inner)',
-              padding: '8px 12px',
-              fontSize: 14,
-              fontWeight: 700,
-              color: 'var(--text-muted)',
-            }}
-          >
-            상환 미리보기
-          </div>
-          <div
-            style={{
-              padding: '10px 12px 6px',
-              display: 'grid',
-              gridTemplateColumns: '1fr 1fr',
-              gap: 8,
-            }}
-          >
-            <div
-              style={{
-                padding: '8px 10px',
-                background: 'var(--surface-card-inner)',
-                borderRadius: 8,
-              }}
-            >
-              <div style={{ fontSize: 14, color: 'var(--text-faint)', marginBottom: 4 }}>
-                첫 달 상환액
-              </div>
-              <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-base)' }}>
-                −{Math.round(summary.firstMonthPayment).toLocaleString('ko-KR')}만원
-              </div>
-            </div>
-            <div
-              style={{
-                padding: '8px 10px',
-                background: 'var(--surface-card-inner)',
-                borderRadius: 8,
-              }}
-            >
-              <div style={{ fontSize: 14, color: 'var(--text-faint)', marginBottom: 4 }}>
-                첫해 상환액
-              </div>
-              <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-base)' }}>
-                −{Math.round(summary.firstYearAnnualPayment).toLocaleString('ko-KR')}만원
-              </div>
-            </div>
-          </div>
-          <div style={{ padding: '2px 12px 10px', display: 'flex', gap: 14 }}>
-            <span style={{ fontSize: 14, color: 'var(--text-faint)' }}>
-              총이자{' '}
-              <span style={{ fontWeight: 600, color: 'var(--text-muted)' }}>
-                −{Math.round(summary.totalInterest).toLocaleString('ko-KR')}만원
-              </span>
-            </span>
-            <span style={{ fontSize: 14, color: 'var(--text-faint)' }}>
-              최대 월 상환액{' '}
-              <span style={{ fontWeight: 600, color: 'var(--text-muted)' }}>
-                −{Math.round(summary.maxMonthPayment).toLocaleString('ko-KR')}만원
-              </span>
-            </span>
-          </div>
-        </div>
-      )}
     </PillToggle>
   );
 }
