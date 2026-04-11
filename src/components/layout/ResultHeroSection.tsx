@@ -29,16 +29,23 @@ export default function ResultHeroSection({ summary, inputs }: ResultHeroSection
   const mainLine2 = `${monthly.toLocaleString('ko-KR')}만원을 쓸 수 있어요`;
 
   // 서브타이틀
+  const shortfall = target > 0 ? target - monthly : 0;
+
   let subtitleText: string;
+  let subtitleColor = '#4e5968';
+
   if (isPositive) {
     subtitleText =
       monthly >= target && target > 0
         ? '목표 금액보다 더 많은 돈을 쓸 수 있어요.'
         : '목표 금액에 근접하게 쓸 수 있어요.';
   } else {
-    subtitleText = summary.failureAge !== null
-      ? `${summary.failureAge}세에 자산이 바닥날 수 있어요.`
-      : '목표 생활비를 달성하려면 개선이 필요해요.';
+    if (summary.failureAge !== null) {
+      subtitleText = `${summary.failureAge}세에 자산이 바닥날 수 있어요.`;
+    } else {
+      subtitleText = `매월 ${shortfall.toLocaleString('ko-KR')}만원이 부족해요. 목표 생활비를 달성하려면 개선이 필요해요.`;
+      subtitleColor = '#F57800';
+    }
   }
 
   return (
@@ -89,7 +96,7 @@ export default function ResultHeroSection({ summary, inputs }: ResultHeroSection
             margin: 0,
             fontSize: 16,
             fontWeight: 400,
-            color: '#4e5968',
+            color: subtitleColor,
             fontFamily: 'Pretendard, sans-serif',
             lineHeight: 1.5,
           }}
