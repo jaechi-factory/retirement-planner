@@ -24,6 +24,23 @@ import {
 } from './assetBalanceMetrics';
 import AgeInspectorPanel from './AgeInspectorPanel';
 
+// ── 시각 계층 상수 ────────────────────────────────────────────────────────────
+
+const SERIES = {
+  property:  { key: '집 자산',               color: '#c2cfe0', strokeWidth: 1,   dash: undefined,  fillId: 'propGrad'  },
+  cash:      { key: '현금·예금',              color: '#00c471', strokeWidth: 1.8, dash: undefined,  fillId: 'cashGrad'  },
+  financial: { key: '주식·채권',              color: '#1b64da', strokeWidth: 2.4, dash: undefined,  fillId: 'finGrad'   },
+  sale:      { key: '집을 판 뒤 굴리는 돈',   color: '#f57800', strokeWidth: 1.8, dash: '5 3',      fillId: 'saleGrad'  },
+} as const;
+
+// 범례 표시 순서 (렌더 순서와 독립적)
+const LEGEND_ORDER = [
+  SERIES.cash,
+  SERIES.financial,
+  SERIES.property,
+  SERIES.sale,
+] as const;
+
 interface Props {
   rows: YearlyAggregateV2[];
   retirementAge: number;
@@ -121,7 +138,7 @@ function buildPensionByAgeMaps(rows: YearlyAggregateV2[], inputs: PlannerInputs,
   };
 }
 
-// ── Hover Tooltip (요약 5줄) ──────────────────────────────────────────────────
+// ── Hover Tooltip ─────────────────────────────────────────────────────────────
 
 function MinimalTooltip({
   active,
@@ -175,6 +192,36 @@ function MinimalTooltip({
   );
 }
 
+// ── 커스텀 범례 (표시 순서 독립 제어) ─────────────────────────────────────────
+
+function CustomLegend({ hasRealEstate, hasSaleProceeds }: { hasRealEstate: boolean; hasSaleProceeds: boolean }) {
+  const items = LEGEND_ORDER.filter((s) => {
+    if (s.key === SERIES.property.key) return hasRealEstate;
+    if (s.key === SERIES.sale.key) return hasSaleProceeds;
+    return true;
+  });
+
+  return (
+    <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', justifyContent: 'center', paddingTop: 8 }}>
+      {items.map((s) => (
+        <span key={s.key} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 13, color: 'var(--ux-text-base)' }}>
+          <span
+            style={{
+              display: 'inline-block',
+              width: s.key === SERIES.property.key ? 16 : 12,
+              height: s.key === SERIES.property.key ? 2 : 2.5,
+              background: s.color,
+              borderRadius: 2,
+              opacity: s.key === SERIES.property.key ? 0.5 : 1,
+            }}
+          />
+          {s.key}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 // ── Main Component ────────────────────────────────────────────────────────────
 
 export default function AssetBalanceChart({
@@ -197,8 +244,7 @@ export default function AssetBalanceChart({
     monthlyRetirementPensionRealByAge,
     monthlyPrivatePensionByAge,
     monthlyPrivatePensionRealByAge,
-  } =
-    buildPensionByAgeMaps(rows, inputs, retirementAge);
+  } = buildPensionByAgeMaps(rows, inputs, retirementAge);
 
   const hasRealEstate = inputs.assets.realEstate.amount > 0;
   const hasSaleProceeds = hasRealEstate && rows.some((row) => row.propertySaleProceedsBucketEnd > 0);
@@ -207,10 +253,10 @@ export default function AssetBalanceChart({
 
   const data = rows.map((row) => ({
     age: row.ageYear,
-    ...(hasRealEstate ? { '집 자산': row.propertyValueEnd } : {}),
-    '현금·예금': row.cashLikeEnd,
-    '주식·채권': row.financialInvestableEnd,
-    ...(hasSaleProceeds ? { '매각대금 운용': row.propertySaleProceedsBucketEnd } : {}),
+    ...(hasRealEstate ? { [SERIES.property.key]: row.propertyValueEnd } : {}),
+    [SERIES.cash.key]: row.cashLikeEnd,
+    [SERIES.financial.key]: row.financialInvestableEnd,
+    ...(hasSaleProceeds ? { [SERIES.sale.key]: row.propertySaleProceedsBucketEnd } : {}),
     shortfall: row.totalShortfall,
   }));
 
@@ -248,6 +294,7 @@ export default function AssetBalanceChart({
 
   return (
     <div style={{ marginBottom: 12 }}>
+      {/* 상태 메시지 */}
       <div
         style={{
           fontSize: 13,
@@ -279,29 +326,33 @@ export default function AssetBalanceChart({
           onMouseMove={handleMouseMove}
         >
           <defs>
+            {/* 집 자산: 매우 연하게 */}
             {hasRealEstate && (
               <linearGradient id="propGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="var(--ux-text-subtle)" stopOpacity={0.18} />
-                <stop offset="95%" stopColor="var(--ux-text-subtle)" stopOpacity={0.02} />
+                <stop offset="5%"  stopColor={SERIES.property.color} stopOpacity={0.07} />
+                <stop offset="95%" stopColor={SERIES.property.color} stopOpacity={0.01} />
               </linearGradient>
             )}
+            {/* 집을 판 뒤 굴리는 돈: 주황 */}
             {hasSaleProceeds && (
               <linearGradient id="saleGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="var(--ux-status-positive)" stopOpacity={0.2} />
-                <stop offset="95%" stopColor="var(--ux-status-positive)" stopOpacity={0.02} />
+                <stop offset="5%"  stopColor={SERIES.sale.color} stopOpacity={0.18} />
+                <stop offset="95%" stopColor={SERIES.sale.color} stopOpacity={0.02} />
               </linearGradient>
             )}
+            {/* 현금·예금: 초록 */}
             <linearGradient id="cashGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="var(--ux-accent)" stopOpacity={0.18} />
-              <stop offset="95%" stopColor="var(--ux-accent)" stopOpacity={0.02} />
+              <stop offset="5%"  stopColor={SERIES.cash.color} stopOpacity={0.16} />
+              <stop offset="95%" stopColor={SERIES.cash.color} stopOpacity={0.02} />
             </linearGradient>
+            {/* 주식·채권: 파랑 */}
             <linearGradient id="finGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="var(--ux-text-base)" stopOpacity={0.16} />
-              <stop offset="95%" stopColor="var(--ux-text-base)" stopOpacity={0.02} />
+              <stop offset="5%"  stopColor={SERIES.financial.color} stopOpacity={0.18} />
+              <stop offset="95%" stopColor={SERIES.financial.color} stopOpacity={0.02} />
             </linearGradient>
           </defs>
 
-          <CartesianGrid strokeDasharray="3 3" stroke="var(--ux-border)" />
+          <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.05)" />
           <XAxis
             dataKey="age"
             tickFormatter={(value) => `${value}세`}
@@ -331,26 +382,51 @@ export default function AssetBalanceChart({
               />
             )}
           />
-          <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 14, paddingTop: 8 }} />
+          <Legend
+            content={() => (
+              <CustomLegend hasRealEstate={hasRealEstate} hasSaleProceeds={hasSaleProceeds} />
+            )}
+          />
 
+          {/* 렌더 순서: 집 자산(배경) → 현금·예금 → 주식·채권 → 집을 판 뒤 굴리는 돈 */}
           {hasRealEstate && (
-            <Area type="monotone" dataKey="집 자산" stroke="var(--ux-text-subtle)" strokeWidth={1.4} fill="url(#propGrad)" />
+            <Area
+              type="monotone"
+              dataKey={SERIES.property.key}
+              stroke={SERIES.property.color}
+              strokeWidth={SERIES.property.strokeWidth}
+              fill={`url(#${SERIES.property.fillId})`}
+              strokeOpacity={0.5}
+            />
           )}
+          <Area
+            type="monotone"
+            dataKey={SERIES.cash.key}
+            stroke={SERIES.cash.color}
+            strokeWidth={SERIES.cash.strokeWidth}
+            fill={`url(#${SERIES.cash.fillId})`}
+          />
+          <Area
+            type="monotone"
+            dataKey={SERIES.financial.key}
+            stroke={SERIES.financial.color}
+            strokeWidth={SERIES.financial.strokeWidth}
+            fill={`url(#${SERIES.financial.fillId})`}
+          />
           {hasSaleProceeds && (
             <Area
               type="monotone"
-              dataKey="매각대금 운용"
-              stroke="var(--ux-status-positive)"
-              strokeWidth={1.6}
-              fill="url(#saleGrad)"
-              strokeDasharray="5 3"
+              dataKey={SERIES.sale.key}
+              stroke={SERIES.sale.color}
+              strokeWidth={SERIES.sale.strokeWidth}
+              fill={`url(#${SERIES.sale.fillId})`}
+              strokeDasharray={SERIES.sale.dash}
             />
           )}
-          <Area type="monotone" dataKey="현금·예금" stroke="var(--ux-accent)" strokeWidth={1.6} fill="url(#cashGrad)" />
-          <Area type="monotone" dataKey="주식·채권" stroke="var(--ux-text-base)" strokeWidth={1.6} fill="url(#finGrad)" />
         </AreaChart>
       </ResponsiveContainer>
 
+      {/* 하단 메타 */}
       <div style={{ fontSize: 12, color: 'var(--ux-text-subtle)', marginTop: 6, lineHeight: 1.8, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
         {hasRealEstate && <span>선택 전략: {strategyLabel}</span>}
         <span>목표 생활비: {targetMonthly}만원</span>
