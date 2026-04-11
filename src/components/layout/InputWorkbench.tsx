@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import RetirementGoalSection from '../input/RetirementGoalSection';
 import CurrentStatusSection from '../input/CurrentStatusSection';
 import AssetSection from '../input/AssetSection';
@@ -7,13 +8,22 @@ import PensionSection from '../input/PensionSection';
 import VehicleSection from '../input/VehicleSection';
 
 export default function InputWorkbench() {
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 0);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
   return (
     <div
       style={{
         width: 333,
         flexShrink: 0,
         position: 'sticky',
-        top: 0,
+        top: scrolled ? 24 : 0,
+        transition: 'top 0.2s ease',
         height: 'calc(100vh / 0.85)',
         overflowY: 'auto',
         scrollbarWidth: 'none',
