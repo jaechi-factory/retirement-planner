@@ -1,35 +1,74 @@
-import { useState } from 'react';
 import './index.css';
 import InputWorkbench from './components/layout/InputWorkbench';
 import ResultWorkbench from './components/layout/ResultWorkbench';
 
 export default function App() {
-  const [allDone, setAllDone] = useState(false);
-
-  if (!allDone) {
-    return (
-      <div
-        style={{
-          minHeight: '100vh',
-          background: 'var(--fig-page-bg)',
-        }}
-      >
-        <InputWorkbench allDone={false} onAllDone={() => setAllDone(true)} />
-      </div>
-    );
-  }
-
   return (
     <div
       style={{
-        display: 'flex',
         height: '100vh',
         background: 'var(--fig-page-bg)',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
         overflow: 'hidden',
       }}
     >
-      <InputWorkbench allDone={true} onAllDone={() => {}} />
-      <ResultWorkbench />
+      {/* 헤더 */}
+      <div
+        style={{
+          paddingTop: 51,
+          paddingBottom: 38,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: 16,
+          textAlign: 'center',
+          flexShrink: 0,
+          width: '100%',
+        }}
+      >
+        <h1
+          style={{
+            margin: 0,
+            fontSize: 35,
+            fontWeight: 700,
+            color: 'var(--fig-title-color)',
+            fontFamily: 'Pretendard, sans-serif',
+            lineHeight: 1.5,
+          }}
+        >
+          나는 은퇴하면 한달에<br />얼마를 쓸 수 있을까?
+        </h1>
+        <p
+          style={{
+            margin: 0,
+            fontSize: 20,
+            fontWeight: 500,
+            color: 'var(--fig-subtitle-color)',
+            fontFamily: 'Pretendard, sans-serif',
+            lineHeight: 1.5,
+          }}
+        >
+          내 정보를 입력하면, 은퇴 후 생활비를 예상해 볼 수 있어요.
+        </p>
+      </div>
+
+      {/* 2컬럼 레이아웃 */}
+      <div
+        style={{
+          display: 'flex',
+          gap: 24,
+          width: 1400,
+          flex: 1,
+          minHeight: 0,
+          paddingBottom: 40,
+          boxSizing: 'border-box',
+        }}
+      >
+        <InputWorkbench />
+        <ResultWorkbench />
+      </div>
     </div>
   );
 }

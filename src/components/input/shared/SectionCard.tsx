@@ -13,8 +13,10 @@ export default function SectionCard({ title, children }: Props) {
 borderRadius: 'var(--fig-card-radius)',
         boxShadow: 'var(--shadow-card)',
         width: '100%',
-        paddingTop: 48,
-        paddingBottom: 48,
+        paddingTop: 40,
+        paddingRight: 32,
+        paddingBottom: 40,
+        paddingLeft: 32,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -24,7 +26,7 @@ borderRadius: 'var(--fig-card-radius)',
       {/* 카드 내 콘텐츠 폭 510px 고정 */}
       <div
         style={{
-          width: 510,
+          width: '100%',
           display: 'flex',
           flexDirection: 'column',
           gap: 32,

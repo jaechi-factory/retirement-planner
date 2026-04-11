@@ -137,11 +137,15 @@ export default function ResultWorkbench() {
 
   const panelStyle = {
     flex: 1,
-    height: 'calc(100vh - 64px)',
+    minWidth: 0,
+    height: '100%',
     overflowY: 'auto' as const,
-    padding: '40px 40px 80px',
+    padding: '38px 40px 80px',
     scrollbarWidth: 'thin' as const,
-    background: 'var(--surface-page)',
+    background: '#fdfcf7',
+    borderRadius: 32,
+    boxShadow: '8px 8px 16px 16px rgba(158,135,71,0.06)',
+    boxSizing: 'border-box' as const,
   };
 
   // ── 에러/빈 상태 ──
