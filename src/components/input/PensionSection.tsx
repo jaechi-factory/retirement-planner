@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { usePlannerStore } from '../../store/usePlannerStore';
 import NumberInput from './shared/NumberInput';
+import RateInput from './shared/RateInput';
 import PillToggle from './shared/PillToggle';
 import SectionCard from './shared/SectionCard';
 import type { PrivatePensionProduct } from '../../types/pension';
@@ -122,6 +123,11 @@ function PensionRow({ productId, label }: { productId: string; label: string }) 
         unit="세"
         min={product.startAge + 1}
         max={100}
+      />
+      <RateInput
+        label="예상 수익률이 얼마인가요? (연)"
+        value={product.expectedReturnRate}
+        onChange={(v) => updateProduct({ expectedReturnRate: v, accumulationReturnRate: v, payoutReturnRate: v })}
       />
     </PillToggle>
   );
