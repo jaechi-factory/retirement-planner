@@ -6,17 +6,19 @@ interface ResultHeroSectionProps {
   inputs: PlannerInputs;
 }
 
-function getCase(summary: CalculationResultV2['summary']): 'positive' | 'negative' {
-  return summary.failureAge === null ? 'positive' : 'negative';
+function getCase(summary: CalculationResultV2['summary'], targetMonthly: number): 'positive' | 'negative' {
+  if (summary.failureAge !== null) return 'negative';
+  if (targetMonthly > 0 && summary.sustainableMonthly < targetMonthly) return 'negative';
+  return 'positive';
 }
 
 export default function ResultHeroSection({ summary, inputs }: ResultHeroSectionProps) {
-  const caseType = getCase(summary);
-  const isPositive = caseType === 'positive';
-
   const lifeExpectancy = inputs.goal.lifeExpectancy || 90;
   const monthly = Math.round(summary.sustainableMonthly);
   const target = inputs.goal.targetMonthly;
+
+  const caseType = getCase(summary, target);
+  const isPositive = caseType === 'positive';
 
   // 배지 텍스트
   const badgeText = isPositive ? '미래가 긍정적이에요' : '미래가 부정적이에요';
