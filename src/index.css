@@ -54,7 +54,7 @@
   --accent-marker:       #FF6600;
 
   /* ── Shadow ─────────────────────────────────────────────────── */
-  --shadow-card:      8px 8px 16px 16px rgba(158,135,71,0.06);
+  --shadow-card:      none;
   --shadow-card-sm:   none;
   --shadow-card-md:   none;
 
@@ -128,7 +128,7 @@
 
   /* ── Figma UI Renewal Tokens ─────────────────────────────────── */
   --fig-page-bg: linear-gradient(to right, #e4e5e7 0%, #f2f9ff 61.943%, #d7e3ec 100%);
-  --fig-card-bg: rgba(253,252,247,0.4);
+  --fig-card-bg: rgba(253,252,247,0.72);
   --fig-card-radius: 32px;
 
   --fig-input-border-empty:  #b0b8c1;
