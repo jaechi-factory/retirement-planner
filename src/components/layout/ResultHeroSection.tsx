@@ -22,7 +22,7 @@ export default function ResultHeroSection({ summary, inputs }: ResultHeroSection
 
   // 배지 텍스트
   const badgeText = isPositive ? '미래가 긍정적이에요' : '미래가 부정적이에요';
-  const badgeColor = isPositive ? '#2272eb' : '#f04438';
+  const badgeColor = isPositive ? '#2272eb' : '#f04452';
 
   // 본문 2줄
   const mainLine1 = `${lifeExpectancy}세까지 매월`;
@@ -38,7 +38,7 @@ export default function ResultHeroSection({ summary, inputs }: ResultHeroSection
   } else {
     subtitleText = summary.failureAge !== null
       ? `${summary.failureAge}세에 자산이 바닥날 수 있어요.`
-      : '목표 금액보다 적게 쓸 수 밖에 없어요.';
+      : '목표 생활비를 달성하려면 개선이 필요해요.';
   }
 
   return (
