@@ -388,7 +388,10 @@ export default function AssetBalanceChart({
             tick={{ fontSize: 14, fill: 'var(--ux-text-subtle)' }}
             tickLine={false}
             axisLine={false}
-            width={44}
+            width={(() => {
+              const label = fmtKRWAxis(yMax);
+              return Math.max(44, label.length * 14 + 4);
+            })()}
             domain={[0, yMax]}
           />
 
