@@ -35,10 +35,7 @@ export default function ResultHeroSection({ summary, inputs }: ResultHeroSection
   let subtitleColor = '#4e5968';
 
   if (isPositive) {
-    subtitleText =
-      monthly >= target && target > 0
-        ? '목표 금액보다 더 많은 돈을 쓸 수 있어요.'
-        : '목표 금액에 근접하게 쓸 수 있어요.';
+    subtitleText = '목표 금액보다 더 많은 돈을 쓸 수 있어요.';
   } else {
     subtitleText = `매월 ${shortfall.toLocaleString('ko-KR')}만원이 부족해요. 목표 생활비를 달성하려면 개선이 필요해요.`;
     subtitleColor = '#F57800';
