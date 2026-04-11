@@ -58,8 +58,8 @@ export default function App() {
       <div
         style={{
           display: 'flex',
-          gap: 24,
-          width: 1400,
+          gap: 16,
+          width: 1100,
           flex: 1,
           minHeight: 0,
           paddingBottom: 40,

@@ -25,7 +25,7 @@ export default function InputWorkbench() {
   return (
     <div
       style={{
-        width: 421,
+        width: 333,
         flexShrink: 0,
         height: '100%',
         overflowY: 'auto',
