@@ -29,6 +29,7 @@ interface Props {
   retirementAge: number;
   targetMonthly: number;
   strategyLabel: string;
+  sustainableMonthly: number;
   inputs: PlannerInputs;
 }
 
@@ -181,6 +182,7 @@ export default function AssetBalanceChart({
   retirementAge,
   targetMonthly,
   strategyLabel,
+  sustainableMonthly,
   inputs,
 }: Props) {
   const [selectedAge, setSelectedAge] = useState<number>(retirementAge);
@@ -248,8 +250,8 @@ export default function AssetBalanceChart({
     <div style={{ marginBottom: 12 }}>
       <div
         style={{
-          fontSize: 14,
-          fontWeight: 700,
+          fontSize: 13,
+          fontWeight: 600,
           color:
             depletionAge !== null
               ? 'var(--ux-status-negative)'
@@ -260,11 +262,11 @@ export default function AssetBalanceChart({
         }}
       >
         {depletionAge !== null
-          ? `${depletionAge}세에 금융자산이 거의 다 떨어져요`
+          ? `${depletionAge}세부터 생활비가 부족해요`
           : isSaleProceedsDependent
-          ? '집 매각 후 운용자금까지 쓰면 기대수명까지 버틸 수 있어요'
+          ? '집을 팔아 쓴 뒤에도 기대수명까지 버틸 수 있어요'
           : isSecuredLoanDependent
-          ? '집 담보대출까지 쓰면 기대수명까지 버틸 수 있어요'
+          ? '집 담보대출을 활용해 기대수명까지 버틸 수 있어요'
           : isPensionDependent
           ? '연금 중심으로 기대수명까지 버틸 수 있어요'
           : '기대수명까지 금융자산을 유지해요'}
@@ -349,8 +351,10 @@ export default function AssetBalanceChart({
         </AreaChart>
       </ResponsiveContainer>
 
-      <div style={{ fontSize: 14, color: 'var(--ux-text-subtle)', marginTop: 6, lineHeight: 1.6 }}>
-        {hasRealEstate ? `선택 전략: ${strategyLabel}` : `기준: ${strategyLabel}`} / 목표 월 {targetMonthly}만원 / 은퇴 {retirementAge}세
+      <div style={{ fontSize: 12, color: 'var(--ux-text-subtle)', marginTop: 6, lineHeight: 1.8, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+        {hasRealEstate && <span>선택 전략: {strategyLabel}</span>}
+        <span>목표 생활비: {targetMonthly}만원</span>
+        <span>실제 가능 생활비: {Math.round(sustainableMonthly)}만원</span>
       </div>
 
       {inspectorData && (

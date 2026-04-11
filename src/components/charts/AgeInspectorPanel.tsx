@@ -1,32 +1,24 @@
 import type { AgeSnapshotData } from './assetBalanceMetrics';
 import { fmtKRW } from '../../utils/format';
 
-// ── 공통 행 컴포넌트 ─────────────────────────────────────────────────────────
+// ── 행 컴포넌트 ─────────────────────────────────────────────────────────────
 
 function DetailRow({
   label,
   value,
-  indent = false,
   unit = '월',
 }: {
   label: string;
   value: number;
-  indent?: boolean;
   unit?: string;
 }) {
-  const isEmpty = value === 0;
   return (
     <div
       style={{
         display: 'flex',
         justifyContent: 'space-between',
         gap: 8,
-        paddingLeft: indent ? 10 : 0,
-        color: isEmpty
-          ? 'var(--ux-text-disabled, #bbb)'
-          : indent
-          ? 'var(--ux-text-subtle)'
-          : 'var(--ux-text-base)',
+        color: 'var(--ux-text-base)',
         fontSize: 13,
         lineHeight: 1.7,
       }}
@@ -43,37 +35,45 @@ function AssetRow({
   label,
   value,
   dotColor,
+  note,
 }: {
   label: string;
   value: number;
   dotColor: string;
+  note?: string;
 }) {
-  const isEmpty = value === 0;
   return (
-    <div
-      style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        gap: 8,
-        color: isEmpty ? 'var(--ux-text-disabled, #bbb)' : 'var(--ux-text-base)',
-        fontSize: 13,
-        lineHeight: 1.7,
-      }}
-    >
-      <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-        <span
-          style={{
-            width: 6,
-            height: 6,
-            borderRadius: '50%',
-            background: isEmpty ? 'var(--ux-text-disabled, #bbb)' : dotColor,
-            flexShrink: 0,
-            display: 'inline-block',
-          }}
-        />
-        {label}
-      </span>
-      <span style={{ whiteSpace: 'nowrap' }}>{fmtKRW(Math.round(value))}</span>
+    <div style={{ marginBottom: note ? 1 : 0 }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          gap: 8,
+          color: 'var(--ux-text-base)',
+          fontSize: 13,
+          lineHeight: 1.7,
+        }}
+      >
+        <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+          <span
+            style={{
+              width: 6,
+              height: 6,
+              borderRadius: '50%',
+              background: dotColor,
+              flexShrink: 0,
+              display: 'inline-block',
+            }}
+          />
+          {label}
+        </span>
+        <span style={{ whiteSpace: 'nowrap' }}>{fmtKRW(Math.round(value))}</span>
+      </div>
+      {note && (
+        <div style={{ fontSize: 11, color: 'var(--ux-text-subtle)', paddingLeft: 11, lineHeight: 1.5, marginBottom: 2 }}>
+          {note}
+        </div>
+      )}
     </div>
   );
 }
@@ -148,6 +148,15 @@ export default function AgeInspectorPanel({ data, hasRealEstate, hasSaleProceeds
     data.monthlyNet >= 0 ? 'var(--ux-status-positive)' : 'var(--ux-status-negative)';
   const netPrefix = data.monthlyNet >= 0 ? '+' : '-';
 
+  // 연금 합계 — 오늘 가치 기준
+  const pensionRealTotal =
+    data.monthlyPublicPensionRealTodayValue +
+    data.monthlyRetirementPensionRealTodayValue +
+    data.monthlyPrivatePensionRealTodayValue;
+
+  // 금융자산 = 주식·채권 + 집을 판 뒤 굴리는 돈
+  const financialTotal = data.financialInvestable + data.saleProceedsEnd;
+
   return (
     <div
       style={{
@@ -159,7 +168,7 @@ export default function AgeInspectorPanel({ data, hasRealEstate, hasSaleProceeds
         fontSize: 13,
       }}
     >
-      {/* ── 헤더: 나이 + 이벤트 ── */}
+      {/* ── 헤더: 나이 + 이벤트 배지 ── */}
       <div
         style={{
           display: 'flex',
@@ -213,69 +222,66 @@ export default function AgeInspectorPanel({ data, hasRealEstate, hasSaleProceeds
         <SummaryCell label="총 자산" value={data.totalAssets} unit="" />
       </div>
 
-      {/* ── 하단 2열 상세 ── */}
+      {/* ── 하단 3묶음 ── */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
 
-        {/* 왼쪽: 수입 내역 + 지출 내역 */}
+        {/* 왼쪽: 수입 구성 + 지출 구성 */}
         <div style={{ padding: '10px 14px', borderRight: '1px solid var(--ux-border)' }}>
-          <SectionTitle>수입 내역</SectionTitle>
-          <div style={{ fontSize: 11, color: 'var(--ux-text-subtle)', marginBottom: 4 }}>
-            연금은 해당 나이 기준 명목금액과 오늘 가치 환산을 함께 보여줘요
-          </div>
-          <DetailRow label="근로소득" value={data.monthlySalary} />
-          <DetailRow label="연금 합계 (명목)" value={data.monthlyPension} />
-          <DetailRow label="국민연금 (명목)" value={data.monthlyPublicPension} indent />
-          <DetailRow label="국민연금 (오늘 가치)" value={data.monthlyPublicPensionRealTodayValue} indent />
-          <DetailRow label="퇴직연금 (명목)" value={data.monthlyRetirementPension} indent />
-          <DetailRow label="퇴직연금 (오늘 가치)" value={data.monthlyRetirementPensionRealTodayValue} indent />
-          <DetailRow label="개인연금 (명목)" value={data.monthlyPrivatePension} indent />
-          <DetailRow label="개인연금 (오늘 가치)" value={data.monthlyPrivatePensionRealTodayValue} indent />
+
+          <SectionTitle>수입 구성</SectionTitle>
+          {data.monthlySalary > 0 && (
+            <DetailRow label="근로소득" value={data.monthlySalary} />
+          )}
+          {pensionRealTotal > 0 && (
+            <DetailRow label="연금 합계" value={pensionRealTotal} />
+          )}
+          {(data.monthlySalary > 0 || pensionRealTotal > 0) && (
+            <div style={{ fontSize: 11, color: 'var(--ux-text-subtle)', marginTop: 2, lineHeight: 1.5 }}>
+              현재 가치 기준으로 보여줘요
+            </div>
+          )}
 
           <div style={{ marginTop: 12 }}>
-            <SectionTitle>지출 내역</SectionTitle>
-            <div style={{ fontSize: 11, color: 'var(--ux-text-subtle)', marginBottom: 4 }}>
-              지출은 선택한 나이 기준 명목금액이에요
-            </div>
-            <DetailRow label="생활비 (명목)" value={data.monthlyLivingExpense} />
-            <DetailRow label="부채상환" value={data.monthlyDebtService} />
-            <DetailRow label="자녀비" value={data.monthlyChildExpense} />
-            <DetailRow label="주거비" value={data.monthlyRent} />
+            <SectionTitle>지출 구성</SectionTitle>
+            {data.monthlyLivingExpense > 0 && (
+              <DetailRow label="생활비" value={data.monthlyLivingExpense} />
+            )}
+            {data.monthlyDebtService > 0 && (
+              <DetailRow label="부채상환" value={data.monthlyDebtService} />
+            )}
+            {data.monthlyChildExpense > 0 && (
+              <DetailRow label="자녀비" value={data.monthlyChildExpense} />
+            )}
+            {data.monthlyRent > 0 && (
+              <DetailRow label="주거비" value={data.monthlyRent} />
+            )}
           </div>
         </div>
 
-        {/* 오른쪽: 자산 내역 + 연금 이벤트 */}
+        {/* 오른쪽: 자산 구성 */}
         <div style={{ padding: '10px 14px' }}>
-          <SectionTitle>자산 (연말 잔고)</SectionTitle>
-          <AssetRow label="현금·예금" value={data.cashLike} dotColor="var(--ux-accent)" />
-          <AssetRow label="주식·채권" value={data.financialInvestable} dotColor="var(--ux-text-base)" />
-          {hasRealEstate && (
-            <AssetRow label="집 자산" value={data.propertyValue} dotColor="var(--ux-text-subtle)" />
-          )}
-          {hasSaleProceeds && (
+          <SectionTitle>자산 구성</SectionTitle>
+          {hasRealEstate && data.propertyValue > 0 && (
             <AssetRow
-              label="매각대금 운용"
-              value={data.saleProceedsEnd}
-              dotColor="var(--ux-status-positive)"
+              label="집 가치"
+              value={data.propertyValue}
+              dotColor="var(--ux-text-subtle)"
             />
           )}
-
-          {data.pensionEvents.length > 0 && (
-            <div style={{ marginTop: 12 }}>
-              <SectionTitle>이벤트</SectionTitle>
-              {data.pensionEvents.map((e, i) => (
-                <div
-                  key={i}
-                  style={{
-                    fontSize: 13,
-                    color: 'var(--ux-status-positive)',
-                    fontWeight: 600,
-                    lineHeight: 1.7,
-                  }}
-                >
-                  {e.name} 수령 시작 · 월 {fmtKRW(e.monthly)}
-                </div>
-              ))}
-            </div>
+          {financialTotal > 0 && (
+            <AssetRow
+              label="금융자산"
+              value={financialTotal}
+              dotColor="var(--ux-text-base)"
+              note={hasSaleProceeds && data.saleProceedsEnd > 0 ? '주식·채권 · 집을 판 뒤 굴리는 돈 합산' : undefined}
+            />
+          )}
+          {data.cashLike > 0 && (
+            <AssetRow
+              label="현금·예금"
+              value={data.cashLike}
+              dotColor="var(--ux-accent)"
+            />
           )}
         </div>
       </div>

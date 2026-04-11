@@ -17,30 +17,6 @@ interface EvidenceWorkspaceProps {
   assumptions: AssumptionItem[];
 }
 
-function buildChartInterpretation(
-  summary: CalculationResultV2['summary'],
-  hasRealEstate: boolean,
-  lifeExpectancy: number,
-): string {
-  const { financialExhaustionAge, propertyInterventionAge, failureAge } = summary;
-
-  if (failureAge !== null) {
-    if (hasRealEstate && propertyInterventionAge !== null) {
-      return `${propertyInterventionAge}세부터 집이 필요하고, ${failureAge}세부터 생활비가 부족해요.`;
-    }
-    return `${failureAge}세부터 생활비가 부족해져요. 자산 규모나 목표 생활비 조정이 필요해요.`;
-  }
-
-  if (financialExhaustionAge !== null) {
-    if (hasRealEstate && propertyInterventionAge !== null) {
-      return `${financialExhaustionAge}세 무렵 투자자산이 소진되고, ${propertyInterventionAge}세부터 집을 활용해요. ${lifeExpectancy}세까지 유지돼요.`;
-    }
-    return `${financialExhaustionAge}세 무렵 투자자산이 소진돼요. 그 이후엔 현금성 자산으로 ${lifeExpectancy}세까지 버텨요.`;
-  }
-
-  return `${lifeExpectancy}세까지 금융자산이 유지돼요.`;
-}
-
 export default function EvidenceWorkspace({
   hasRealEstate,
   chartRows,
@@ -50,8 +26,6 @@ export default function EvidenceWorkspace({
   summary,
   assumptions,
 }: EvidenceWorkspaceProps) {
-  const chartInterpretation = buildChartInterpretation(summary, hasRealEstate, inputs.goal.lifeExpectancy);
-
   return (
     <section style={{ marginBottom: 40 }}>
       {/* 섹션 레이블 */}
@@ -69,8 +43,7 @@ export default function EvidenceWorkspace({
         </span>
       </div>
 
-
-      {/* 돈 흐름 */}
+      {/* 메인 카드 */}
       <div
         style={{
           borderRadius: 20,
@@ -78,7 +51,7 @@ export default function EvidenceWorkspace({
           marginBottom: 'var(--result-space-2)',
         }}
       >
-        {/* 돈 흐름 헤더 */}
+        {/* 헤더 */}
         <div
           style={{
             padding: '12px 16px 0',
@@ -90,14 +63,26 @@ export default function EvidenceWorkspace({
         >
           <div>
             <span
-              style={{ fontSize: 15, fontWeight: 700, color: 'var(--result-text-strong-color)', display: 'block', marginBottom: 4 }}
+              style={{
+                fontSize: 15,
+                fontWeight: 700,
+                color: 'var(--result-text-strong-color)',
+                display: 'block',
+                marginBottom: 4,
+              }}
             >
-              돈 흐름
+              자산의 흐름을 그래프로 보여드릴게요
             </span>
             <span
-              style={{ fontSize: 12, color: 'rgba(36,39,46,0.64)', display: 'block', lineHeight: 1.55, marginBottom: 10 }}
+              style={{
+                fontSize: 12,
+                color: 'rgba(36,39,46,0.64)',
+                display: 'block',
+                lineHeight: 1.55,
+                marginBottom: 10,
+              }}
             >
-              {chartInterpretation}
+              먼저 현금으로 생활하고, 현금이 부족해지면 주식 같은 투자 자산을 팔아 생활해요. 그래도 부족하면 경우에 따라 집을 담보로 대출하거나 판매해야 할 수 있어요.
             </span>
           </div>
           {hasRealEstate && (
@@ -127,6 +112,7 @@ export default function EvidenceWorkspace({
             retirementAge={retirementAge}
             targetMonthly={inputs.goal.targetMonthly}
             strategyLabel={strategyLabel}
+            sustainableMonthly={summary.sustainableMonthly}
             inputs={inputs}
           />
         </div>
@@ -164,7 +150,13 @@ export default function EvidenceWorkspace({
             )}
 
             <span
-              style={{ fontSize: 12, fontWeight: 700, color: 'var(--result-text-body-color)', display: 'block', marginBottom: 'var(--result-space-2)' }}
+              style={{
+                fontSize: 12,
+                fontWeight: 700,
+                color: 'var(--result-text-body-color)',
+                display: 'block',
+                marginBottom: 'var(--result-space-2)',
+              }}
             >
               주요 가정
             </span>
