@@ -260,7 +260,7 @@ export default function ResultWorkbench() {
         </div>
         <div
           style={{
-            background: '#f2f4f6',
+            background: '#E8F3FF',
             borderRadius: 20,
             padding: 16,
             display: 'flex',
