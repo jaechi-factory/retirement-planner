@@ -1,5 +1,5 @@
 import type { PlannerInputs } from '../../types/inputs';
-import { calcTotalAsset } from '../../engine/assetWeighting';
+import { calcFinancialTotalAsset } from '../../engine/assetWeighting';
 
 interface Props {
   inputs: PlannerInputs;
@@ -28,7 +28,7 @@ export default function ReinvestmentExplainerSection({ inputs, annualNetSavings,
   const isDeficit = monthlySurplus < 0;
 
   // ── 자산 비중 계산 ────────────────────────────────────────────────
-  const totalFinancial = calcTotalAsset(assets);
+  const totalFinancial = calcFinancialTotalAsset(assets);
 
   const allocationItems = [
     { label: '현금', amount: assets.cash.amount },
