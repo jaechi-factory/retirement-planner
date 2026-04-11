@@ -30,6 +30,7 @@ export default function InputWorkbench() {
         height: '100%',
         overflowY: 'auto',
         scrollbarWidth: 'none',
+        overscrollBehavior: 'none',
         display: 'flex',
         flexDirection: 'column',
         gap: 24,

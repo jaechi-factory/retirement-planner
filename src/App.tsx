@@ -7,7 +7,6 @@ export default function App() {
     <div
       style={{
         height: '100vh',
-        overflow: 'hidden',
         background: 'var(--fig-page-bg)',
         display: 'flex',
         flexDirection: 'column',
