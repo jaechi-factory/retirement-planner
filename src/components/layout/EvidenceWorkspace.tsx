@@ -80,18 +80,35 @@ export default function EvidenceWorkspace({
 
         {/* 차트 */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <p
-            style={{
-              margin: 0,
-              fontSize: 14,
-              fontWeight: 700,
-              color: '#3182f6',
-              fontFamily: 'Pretendard, sans-serif',
-              lineHeight: 1.5,
-            }}
-          >
-            기대 수명까지 예측 그래프
-          </p>
+          {/* 타이틀 + 설명 그룹 */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <p
+              style={{
+                margin: 0,
+                fontSize: 14,
+                fontWeight: 700,
+                color: '#3182f6',
+                fontFamily: 'Pretendard, sans-serif',
+                lineHeight: 1.5,
+              }}
+            >
+              기대 수명까지 예측 그래프
+            </p>
+            {inputs.goal.targetMonthly > 0 && (
+              <p
+                style={{
+                  margin: 0,
+                  fontSize: 14,
+                  fontWeight: 400,
+                  color: '#4e5968',
+                  fontFamily: 'Pretendard, sans-serif',
+                  lineHeight: 1.5,
+                }}
+              >
+                {`목표 생활비 월 ${inputs.goal.targetMonthly}만원은 오늘 기준이에요. 같은 생활 수준을 유지하려면 ${inputs.goal.retirementAge}세에는 월 ${Math.round(inputs.goal.targetMonthly * Math.pow(1 + (inputs.goal.inflationRate ?? 2) / 100, inputs.goal.retirementAge - inputs.status.currentAge))}만원이 필요하고, 이후에도 물가상승률만큼 늘어나요. 투자 자산도 수익이 쌓이면서 커질 수 있어요.`}
+              </p>
+            )}
+          </div>
           <div
             style={{
               background: '#f9fafb',
@@ -112,6 +129,7 @@ export default function EvidenceWorkspace({
       </div>
 
       {/* 계산 가정 (collapsible) */}
+
       {assumptions.length > 0 && (
         <details style={{ marginTop: 0 }}>
           <summary
