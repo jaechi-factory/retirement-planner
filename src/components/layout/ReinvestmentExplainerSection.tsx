@@ -73,7 +73,7 @@ export default function ReinvestmentExplainerSection({ inputs, annualNetSavings 
             lineHeight: 1.5,
           }}
         >
-          남은 돈은 부동산을 제외한 투자 자산 비중대로, 설정한 수익률을 적용해 매월 다시 투자되는 것으로 계산돼요.
+          남은 돈은 부동산을 제외한 투자 자산 비중대로, 매월 다시 투자되는 것으로 계산돼요.
         </p>
       </div>
 
