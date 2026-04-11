@@ -50,10 +50,10 @@ function EmptyStateCard({ title, body, hint }: { title: string; body: string; hi
     <div
       style={{
         borderRadius: 20,
-        border: '1px solid rgba(255,255,255,0.35)',
+        border: '1px solid rgba(255,255,255,0.55)',
         background: 'var(--fig-card-bg)',
-        backdropFilter: 'blur(20px) saturate(180%)',
-        WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+        backdropFilter: 'blur(40px) saturate(200%)',
+        WebkitBackdropFilter: 'blur(40px) saturate(200%)',
         padding: '64px 32px',
         display: 'flex',
         flexDirection: 'column',

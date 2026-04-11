@@ -10,10 +10,10 @@ export default function SectionCard({ title, children }: Props) {
     <div
       style={{
         background: 'var(--fig-card-bg)',
-        backdropFilter: 'blur(20px) saturate(180%)',
-        WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+        backdropFilter: 'blur(40px) saturate(200%)',
+        WebkitBackdropFilter: 'blur(40px) saturate(200%)',
         borderRadius: 'var(--fig-card-radius)',
-        border: '1px solid rgba(255,255,255,0.35)',
+        border: '1px solid rgba(255,255,255,0.55)',
         width: '100%',
         paddingTop: 40,
         paddingRight: 32,
