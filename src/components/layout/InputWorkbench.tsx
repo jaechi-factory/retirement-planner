@@ -27,6 +27,9 @@ export default function InputWorkbench() {
       style={{
         width: 333,
         flexShrink: 0,
+        height: '100%',
+        overflowY: 'auto',
+        scrollbarWidth: 'none',
         display: 'flex',
         flexDirection: 'column',
         gap: 24,

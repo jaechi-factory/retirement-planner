@@ -6,7 +6,8 @@ export default function App() {
   return (
     <div
       style={{
-        minHeight: '100vh',
+        height: '100vh',
+        overflow: 'hidden',
         background: 'var(--fig-page-bg)',
         display: 'flex',
         flexDirection: 'column',
@@ -59,9 +60,9 @@ export default function App() {
           display: 'flex',
           gap: 16,
           width: 1100,
-          paddingBottom: 80,
+          flex: 1,
+          minHeight: 0,
           boxSizing: 'border-box',
-          alignItems: 'flex-start',
         }}
       >
         <InputWorkbench />

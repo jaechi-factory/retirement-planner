@@ -138,6 +138,9 @@ export default function ResultWorkbench() {
   const panelStyle = {
     flex: 1,
     minWidth: 0,
+    height: '100%',
+    overflowY: 'auto' as const,
+    scrollbarWidth: 'none' as const,
     padding: '38px 40px 80px',
     background: '#fdfcf7',
     borderRadius: 32,
