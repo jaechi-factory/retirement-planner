@@ -1,17 +1,11 @@
 import AssetBalanceChart from '../charts/AssetBalanceChart';
 import PropertyAssetChart from '../charts/PropertyAssetChart';
-import FundingPathSection from './FundingPathSection';
 import type {
   AssumptionItem,
-  FundingStage,
-  WarningItem,
-  PropertyOptionResult,
   YearlyAggregateV2,
   CalculationResultV2,
 } from '../../types/calculationV2';
 import type { PlannerInputs } from '../../types/inputs';
-import { extractKeyDecisionEvents } from '../../engine/timelineBuilder';
-import { CompactLifetimeTimeline } from '../result/v3/LifetimeTimeline';
 
 interface EvidenceWorkspaceProps {
   hasRealEstate: boolean;
@@ -20,12 +14,7 @@ interface EvidenceWorkspaceProps {
   strategyLabel: string;
   inputs: PlannerInputs;
   summary: CalculationResultV2['summary'];
-  propertyOptions: PropertyOptionResult[];
   assumptions: AssumptionItem[];
-  warnings: WarningItem[];
-  timelineStrategyMode: 'recommended' | 'selected';
-  selectedPropertyStrategy: PropertyOptionResult['strategy'] | null;
-  fundingTimeline: FundingStage[];
 }
 
 function buildChartInterpretation(
@@ -59,24 +48,9 @@ export default function EvidenceWorkspace({
   strategyLabel,
   inputs,
   summary,
-  propertyOptions,
   assumptions,
-  warnings,
-  timelineStrategyMode,
-  selectedPropertyStrategy,
-  fundingTimeline,
 }: EvidenceWorkspaceProps) {
-  const filteredWarnings = warnings.filter((warning) => warning.severity !== 'info');
   const chartInterpretation = buildChartInterpretation(summary, hasRealEstate, inputs.goal.lifeExpectancy);
-
-  const keyEvents = extractKeyDecisionEvents(
-    chartRows,
-    summary,
-    propertyOptions,
-    inputs,
-    timelineStrategyMode,
-    selectedPropertyStrategy,
-  );
 
   return (
     <section style={{ marginBottom: 40 }}>
@@ -95,53 +69,6 @@ export default function EvidenceWorkspace({
         </span>
       </div>
 
-      {/* 자금 전환 타임라인 — FundingPath 통합 */}
-      {fundingTimeline.length > 0 && (
-        <div style={{ marginBottom: 12 }}>
-          <FundingPathSection
-            fundingTimeline={fundingTimeline}
-            lifeExpectancy={inputs.goal.lifeExpectancy}
-            retirementAge={retirementAge}
-          />
-        </div>
-      )}
-
-      {/* 주의사항 — collapsible 밖으로 꺼내어 항상 표시 */}
-      {filteredWarnings.length > 0 && (
-        <div
-          style={{
-            borderRadius: 10,
-            border: '1px solid var(--ux-status-warning-soft)',
-            background: 'var(--ux-status-warning-bg)',
-            padding: '10px 14px',
-            marginBottom: 'var(--result-space-2)',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 6,
-          }}
-        >
-          <span
-            style={{ fontSize: 12, fontWeight: 700, color: 'var(--ux-status-warning)', display: 'block', marginBottom: 2 }}
-          >
-            주의사항
-          </span>
-          {filteredWarnings.map((warning, index) => (
-            <div
-              key={index}
-              style={{
-                borderRadius: 6,
-                border: `1px solid ${warning.severity === 'critical' ? 'var(--ux-status-negative-soft)' : 'var(--ux-status-warning-soft)'}`,
-                background: warning.severity === 'critical' ? 'var(--ux-status-negative-bg)' : 'transparent',
-                padding: '6px 10px',
-              }}
-            >
-              <span style={{ fontSize: 12, color: 'var(--result-text-body-color)', lineHeight: 1.6, display: 'block' }}>
-                {warning.message}
-              </span>
-            </div>
-          ))}
-        </div>
-      )}
 
       {/* 돈 흐름 */}
       <div
@@ -203,23 +130,6 @@ export default function EvidenceWorkspace({
             inputs={inputs}
           />
         </div>
-      </div>
-
-      {/* 나이별 주요 이벤트 */}
-      <div
-        style={{
-          borderRadius: 20,
-          background: 'var(--surface-card)',
-          padding: '12px 14px',
-          marginBottom: 'var(--result-space-2)',
-        }}
-      >
-        <span
-          style={{ fontSize: 15, fontWeight: 700, color: 'var(--result-text-strong-color)', display: 'block', marginBottom: 10 }}
-        >
-          나이별 주요 이벤트
-        </span>
-        <CompactLifetimeTimeline events={keyEvents} />
       </div>
 
       {/* 계산 가정 (collapsible) */}

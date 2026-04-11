@@ -131,7 +131,10 @@ function getEventStyle(type: EventType): { dotColor: string; headerColor: string
 
 function getKeyEventStyle(kind: KeyDecisionEventKind): { dotColor: string; textColor: string } {
   switch (kind) {
+    case 'financial_peak':
+      return { dotColor: '#3D9970', textColor: 'var(--result-text-body-color)' };
     case 'financial_exhaustion_start':
+    case 'financial_depletion':
     case 'lifestyle_shortfall_start':
       return { dotColor: 'var(--ux-status-negative)', textColor: 'var(--result-text-body-color)' };
     case 'property_intervention_start':

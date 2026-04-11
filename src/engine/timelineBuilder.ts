@@ -51,7 +51,9 @@ export type KeyDecisionEventKind =
   | 'pension_retirement_end'
   | 'pension_private_start'
   | 'pension_private_end'
+  | 'financial_peak'
   | 'financial_exhaustion_start'
+  | 'financial_depletion'
   | 'property_intervention_start'
   | 'lifestyle_shortfall_start'
   | 'child_expense_end';
@@ -287,8 +289,12 @@ function eventPriority(kind: KeyDecisionEventKind): number {
       return 60;
     case 'child_expense_end':
       return 70;
+    case 'financial_peak':
+      return 75;
     case 'financial_exhaustion_start':
       return 80;
+    case 'financial_depletion':
+      return 85;
     case 'property_intervention_start':
       return 90;
     case 'lifestyle_shortfall_start':
@@ -378,11 +384,41 @@ export function extractKeyDecisionEvents(
     });
   }
 
-  if (summary.financialExhaustionAge !== null) {
+  // 금융자산 최고점
+  if (aggregates.length > 0) {
+    let peakAmount = -Infinity;
+    let peakAge = -1;
+    for (const row of aggregates) {
+      const total = row.cashLikeEnd + row.financialInvestableEnd;
+      if (total > peakAmount) {
+        peakAmount = total;
+        peakAge = row.ageYear;
+      }
+    }
+    if (peakAge >= retirementAge && peakAge <= lifeExpectancy) {
+      add({
+        kind: 'financial_peak',
+        age: peakAge,
+        text: `${peakAge}세 금융자산이 최고점이에요`,
+      });
+    }
+  }
+
+  // 금융자산 소진 시작 (매도 시작 나이)
+  if (summary.financialSellStartAge !== null) {
     add({
       kind: 'financial_exhaustion_start',
+      age: summary.financialSellStartAge,
+      text: `${summary.financialSellStartAge}세 금융자산이 부족해지기 시작해요`,
+    });
+  }
+
+  // 금융자산 완전 소진
+  if (summary.financialExhaustionAge !== null) {
+    add({
+      kind: 'financial_depletion',
       age: summary.financialExhaustionAge,
-      text: `${summary.financialExhaustionAge}세 금융자산이 부족해지기 시작해요`,
+      text: `${summary.financialExhaustionAge}세 금융자산이 바닥나요`,
     });
   }
 
@@ -394,7 +430,7 @@ export function extractKeyDecisionEvents(
       kind: 'property_intervention_start',
       age: propertyEvent.age,
       text: propertyEvent.type === 'property_sell'
-        ? `${propertyEvent.age}세 집을 팔아 생활비를 이어가야 해요`
+        ? `${propertyEvent.age}세 집을 팔거나, 대출을 받아서 생활비를 마련해야 해요`
         : `${propertyEvent.age}세 집을 담보로 빌려 생활비를 보태야 해요`,
     });
   }

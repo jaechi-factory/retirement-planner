@@ -12,6 +12,10 @@ function Divider() {
   return <div style={{ background: '#d9d9d9', height: 1, width: '100%', flexShrink: 0 }} />;
 }
 
+const textStyle = {
+  fontFamily: 'Pretendard, sans-serif',
+} as const;
+
 export default function ReinvestmentExplainerSection({ inputs, annualNetSavings, monthlyDebt, monthlyVehicle }: Props) {
   const { status, goal, assets, children } = inputs;
 
@@ -21,6 +25,7 @@ export default function ReinvestmentExplainerSection({ inputs, annualNetSavings,
   const monthlyChildren =
     children.hasChildren ? Math.round(children.count * children.monthlyPerChild) : 0;
   const monthlySurplus = Math.round(annualNetSavings / 12);
+  const isDeficit = monthlySurplus < 0;
 
   // ── 자산 비중 계산 ────────────────────────────────────────────────
   const totalFinancial = calcTotalAsset(assets);
@@ -36,6 +41,33 @@ export default function ReinvestmentExplainerSection({ inputs, annualNetSavings,
 
   const hasAllocation = totalFinancial > 0 && allocationItems.length > 0;
 
+  // ── 공통 bullet list ─────────────────────────────────────────────
+  const BulletList = () => (
+    <ul
+      style={{
+        margin: 0,
+        paddingLeft: 20,
+        listStyleType: 'disc',
+        fontSize: 16,
+        color: '#191f28',
+        ...textStyle,
+        lineHeight: 1.6,
+      }}
+    >
+      <li>{`월 수입 : ${monthlyIncome.toLocaleString('ko-KR')}만원`}</li>
+      <li>{`월 생활비 : - ${monthlyLiving.toLocaleString('ko-KR')}만원`}</li>
+      {monthlyChildren > 0 && (
+        <li>{`월 자녀 지출 : - ${monthlyChildren.toLocaleString('ko-KR')}만원`}</li>
+      )}
+      {monthlyDebt > 0 && (
+        <li>{`월 대출 상환 : - ${monthlyDebt.toLocaleString('ko-KR')}만원`}</li>
+      )}
+      {monthlyVehicle > 0 && (
+        <li>{`월 차량 비용 : - ${monthlyVehicle.toLocaleString('ko-KR')}만원`}</li>
+      )}
+    </ul>
+  );
+
   return (
     <div
       style={{
@@ -50,97 +82,69 @@ export default function ReinvestmentExplainerSection({ inputs, annualNetSavings,
     >
       {/* 제목 + 설명 */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        <div
-          style={{
-            fontSize: 20,
-            fontWeight: 700,
-            color: '#191f28',
-            fontFamily: 'Pretendard, sans-serif',
-            lineHeight: 1.5,
-          }}
-        >
-          <p style={{ margin: 0 }}>일할 때, 매월 월급에서 남은 돈을 투자 자산의 기존 비율대로</p>
-          <p style={{ margin: 0 }}>계속 투자한다고 가정하고, 계산한 결과예요</p>
-        </div>
-        <p
-          style={{
-            margin: 0,
-            fontSize: 16,
-            fontWeight: 400,
-            color: '#4e5968',
-            fontFamily: 'Pretendard, sans-serif',
-            lineHeight: 1.5,
-          }}
-        >
-          남은 돈은 부동산을 제외한 투자 자산 비중대로, 매월 다시 투자되는 것으로 계산돼요.
-        </p>
-      </div>
-
-      {/* 두 컬럼 카드 */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
-          gap: 10,
-        }}
-      >
-        {/* 왼쪽: 월 남는 돈 */}
-        <div
-          style={{
-            background: monthlySurplus < 0 ? '#FFEEEE' : '#f2f4f6',
-            borderRadius: 20,
-            padding: 16,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 6,
-          }}
-        >
-          <p
-            style={{
-              margin: 0,
-              fontSize: 16,
-              fontWeight: 700,
-              color: monthlySurplus >= 0 ? '#191f28' : '#F04452',
-              fontFamily: 'Pretendard, sans-serif',
-              lineHeight: 1.5,
-            }}
-          >
-            {monthlySurplus >= 0
-              ? `매달 ${monthlySurplus.toLocaleString('ko-KR')}만원이 남아요`
-              : `매달 ${Math.abs(monthlySurplus).toLocaleString('ko-KR')}만원이 부족해요`}
-          </p>
-          <Divider />
-          <div style={{ paddingTop: 8 }}>
-            <ul
+        {isDeficit ? (
+          <>
+            <p
               style={{
                 margin: 0,
-                paddingLeft: 20,
-                listStyleType: 'disc',
-                fontSize: 16,
+                fontSize: 20,
+                fontWeight: 700,
                 color: '#191f28',
-                fontFamily: 'Pretendard, sans-serif',
-                lineHeight: 1.6,
+                ...textStyle,
+                lineHeight: 1.5,
               }}
             >
-              <li>{`월 수입 : ${monthlyIncome.toLocaleString('ko-KR')}만원`}</li>
-              <li>{`월 생활비 : - ${monthlyLiving.toLocaleString('ko-KR')}만원`}</li>
-              {monthlyChildren > 0 && (
-                <li>{`월 자녀 지출 : - ${monthlyChildren.toLocaleString('ko-KR')}만원`}</li>
-              )}
-              {monthlyDebt > 0 && (
-                <li>{`월 대출 상환 : - ${monthlyDebt.toLocaleString('ko-KR')}만원`}</li>
-              )}
-              {monthlyVehicle > 0 && (
-                <li>{`월 차량 비용 : - ${monthlyVehicle.toLocaleString('ko-KR')}만원`}</li>
-              )}
-            </ul>
-          </div>
-        </div>
+              현재 수입으로는 생활비와 차량비, 대출 상환을 감당하기 어려워요.
+            </p>
+            <p
+              style={{
+                margin: 0,
+                fontSize: 16,
+                fontWeight: 400,
+                color: '#4e5968',
+                ...textStyle,
+                lineHeight: 1.5,
+              }}
+            >
+              {`매월 ${Math.abs(monthlySurplus).toLocaleString('ko-KR')}만원이 부족해요. 지출을 줄여주세요.`}
+            </p>
+          </>
+        ) : (
+          <>
+            <div
+              style={{
+                fontSize: 20,
+                fontWeight: 700,
+                color: '#191f28',
+                ...textStyle,
+                lineHeight: 1.5,
+              }}
+            >
+              <p style={{ margin: 0 }}>일할 때, 매월 월급에서 남은 돈을 투자 자산의 기존 비율대로</p>
+              <p style={{ margin: 0 }}>계속 투자한다고 가정하고, 계산한 결과예요</p>
+            </div>
+            <p
+              style={{
+                margin: 0,
+                fontSize: 16,
+                fontWeight: 400,
+                color: '#4e5968',
+                ...textStyle,
+                lineHeight: 1.5,
+              }}
+            >
+              남은 돈은 부동산을 제외한 투자 자산 비중대로, 매월 다시 투자되는 것으로 계산돼요.
+            </p>
+          </>
+        )}
+      </div>
 
-        {/* 오른쪽: 자산 비중 */}
+      {/* 카드 영역 */}
+      {isDeficit ? (
+        /* 부정: 왼쪽 카드만 (빨간 배경) */
         <div
           style={{
-            background: '#f0faf6',
+            background: '#ffeeee',
             borderRadius: 20,
             padding: 16,
             display: 'flex',
@@ -153,61 +157,110 @@ export default function ReinvestmentExplainerSection({ inputs, annualNetSavings,
               margin: 0,
               fontSize: 16,
               fontWeight: 700,
-              color: '#191f28',
-              fontFamily: 'Pretendard, sans-serif',
+              color: '#f04452',
+              ...textStyle,
               lineHeight: 1.5,
             }}
           >
-            남은 돈을 이 비중대로 투자해요
+            {`매달 ${Math.abs(monthlySurplus).toLocaleString('ko-KR')}만원이 부족해요`}
           </p>
           <Divider />
           <div style={{ paddingTop: 8 }}>
-            {monthlySurplus <= 0 ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: '#191f28', fontFamily: 'Pretendard, sans-serif', lineHeight: 1.5 }}>
-                  [주의]
-                </p>
-                <p style={{ margin: 0, fontSize: 14, color: '#191f28', fontFamily: 'Pretendard, sans-serif', lineHeight: 1.6 }}>
-                  남는 돈이 없어서 투자가 불가능해요
-                </p>
-                <p style={{ margin: 0, fontSize: 14, color: '#4e5968', fontFamily: 'Pretendard, sans-serif', lineHeight: 1.6 }}>
-                  미래를 위해 지출을 줄여보세요.
-                </p>
-              </div>
-            ) : hasAllocation ? (
-              <ul
-                style={{
-                  margin: 0,
-                  paddingLeft: 20,
-                  listStyleType: 'disc',
-                  fontSize: 16,
-                  color: '#191f28',
-                  fontFamily: 'Pretendard, sans-serif',
-                  lineHeight: 1.6,
-                }}
-              >
-                {allocationItems.map(({ label, amount }) => (
-                  <li key={label}>
-                    {`${label} : ${Math.round((amount / totalFinancial) * 100)}%`}
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p
-                style={{
-                  margin: 0,
-                  fontSize: 14,
-                  color: '#8b95a1',
-                  fontFamily: 'Pretendard, sans-serif',
-                  lineHeight: 1.5,
-                }}
-              >
-                자산을 입력하면 비중이 표시돼요
-              </p>
-            )}
+            <BulletList />
           </div>
         </div>
-      </div>
+      ) : (
+        /* 긍정: 두 컬럼 */
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+          {/* 왼쪽: 월 남는 돈 */}
+          <div
+            style={{
+              background: '#f2f4f6',
+              borderRadius: 20,
+              padding: 16,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 6,
+            }}
+          >
+            <p
+              style={{
+                margin: 0,
+                fontSize: 16,
+                fontWeight: 700,
+                color: '#191f28',
+                ...textStyle,
+                lineHeight: 1.5,
+              }}
+            >
+              {`매달 ${monthlySurplus.toLocaleString('ko-KR')}만원이 남아요`}
+            </p>
+            <Divider />
+            <div style={{ paddingTop: 8 }}>
+              <BulletList />
+            </div>
+          </div>
+
+          {/* 오른쪽: 자산 비중 */}
+          <div
+            style={{
+              background: '#f0faf6',
+              borderRadius: 20,
+              padding: 16,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 6,
+            }}
+          >
+            <p
+              style={{
+                margin: 0,
+                fontSize: 16,
+                fontWeight: 700,
+                color: '#191f28',
+                ...textStyle,
+                lineHeight: 1.5,
+              }}
+            >
+              남은 돈을 이 비중대로 투자해요
+            </p>
+            <Divider />
+            <div style={{ paddingTop: 8 }}>
+              {hasAllocation ? (
+                <ul
+                  style={{
+                    margin: 0,
+                    paddingLeft: 20,
+                    listStyleType: 'disc',
+                    fontSize: 16,
+                    color: '#191f28',
+                    ...textStyle,
+                    lineHeight: 1.6,
+                  }}
+                >
+                  {allocationItems.map(({ label, amount }) => (
+                    <li key={label}>
+                      {`${label} : ${Math.round((amount / totalFinancial) * 100)}%`}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p
+                  style={{
+                    margin: 0,
+                    fontSize: 14,
+                    color: '#8b95a1',
+                    ...textStyle,
+                    lineHeight: 1.5,
+                  }}
+                >
+                  자산을 입력하면 비중이 표시돼요
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
