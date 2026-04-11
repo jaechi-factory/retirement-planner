@@ -2,24 +2,12 @@ import { usePlannerStore } from '../../store/usePlannerStore';
 import NumberInput from './shared/NumberInput';
 import SectionCard from './shared/SectionCard';
 
-interface Props {
-  onComplete?: () => void;
-}
-
-export default function ChildrenSection({ onComplete }: Props) {
+export default function ChildrenSection() {
   const { inputs, setChildren } = usePlannerStore();
   const { children } = inputs;
 
-  // 완료 조건: hasChildren이 명시적으로 선택됨 (true/false 모두 유효)
-  // hasChildren은 boolean이므로 항상 선택된 상태
-  const canComplete = true;
-
   return (
-    <SectionCard
-      title="자녀 정보"
-      canComplete={canComplete}
-      onComplete={onComplete}
-    >
+    <SectionCard title="자녀 정보">
       {/* 라디오 버튼 */}
       <div style={{ display: 'flex', gap: 8 }}>
         {[

@@ -12,19 +12,11 @@ const rows: AssetKey[] = [
   'cash', 'deposit', 'stock_kr', 'stock_us', 'realEstate', 'bond', 'crypto',
 ];
 
-interface Props {
-  onComplete?: () => void;
-}
-
-export default function AssetSection({ onComplete }: Props) {
+export default function AssetSection() {
   const { inputs, setAsset } = usePlannerStore();
 
   return (
-    <SectionCard
-      title="모은 자산을 알려주세요"
-      canComplete={true}
-      onComplete={onComplete}
-    >
+    <SectionCard title="모은 자산을 알려주세요">
       {rows.map((key) => (
         <div
           key={key}

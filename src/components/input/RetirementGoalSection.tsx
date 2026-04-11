@@ -3,27 +3,12 @@ import NumberInput from './shared/NumberInput';
 import RateInput from './shared/RateInput';
 import SectionCard from './shared/SectionCard';
 
-interface Props {
-  onComplete?: () => void;
-}
-
-export default function RetirementGoalSection({ onComplete }: Props) {
+export default function RetirementGoalSection() {
   const { inputs, setGoal } = usePlannerStore();
   const { goal } = inputs;
 
-  // 완료 조건: 4개 모두 > 0
-  const canComplete =
-    goal.retirementAge > 0 &&
-    goal.lifeExpectancy > 0 &&
-    goal.targetMonthly > 0 &&
-    goal.inflationRate > 0;
-
   return (
-    <SectionCard
-      title="목표를 먼저 세워볼까요?"
-      canComplete={canComplete}
-      onComplete={onComplete}
-    >
+    <SectionCard title="목표를 먼저 세워볼까요?">
       <NumberInput
         label="언제 은퇴하고 싶나요?"
         value={goal.retirementAge}

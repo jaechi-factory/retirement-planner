@@ -78,21 +78,13 @@ function RepaymentTypeSelector({
   );
 }
 
-interface Props {
-  onComplete?: () => void;
-}
-
-export default function DebtSection({ onComplete }: Props) {
+export default function DebtSection() {
   const { inputs, setDebt, result } = usePlannerStore();
 
   const rows: DebtKey[] = ['mortgage', 'creditLoan', 'otherLoan'];
 
   return (
-    <SectionCard
-      title="부채 구성"
-      canComplete={true}
-      onComplete={onComplete}
-    >
+    <SectionCard title="부채 구성">
       {result.totalDebt > 0 && (
         <div
           style={{

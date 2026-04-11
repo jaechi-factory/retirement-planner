@@ -1,23 +1,11 @@
 interface Props {
   title: string;
   children: React.ReactNode;
-  /** "다음" 버튼 활성 여부 */
-  canComplete?: boolean;
-  /** "다음" 버튼 클릭 시 호출 — 없으면 버튼 미표시 */
-  onComplete?: () => void;
-  /** 마지막 섹션인 경우 버튼 텍스트 변경 */
-  isLast?: boolean;
 }
 
 import React from 'react';
 
-export default function SectionCard({
-  title,
-  children,
-  canComplete,
-  onComplete,
-  isLast = false,
-}: Props) {
+export default function SectionCard({ title, children }: Props) {
   return (
     <div
       style={{
@@ -67,29 +55,6 @@ borderRadius: 'var(--fig-card-radius)',
           {children}
         </div>
 
-        {/* 다음 버튼 */}
-        {onComplete !== undefined && (
-          <button
-            disabled={!canComplete}
-            onClick={canComplete ? onComplete : undefined}
-            style={{
-              height: 'var(--fig-btn-height)',
-              borderRadius: 'var(--fig-btn-radius)',
-              border: 'none',
-              background: canComplete ? 'var(--fig-btn-active-bg)' : 'var(--fig-btn-disabled-bg)',
-              color: canComplete ? 'var(--fig-btn-active-text)' : 'var(--fig-btn-disabled-text)',
-              fontSize: 20,
-              fontWeight: 700,
-              fontFamily: 'Pretendard, sans-serif',
-              cursor: canComplete ? 'pointer' : 'not-allowed',
-              width: '100%',
-              transition: 'background 0.15s, color 0.15s, font-size 0.1s',
-              letterSpacing: canComplete ? '0.114px' : '0.0912px',
-            }}
-          >
-            {isLast ? '결과 보기' : '다음'}
-          </button>
-        )}
       </div>
     </div>
   );

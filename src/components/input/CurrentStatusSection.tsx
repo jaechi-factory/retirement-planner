@@ -3,19 +3,9 @@ import NumberInput from './shared/NumberInput';
 import RateInput from './shared/RateInput';
 import SectionCard from './shared/SectionCard';
 
-interface Props {
-  onComplete?: () => void;
-}
-
-export default function CurrentStatusSection({ onComplete }: Props) {
+export default function CurrentStatusSection() {
   const { inputs, result, setStatus } = usePlannerStore();
   const { status } = inputs;
-
-  // 완료 조건: currentAge, annualIncome, annualExpense 모두 > 0
-  const canComplete =
-    status.currentAge > 0 &&
-    status.annualIncome > 0 &&
-    status.annualExpense > 0;
 
   const monthlyIncome = Math.round(status.annualIncome / 12);
   const monthlyExpense = Math.round(status.annualExpense / 12);
@@ -27,11 +17,7 @@ export default function CurrentStatusSection({ onComplete }: Props) {
   const showCashflow = status.annualIncome > 0 && status.annualExpense > 0;
 
   return (
-    <SectionCard
-      title="내 정보를 알려주세요"
-      canComplete={canComplete}
-      onComplete={onComplete}
-    >
+    <SectionCard title="내 정보를 알려주세요">
       <NumberInput
         label="현재 나이를 알려주세요"
         value={status.currentAge}

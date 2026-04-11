@@ -8,82 +8,36 @@ import ChildrenSection from '../input/ChildrenSection';
 import PensionSection from '../input/PensionSection';
 import VehicleSection from '../input/VehicleSection';
 
-const SECTION_ORDER = [
-  'retirementGoal',
-  'currentStatus',
-  'asset',
-  'debt',
-  'vehicle',
-  'children',
-  'pension',
-] as const;
-
-type SectionId = typeof SECTION_ORDER[number];
-
 interface Props {
   allDone: boolean;
   onAllDone: () => void;
 }
 
-function SectionComponent({
-  sectionId,
-  onComplete,
-  isLast,
-}: {
-  sectionId: SectionId;
-  onComplete?: () => void;
-  isLast?: boolean;
-}) {
-  switch (sectionId) {
-    case 'retirementGoal':
-      return <RetirementGoalSection onComplete={onComplete} />;
-    case 'currentStatus':
-      return <CurrentStatusSection onComplete={onComplete} />;
-    case 'asset':
-      return <AssetSection onComplete={onComplete} />;
-    case 'debt':
-      return <DebtSection onComplete={onComplete} />;
-    case 'vehicle':
-      return <VehicleSection onComplete={onComplete} />;
-    case 'children':
-      return <ChildrenSection onComplete={onComplete} />;
-    case 'pension':
-      return <PensionSection onComplete={onComplete} isLast={isLast} />;
-  }
-}
-
 export default function InputWorkbench({ allDone, onAllDone }: Props) {
   const resetAll = usePlannerStore((s) => s.resetAll);
-
-  // visibleSections: [active(index 0), ...completed(oldest last)]
-  // 새 섹션이 생기면 앞에 추가 → 활성 섹션이 항상 맨 위
-  const [visibleSections, setVisibleSections] = useState<SectionId[]>(['retirementGoal']);
   const [confirmReset, setConfirmReset] = useState(false);
-
-  function handleComplete(sectionId: SectionId) {
-    const currentIdx = SECTION_ORDER.indexOf(sectionId);
-    const nextIdx = currentIdx + 1;
-
-    if (nextIdx < SECTION_ORDER.length) {
-      const nextSection = SECTION_ORDER[nextIdx];
-      // 새 섹션을 맨 앞에 추가 (활성 섹션 = index 0)
-      setVisibleSections((prev) => [nextSection, ...prev]);
-    } else {
-      // 마지막 섹션 완료 → 2컬럼 전환
-      onAllDone();
-    }
-  }
 
   function handleResetClick() {
     if (confirmReset) {
       resetAll();
-      setVisibleSections(['retirementGoal']);
       setConfirmReset(false);
     } else {
       setConfirmReset(true);
       setTimeout(() => setConfirmReset(false), 3000);
     }
   }
+
+  const sections = (
+    <>
+      <RetirementGoalSection />
+      <CurrentStatusSection />
+      <AssetSection />
+      <DebtSection />
+      <VehicleSection />
+      <ChildrenSection />
+      <PensionSection />
+    </>
+  );
 
   // 2컬럼 완료 상태
   if (allDone) {
@@ -101,24 +55,13 @@ export default function InputWorkbench({ allDone, onAllDone }: Props) {
           boxSizing: 'border-box',
           display: 'flex',
           flexDirection: 'column',
-          gap: 40,
+          gap: 32,
         }}
       >
-        <RetirementGoalSection />
-        <CurrentStatusSection />
-        <AssetSection />
-        <DebtSection />
-        <VehicleSection />
-        <ChildrenSection />
-        <PensionSection />
+        {sections}
       </div>
     );
   }
-
-  // 활성 섹션: visibleSections[0] (맨 위)
-  // 완료 섹션: visibleSections.slice(1) (아래로 쌓임)
-  const activeSectionId = visibleSections[0];
-  const completedSectionIds = visibleSections.slice(1);
 
   return (
     <div
@@ -169,35 +112,41 @@ export default function InputWorkbench({ allDone, onAllDone }: Props) {
         </p>
       </div>
 
-      {/* 타이틀 ↔ 첫 카드 간격 38px */}
       <div style={{ height: 38 }} />
 
-      {/* 섹션 카드 영역: 활성 카드(위) + 완료된 카드(아래) */}
+      {/* 섹션 카드 전체 */}
       <div
         style={{
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
           gap: 32,
-          paddingBottom: 160,
-          width: '100%',
+          width: 866,
         }}
       >
-        {/* 활성 섹션 — 버튼 있음 */}
-        <div style={{ width: 866 }}>
-          <SectionComponent
-            sectionId={activeSectionId}
-            onComplete={() => handleComplete(activeSectionId)}
-            isLast={activeSectionId === 'pension'}
-          />
-        </div>
+        {sections}
 
-        {/* 완료된 섹션들 — 버튼 없음 */}
-        {completedSectionIds.map((sectionId) => (
-          <div key={sectionId} style={{ width: 866 }}>
-            <SectionComponent sectionId={sectionId} />
-          </div>
-        ))}
+        {/* 결과 보기 버튼 */}
+        <button
+          onClick={onAllDone}
+          style={{
+            width: '100%',
+            height: 'var(--fig-btn-height)',
+            borderRadius: 'var(--fig-btn-radius)',
+            border: 'none',
+            background: 'var(--fig-btn-active-bg)',
+            color: 'var(--fig-btn-active-text)',
+            fontSize: 20,
+            fontWeight: 700,
+            fontFamily: 'Pretendard, sans-serif',
+            cursor: 'pointer',
+            letterSpacing: '0.114px',
+          }}
+        >
+          결과 보기
+        </button>
+
+        <div style={{ height: 80 }} />
       </div>
 
       {/* 초기화 버튼 */}

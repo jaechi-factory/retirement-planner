@@ -124,25 +124,14 @@ function InclusionSelector({
   );
 }
 
-interface Props {
-  onComplete?: () => void;
-}
-
-export default function VehicleSection({ onComplete }: Props) {
+export default function VehicleSection() {
   const { inputs, setVehicle } = usePlannerStore();
   const vehicle = inputs.vehicle ?? defaultVehicle;
   const type = vehicle.ownershipType;
   const hasVehicle = type !== 'none';
 
-  // 완료 조건: ownershipType 선택됨 (none도 유효)
-  const canComplete = true;
-
   return (
-    <SectionCard
-      title="자동차"
-      canComplete={canComplete}
-      onComplete={onComplete}
-    >
+    <SectionCard title="자동차">
       <OwnershipSelector
         value={type}
         onChange={(v) => setVehicle({ ownershipType: v })}

@@ -5,24 +5,14 @@ import RetirementPensionCard from './pension/RetirementPensionCard';
 import PrivatePensionCard from './pension/PrivatePensionCard';
 import SectionCard from './shared/SectionCard';
 
-interface Props {
-  onComplete?: () => void;
-  isLast?: boolean;
-}
-
-export default function PensionSection({ onComplete, isLast }: Props) {
+export default function PensionSection() {
   const { inputs, result } = usePlannerStore();
   const totalPension = result.totalMonthlyPensionTodayValue ?? 0;
   const targetMonthly = inputs.goal.targetMonthly;
   const coveragePct = targetMonthly > 0 ? Math.round((totalPension / targetMonthly) * 100) : 0;
 
   return (
-    <SectionCard
-      title="연금"
-      canComplete={true}
-      onComplete={onComplete}
-      isLast={isLast}
-    >
+    <SectionCard title="연금">
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         <PublicPensionCard />
         <RetirementPensionCard />
