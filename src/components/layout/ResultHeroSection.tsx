@@ -4,20 +4,26 @@ import type { PlannerInputs } from '../../types/inputs';
 interface ResultHeroSectionProps {
   summary: CalculationResultV2['summary'];
   inputs: PlannerInputs;
+  /** 차트에 표시 중인 전략의 sustainableMonthly (있으면 summary 대신 사용) */
+  displaySustainableMonthly?: number;
+  /** 차트에 표시 중인 전략의 failureAge (있으면 summary 대신 사용) */
+  displayFailureAge?: number | null;
 }
 
-function getCase(summary: CalculationResultV2['summary'], targetMonthly: number): 'positive' | 'negative' {
-  if (summary.failureAge !== null) return 'negative';
-  if (targetMonthly > 0 && summary.sustainableMonthly < targetMonthly) return 'negative';
+function getCase(failureAge: number | null, sustainableMonthly: number, targetMonthly: number): 'positive' | 'negative' {
+  if (failureAge !== null) return 'negative';
+  if (targetMonthly > 0 && sustainableMonthly < targetMonthly) return 'negative';
   return 'positive';
 }
 
-export default function ResultHeroSection({ summary, inputs }: ResultHeroSectionProps) {
+export default function ResultHeroSection({ summary, inputs, displaySustainableMonthly, displayFailureAge }: ResultHeroSectionProps) {
   const lifeExpectancy = inputs.goal.lifeExpectancy || 90;
-  const monthly = Math.round(summary.sustainableMonthly);
+  const effectiveSustainable = displaySustainableMonthly ?? summary.sustainableMonthly;
+  const effectiveFailureAge = displayFailureAge !== undefined ? displayFailureAge : summary.failureAge;
+  const monthly = Math.round(effectiveSustainable);
   const target = inputs.goal.targetMonthly;
 
-  const caseType = getCase(summary, target);
+  const caseType = getCase(effectiveFailureAge, effectiveSustainable, target);
   const isPositive = caseType === 'positive';
 
   // 배지 텍스트

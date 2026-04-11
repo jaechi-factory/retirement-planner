@@ -213,6 +213,8 @@ export default function ResultWorkbench() {
       <ResultHeroSection
         summary={summary}
         inputs={inputs}
+        displaySustainableMonthly={verificationOption?.sustainableMonthly}
+        displayFailureAge={verificationOption?.failureAge ?? null}
       />
 
       {/* 2. 재투자 가정 설명 */}
