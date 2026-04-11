@@ -20,6 +20,9 @@ export default function ReinvestmentExplainerSection({ inputs, annualNetSavings 
     children.hasChildren ? Math.round(children.count * children.monthlyPerChild) : 0;
   const monthlySurplus = Math.round(annualNetSavings / 12);
 
+  // 대출 상환 + 차량 비용 = 잔액으로 역산 (항상 표시값 합계가 수입과 일치)
+  const monthlyOther = monthlyIncome - monthlyLiving - monthlyChildren - monthlySurplus;
+
   // ── 자산 비중 계산 ────────────────────────────────────────────────
   const totalFinancial = calcTotalAsset(assets);
 
@@ -123,6 +126,9 @@ export default function ReinvestmentExplainerSection({ inputs, annualNetSavings 
               <li>{`월 생활비 : ${monthlyLiving.toLocaleString('ko-KR')}만원`}</li>
               {monthlyChildren > 0 && (
                 <li>{`월 자녀 지출 : ${monthlyChildren.toLocaleString('ko-KR')}만원`}</li>
+              )}
+              {monthlyOther > 0 && (
+                <li>{`월 대출·차량 : ${monthlyOther.toLocaleString('ko-KR')}만원`}</li>
               )}
             </ul>
           </div>
