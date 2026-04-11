@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { usePlannerStore } from '../../store/usePlannerStore';
 import { calcFinancialTotalAsset } from '../../engine/assetWeighting';
+import { getVehicleMonthlyCost } from '../../engine/vehicleSchedule';
 import { PROPERTY_STRATEGY_LABELS } from '../../engine/propertyStrategiesV2';
 import type { PropertyOptionResult } from '../../types/calculationV2';
 import type { HouseDecisionStrategy } from './houseDecisionVM';
@@ -225,6 +226,15 @@ export default function ResultWorkbench() {
       <ReinvestmentExplainerSection
         inputs={inputs}
         annualNetSavings={result.annualNetSavings}
+        monthlyDebt={result.firstYearMonthlyDebt}
+        monthlyVehicle={
+          inputs.vehicle?.costIncludedInExpense === 'separate'
+            ? Math.round(
+                Array.from({ length: 12 }, (_, m) => getVehicleMonthlyCost(inputs.vehicle, m))
+                  .reduce((sum, c) => sum + c, 0) / 12
+              )
+            : 0
+        }
       />
 
       {/* 3. 왜 이런 결과인지 */}

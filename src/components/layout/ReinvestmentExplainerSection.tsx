@@ -4,13 +4,15 @@ import { calcTotalAsset } from '../../engine/assetWeighting';
 interface Props {
   inputs: PlannerInputs;
   annualNetSavings: number; // 연간 저축 여력 (만원)
+  monthlyDebt: number;      // 월 대출 상환액 (만원)
+  monthlyVehicle: number;   // 월 차량 비용 (만원)
 }
 
 function Divider() {
   return <div style={{ background: '#d9d9d9', height: 1, width: '100%', flexShrink: 0 }} />;
 }
 
-export default function ReinvestmentExplainerSection({ inputs, annualNetSavings }: Props) {
+export default function ReinvestmentExplainerSection({ inputs, annualNetSavings, monthlyDebt, monthlyVehicle }: Props) {
   const { status, goal, assets, children } = inputs;
 
   // ── 월별 수치 계산 ────────────────────────────────────────────────
@@ -19,9 +21,6 @@ export default function ReinvestmentExplainerSection({ inputs, annualNetSavings 
   const monthlyChildren =
     children.hasChildren ? Math.round(children.count * children.monthlyPerChild) : 0;
   const monthlySurplus = Math.round(annualNetSavings / 12);
-
-  // 대출 상환 + 차량 비용 = 잔액으로 역산 (항상 표시값 합계가 수입과 일치)
-  const monthlyOther = monthlyIncome - monthlyLiving - monthlyChildren - monthlySurplus;
 
   // ── 자산 비중 계산 ────────────────────────────────────────────────
   const totalFinancial = calcTotalAsset(assets);
@@ -123,12 +122,15 @@ export default function ReinvestmentExplainerSection({ inputs, annualNetSavings 
               }}
             >
               <li>{`월 수입 : ${monthlyIncome.toLocaleString('ko-KR')}만원`}</li>
-              <li>{`월 생활비 : ${monthlyLiving.toLocaleString('ko-KR')}만원`}</li>
+              <li>{`월 생활비 : - ${monthlyLiving.toLocaleString('ko-KR')}만원`}</li>
               {monthlyChildren > 0 && (
-                <li>{`월 자녀 지출 : ${monthlyChildren.toLocaleString('ko-KR')}만원`}</li>
+                <li>{`월 자녀 지출 : - ${monthlyChildren.toLocaleString('ko-KR')}만원`}</li>
               )}
-              {monthlyOther > 0 && (
-                <li>{`월 대출·차량 : ${monthlyOther.toLocaleString('ko-KR')}만원`}</li>
+              {monthlyDebt > 0 && (
+                <li>{`월 대출 상환 : - ${monthlyDebt.toLocaleString('ko-KR')}만원`}</li>
+              )}
+              {monthlyVehicle > 0 && (
+                <li>{`월 차량 비용 : - ${monthlyVehicle.toLocaleString('ko-KR')}만원`}</li>
               )}
             </ul>
           </div>
