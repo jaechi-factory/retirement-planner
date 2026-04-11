@@ -76,24 +76,6 @@ export default function EvidenceWorkspace({
               먼저 현금으로 생활하고, 현금이 부족해지면 주식 같은 투자 자산을 팔아 생활해요. 그래도 부족하면 경우에 따라 집을 담보로 대출하거나 판매해야 할 수 있어요.
             </p>
           </div>
-          {hasRealEstate && (
-            <span
-              style={{
-                color: 'var(--text-strong)',
-                background: 'var(--accent-selected-bg)',
-                border: 'none',
-                borderRadius: 999,
-                padding: '2px 8px',
-                whiteSpace: 'nowrap',
-                flexShrink: 0,
-                fontWeight: 600,
-                fontSize: 12,
-                display: 'inline-block',
-              }}
-            >
-              {strategyLabel}
-            </span>
-          )}
         </div>
 
         {/* 차트 */}
