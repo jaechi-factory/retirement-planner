@@ -100,7 +100,7 @@ export default function ReinvestmentExplainerSection({ inputs, annualNetSavings,
               margin: 0,
               fontSize: 16,
               fontWeight: 700,
-              color: '#191f28',
+              color: monthlySurplus >= 0 ? '#191f28' : '#F04452',
               fontFamily: 'Pretendard, sans-serif',
               lineHeight: 1.5,
             }}
@@ -114,7 +114,8 @@ export default function ReinvestmentExplainerSection({ inputs, annualNetSavings,
             <ul
               style={{
                 margin: 0,
-                paddingLeft: 24,
+                paddingLeft: 20,
+                listStyleType: 'disc',
                 fontSize: 16,
                 color: '#191f28',
                 fontFamily: 'Pretendard, sans-serif',
@@ -161,11 +162,24 @@ export default function ReinvestmentExplainerSection({ inputs, annualNetSavings,
           </p>
           <Divider />
           <div style={{ paddingTop: 8 }}>
-            {hasAllocation ? (
+            {monthlySurplus <= 0 ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: '#F04452', fontFamily: 'Pretendard, sans-serif', lineHeight: 1.5 }}>
+                  [주의]
+                </p>
+                <p style={{ margin: 0, fontSize: 14, color: '#191f28', fontFamily: 'Pretendard, sans-serif', lineHeight: 1.6 }}>
+                  남는 돈이 없어서 투자가 불가능해요
+                </p>
+                <p style={{ margin: 0, fontSize: 14, color: '#4e5968', fontFamily: 'Pretendard, sans-serif', lineHeight: 1.6 }}>
+                  미래를 위해 지출을 줄여보세요.
+                </p>
+              </div>
+            ) : hasAllocation ? (
               <ul
                 style={{
                   margin: 0,
-                  paddingLeft: 24,
+                  paddingLeft: 20,
+                  listStyleType: 'disc',
                   fontSize: 16,
                   color: '#191f28',
                   fontFamily: 'Pretendard, sans-serif',
