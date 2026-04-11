@@ -127,7 +127,7 @@
   --ux-status-warning-soft:  var(--status-adjust-border);
 
   /* ── Figma UI Renewal Tokens ─────────────────────────────────── */
-  --fig-page-bg: linear-gradient(to right, #e4e5e7 0%, #e7e5de 61.943%, #f2e7bd 100%);
+  --fig-page-bg: linear-gradient(to right, #e4e5e7 0%, #f2f9ff 61.943%, #d7e3ec 100%);
   --fig-card-bg: rgba(253,252,247,0.4);
   --fig-card-radius: 32px;
 
@@ -252,7 +252,7 @@ html, body {
   margin: 0;
   padding: 0;
   font-family: 'Pretendard', sans-serif;
-  background-color: var(--surface-page);
+  background: var(--fig-page-bg);
   color: var(--text-strong);
   font-size: 14px;
   line-height: 1.5;
