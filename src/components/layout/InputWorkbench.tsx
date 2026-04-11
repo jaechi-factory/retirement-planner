@@ -27,12 +27,9 @@ export default function InputWorkbench() {
       style={{
         width: 333,
         flexShrink: 0,
-        height: '100%',
-        overflowY: 'auto',
-        scrollbarWidth: 'thin',
         display: 'flex',
         flexDirection: 'column',
-        gap: 32,
+        gap: 24,
         paddingBottom: 80,
         boxSizing: 'border-box',
       }}

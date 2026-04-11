@@ -6,12 +6,11 @@ export default function App() {
   return (
     <div
       style={{
-        height: '100vh',
+        minHeight: '100vh',
         background: 'var(--fig-page-bg)',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        overflow: 'hidden',
       }}
     >
       {/* 헤더 */}
@@ -24,8 +23,8 @@ export default function App() {
           alignItems: 'center',
           gap: 16,
           textAlign: 'center',
-          flexShrink: 0,
           width: '100%',
+          flexShrink: 0,
         }}
       >
         <h1
@@ -60,10 +59,9 @@ export default function App() {
           display: 'flex',
           gap: 16,
           width: 1100,
-          flex: 1,
-          minHeight: 0,
-          paddingBottom: 40,
+          paddingBottom: 80,
           boxSizing: 'border-box',
+          alignItems: 'flex-start',
         }}
       >
         <InputWorkbench />
