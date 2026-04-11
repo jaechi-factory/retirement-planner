@@ -26,7 +26,7 @@ export default function EvidenceWorkspace({
         style={{
           borderRadius: 32,
           background: '#ffffff',
-          padding: '28px 32px',
+          padding: '28px 32px 48px',
           boxShadow: '0px 2px 8px 4px rgba(121,158,195,0.08)',
           marginBottom: 'var(--result-space-2)',
           display: 'flex',
@@ -49,7 +49,7 @@ export default function EvidenceWorkspace({
         {/* ── 타임라인 섹션 ── */}
         <div
           style={{
-            background: '#E8F3FF',
+            background: 'rgb(242, 244, 246)',
             borderRadius: 20,
             padding: 16,
             display: 'flex',
