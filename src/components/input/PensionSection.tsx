@@ -13,7 +13,10 @@ const PENSION_PRODUCTS = [
   { id: 'pension-insurance', label: '연금 보험' },
 ] as const;
 
+const FIXED_PAYOUT_IDS = new Set(['pension-insurance']);
+
 function makeDefaultProduct(id: string, label: string): PrivatePensionProduct {
+  const payoutReturnRate = FIXED_PAYOUT_IDS.has(id) ? 0 : 3.5;
   return {
     id,
     label,
@@ -23,7 +26,7 @@ function makeDefaultProduct(id: string, label: string): PrivatePensionProduct {
     payoutYears: 20,
     expectedReturnRate: 3.5,
     accumulationReturnRate: 3.5,
-    payoutReturnRate: 3.5,
+    payoutReturnRate,
   };
 }
 
@@ -125,9 +128,14 @@ function PensionRow({ productId, label }: { productId: string; label: string }) 
         max={100}
       />
       <RateInput
-        label="예상 수익률이 얼마인가요? (연)"
+        label={FIXED_PAYOUT_IDS.has(productId) ? '예정이율이 얼마인가요? (연)' : '예상 수익률이 얼마인가요? (연)'}
         value={product.expectedReturnRate}
-        onChange={(v) => updateProduct({ expectedReturnRate: v, accumulationReturnRate: v, payoutReturnRate: v })}
+        onChange={(v) => updateProduct({
+          expectedReturnRate: v,
+          accumulationReturnRate: v,
+          ...(FIXED_PAYOUT_IDS.has(productId) ? {} : { payoutReturnRate: v }),
+        })}
+        hint={FIXED_PAYOUT_IDS.has(productId) ? '가입 시 계약된 예정이율을 입력하세요' : undefined}
       />
     </PillToggle>
   );
