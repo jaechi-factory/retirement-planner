@@ -9,7 +9,6 @@ import {
   ResponsiveContainer,
   Cell,
 } from 'recharts';
-import { Divider, Typography } from '@wanteddev/wds';
 import type { PropertyOptionResult } from '../../types/calculationV2';
 import { buildHouseDecisionRowsVM, type HouseDecisionStrategy } from './houseDecisionVM';
 import HouseDecisionRows from './HouseDecisionRows';
@@ -120,32 +119,26 @@ export default function HouseStrategyComparisonSection({
     >
       {/* 섹션 헤더 */}
       <div style={{ marginBottom: 'var(--result-space-4)' }}>
-        <Typography
-          variant="headline1"
-          weight="bold"
-          style={{ color: 'var(--result-text-strong-color)', display: 'block', marginBottom: 'var(--result-space-1)' }}
+        <span
+          style={{ fontSize: 16, fontWeight: 700, color: 'var(--result-text-strong-color)', display: 'block', marginBottom: 'var(--result-space-1)' }}
         >
           집을 어떻게 쓸지 비교
-        </Typography>
-        <Typography
-          variant="caption1"
-          color="semantic.label.alternative"
-          style={{ display: 'block', lineHeight: 1.55 }}
+        </span>
+        <span
+          style={{ fontSize: 12, color: 'rgba(36,39,46,0.64)', display: 'block', lineHeight: 1.55 }}
         >
           집을 그대로 둘지, 팔지, 담보대출을 받을지 비교해보세요.
-        </Typography>
+        </span>
       </div>
 
       {/* 전략 비교 막대 그래프 */}
       {chartData.length > 0 && (
         <div style={{ marginBottom: 'var(--result-space-4)' }}>
-          <Typography
-            variant="caption1"
-            weight="medium"
-            style={{ color: 'var(--result-text-body-color)', display: 'block', marginBottom: 'var(--result-space-2)' }}
+          <span
+            style={{ fontSize: 12, fontWeight: 500, color: 'var(--result-text-body-color)', display: 'block', marginBottom: 'var(--result-space-2)' }}
           >
             전략별 가능한 월 생활비
-          </Typography>
+          </span>
           <ResponsiveContainer width="100%" height={160}>
             <BarChart
               data={chartData}
@@ -187,16 +180,14 @@ export default function HouseStrategyComparisonSection({
       )}
 
       {/* 구분선 */}
-      <Divider style={{ marginBottom: 'var(--result-space-3)' }} />
+      <div style={{ height: 1, background: 'rgba(36,39,46,0.08)', marginBottom: 'var(--result-space-3)' }} />
 
       {/* 전략 선택 행 */}
-      <Typography
-        variant="caption1"
-        color="semantic.label.alternative"
-        style={{ display: 'block', marginBottom: 'var(--result-space-2)', lineHeight: 1.5 }}
+      <span
+        style={{ fontSize: 12, color: 'rgba(36,39,46,0.64)', display: 'block', marginBottom: 'var(--result-space-2)', lineHeight: 1.5 }}
       >
         전략을 누르면 아래 근거 차트가 바뀌어요.
-      </Typography>
+      </span>
       <HouseDecisionRows rows={rows} onSelectStrategy={onSelectStrategy} />
     </section>
   );

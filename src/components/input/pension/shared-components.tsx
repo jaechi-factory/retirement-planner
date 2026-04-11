@@ -1,5 +1,4 @@
 /** PensionSection 하위 카드들이 공유하는 소형 컴포넌트 */
-import { Divider as WdsDivider, TextButton, Typography } from '@wanteddev/wds';
 
 export function Row({ children }: { children: React.ReactNode }) {
   return (
@@ -10,21 +9,32 @@ export function Row({ children }: { children: React.ReactNode }) {
 }
 
 export function Divider() {
-  return <WdsDivider style={{ margin: '10px 0' }} />;
+  return <div style={{ height: 1, background: 'rgba(36,39,46,0.08)', margin: '10px 0' }} />;
 }
 
 export function TextBtn({ onClick, children }: { onClick: () => void; children: React.ReactNode }) {
   return (
-    <TextButton size="small" onClick={onClick} style={{ padding: 0 }}>
+    <button
+      onClick={onClick}
+      style={{
+        background: 'none',
+        border: 'none',
+        fontSize: 12,
+        color: 'rgba(36,39,46,0.64)',
+        cursor: 'pointer',
+        padding: 0,
+        fontFamily: 'Pretendard, sans-serif',
+      }}
+    >
       {children}
-    </TextButton>
+    </button>
   );
 }
 
 export function ModeLabel({ text }: { text: string }) {
   return (
-    <Typography variant="caption2" weight="medium" color="semantic.label.alternative">
+    <span style={{ fontSize: 11, fontWeight: 500, color: 'rgba(36,39,46,0.64)' }}>
       {text}
-    </Typography>
+    </span>
   );
 }

@@ -4,9 +4,29 @@ import NumberInput from '../shared/NumberInput';
 import RateInput from '../shared/RateInput';
 import { estimateRetirementPension } from '../../../engine/pensionEstimation';
 import { fmtKRW } from '../../../utils/format';
-import { Chip, Typography } from '@wanteddev/wds';
 import { cardStyle } from './shared';
 import { Row, Divider, TextBtn, ModeLabel } from './shared-components';
+
+function Chip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        fontSize: 12,
+        fontWeight: active ? 700 : 500,
+        padding: '4px 12px',
+        borderRadius: 16,
+        border: active ? '1.5px solid #191f28' : '1.5px solid rgba(36,39,46,0.12)',
+        background: active ? '#191f28' : '#fff',
+        color: active ? '#fff' : 'rgba(36,39,46,0.64)',
+        cursor: 'pointer',
+        fontFamily: 'Pretendard, sans-serif',
+      }}
+    >
+      {children}
+    </button>
+  );
+}
 
 export default function RetirementPensionCard() {
   const { inputs, setPension } = usePlannerStore();
@@ -34,19 +54,19 @@ export default function RetirementPensionCard() {
     <div style={cardStyle}>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 8 }}>
         <div>
-          <Typography variant="label1" weight="bold" color="semantic.label.normal">퇴직연금</Typography>
-          <Typography variant="caption1" color="semantic.label.alternative" style={{ marginTop: 2, display: 'block' }}>회사에서 쌓인 퇴직연금 예상 월액이에요</Typography>
+          <span style={{ fontSize: 14, fontWeight: 700, color: '#24272E' }}>퇴직연금</span>
+          <span style={{ fontSize: 12, color: 'rgba(36,39,46,0.64)', marginTop: 2, display: 'block' }}>회사에서 쌓인 퇴직연금 예상 월액이에요</span>
         </div>
         <ModeLabel text={isAuto ? '간편 계산' : '직접 입력'} />
       </div>
 
-      <Typography variant="headline1" weight="bold" color="semantic.label.normal" style={{ display: 'block', margin: '4px 0 2px' }}>
+      <span style={{ fontSize: 16, fontWeight: 700, color: '#24272E', display: 'block', margin: '4px 0 2px' }}>
         월 {fmtKRW(displayValue)}
-      </Typography>
-      <Typography variant="caption1" color="semantic.label.alternative" style={{ display: 'block' }}>
+      </span>
+      <span style={{ fontSize: 12, color: 'rgba(36,39,46,0.64)', display: 'block' }}>
         {startAge}세부터 {retirementPension.payoutYears}년간 받아요
         {!hasBalance && isAuto && ' · 적립금 입력 시 더 정확해져요'}
-      </Typography>
+      </span>
 
       <div style={{ marginTop: 6 }}>
         <TextBtn onClick={() => setShowDetail(v => !v)}>
@@ -58,8 +78,8 @@ export default function RetirementPensionCard() {
         <>
           <Divider />
           <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
-            <Chip size="small" active={isAuto} onClick={() => setPension({ retirementPension: { ...retirementPension, mode: 'auto' } })}>간편 계산</Chip>
-            <Chip size="small" active={!isAuto} onClick={() => setPension({ retirementPension: { ...retirementPension, mode: 'manual' } })}>내가 직접 입력</Chip>
+            <Chip active={isAuto} onClick={() => setPension({ retirementPension: { ...retirementPension, mode: 'auto' } })}>간편 계산</Chip>
+            <Chip active={!isAuto} onClick={() => setPension({ retirementPension: { ...retirementPension, mode: 'manual' } })}>내가 직접 입력</Chip>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>

@@ -1,4 +1,3 @@
-import { Typography } from '@wanteddev/wds';
 import { getTotalMonthlyPensionTodayValue } from '../../engine/pensionEstimation';
 import type { CalculationResultV2, PropertyOptionResult } from '../../types/calculationV2';
 import type { PlannerInputs } from '../../types/inputs';
@@ -97,9 +96,9 @@ export default function ActionPlanSection({ summary, inputs, hasRealEstate, prop
             borderLeft: '4px solid var(--palette-yellow)',
           }}
         >
-          <Typography variant="body1" style={{ color: 'var(--result-text-body-color)', lineHeight: 1.65, fontSize: 14 }}>
+          <span style={{ color: 'var(--result-text-body-color)', lineHeight: 1.65, fontSize: 14, display: 'block' }}>
             현재 입력 기준으로 안정적인 계획이에요. 입력값을 바꾸면 바로 다시 확인할 수 있어요.
-          </Typography>
+          </span>
         </div>
       </section>
     );
@@ -160,27 +159,24 @@ export default function ActionPlanSection({ summary, inputs, hasRealEstate, prop
 
             {/* 내용 */}
             <div style={{ flex: 1 }}>
-              <Typography
-                variant="body1"
-                weight="bold"
+              <span
                 style={{
                   color: 'var(--result-text-strong-color)',
                   display: 'block',
                   lineHeight: 1.45,
                   marginBottom: item.detail ? 5 : 0,
                   fontSize: 14,
+                  fontWeight: 700,
                 }}
               >
                 {item.text}
-              </Typography>
+              </span>
               {item.detail && (
-                <Typography
-                  variant="caption1"
-                  color="semantic.label.alternative"
-                  style={{ display: 'block', lineHeight: 1.6, fontSize: 12 }}
+                <span
+                  style={{ display: 'block', lineHeight: 1.6, fontSize: 12, color: 'rgba(36,39,46,0.64)' }}
                 >
                   {item.detail}
-                </Typography>
+                </span>
               )}
             </div>
           </div>

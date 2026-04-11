@@ -1,4 +1,3 @@
-import { Typography } from '@wanteddev/wds';
 import type { VehicleComparisonResult } from '../../engine/vehicleSchedule';
 
 interface Props {
@@ -19,20 +18,14 @@ export default function VehicleComparisonCard({ comparison }: Props) {
     >
       {/* 헤더 */}
       <div style={{ marginBottom: 18 }}>
-        <Typography
-          as="h3"
-          variant="headline1"
-          weight="bold"
-          color="semantic.label.normal"
-          style={{ margin: '0 0 4px 0', letterSpacing: '-0.2px' }}
-        >
+        <h3 style={{ fontSize: 16, fontWeight: 700, color: '#24272E', margin: '0 0 4px 0', letterSpacing: '-0.2px' }}>
           자동차가 생활비에 미치는 영향
-        </Typography>
-        <Typography variant="caption1" color="semantic.label.alternative" style={{ margin: 0, lineHeight: 1.4 }}>
+        </h3>
+        <span style={{ fontSize: 12, color: 'rgba(36,39,46,0.64)', lineHeight: 1.4, display: 'block' }}>
           {isIncluded
             ? '연소비에 이미 포함된 기준 — 차가 없었다면 얼마나 더 쓸 수 있는지 보여줘요'
             : '별도 계산 기준 — 차 비용이 얼마나 생활비를 줄이는지 보여줘요'}
-        </Typography>
+        </span>
       </div>
 
       {/* 3개 비교 수치 */}
@@ -48,20 +41,22 @@ export default function VehicleComparisonCard({ comparison }: Props) {
           borderRadius: 12,
         }}>
           <div>
-            <Typography variant="label2" weight="medium" color="semantic.label.alternative"
-              style={{ display: 'block', marginBottom: 2 }}>
+            <span style={{ fontSize: 13, fontWeight: 500, color: 'rgba(36,39,46,0.64)', display: 'block', marginBottom: 2 }}>
               자동차 포함 시 월 가능 생활비
-            </Typography>
-            <Typography variant="caption1" color="semantic.label.alternative"
-              style={{ margin: 0, fontSize: 11 }}>
+            </span>
+            <span style={{ fontSize: 11, color: 'rgba(36,39,46,0.64)', display: 'block' }}>
               차 유지비 반영 후 실제로 쓸 수 있는 금액
-            </Typography>
+            </span>
           </div>
-          <Typography variant="headline1" weight="bold"
-            color={isIncluded ? 'semantic.label.normal' : 'semantic.label.alternative'}
-            style={{ fontSize: 20, whiteSpace: 'nowrap', marginLeft: 12 }}>
+          <span style={{
+            fontSize: 20,
+            fontWeight: 700,
+            color: isIncluded ? '#24272E' : 'rgba(36,39,46,0.64)',
+            whiteSpace: 'nowrap',
+            marginLeft: 12,
+          }}>
             {withVehicle.toLocaleString('ko-KR')}만원
-          </Typography>
+          </span>
         </div>
 
         {/* 차 미포함 */}
@@ -74,20 +69,22 @@ export default function VehicleComparisonCard({ comparison }: Props) {
           borderRadius: 12,
         }}>
           <div>
-            <Typography variant="label2" weight="medium" color="semantic.label.alternative"
-              style={{ display: 'block', marginBottom: 2 }}>
+            <span style={{ fontSize: 13, fontWeight: 500, color: 'rgba(36,39,46,0.64)', display: 'block', marginBottom: 2 }}>
               자동차 제외 시 월 가능 생활비
-            </Typography>
-            <Typography variant="caption1" color="semantic.label.alternative"
-              style={{ margin: 0, fontSize: 11 }}>
+            </span>
+            <span style={{ fontSize: 11, color: 'rgba(36,39,46,0.64)', display: 'block' }}>
               차가 없다면 쓸 수 있는 금액
-            </Typography>
+            </span>
           </div>
-          <Typography variant="headline1" weight="bold"
-            color={!isIncluded ? 'semantic.label.normal' : 'semantic.label.alternative'}
-            style={{ fontSize: 20, whiteSpace: 'nowrap', marginLeft: 12 }}>
+          <span style={{
+            fontSize: 20,
+            fontWeight: 700,
+            color: !isIncluded ? '#24272E' : 'rgba(36,39,46,0.64)',
+            whiteSpace: 'nowrap',
+            marginLeft: 12,
+          }}>
             {withoutVehicle.toLocaleString('ko-KR')}만원
-          </Typography>
+          </span>
         </div>
 
         {/* 차이 */}
@@ -101,27 +98,24 @@ export default function VehicleComparisonCard({ comparison }: Props) {
           border: monthlyReduction > 0 ? '1px solid var(--status-shortage-border, #FFD0D0)' : 'none',
         }}>
           <div>
-            <Typography variant="label2" weight="medium" color="semantic.label.alternative"
-              style={{ display: 'block', marginBottom: 2 }}>
+            <span style={{ fontSize: 13, fontWeight: 500, color: 'rgba(36,39,46,0.64)', display: 'block', marginBottom: 2 }}>
               자동차 때문에 줄어드는 금액
-            </Typography>
-            <Typography variant="caption1" color="semantic.label.alternative"
-              style={{ margin: 0, fontSize: 11 }}>
+            </span>
+            <span style={{ fontSize: 11, color: 'rgba(36,39,46,0.64)', display: 'block' }}>
               은퇴 기간 월 평균 차량 비용 (현재가치 기준)
-            </Typography>
+            </span>
           </div>
-          <Typography
-            variant="headline1"
-            weight="bold"
+          <span
             style={{
               fontSize: 20,
+              fontWeight: 700,
               whiteSpace: 'nowrap',
               marginLeft: 12,
               color: monthlyReduction > 0 ? 'var(--status-shortage-text, #C0392B)' : 'var(--text-faint)',
             }}
           >
             {monthlyReduction > 0 ? `−${monthlyReduction.toLocaleString('ko-KR')}만원` : '—'}
-          </Typography>
+          </span>
         </div>
       </div>
 
@@ -132,10 +126,9 @@ export default function VehicleComparisonCard({ comparison }: Props) {
         background: 'var(--surface-card-soft)',
         borderRadius: 8,
       }}>
-        <Typography variant="caption1" color="semantic.label.alternative"
-          style={{ margin: 0, lineHeight: 1.6 }}>
+        <span style={{ fontSize: 12, color: 'rgba(36,39,46,0.64)', lineHeight: 1.6, display: 'block' }}>
           이 계산은 현재 차 1대 기준이에요. 차를 교체하거나 추가하면 실제 비용이 달라질 수 있어요.
-        </Typography>
+        </span>
       </div>
     </div>
   );

@@ -1,4 +1,3 @@
-import { Typography } from '@wanteddev/wds';
 import type { FundingStage } from '../../types/calculationV2';
 
 interface FundingPathSectionProps {
@@ -82,25 +81,17 @@ export default function FundingPathSection({ fundingTimeline, lifeExpectancy, re
                   whiteSpace: 'nowrap',
                 }}
               >
-                <Typography
-                  variant="caption2"
-                  color="semantic.label.alternative"
-                  style={{ fontSize: 11 }}
-                >
+                <span style={{ fontSize: 11, color: 'rgba(36,39,46,0.64)' }}>
                   {stageFrom}세
-                </Typography>
+                </span>
               </div>
             );
           })}
           {/* 마지막 나이 */}
           <div style={{ position: 'absolute', right: 0, lineHeight: 1.3 }}>
-            <Typography
-              variant="caption2"
-              color="semantic.label.alternative"
-              style={{ fontSize: 11 }}
-            >
+            <span style={{ fontSize: 11, color: 'rgba(36,39,46,0.64)' }}>
               {lifeExpectancy}세
-            </Typography>
+            </span>
           </div>
         </div>
       </div>
@@ -137,11 +128,10 @@ export default function FundingPathSection({ fundingTimeline, lifeExpectancy, re
               }}
             >
               {widthPct > 8 && (
-                <Typography
-                  variant="caption2"
-                  weight="medium"
+                <span
                   style={{
                     fontSize: 11,
+                    fontWeight: 500,
                     color: cfg.color,
                     whiteSpace: 'nowrap',
                     overflow: 'hidden',
@@ -150,7 +140,7 @@ export default function FundingPathSection({ fundingTimeline, lifeExpectancy, re
                   }}
                 >
                   {cfg.label}
-                </Typography>
+                </span>
               )}
             </div>
           );
@@ -192,19 +182,12 @@ export default function FundingPathSection({ fundingTimeline, lifeExpectancy, re
                   display: 'inline-block',
                 }}
               />
-              <Typography
-                variant="caption2"
-                weight="medium"
-                style={{ color: cfg.color }}
-              >
+              <span style={{ fontSize: 11, fontWeight: 500, color: cfg.color }}>
                 {cfg.label}
-              </Typography>
-              <Typography
-                variant="caption2"
-                color="semantic.label.alternative"
-              >
+              </span>
+              <span style={{ fontSize: 11, color: 'rgba(36,39,46,0.64)' }}>
                 {stageFrom}~{stageTo}세
-              </Typography>
+              </span>
             </div>
           );
         })}

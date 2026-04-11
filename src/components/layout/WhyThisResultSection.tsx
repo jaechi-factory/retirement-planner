@@ -1,4 +1,3 @@
-import { Typography } from '@wanteddev/wds';
 import { getTotalMonthlyPensionTodayValue } from '../../engine/pensionEstimation';
 import type { CalculationResultV2 } from '../../types/calculationV2';
 import type { PlannerInputs } from '../../types/inputs';
@@ -134,20 +133,18 @@ export default function WhyThisResultSection({ summary, inputs, hasRealEstate }:
               gap: 6,
             }}
           >
-            <Typography
-              variant="body2"
-              weight="bold"
+            <span
               style={{
                 color: 'var(--result-text-strong-color)',
                 display: 'block',
                 lineHeight: 1.4,
                 fontSize: 13,
+                fontWeight: 700,
               }}
             >
               {card.title}
-            </Typography>
-            <Typography
-              variant="caption1"
+            </span>
+            <span
               style={{
                 color: 'var(--result-text-body-color)',
                 display: 'block',
@@ -156,7 +153,7 @@ export default function WhyThisResultSection({ summary, inputs, hasRealEstate }:
               }}
             >
               {card.body}
-            </Typography>
+            </span>
           </div>
         ))}
       </div>

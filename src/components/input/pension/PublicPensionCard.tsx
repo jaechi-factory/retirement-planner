@@ -4,9 +4,29 @@ import { getPlannerPolicy } from '../../../policy/policyTable';
 import NumberInput from '../shared/NumberInput';
 import { estimatePublicPensionWithMeta } from '../../../engine/pensionMeta';
 import { fmtKRW } from '../../../utils/format';
-import { Chip, Typography } from '@wanteddev/wds';
 import { cardStyle } from './shared';
 import { Row, Divider, TextBtn, ModeLabel } from './shared-components';
+
+function Chip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        fontSize: 12,
+        fontWeight: active ? 700 : 500,
+        padding: '4px 12px',
+        borderRadius: 16,
+        border: active ? '1.5px solid #191f28' : '1.5px solid rgba(36,39,46,0.12)',
+        background: active ? '#191f28' : '#fff',
+        color: active ? '#fff' : 'rgba(36,39,46,0.64)',
+        cursor: 'pointer',
+        fontFamily: 'Pretendard, sans-serif',
+      }}
+    >
+      {children}
+    </button>
+  );
+}
 
 export default function PublicPensionCard() {
   const { inputs, setPension } = usePlannerStore();
@@ -37,24 +57,24 @@ export default function PublicPensionCard() {
     <div style={cardStyle}>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 8 }}>
         <div>
-          <Typography variant="label1" weight="bold" color="semantic.label.normal">국민연금</Typography>
-          <Typography variant="caption1" color="semantic.label.alternative" style={{ marginTop: 2, display: 'block' }}>수령 시작 월액의 오늘 가치예요</Typography>
+          <span style={{ fontSize: 14, fontWeight: 700, color: '#24272E' }}>국민연금</span>
+          <span style={{ fontSize: 12, color: 'rgba(36,39,46,0.64)', marginTop: 2, display: 'block' }}>수령 시작 월액의 오늘 가치예요</span>
         </div>
         <ModeLabel text={isAuto ? '간편 계산' : '직접 입력'} />
       </div>
 
       <div style={{ margin: '4px 0 2px' }}>
-        <Typography variant="headline1" weight="bold" color="semantic.label.normal" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <span style={{ fontSize: 16, fontWeight: 700, color: '#24272E', display: 'flex', alignItems: 'center', gap: 6 }}>
           월 {fmtKRW(displayValue)}
           {meta.cappedByIncomeCeiling && isAuto && (
-            <Typography as="span" variant="caption2" color="semantic.label.alternative">소득 상한 기준</Typography>
+            <span style={{ fontSize: 11, color: 'rgba(36,39,46,0.64)' }}>소득 상한 기준</span>
           )}
-        </Typography>
-        <Typography variant="caption1" color="semantic.label.alternative" style={{ marginTop: 2, display: 'block' }}>
+        </span>
+        <span style={{ fontSize: 12, color: 'rgba(36,39,46,0.64)', marginTop: 2, display: 'block' }}>
           {isAuto
             ? `${publicPension.startAge}세부터 수령 · 공단 예상월액표 기준 추정 (${workStartAge}세 취업, 평가연도 ${publicPension.valuationYear ?? valuationYear})`
             : `${publicPension.startAge}세부터 수령 · 실제 수령액과 다를 수 있어요`}
-        </Typography>
+        </span>
       </div>
 
       {isAuto && (
@@ -73,8 +93,8 @@ export default function PublicPensionCard() {
         <>
           <Divider />
           <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
-            <Chip size="small" active={isAuto} onClick={() => setPension({ publicPension: { ...publicPension, mode: 'auto' } })}>간편 계산</Chip>
-            <Chip size="small" active={!isAuto} onClick={() => setPension({ publicPension: { ...publicPension, mode: 'manual' } })}>내가 직접 입력</Chip>
+            <Chip active={isAuto} onClick={() => setPension({ publicPension: { ...publicPension, mode: 'auto' } })}>간편 계산</Chip>
+            <Chip active={!isAuto} onClick={() => setPension({ publicPension: { ...publicPension, mode: 'manual' } })}>내가 직접 입력</Chip>
           </div>
           {isAuto && (
             <NumberInput

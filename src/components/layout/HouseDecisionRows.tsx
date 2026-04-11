@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { ContentBadge, Typography } from '@wanteddev/wds';
 import type { HouseDecisionRowVM, HouseDecisionStrategy } from './houseDecisionVM';
 
 interface HouseDecisionRowsProps {
@@ -18,25 +17,24 @@ function MetricCell({
 }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
-      <Typography
-        variant="caption2"
-        color="semantic.label.alternative"
-        style={{ lineHeight: 1.45 }}
+      <span
+        style={{ fontSize: 11, color: 'rgba(36,39,46,0.64)', lineHeight: 1.45, display: 'block' }}
         className="house-decision-row-metric-label"
       >
         {label}
-      </Typography>
-      <Typography
-        variant="headline2"
-        weight={selected ? 'medium' : 'bold'}
+      </span>
+      <span
         style={{
+          fontSize: 14,
+          fontWeight: selected ? 500 : 700,
           color: selected ? 'var(--result-text-body-color)' : 'var(--result-text-value-strong-color)',
           lineHeight: 1.35,
+          display: 'block',
         }}
         className="house-decision-row-metric-value"
       >
         {value}
-      </Typography>
+      </span>
     </div>
   );
 }
@@ -90,39 +88,38 @@ export default function HouseDecisionRows({ rows, onSelectStrategy }: HouseDecis
             >
               <div style={{ paddingRight: disabled ? 0 : 44 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 9 }}>
-                  <Typography
-                    variant="headline2"
-                    weight={selected ? 'bold' : 'medium'}
+                  <span
                     style={{
+                      fontSize: 14,
+                      fontWeight: selected ? 700 : 500,
                       color: selected ? 'var(--result-accent-strong)' : 'var(--result-text-body-color)',
                       lineHeight: 1.35,
                       wordBreak: 'keep-all',
                     }}
                   >
                     {row.strategyLabel}
-                  </Typography>
+                  </span>
                   {row.isRecommended && (
-                    <ContentBadge
-                      variant="outlined"
-                      size="xsmall"
+                    <span
                       style={{
                         color: 'var(--result-text-faint-color)',
-                        borderColor: 'var(--result-border-subtle)',
+                        border: '1px solid var(--result-border-subtle)',
                         background: 'var(--result-surface-soft)',
                         borderRadius: 999,
                         padding: '1px 6px',
                         fontSize: 12,
                         fontWeight: 600,
                         letterSpacing: '0.01em',
+                        display: 'inline-block',
                       }}
                     >
                       추천
-                    </ContentBadge>
+                    </span>
                   )}
                   {disabled && (
-                    <Typography variant="caption1" color="semantic.label.alternative">
+                    <span style={{ fontSize: 12, color: 'rgba(36,39,46,0.64)' }}>
                       계산 불가
-                    </Typography>
+                    </span>
                   )}
                 </div>
 
@@ -168,13 +165,13 @@ export default function HouseDecisionRows({ rows, onSelectStrategy }: HouseDecis
                   gap: 4,
                 }}
               >
-                <Typography variant="caption1" color="semantic.label.alternative" style={{ lineHeight: 1.55 }}>
+                <span style={{ fontSize: 12, color: 'rgba(36,39,46,0.64)', lineHeight: 1.55, display: 'block' }}>
                   마지막에 남는 돈 {row.lastRemainingMoneyText}
-                </Typography>
+                </span>
                 {row.houseCashSupportText && (
-                  <Typography variant="caption1" color="semantic.label.alternative" style={{ lineHeight: 1.55 }}>
+                  <span style={{ fontSize: 12, color: 'rgba(36,39,46,0.64)', lineHeight: 1.55, display: 'block' }}>
                     {row.houseCashSupportText}
-                  </Typography>
+                  </span>
                 )}
               </div>
             )}
@@ -186,9 +183,9 @@ export default function HouseDecisionRows({ rows, onSelectStrategy }: HouseDecis
                   padding: '8px 12px',
                 }}
               >
-                <Typography variant="caption2" color="semantic.label.alternative" style={{ lineHeight: 1.5 }}>
+                <span style={{ fontSize: 11, color: 'rgba(36,39,46,0.64)', lineHeight: 1.5, display: 'block' }}>
                   {row.disabledReason}
-                </Typography>
+                </span>
               </div>
             )}
           </div>
