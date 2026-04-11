@@ -127,14 +127,7 @@
   --ux-status-warning-soft:  var(--status-adjust-border);
 
   /* ── Figma UI Renewal Tokens ─────────────────────────────────── */
-  --fig-page-bg:
-    radial-gradient(ellipse at 12% 18%, rgba(255, 100, 130, 0.82) 0%, transparent 42%),
-    radial-gradient(ellipse at 58% 6%,  rgba(255, 180,  95, 0.78) 0%, transparent 40%),
-    radial-gradient(ellipse at 90% 28%, rgba(255, 225,  80, 0.68) 0%, transparent 36%),
-    radial-gradient(ellipse at 92% 82%, rgba(55,  195, 255, 0.82) 0%, transparent 44%),
-    radial-gradient(ellipse at 10% 88%, rgba(155,  65, 225, 0.78) 0%, transparent 44%),
-    radial-gradient(ellipse at 50% 50%, rgba(255, 240, 180, 0.55) 0%, transparent 52%),
-    #e0d0f0;
+  --fig-page-bg: linear-gradient(to right, #e4e5e7 0%, #f2f9ff 61.943%, #d7e3ec 100%);
   --fig-card-bg: rgba(255,254,252,0.45);
   --fig-card-radius: 32px;
 
