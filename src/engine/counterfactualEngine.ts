@@ -554,19 +554,16 @@ function assignSlots(candidates: ComparisonMetrics[]): SlottedRecommendation[] {
   const slots: SlottedRecommendation[] = [];
   const usedCategories = new Set<StrategyCategory>();
 
-  // 최소 추천 임계값: 의미 있는 개선이 있는 전략만 통과
+  // 최소 추천 임계값: 사용자에게 설명 가능한 개선이 있는 전략만 통과
+  // shortfall 개선은 필터 조건이 아니라 rankMetrics 정렬 보조 지표로만 사용
   const MIN_MONTHLY_DELTA = 5; // 만원
   const positive = candidates.filter((m) => {
     const preventsFail = !m.baselineSurvives && m.counterfactualSurvives;
     const improvesFailureAge = m.failureAgeDelta !== null && m.failureAgeDelta > 0;
     const improvesDeficitStart = m.deficitStartAgeDelta !== null && m.deficitStartAgeDelta > 0;
-    const improvesShortfall = m.totalLateLifeShortfall < m.baselineLateLifeShortfall;
     const meaningfulMonthlyGain = m.sustainableMonthlyDelta >= MIN_MONTHLY_DELTA;
 
-    // 고갈 방지, 적자 시점 개선, 말년 적자 개선이 있으면 무조건 통과
-    if (preventsFail || improvesFailureAge || improvesDeficitStart || improvesShortfall) return true;
-    // 그 외에는 생활비 개선이 임계값 이상이어야 통과
-    return meaningfulMonthlyGain;
+    return preventsFail || improvesFailureAge || improvesDeficitStart || meaningfulMonthlyGain;
   });
 
   // 랭킹 정렬

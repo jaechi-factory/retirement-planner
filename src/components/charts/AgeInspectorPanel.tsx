@@ -129,7 +129,7 @@ function SummaryCell({
         display: 'flex',
         flexDirection: 'column',
         gap: 2,
-        padding: '8px 12px',
+        padding: '8px 32px',
       }}
     >
       <span style={{ fontSize: 14, color: 'var(--ux-text-subtle)', fontWeight: 500 }}>{label}</span>
@@ -166,9 +166,9 @@ export default function AgeInspectorPanel({ data, hasRealEstate, hasSaleProceeds
   return (
     <div
       style={{
-        marginTop: 12,
-        border: '1px solid var(--ux-border)',
-        borderRadius: 10,
+        marginTop: 0,
+        borderTop: '1px solid var(--ux-border)',
+        borderRadius: 0,
         overflow: 'hidden',
         background: 'var(--ux-surface)',
         fontSize: 14,
@@ -180,7 +180,7 @@ export default function AgeInspectorPanel({ data, hasRealEstate, hasSaleProceeds
           display: 'flex',
           alignItems: 'center',
           gap: 8,
-          padding: '7px 14px',
+          padding: '7px 32px',
           borderBottom: '1px solid var(--ux-border)',
           background: 'var(--ux-surface-elevated, var(--ux-surface))',
         }}
@@ -232,7 +232,7 @@ export default function AgeInspectorPanel({ data, hasRealEstate, hasSaleProceeds
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
 
         {/* 왼쪽: 수입 구성 + 지출 구성 */}
-        <div style={{ padding: '10px 14px', borderRight: '1px solid var(--ux-border)' }}>
+        <div style={{ padding: '10px 32px', borderRight: '1px solid var(--ux-border)' }}>
 
           <SectionTitle>수입 구성</SectionTitle>
           {(data.monthlySalary > 0 || data.monthlyPublicPensionRealTodayValue > 0 || data.monthlyRetirementPensionRealTodayValue > 0 || data.monthlyPrivatePensionRealTodayValue > 0) && (
@@ -282,7 +282,7 @@ export default function AgeInspectorPanel({ data, hasRealEstate, hasSaleProceeds
         </div>
 
         {/* 오른쪽: 자산 구성 */}
-        <div style={{ padding: '10px 14px' }}>
+        <div style={{ padding: '10px 32px' }}>
           <SectionTitle>자산 구성</SectionTitle>
           {hasSaleProceeds && data.saleProceedsEnd > 0 && (
             <div style={{ fontSize: 13, color: 'var(--ux-text-subtle)', marginBottom: 4, lineHeight: 1.4 }}>

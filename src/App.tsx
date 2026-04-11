@@ -31,15 +31,24 @@ export default function App() {
   const showReset = hasAnyInput(inputs);
 
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        background: 'var(--fig-page-bg)',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-      }}
-    >
+    <>
+      {/* 배경 레이어 — 스크롤 바운스에 안 딸려감 */}
+      <div
+        style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'var(--fig-page-bg)',
+          zIndex: -1,
+        }}
+      />
+      <div
+        style={{
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+        }}
+      >
       {/* 헤더 — 피그마 264:1463 gap-40, 288:2341 gap-16 */}
       <div
         style={{
@@ -119,5 +128,6 @@ export default function App() {
         <ResultWorkbench />
       </div>
     </div>
+    </>
   );
 }

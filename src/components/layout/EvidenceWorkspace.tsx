@@ -1,4 +1,8 @@
+import { useState } from 'react';
 import AssetBalanceChart from '../charts/AssetBalanceChart';
+import { buildPensionStartMap, buildPensionByAgeMaps } from '../charts/AssetBalanceChart';
+import AgeInspectorPanel from '../charts/AgeInspectorPanel';
+import { buildCashflowByAgeMaps, getAgeSnapshot } from '../charts/assetBalanceMetrics';
 import type {
   YearlyAggregateV2,
 } from '../../types/calculationV2';
@@ -19,25 +23,56 @@ export default function EvidenceWorkspace({
   inputs,
   timelineEvents,
 }: EvidenceWorkspaceProps) {
+  const [selectedAge, setSelectedAge] = useState<number>(retirementAge);
+
+  const hasRealEstate = inputs.assets.realEstate.amount > 0;
+  const hasSaleProceeds = hasRealEstate && chartRows.some((row) => row.propertySaleProceedsBucketEnd > 0);
+
+  const cashflow = buildCashflowByAgeMaps(chartRows);
+  const pensionStartMap = buildPensionStartMap(inputs, retirementAge);
+  const {
+    monthlyPublicPensionByAge,
+    monthlyPublicPensionRealByAge,
+    monthlyRetirementPensionByAge,
+    monthlyRetirementPensionRealByAge,
+    monthlyPrivatePensionByAge,
+    monthlyPrivatePensionRealByAge,
+  } = buildPensionByAgeMaps(chartRows, inputs, retirementAge);
+
+  const inspectorData = getAgeSnapshot({
+    age: selectedAge,
+    retirementAge,
+    rows: chartRows,
+    cashflow,
+    monthlyPublicPensionByAge,
+    monthlyPublicPensionRealByAge,
+    monthlyRetirementPensionByAge,
+    monthlyRetirementPensionRealByAge,
+    monthlyPrivatePensionByAge,
+    monthlyPrivatePensionRealByAge,
+    pensionStartMap,
+  });
+
+  const cardPadding = '0 32px';
+
   return (
-    <section style={{ marginBottom: 40 }}>
+    <section>
       {/* 피그마 Frame 16: 타임라인 + 차트 통합 카드 */}
       <div
         style={{
           borderRadius: 32,
           background: '#ffffff',
-          padding: '28px 32px 48px',
           boxShadow: '0px 2px 8px 4px rgba(121,158,195,0.08)',
-          marginBottom: 'var(--result-space-2)',
+          overflow: 'hidden',
           display: 'flex',
           flexDirection: 'column',
-          alignItems: 'center',
           gap: 24,
           alignSelf: 'stretch',
+          paddingTop: 28,
         }}
       >
         {/* ── 카드 타이틀 ── */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: cardPadding }}>
           <p style={{ margin: 0, fontSize: 20, fontWeight: 700, color: '#191f28', fontFamily: 'Pretendard, sans-serif', lineHeight: 1.5 }}>
             자산의 흐름을 그래프로 보여드릴게요
           </p>
@@ -47,28 +82,29 @@ export default function EvidenceWorkspace({
         </div>
 
         {/* ── 타임라인 섹션 ── */}
-        <div
-          style={{
-            background: 'rgb(242, 244, 246)',
-            borderRadius: 20,
-            padding: 16,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 6,
-            width: '100%',
-          }}
-        >
-          <p style={{ margin: 0, fontSize: 16, fontWeight: 700, color: '#191f28', fontFamily: 'Pretendard, sans-serif', lineHeight: 1.5 }}>
-            내 나이의 흐름에 따라, 중요한 부분을 요약해 봤어요
-          </p>
-          <div style={{ background: '#d9d9d9', height: 1, width: '100%' }} />
-          <div style={{ paddingTop: 8 }}>
-            <CompactLifetimeTimeline events={timelineEvents} />
+        <div style={{ padding: cardPadding }}>
+          <div
+            style={{
+              background: 'rgb(242, 244, 246)',
+              borderRadius: 20,
+              padding: 16,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 6,
+            }}
+          >
+            <p style={{ margin: 0, fontSize: 16, fontWeight: 700, color: '#191f28', fontFamily: 'Pretendard, sans-serif', lineHeight: 1.5 }}>
+              내 나이의 흐름에 따라, 중요한 부분을 요약해 봤어요
+            </p>
+            <div style={{ background: '#d9d9d9', height: 1, width: '100%' }} />
+            <div style={{ paddingTop: 8 }}>
+              <CompactLifetimeTimeline events={timelineEvents} />
+            </div>
           </div>
         </div>
 
         {/* ── 차트 섹션 ── */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, width: '100%' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: cardPadding }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             <p
               style={{
@@ -106,13 +142,23 @@ export default function EvidenceWorkspace({
           >
             <AssetBalanceChart
               rows={chartRows}
-              retirementAge={retirementAge}
               inputs={inputs}
+              onAgeHover={setSelectedAge}
             />
           </div>
         </div>
-      </div>
 
+        {/* ── 인터랙티브 상세 패널 (전체 너비, 카드 패딩 없음) ── */}
+        {inspectorData && (
+          <div style={{ marginTop: -8, paddingBottom: 28 }}>
+            <AgeInspectorPanel
+              data={inspectorData}
+              hasRealEstate={hasRealEstate}
+              hasSaleProceeds={hasSaleProceeds}
+            />
+          </div>
+        )}
+      </div>
     </section>
   );
 }

@@ -125,7 +125,6 @@ export default function VerificationSection({
       >
         <AssetBalanceChart
           rows={chartRows}
-          retirementAge={retirementAge}
           inputs={inputs}
         />
       </div>

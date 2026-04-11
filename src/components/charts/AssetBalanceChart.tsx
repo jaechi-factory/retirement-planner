@@ -2,7 +2,6 @@
  * 선택 전략 기준 — 버킷별 연말 잔고 추이 차트
  * cashLike / financialInvestable / propertyValue (담보대출 차감 후)
  */
-import { useState } from 'react';
 import {
   AreaChart,
   Area,
@@ -19,10 +18,8 @@ import { getPensionBreakdown, getPensionMonthlyBreakdownForMonthIndex } from '..
 import { fmtKRW, fmtKRWAxis } from '../../utils/format';
 import {
   buildCashflowByAgeMaps,
-  getAgeSnapshot,
   type CashflowByAgeMaps,
 } from './assetBalanceMetrics';
-import AgeInspectorPanel from './AgeInspectorPanel';
 
 // ── 시각 계층 상수 ────────────────────────────────────────────────────────────
 
@@ -43,8 +40,8 @@ const LEGEND_ORDER = [
 
 interface Props {
   rows: YearlyAggregateV2[];
-  retirementAge: number;
   inputs: PlannerInputs;
+  onAgeHover?: (age: number) => void;
 }
 
 interface PensionEvent {
@@ -53,7 +50,7 @@ interface PensionEvent {
 }
 
 // 연금 개시 나이 → 이벤트 맵
-function buildPensionStartMap(inputs: PlannerInputs, retirementAge: number): Map<number, PensionEvent[]> {
+export function buildPensionStartMap(inputs: PlannerInputs, retirementAge: number): Map<number, PensionEvent[]> {
   const map = new Map<number, PensionEvent[]>();
   const add = (age: number, name: string, monthly: number) => {
     if (!map.has(age)) map.set(age, []);
@@ -81,7 +78,7 @@ function buildPensionStartMap(inputs: PlannerInputs, retirementAge: number): Map
   return map;
 }
 
-function buildPensionByAgeMaps(rows: YearlyAggregateV2[], inputs: PlannerInputs, retirementAge: number) {
+export function buildPensionByAgeMaps(rows: YearlyAggregateV2[], inputs: PlannerInputs, retirementAge: number) {
   const monthlyPublicPensionByAge = new Map<number, number>();
   const monthlyPublicPensionRealByAge = new Map<number, number>();
   const monthlyRetirementPensionByAge = new Map<number, number>();
@@ -200,7 +197,7 @@ function CustomLegend({ hasRealEstate, hasFinancial, hasSaleProceeds }: { hasRea
   });
 
   return (
-    <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', justifyContent: 'center', paddingTop: 8 }}>
+    <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', justifyContent: 'center', paddingBottom: 8 }}>
       {items.map((s) => (
         <span key={s.key} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 14, color: 'var(--ux-text-base)' }}>
           <span
@@ -224,22 +221,11 @@ function CustomLegend({ hasRealEstate, hasFinancial, hasSaleProceeds }: { hasRea
 
 export default function AssetBalanceChart({
   rows,
-  retirementAge,
   inputs,
+  onAgeHover,
 }: Props) {
-  const [selectedAge, setSelectedAge] = useState<number>(retirementAge);
 
   if (rows.length === 0) return null;
-
-  const pensionStartMap = buildPensionStartMap(inputs, retirementAge);
-  const {
-    monthlyPublicPensionByAge,
-    monthlyPublicPensionRealByAge,
-    monthlyRetirementPensionByAge,
-    monthlyRetirementPensionRealByAge,
-    monthlyPrivatePensionByAge,
-    monthlyPrivatePensionRealByAge,
-  } = buildPensionByAgeMaps(rows, inputs, retirementAge);
 
   const hasRealEstate = inputs.assets.realEstate.amount > 0;
   const hasFinancial = rows.some((row) => row.financialInvestableEnd > 0);
@@ -269,23 +255,9 @@ export default function AssetBalanceChart({
 
   const handleMouseMove = (state: { activeLabel?: string | number }) => {
     if (state.activeLabel !== undefined) {
-      setSelectedAge(state.activeLabel as number);
+      onAgeHover?.(state.activeLabel as number);
     }
   };
-
-  const inspectorData = getAgeSnapshot({
-    age: selectedAge,
-    retirementAge,
-    rows,
-    cashflow,
-    monthlyPublicPensionByAge,
-    monthlyPublicPensionRealByAge,
-    monthlyRetirementPensionByAge,
-    monthlyRetirementPensionRealByAge,
-    monthlyPrivatePensionByAge,
-    monthlyPrivatePensionRealByAge,
-    pensionStartMap,
-  });
 
   return (
     <div style={{ marginBottom: 12 }}>
@@ -370,6 +342,7 @@ export default function AssetBalanceChart({
             )}
           />
           <Legend
+            verticalAlign="top"
             content={() => (
               <CustomLegend hasRealEstate={hasRealEstate} hasFinancial={hasFinancial} hasSaleProceeds={hasSaleProceeds} />
             )}
@@ -420,13 +393,6 @@ export default function AssetBalanceChart({
       </ResponsiveContainer>
 
 
-      {inspectorData && (
-        <AgeInspectorPanel
-          data={inspectorData}
-          hasRealEstate={hasRealEstate}
-          hasSaleProceeds={hasSaleProceeds}
-        />
-      )}
     </div>
   );
 }

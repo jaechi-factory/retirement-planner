@@ -11,37 +11,6 @@ import ReinvestmentExplainerSection from './ReinvestmentExplainerSection';
 import EvidenceWorkspace from './EvidenceWorkspace';
 import ActionPlanSection from './ActionPlanSection';
 
-// ── 섹션 구분선 ────────────────────────────────────────────
-function SectionDivider({ label }: { label?: string }) {
-  return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 12,
-        margin: '0 0 32px',
-      }}
-    >
-      <div style={{ flex: 1, height: 1, background: 'rgba(36,39,46,0.08)' }} />
-      {label && (
-        <span
-          style={{
-            fontSize: 14,
-            fontWeight: 600,
-            color: 'var(--text-faint)',
-            letterSpacing: '0.08em',
-            textTransform: 'uppercase',
-            whiteSpace: 'nowrap',
-          }}
-        >
-          {label}
-        </span>
-      )}
-      <div style={{ flex: 1, height: 1, background: 'rgba(36,39,46,0.08)' }} />
-    </div>
-  );
-}
-
 // ── 빈 상태 ────────────────────────────────────────────────
 function EmptyStateCard({ title, body, hint }: { title: string; body: string; hint?: string }) {
   return (
@@ -138,6 +107,7 @@ export default function ResultWorkbench() {
     flex: 1,
     minWidth: 0,
     padding: 24,
+    marginBottom: 80,
     background: 'var(--fig-card-bg)',
     backdropFilter: 'blur(40px) saturate(200%)',
     WebkitBackdropFilter: 'blur(40px) saturate(200%)',
@@ -246,13 +216,10 @@ export default function ResultWorkbench() {
         )}
       />
 
-      <SectionDivider />
-
-
-
       {/* 6. 지금 해야 할 일 */}
       <ActionPlanSection
         counterfactual={counterfactual}
+        targetMonthly={inputs.goal.targetMonthly}
       />
 
     </div>

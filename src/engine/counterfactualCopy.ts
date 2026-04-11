@@ -23,8 +23,13 @@ export function getSlotLabel(slot: SlotType): string {
 
 // ── Headline 생성 ──────────────────────────────────────────────
 
-export function generateHeadline(m: ComparisonMetrics): string {
+export function generateHeadline(m: ComparisonMetrics, targetMonthly: number): string {
   const { strategyId, sustainableMonthlyDelta, failureAgeDelta, deficitStartAgeDelta } = m;
+  const baseFailAge = m.newFailureAge !== null && failureAgeDelta !== null
+    ? Math.round(m.newFailureAge - failureAgeDelta)
+    : null;
+  const newFailAge = m.newFailureAge !== null ? Math.round(m.newFailureAge) : null;
+  const budget = targetMonthly > 0 ? `월 ${fmtKRW(targetMonthly)} 기준, ` : '';
 
   // 고갈 방지가 최우선
   const preventsFailure = !m.baselineSurvives && m.counterfactualSurvives;
@@ -58,6 +63,12 @@ export function generateHeadline(m: ComparisonMetrics): string {
       if (preventsFailure) {
         return '개인연금에 월 30만원을 넣으면 자금 고갈을 방지할 수 있어요';
       }
+      if (failureAgeDelta !== null && failureAgeDelta > 0 && failureAgeDelta !== Infinity) {
+        return `개인연금에 월 30만원을 넣으면 ${budget}자금 고갈이 ${baseFailAge}세에서 ${newFailAge}세로 늦춰져요`;
+      }
+      if (deficitStartAgeDelta !== null && deficitStartAgeDelta > 0 && deficitStartAgeDelta !== Infinity) {
+        return `개인연금에 월 30만원을 넣으면 적자 시작이 ${Math.round(deficitStartAgeDelta)}년 늦춰져요`;
+      }
       return `개인연금에 월 30만원을 넣으면 월 가능 생활비가 ${fmtKRW(sustainableMonthlyDelta)} 늘어나요`;
     }
 
@@ -65,14 +76,38 @@ export function generateHeadline(m: ComparisonMetrics): string {
       if (preventsFailure) {
         return '자동차를 정리하면 자금 고갈 없이 기대수명까지 유지돼요';
       }
+      if (failureAgeDelta !== null && failureAgeDelta > 0 && failureAgeDelta !== Infinity) {
+        return `자동차를 정리하면 ${budget}자금 고갈이 ${baseFailAge}세에서 ${newFailAge}세로 늦춰져요`;
+      }
+      if (deficitStartAgeDelta !== null && deficitStartAgeDelta > 0 && deficitStartAgeDelta !== Infinity) {
+        return `자동차를 정리하면 적자 시작이 ${Math.round(deficitStartAgeDelta)}년 늦춰져요`;
+      }
       return `자동차를 정리하면 월 가능 생활비가 ${fmtKRW(sustainableMonthlyDelta)} 늘어나요`;
     }
 
     case 'debt_paydown': {
+      if (preventsFailure) {
+        return '대출을 지금 갚으면 자금 고갈 없이 기대수명까지 유지돼요';
+      }
+      if (failureAgeDelta !== null && failureAgeDelta > 0 && failureAgeDelta !== Infinity) {
+        return `대출을 지금 갚으면 ${budget}자금 고갈이 ${baseFailAge}세에서 ${newFailAge}세로 늦춰져요`;
+      }
+      if (deficitStartAgeDelta !== null && deficitStartAgeDelta > 0 && deficitStartAgeDelta !== Infinity) {
+        return `대출을 지금 갚으면 적자 시작이 ${Math.round(deficitStartAgeDelta)}년 늦춰져요`;
+      }
       return `대출을 지금 갚으면 유지하는 것보다 월 ${fmtKRW(sustainableMonthlyDelta)} 더 여유가 생겨요`;
     }
 
     case 'debt_keep_invest': {
+      if (preventsFailure) {
+        return '대출을 유지하면서 투자하면 자금 고갈 없이 기대수명까지 유지돼요';
+      }
+      if (failureAgeDelta !== null && failureAgeDelta > 0 && failureAgeDelta !== Infinity) {
+        return `대출을 유지하면서 투자하면 ${budget}자금 고갈이 ${baseFailAge}세에서 ${newFailAge}세로 늦춰져요`;
+      }
+      if (deficitStartAgeDelta !== null && deficitStartAgeDelta > 0 && deficitStartAgeDelta !== Infinity) {
+        return `대출을 유지하면서 투자하면 적자 시작이 ${Math.round(deficitStartAgeDelta)}년 늦춰져요`;
+      }
       return `대출을 유지하면서 투자하면 조기상환보다 월 ${fmtKRW(sustainableMonthlyDelta)} 더 여유가 생겨요`;
     }
 
@@ -85,8 +120,8 @@ export function generateHeadline(m: ComparisonMetrics): string {
       }
       if (failureAgeDelta !== null && failureAgeDelta > 0 && failureAgeDelta !== Infinity) {
         return isSecured
-          ? `집을 담보로 대출받으면 자금 고갈을 ${Math.round(failureAgeDelta)}년 늦출 수 있어요`
-          : `집을 매각하면 자금 고갈을 ${Math.round(failureAgeDelta)}년 늦출 수 있어요`;
+          ? `집을 담보로 대출받으면 ${budget}자금 고갈이 ${baseFailAge}세에서 ${newFailAge}세로 늦춰져요`
+          : `집을 매각하면 ${budget}자금 고갈이 ${baseFailAge}세에서 ${newFailAge}세로 늦춰져요`;
       }
       return isSecured
         ? `집을 담보로 대출받으면 월 가능 생활비가 ${fmtKRW(sustainableMonthlyDelta)} 늘어나요`

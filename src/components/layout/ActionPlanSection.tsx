@@ -1,25 +1,14 @@
-import type { CounterfactualResult, SlottedRecommendation, SlotType } from '../../engine/counterfactualEngine';
-import { getSlotLabel, generateHeadline, generateDetail, generateDeltaBadges } from '../../engine/counterfactualCopy';
+import type { CounterfactualResult, SlottedRecommendation } from '../../engine/counterfactualEngine';
+import { generateHeadline, generateDetail, generateDeltaBadges } from '../../engine/counterfactualCopy';
 
 interface ActionPlanSectionProps {
   counterfactual: CounterfactualResult | null;
+  targetMonthly: number;
 }
 
-const SLOT_BORDER_COLORS: Record<SlotType, string> = {
-  best: 'var(--palette-ink)',
-  practical: 'var(--palette-muted, rgba(36,39,46,0.35))',
-  big_move: 'var(--palette-yellow)',
-};
-
-const SLOT_LABEL_COLORS: Record<SlotType, string> = {
-  best: 'var(--palette-ink)',
-  practical: 'rgba(36,39,46,0.55)',
-  big_move: 'var(--palette-yellow-dark, #b8860b)',
-};
-
-function SlotCard({ rec, baselineSustainable }: { rec: SlottedRecommendation; baselineSustainable: number }) {
-  const { slot, metrics } = rec;
-  const headline = generateHeadline(metrics);
+function SlotCard({ rec, index, baselineSustainable, targetMonthly }: { rec: SlottedRecommendation; index: number; baselineSustainable: number; targetMonthly: number }) {
+  const { metrics } = rec;
+  const headline = generateHeadline(metrics, targetMonthly);
   const detail = generateDetail(metrics, baselineSustainable);
   const badges = generateDeltaBadges(metrics);
 
@@ -28,84 +17,78 @@ function SlotCard({ rec, baselineSustainable }: { rec: SlottedRecommendation; ba
       style={{
         display: 'flex',
         flexDirection: 'column',
-        gap: 8,
-        padding: '18px 20px',
-        borderRadius: 14,
-        background: 'var(--surface-card)',
-        boxShadow: 'var(--shadow-card)',
-        border: '1px solid rgba(36,39,46,0.06)',
-        borderLeft: `4px solid ${SLOT_BORDER_COLORS[slot]}`,
+        gap: 6,
+        padding: 16,
+        borderRadius: 20,
+        background: '#f9f0fc',
+        overflow: 'hidden',
       }}
     >
-      {/* 슬롯 라벨 */}
-      <span
+      {/* 번호 + 제목 */}
+      <p
         style={{
-          fontSize: 11,
+          margin: 0,
+          fontSize: 16,
           fontWeight: 700,
-          color: SLOT_LABEL_COLORS[slot],
-          letterSpacing: '0.05em',
-          textTransform: 'uppercase',
+          color: '#191f28',
+          lineHeight: 1.5,
+          fontFamily: 'Pretendard, sans-serif',
         }}
       >
-        {getSlotLabel(slot)}
-      </span>
+        {index + 1}. {headline}
+      </p>
 
-      {/* Headline */}
-      <span
-        style={{
-          color: 'var(--result-text-strong-color)',
-          display: 'block',
-          lineHeight: 1.45,
-          fontSize: 14,
-          fontWeight: 700,
-        }}
-      >
-        {headline}
-      </span>
+      {/* 디바이더 */}
+      <div style={{ background: '#d9d9d9', height: 1, width: '100%' }} />
 
-      {/* Detail */}
-      {detail && (
-        <span
-          style={{
-            display: 'block',
-            lineHeight: 1.6,
-            fontSize: 13,
-            color: 'rgba(36,39,46,0.58)',
-          }}
-        >
-          {detail}
-        </span>
-      )}
-
-      {/* Delta Badges */}
-      {badges.length > 0 && (
-        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 2 }}>
-          {badges.map((badge) => (
-            <span
-              key={badge.text}
-              style={{
-                fontSize: 12,
-                fontWeight: 600,
-                padding: '3px 10px',
-                borderRadius: 20,
-                background: badge.type === 'positive'
-                  ? 'rgba(34, 139, 34, 0.08)'
-                  : 'rgba(36,39,46,0.05)',
-                color: badge.type === 'positive'
-                  ? 'rgb(34, 120, 34)'
-                  : 'rgba(36,39,46,0.5)',
-              }}
-            >
-              {badge.text}
-            </span>
-          ))}
-        </div>
-      )}
+      {/* 설명 + 배지 */}
+      <div style={{ paddingTop: 8, display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {detail && (
+          <p
+            style={{
+              margin: 0,
+              fontSize: 16,
+              fontWeight: 400,
+              color: '#191f28',
+              lineHeight: 1.6,
+              fontFamily: 'Pretendard, sans-serif',
+              paddingLeft: 12,
+              textIndent: -12,
+            }}
+          >
+            •{'  '}{detail}
+          </p>
+        )}
+        {badges.length > 0 && (
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            {badges.map((badge) => (
+              <span
+                key={badge.text}
+                style={{
+                  fontSize: 13,
+                  fontWeight: 600,
+                  padding: '3px 10px',
+                  borderRadius: 20,
+                  background: badge.type === 'positive'
+                    ? 'rgba(120, 60, 180, 0.10)'
+                    : 'rgba(36,39,46,0.06)',
+                  color: badge.type === 'positive'
+                    ? '#7b3bb0'
+                    : 'rgba(36,39,46,0.5)',
+                  fontFamily: 'Pretendard, sans-serif',
+                }}
+              >
+                {badge.text}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
 
-export default function ActionPlanSection({ counterfactual }: ActionPlanSectionProps) {
+export default function ActionPlanSection({ counterfactual, targetMonthly }: ActionPlanSectionProps) {
   const slots = counterfactual?.slots ?? [];
   const baselineSustainable = counterfactual?.baseline.sustainableMonthly ?? 0;
 
@@ -115,24 +98,37 @@ export default function ActionPlanSection({ counterfactual }: ActionPlanSectionP
   if (!counterfactual || !hasBestOrPractical) {
     return (
       <section>
-        <div style={{ marginBottom: 14 }}>
-          <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-faint)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-            지금 해야 할 일
-          </span>
-        </div>
         <div
           style={{
-            padding: '20px 22px',
-            borderRadius: 14,
-            background: 'var(--surface-card)',
-            boxShadow: 'var(--shadow-card)',
-            border: '1px solid rgba(36,39,46,0.06)',
-            borderLeft: '4px solid var(--palette-yellow)',
+            borderRadius: 32,
+            background: '#ffffff',
+            boxShadow: '0px 2px 8px 4px rgba(121,158,195,0.08)',
+            overflow: 'hidden',
+            padding: '28px 32px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 24,
           }}
         >
-          <span style={{ color: 'var(--result-text-body-color)', lineHeight: 1.65, fontSize: 14, display: 'block' }}>
-            현재 입력 기준으로 안정적인 계획이에요. 입력값을 바꾸면 바로 다시 확인할 수 있어요.
-          </span>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <p style={{ margin: 0, fontSize: 20, fontWeight: 700, color: '#191f28', fontFamily: 'Pretendard, sans-serif', lineHeight: 1.5 }}>
+              더 나은 은퇴 준비를 위해 추천드려요
+            </p>
+            <p style={{ margin: 0, fontSize: 16, fontWeight: 400, color: '#4e5968', fontFamily: 'Pretendard, sans-serif', lineHeight: 1.5 }}>
+              계산 결과를 바탕으로, 은퇴 생활을 더 안정적으로 만드는 방법을 정리했어요.
+            </p>
+          </div>
+          <div
+            style={{
+              padding: 16,
+              borderRadius: 20,
+              background: '#f9f0fc',
+            }}
+          >
+            <p style={{ margin: 0, color: '#191f28', lineHeight: 1.6, fontSize: 16, fontFamily: 'Pretendard, sans-serif' }}>
+              현재 입력 기준으로 안정적인 계획이에요. 입력값을 바꾸면 바로 다시 확인할 수 있어요.
+            </p>
+          </div>
         </div>
       </section>
     );
@@ -140,29 +136,40 @@ export default function ActionPlanSection({ counterfactual }: ActionPlanSectionP
 
   return (
     <section>
-      {/* 섹션 레이블 */}
-      <div style={{ marginBottom: 14 }}>
-        <span
-          style={{
-            fontSize: 14,
-            fontWeight: 700,
-            color: 'var(--text-faint)',
-            letterSpacing: '0.1em',
-            textTransform: 'uppercase',
-          }}
-        >
-          지금 해야 할 일
-        </span>
-      </div>
+      <div
+        style={{
+          borderRadius: 32,
+          background: '#ffffff',
+          boxShadow: '0px 2px 8px 4px rgba(121,158,195,0.08)',
+          overflow: 'hidden',
+          padding: '28px 32px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 24,
+        }}
+      >
+        {/* 타이틀 */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <p style={{ margin: 0, fontSize: 20, fontWeight: 700, color: '#191f28', fontFamily: 'Pretendard, sans-serif', lineHeight: 1.5 }}>
+            더 나은 은퇴 준비를 위해 추천드려요
+          </p>
+          <p style={{ margin: 0, fontSize: 16, fontWeight: 400, color: '#4e5968', fontFamily: 'Pretendard, sans-serif', lineHeight: 1.5 }}>
+            계산 결과를 바탕으로, 은퇴 생활을 더 안정적으로 만드는 방법을 정리했어요.
+          </p>
+        </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        {slots.map((rec) => (
-          <SlotCard
-            key={rec.slot}
-            rec={rec}
-            baselineSustainable={baselineSustainable}
-          />
-        ))}
+        {/* 추천 카드 목록 */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {slots.map((rec, i) => (
+            <SlotCard
+              key={rec.slot}
+              rec={rec}
+              index={i}
+              baselineSustainable={baselineSustainable}
+              targetMonthly={targetMonthly}
+            />
+          ))}
+        </div>
       </div>
     </section>
   );
