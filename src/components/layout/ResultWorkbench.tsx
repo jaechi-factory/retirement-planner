@@ -3,10 +3,10 @@ import { usePlannerStore } from '../../store/usePlannerStore';
 import { calcFinancialTotalAsset } from '../../engine/assetWeighting';
 import { PROPERTY_STRATEGY_LABELS } from '../../engine/propertyStrategiesV2';
 import type { PropertyOptionResult } from '../../types/calculationV2';
-import { buildResultNarrativeModel } from './resultNarrative';
 import type { HouseDecisionStrategy } from './houseDecisionVM';
 import { resolveSelectedStrategy } from './selectedStrategy';
 import ResultHeroSection from './ResultHeroSection';
+import ReinvestmentExplainerSection from './ReinvestmentExplainerSection';
 import WhyThisResultSection from './WhyThisResultSection';
 import EvidenceWorkspace from './EvidenceWorkspace';
 import ActionPlanSection from './ActionPlanSection';
@@ -139,13 +139,16 @@ export default function ResultWorkbench() {
   const panelStyle = {
     flex: 1,
     minWidth: 0,
-    padding: '38px 40px 80px',
+    padding: 24,
     background: 'var(--fig-card-bg)',
-    backdropFilter: 'blur(20px) saturate(180%)',
-    WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+    backdropFilter: 'blur(40px) saturate(200%)',
+    WebkitBackdropFilter: 'blur(40px) saturate(200%)',
     borderRadius: 32,
-    border: '1px solid rgba(255,255,255,0.35)',
+    border: '1px solid rgba(255,255,255,0.55)',
     boxSizing: 'border-box' as const,
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: 24,
   };
 
   // ── 에러/빈 상태 ──
@@ -206,8 +209,6 @@ export default function ResultWorkbench() {
     ? (PROPERTY_STRATEGY_LABELS[chartStrategy] ?? chartStrategy)
     : '집 없음(금융자산 기준)';
 
-  const narrative = buildResultNarrativeModel({ summary, propertyOptions, inputs, hasRealEstate });
-
   const selectedPropertyStrategy = hasRealEstate ? chartStrategy : null;
   const hasSelectableHouseRows = hasRealEstate && propertyOptions.some((option) => option.yearlyAggregates.length > 0);
 
@@ -217,11 +218,16 @@ export default function ResultWorkbench() {
       {/* 1. 핵심 판정 */}
       <ResultHeroSection
         summary={summary}
-        narrative={narrative}
-        hasRealEstate={hasRealEstate}
+        inputs={inputs}
       />
 
-      {/* 2. 왜 이런 결과인지 */}
+      {/* 2. 재투자 가정 설명 */}
+      <ReinvestmentExplainerSection
+        inputs={inputs}
+        annualNetSavings={result.annualNetSavings}
+      />
+
+      {/* 3. 왜 이런 결과인지 */}
       <WhyThisResultSection
         summary={summary}
         inputs={inputs}

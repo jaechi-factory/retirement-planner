@@ -1,12 +1,13 @@
 interface Props {
   title: string;
+  subtitle?: string;
   children: React.ReactNode;
   itemGap?: number;
 }
 
 import React from 'react';
 
-export default function SectionCard({ title, children, itemGap = 24 }: Props) {
+export default function SectionCard({ title, subtitle, children, itemGap = 24 }: Props) {
   return (
     <div
       style={{
@@ -31,22 +32,37 @@ export default function SectionCard({ title, children, itemGap = 24 }: Props) {
           width: '100%',
           display: 'flex',
           flexDirection: 'column',
-          gap: 24,
+          gap: 28,
         }}
       >
-        {/* 섹션 타이틀 */}
-        <h2
-          style={{
-            margin: 0,
-            fontSize: 24,
-            fontWeight: 700,
-            color: 'var(--fig-title-color)',
-            fontFamily: 'Pretendard, sans-serif',
-            lineHeight: 1.5,
-          }}
-        >
-          {title}
-        </h2>
+        {/* 섹션 헤더 (타이틀 + 서브타이틀) */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <h2
+            style={{
+              margin: 0,
+              fontSize: 24,
+              fontWeight: 700,
+              color: 'var(--fig-title-color)',
+              fontFamily: 'Pretendard, sans-serif',
+              lineHeight: 1.5,
+            }}
+          >
+            {title}
+          </h2>
+          {subtitle && (
+            <p
+              style={{
+                margin: 0,
+                fontSize: 14,
+                color: '#4e5968',
+                fontFamily: 'Pretendard, sans-serif',
+                lineHeight: 1.5,
+              }}
+            >
+              {subtitle}
+            </p>
+          )}
+        </div>
 
         {/* 필드 영역 */}
         <div

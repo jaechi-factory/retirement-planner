@@ -1,313 +1,100 @@
 import type { CalculationResultV2 } from '../../types/calculationV2';
-import type { NarrativeMetric, ResultNarrativeModel } from './resultNarrative';
+import type { PlannerInputs } from '../../types/inputs';
 
 interface ResultHeroSectionProps {
   summary: CalculationResultV2['summary'];
-  narrative: ResultNarrativeModel;
-  hasRealEstate: boolean;
+  inputs: PlannerInputs;
 }
 
-type StatusBadge = 'stable' | 'adjust' | 'shortage';
-
-function getStatusBadge(summary: CalculationResultV2['summary']): StatusBadge {
-  if (summary.failureAge !== null) return 'shortage';
-  if (summary.targetGap < 0) return 'adjust';
-  return 'stable';
+function getCase(summary: CalculationResultV2['summary']): 'positive' | 'negative' {
+  return summary.failureAge === null ? 'positive' : 'negative';
 }
 
-const STATUS_CONFIG: Record<StatusBadge, {
-  label: string;
-  bannerBg: string;
-  bannerText: string;
-  badgeBg: string;
-  badgeText: string;
-  badgeBorder: string;
-}> = {
-  stable: {
-    label: '안정적',
-    bannerBg: 'var(--palette-yellow)',
-    bannerText: 'var(--palette-ink)',
-    badgeBg: 'rgba(248,205,51,0.18)',
-    badgeText: '#B8900A',
-    badgeBorder: 'rgba(248,205,51,0.5)',
-  },
-  adjust: {
-    label: '조정 필요',
-    bannerBg: 'var(--palette-pink)',
-    bannerText: '#FFFDFE',
-    badgeBg: 'rgba(203,132,114,0.22)',
-    badgeText: '#CB8472',
-    badgeBorder: 'rgba(203,132,114,0.4)',
-  },
-  shortage: {
-    label: '자금 부족',
-    bannerBg: 'var(--palette-orange)',
-    bannerText: '#FFFDFE',
-    badgeBg: 'rgba(255,102,0,0.16)',
-    badgeText: '#FF6600',
-    badgeBorder: 'rgba(255,102,0,0.35)',
-  },
-};
+export default function ResultHeroSection({ summary, inputs }: ResultHeroSectionProps) {
+  const caseType = getCase(summary);
+  const isPositive = caseType === 'positive';
 
-function metricToneColor(tone?: NarrativeMetric['tone']): string {
-  if (tone === 'positive') return 'var(--palette-yellow)';
-  if (tone === 'negative') return 'var(--palette-orange)';
-  return 'var(--text-on-dark)';
-}
+  const lifeExpectancy = inputs.goal.lifeExpectancy || 90;
+  const monthly = Math.round(summary.sustainableMonthly);
+  const target = inputs.goal.targetMonthly;
 
-// "월 621만원" → { num: "621", suffix: "만원" }
-function parseMonthlyValue(value: string): { num: string; suffix: string } | null {
-  const match = value.match(/^월\s*([\d,]+)(만원.*)$/);
-  if (match) return { num: match[1], suffix: match[2] };
-  return null;
-}
+  // 배지 텍스트
+  const badgeText = isPositive ? '미래가 긍정적이에요' : '미래가 부정적이에요';
+  const badgeColor = isPositive ? '#2272eb' : '#f04438';
 
-export default function ResultHeroSection({ summary, narrative, hasRealEstate }: ResultHeroSectionProps) {
-  const badge = getStatusBadge(summary);
-  const cfg = STATUS_CONFIG[badge];
-  // metrics[0] = 가능한 월 생활비 ("월 608만원")
-  const mainMetric = narrative.metrics[0];
-  const parsed = mainMetric ? parseMonthlyValue(mainMetric.value) : null;
-  const auxMetrics = narrative.metrics.slice(1);
+  // 본문 2줄
+  const mainLine1 = `${lifeExpectancy}세까지 매월`;
+  const mainLine2 = `${monthly.toLocaleString('ko-KR')}만원을 쓸 수 있어요`;
+
+  // 서브타이틀
+  let subtitleText: string;
+  if (isPositive) {
+    subtitleText =
+      monthly >= target && target > 0
+        ? '목표 금액보다 더 많은 돈을 쓸 수 있어요.'
+        : '목표 금액에 근접하게 쓸 수 있어요.';
+  } else {
+    subtitleText = summary.failureAge !== null
+      ? `${summary.failureAge}세에 자산이 바닥날 수 있어요.`
+      : '목표 금액보다 적게 쓸 수 밖에 없어요.';
+  }
 
   return (
-    <section style={{ marginBottom: 40 }}>
-      {/* ── Status Banner (full-width 상단 스트립) ── */}
-      <div
-        style={{
-          background: cfg.bannerBg,
-          borderRadius: '16px 16px 0 0',
-          padding: '8px 24px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 10,
-        }}
-      >
-        <span
-          style={{
-            fontSize: 11,
-            fontWeight: 700,
-            color: cfg.bannerText,
-            letterSpacing: '0.08em',
-            textTransform: 'uppercase',
-          }}
-        >
-          {cfg.label}
-        </span>
-        <span
-          style={{
-            width: 3,
-            height: 3,
-            borderRadius: '50%',
-            background: cfg.bannerText,
-            opacity: 0.5,
-            flexShrink: 0,
-          }}
-        />
-        <span
-          style={{
-            fontSize: 11,
-            color: cfg.bannerText,
-            opacity: 0.72,
-            fontWeight: 500,
-          }}
-        >
-          {hasRealEstate ? '추천 전략 기준' : '무주택 기준'} · 최대 생활비
-        </span>
-      </div>
-
-      {/* ── Dark Hero Body ── */}
-      <div
-        style={{
-          background: 'var(--surface-hero)',
-          borderRadius: '0 0 16px 16px',
-          padding: '32px 28px 28px',
-        }}
-      >
-        {/* ── 핵심 숫자 블록 ── */}
-        <div style={{ marginBottom: 28 }}>
-          {/* 레이블 */}
-          <span
+    <div
+      style={{
+        background: '#ffffff',
+        borderRadius: 32,
+        padding: '28px 32px',
+        boxShadow: '0px 2px 8px 4px rgba(121,158,195,0.08)',
+        marginBottom: 0,
+      }}
+    >
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {/* 배지 + 메인 텍스트 묶음 */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          {/* 배지 */}
+          <p
             style={{
-              fontSize: 11,
-              fontWeight: 600,
-              color: 'var(--text-on-dark-muted)',
-              letterSpacing: '0.08em',
-              textTransform: 'uppercase',
-              display: 'block',
-              marginBottom: 8,
-            }}
-          >
-            {mainMetric?.label ?? '가능한 월 생활비'}
-          </span>
-
-          {/* 대형 숫자 */}
-          {parsed ? (
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, flexWrap: 'wrap', lineHeight: 1 }}>
-              <span
-                style={{
-                  fontSize: 18,
-                  fontWeight: 700,
-                  color: 'var(--text-on-dark-muted)',
-                  letterSpacing: '-0.01em',
-                  alignSelf: 'flex-end',
-                  paddingBottom: 6,
-                }}
-              >
-                월
-              </span>
-              <span
-                style={{
-                  fontSize: 68,
-                  fontWeight: 900,
-                  color: 'var(--text-on-dark)',
-                  letterSpacing: '-0.04em',
-                  lineHeight: 1,
-                }}
-              >
-                {parsed.num}
-              </span>
-              <span
-                style={{
-                  fontSize: 26,
-                  fontWeight: 700,
-                  color: 'var(--text-on-dark)',
-                  letterSpacing: '-0.02em',
-                  lineHeight: 1,
-                  alignSelf: 'flex-end',
-                  paddingBottom: 4,
-                }}
-              >
-                {parsed.suffix}
-              </span>
-            </div>
-          ) : (
-            <span
-              style={{
-                fontSize: 32,
-                fontWeight: 900,
-                color: 'var(--text-on-dark)',
-                letterSpacing: '-0.03em',
-                lineHeight: 1.1,
-                display: 'block',
-              }}
-            >
-              {mainMetric?.value ?? ''}
-            </span>
-          )}
-
-          {/* 서브타이틀 — narrative headline */}
-          <span
-            style={{
-              fontSize: 14,
-              color: 'var(--text-on-dark-muted)',
+              margin: 0,
+              fontSize: 16,
+              fontWeight: 500,
+              color: badgeColor,
+              fontFamily: 'Pretendard, sans-serif',
               lineHeight: 1.5,
-              display: 'block',
-              marginTop: 10,
             }}
           >
-            {narrative.headline}
-          </span>
-        </div>
+            {badgeText}
+          </p>
 
-        {/* ── 보조 지표 2개 ── */}
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
-            gap: 8,
-            marginBottom: 24,
-          }}
-        >
-          {auxMetrics.map((metric) => (
-
-            <div
-              key={metric.label}
-              style={{
-                borderRadius: 10,
-                border: '1px solid var(--border-on-dark)',
-                background: 'rgba(255,253,254,0.05)',
-                padding: '14px 14px',
-              }}
-            >
-              <span
-                style={{
-                  fontSize: 10,
-                  fontWeight: 600,
-                  color: 'var(--text-on-dark-muted)',
-                  letterSpacing: '0.06em',
-                  textTransform: 'uppercase',
-                  display: 'block',
-                  marginBottom: 6,
-                }}
-              >
-                {metric.label}
-              </span>
-              <span
-                style={{
-                  fontSize: 18,
-                  fontWeight: 800,
-                  color: metricToneColor(metric.tone),
-                  letterSpacing: '-0.02em',
-                  lineHeight: 1.2,
-                  display: 'block',
-                }}
-              >
-                {metric.value}
-              </span>
-            </div>
-          ))}
-        </div>
-
-        {/* 권장 전략 줄 */}
-        <div
-          style={{
-            borderTop: '1px solid var(--border-on-dark)',
-            paddingTop: 18,
-            display: 'flex',
-            alignItems: 'flex-start',
-            gap: 10,
-          }}
-        >
-          <span
+          {/* 메인 텍스트 (2줄) */}
+          <div
             style={{
-              fontSize: 10,
+              fontSize: 28,
               fontWeight: 700,
-              color: 'var(--text-on-dark-muted)',
-              letterSpacing: '0.06em',
-              textTransform: 'uppercase',
-              paddingTop: 2,
-              flexShrink: 0,
+              color: '#191f28',
+              fontFamily: 'Pretendard, sans-serif',
+              lineHeight: 1.5,
             }}
           >
-            {hasRealEstate ? '권장 전략' : '현재 상태'}
-          </span>
-          <div>
-            <span
-              style={{
-                fontSize: 15,
-                fontWeight: 700,
-                color: 'var(--text-on-dark)',
-                display: 'block',
-                lineHeight: 1.3,
-                marginBottom: 4,
-              }}
-            >
-              {narrative.recommendedStrategyLabel}
-            </span>
-            <span
-              style={{
-                fontSize: 13,
-                color: 'var(--text-on-dark-muted)',
-                lineHeight: 1.55,
-                display: 'block',
-              }}
-            >
-              {narrative.recommendationReasonLine}
-            </span>
+            <p style={{ margin: 0 }}>{mainLine1}</p>
+            <p style={{ margin: 0 }}>{mainLine2}</p>
           </div>
         </div>
+
+        {/* 서브타이틀 */}
+        <p
+          style={{
+            margin: 0,
+            fontSize: 16,
+            fontWeight: 400,
+            color: '#4e5968',
+            fontFamily: 'Pretendard, sans-serif',
+            lineHeight: 1.5,
+          }}
+        >
+          {subtitleText}
+        </p>
       </div>
-    </section>
+    </div>
   );
 }
