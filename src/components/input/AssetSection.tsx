@@ -22,19 +22,19 @@ export default function AssetSection() {
           key={key}
           style={{
             display: 'flex',
-            gap: 19,
+            gap: 16,
             alignItems: 'flex-start',
             minWidth: 0,
           }}
         >
-          <div style={{ flex: '1 0 0', minWidth: 0 }}>
+          <div style={{ flex: '143 0 0', minWidth: 0 }}>
             <NumberInput
               label={ASSET_LABELS[key]}
               value={inputs.assets[key].amount}
               onChange={(v) => setAsset(key, { amount: v })}
             />
           </div>
-          <div style={{ flex: '1 0 0', minWidth: 0 }}>
+          <div style={{ flex: '110 0 0', minWidth: 0 }}>
             <RateInput
               label="예상 수익율(연)"
               value={inputs.assets[key].expectedReturn}

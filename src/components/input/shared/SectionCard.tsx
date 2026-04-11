@@ -29,14 +29,14 @@ borderRadius: 'var(--fig-card-radius)',
           width: '100%',
           display: 'flex',
           flexDirection: 'column',
-          gap: 32,
+          gap: 28,
         }}
       >
         {/* 섹션 타이틀 */}
         <h2
           style={{
             margin: 0,
-            fontSize: 26,
+            fontSize: 24,
             fontWeight: 700,
             color: 'var(--fig-title-color)',
             fontFamily: 'Pretendard, sans-serif',
@@ -51,7 +51,7 @@ borderRadius: 'var(--fig-card-radius)',
           style={{
             display: 'flex',
             flexDirection: 'column',
-            gap: 32,
+            gap: 24,
           }}
         >
           {children}
