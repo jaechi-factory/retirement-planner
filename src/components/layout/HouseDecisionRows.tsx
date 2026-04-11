@@ -63,10 +63,7 @@ export default function HouseDecisionRows({ rows, onSelectStrategy }: HouseDecis
             style={{
               borderBottom: index < rows.length - 1 ? '1px solid var(--result-border-subtle)' : 'none',
               background: selected ? '#E1EDFF' : (hovered ? 'var(--result-surface-base)' : 'transparent'),
-              boxShadow: selected
-                ? 'inset 4px 0 0 var(--result-accent-strong), inset 0 0 0 1px rgba(49, 130, 246, 0.22)'
-                : (hovered ? 'inset 2px 0 0 var(--result-border-strong)' : 'none'),
-              transition: 'background-color 0.12s ease, box-shadow 0.12s ease',
+              transition: 'background-color 0.12s ease',
             }}
           >
             <button
