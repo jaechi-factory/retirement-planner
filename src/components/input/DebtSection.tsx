@@ -3,6 +3,7 @@ import { usePlannerStore } from '../../store/usePlannerStore';
 import type { RepaymentType } from '../../types/inputs';
 import NumberInput from './shared/NumberInput';
 import RateInput from './shared/RateInput';
+import PillToggle from './shared/PillToggle';
 import SectionCard from './shared/SectionCard';
 import {
   MORTGAGE_REPAYMENT_TYPES,
@@ -36,47 +37,6 @@ const DEBT_CONFIG: Record<DebtKey, {
   },
 };
 
-/** 행별 없어요/있어요 pill */
-function LoanPillToggle({
-  value,
-  onChange,
-}: {
-  value: boolean;
-  onChange: (v: boolean) => void;
-}) {
-  const pills = [
-    { value: false, label: '없어요' },
-    { value: true, label: '있어요' },
-  ];
-  return (
-    <div style={{ display: 'flex', gap: 4 }}>
-      {pills.map((pill) => {
-        const selected = value === pill.value;
-        return (
-          <button
-            key={String(pill.value)}
-            onClick={() => onChange(pill.value)}
-            style={{
-              width: 63,
-              height: 32,
-              borderRadius: 8,
-              border: 'none',
-              background: selected ? '#333d4b' : 'rgba(112,115,124,0.08)',
-              color: selected ? '#ffffff' : 'rgba(46,47,51,0.88)',
-              fontSize: 14,
-              fontWeight: selected ? 600 : 400,
-              cursor: 'pointer',
-              fontFamily: 'Pretendard, sans-serif',
-              transition: 'background 0.15s, color 0.15s',
-            }}
-          >
-            {pill.label}
-          </button>
-        );
-      })}
-    </div>
-  );
-}
 
 /** 상환방식 셀렉트박스 */
 function RepaymentSelect({
@@ -182,10 +142,10 @@ function RepaymentSelect({
 /** 대출 행 카드 */
 function LoanRow({ debtKey }: { debtKey: DebtKey }) {
   const { inputs, setDebt } = usePlannerStore();
-  const [hasLoan, setHasLoan] = useState(false);
-
   const config = DEBT_CONFIG[debtKey];
   const debt = inputs.debts[debtKey];
+  // 새로고침 후 store 복원 시 대출 정보가 있으면 '있어요' 상태로 표시
+  const [hasLoan, setHasLoan] = useState(debt.balance > 0);
 
   const schedule =
     hasLoan && debt.balance > 0 && debt.repaymentYears > 0
@@ -202,29 +162,21 @@ function LoanRow({ debtKey }: { debtKey: DebtKey }) {
   };
 
   return (
-    <div
-      style={{
-        background: '#ffffff',
-        borderRadius: 10,
-        padding: '12px 16px',
-        display: 'flex',
-        flexDirection: 'column',
-      }}
-    >
-      {/* 헤더 행 */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <span style={{ fontSize: 15, fontWeight: 600, color: '#191f28' }}>{config.label}</span>
-        <LoanPillToggle value={hasLoan} onChange={handleToggle} />
-      </div>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      {/* 상위: 대출 여부 pill */}
+      <PillToggle
+        label={config.label}
+        value={hasLoan}
+        onChange={handleToggle}
+        falseLabel="없어요"
+        trueLabel="있어요"
+      />
 
-      {/* 펼쳐진 컨텐츠 */}
+      {/* 하위: 있어요 선택 시 표시 */}
       {hasLoan && (
-        <>
-          {/* 구분선 */}
-          <div style={{ height: 1, background: '#d9d9d9', margin: '12px 0' }} />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {/* 상환방식 셀렉트 */}
+          {/* 상환방식 셀렉트 */}
             <RepaymentSelect
               value={debt.repaymentType}
               onChange={(t) => setDebt(debtKey, { repaymentType: t })}
@@ -233,21 +185,16 @@ function LoanRow({ debtKey }: { debtKey: DebtKey }) {
               descriptions={config.descriptions}
             />
 
-            {/* 금액 */}
             <NumberInput
               label="금액"
               value={debt.balance}
               onChange={(v) => setDebt(debtKey, { balance: v })}
             />
-
-            {/* 이자(연) */}
             <RateInput
               label="이자(연)"
               value={debt.interestRate}
               onChange={(v) => setDebt(debtKey, { interestRate: v })}
             />
-
-            {/* 갚는 기간 */}
             <NumberInput
               label="갚는 기간"
               value={debt.repaymentYears}
@@ -329,8 +276,7 @@ function LoanRow({ debtKey }: { debtKey: DebtKey }) {
                 </div>
               </div>
             )}
-          </div>
-        </>
+        </div>
       )}
     </div>
   );
@@ -339,9 +285,9 @@ function LoanRow({ debtKey }: { debtKey: DebtKey }) {
 export default function DebtSection() {
   return (
     <SectionCard title="받은 대출이 있나요?">
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        <LoanRow debtKey="mortgage" />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
         <LoanRow debtKey="creditLoan" />
+        <LoanRow debtKey="mortgage" />
       </div>
     </SectionCard>
   );

@@ -134,7 +134,7 @@
   --fig-input-border-empty:  #b0b8c1;
   --fig-input-border-filled: #191f28;
   --fig-input-border-focus:  #fb8800;
-  --fig-input-shadow-focus:  none;
+  --fig-input-shadow-focus:  2px 2px 8px 0px rgba(120,106,58,0.24);
 
   --fig-btn-disabled-bg:   #f4f4f5;
   --fig-btn-disabled-text: rgba(55,56,60,0.28);
