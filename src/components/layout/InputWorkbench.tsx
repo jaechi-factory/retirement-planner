@@ -12,7 +12,9 @@ export default function InputWorkbench() {
       style={{
         width: 333,
         flexShrink: 0,
-        height: '100%',
+        position: 'sticky',
+        top: 0,
+        height: 'calc(100vh / 0.85)',
         overflowY: 'auto',
         scrollbarWidth: 'none',
         overscrollBehavior: 'none',

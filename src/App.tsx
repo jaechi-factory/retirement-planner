@@ -6,7 +6,7 @@ export default function App() {
   return (
     <div
       style={{
-        height: 'calc(100vh / 0.85)',
+        minHeight: 'calc(100vh / 0.85)',
         background: 'var(--fig-page-bg)',
         display: 'flex',
         flexDirection: 'column',
@@ -59,8 +59,8 @@ export default function App() {
           display: 'flex',
           gap: 16,
           width: 1100,
-          flex: 1,
-          minHeight: 0,
+          alignItems: 'flex-start',
+          paddingBottom: 80,
           boxSizing: 'border-box',
         }}
       >
