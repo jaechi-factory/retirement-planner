@@ -6,7 +6,7 @@ export default function App() {
   return (
     <div
       style={{
-        height: '100vh',
+        height: 'calc(100vh / 0.85)',
         background: 'var(--fig-page-bg)',
         display: 'flex',
         flexDirection: 'column',
