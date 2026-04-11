@@ -57,7 +57,7 @@ function CustomTooltip({ active, payload }: { active?: boolean; payload?: Toolti
         border: '1px solid var(--result-border-soft)',
         borderRadius: 8,
         padding: '8px 12px',
-        fontSize: 13,
+        fontSize: 14,
         lineHeight: 1.6,
         zIndex: 9999,
         position: 'relative',
@@ -125,7 +125,7 @@ export default function HouseStrategyComparisonSection({
           집을 어떻게 쓸지 비교
         </span>
         <span
-          style={{ fontSize: 12, color: 'rgba(36,39,46,0.64)', display: 'block', lineHeight: 1.55 }}
+          style={{ fontSize: 14, color: 'rgba(36,39,46,0.64)', display: 'block', lineHeight: 1.55 }}
         >
           집을 그대로 둘지, 팔지, 담보대출을 받을지 비교해보세요.
         </span>
@@ -135,7 +135,7 @@ export default function HouseStrategyComparisonSection({
       {chartData.length > 0 && (
         <div style={{ marginBottom: 'var(--result-space-4)' }}>
           <span
-            style={{ fontSize: 12, fontWeight: 500, color: 'var(--result-text-body-color)', display: 'block', marginBottom: 'var(--result-space-2)' }}
+            style={{ fontSize: 14, fontWeight: 500, color: 'var(--result-text-body-color)', display: 'block', marginBottom: 'var(--result-space-2)' }}
           >
             전략별 가능한 월 생활비
           </span>
@@ -148,13 +148,13 @@ export default function HouseStrategyComparisonSection({
               <CartesianGrid vertical={false} stroke="var(--result-border-subtle)" />
               <XAxis
                 dataKey="label"
-                tick={{ fontSize: 12, fill: 'var(--result-text-meta-color)', fontFamily: 'inherit' }}
+                tick={{ fontSize: 14, fill: 'var(--result-text-meta-color)', fontFamily: 'inherit' }}
                 axisLine={false}
                 tickLine={false}
               />
               <YAxis
                 tickFormatter={(v) => fmtKRWAxis(v)}
-                tick={{ fontSize: 11, fill: 'var(--result-text-faint-color)', fontFamily: 'inherit' }}
+                tick={{ fontSize: 14, fill: 'var(--result-text-faint-color)', fontFamily: 'inherit' }}
                 axisLine={false}
                 tickLine={false}
                 domain={[0, Math.ceil(maxMonthly * 1.2)]}
@@ -184,7 +184,7 @@ export default function HouseStrategyComparisonSection({
 
       {/* 전략 선택 행 */}
       <span
-        style={{ fontSize: 12, color: 'rgba(36,39,46,0.64)', display: 'block', marginBottom: 'var(--result-space-2)', lineHeight: 1.5 }}
+        style={{ fontSize: 14, color: 'rgba(36,39,46,0.64)', display: 'block', marginBottom: 'var(--result-space-2)', lineHeight: 1.5 }}
       >
         전략을 누르면 아래 근거 차트가 바뀌어요.
       </span>

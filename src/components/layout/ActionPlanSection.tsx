@@ -82,7 +82,7 @@ export default function ActionPlanSection({ summary, inputs, hasRealEstate, prop
     return (
       <section>
         <div style={{ marginBottom: 14 }}>
-          <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-faint)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+          <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-faint)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
             지금 해야 할 일
           </span>
         </div>
@@ -110,7 +110,7 @@ export default function ActionPlanSection({ summary, inputs, hasRealEstate, prop
       <div style={{ marginBottom: 14 }}>
         <span
           style={{
-            fontSize: 10,
+            fontSize: 14,
             fontWeight: 700,
             color: 'var(--text-faint)',
             letterSpacing: '0.1em',
@@ -145,7 +145,7 @@ export default function ActionPlanSection({ summary, inputs, hasRealEstate, prop
                 borderRadius: '50%',
                 background: 'var(--palette-ink)',
                 color: 'var(--palette-card)',
-                fontSize: 11,
+                fontSize: 14,
                 fontWeight: 800,
                 display: 'flex',
                 alignItems: 'center',
@@ -173,7 +173,7 @@ export default function ActionPlanSection({ summary, inputs, hasRealEstate, prop
               </span>
               {item.detail && (
                 <span
-                  style={{ display: 'block', lineHeight: 1.6, fontSize: 12, color: 'rgba(36,39,46,0.64)' }}
+                  style={{ display: 'block', lineHeight: 1.6, fontSize: 14, color: 'rgba(36,39,46,0.64)' }}
                 >
                   {item.detail}
                 </span>

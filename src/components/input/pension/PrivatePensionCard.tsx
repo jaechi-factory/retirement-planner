@@ -44,7 +44,7 @@ function PrivatePensionProductCard({
         <button
           onClick={onDelete}
           style={{
-            fontSize: 12, color: 'var(--text-faint)', background: 'none',
+            fontSize: 14, color: 'var(--text-faint)', background: 'none',
             border: '1px solid var(--border-base)', borderRadius: 6, cursor: 'pointer', padding: '2px 8px',
           }}
         >
@@ -69,7 +69,7 @@ function PrivatePensionProductCard({
 
         {showAdvanced && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <div style={{ fontSize: 12, color: 'var(--text-faint)' }}>
+            <div style={{ fontSize: 14, color: 'var(--text-faint)' }}>
               더 자세히 계산하고 싶을 때만 따로 설정해 주세요.
             </div>
             <Row>
@@ -142,10 +142,10 @@ export default function PrivatePensionCard() {
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
       <div>
         <span style={{ fontSize: 14, fontWeight: 700, color: isEnabled ? '#24272E' : 'rgba(36,39,46,0.64)' }}>개인연금</span>
-        <span style={{ fontSize: 12, color: 'rgba(36,39,46,0.64)', marginTop: 2, display: 'block' }}>IRP · 연금저축펀드 · 연금보험 등</span>
+        <span style={{ fontSize: 14, color: 'rgba(36,39,46,0.64)', marginTop: 2, display: 'block' }}>IRP · 연금저축펀드 · 연금보험 등</span>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <span style={{ fontSize: 12, fontWeight: 500, color: isEnabled ? '#fb8800' : 'rgba(36,39,46,0.64)' }}>
+        <span style={{ fontSize: 14, fontWeight: 500, color: isEnabled ? '#fb8800' : 'rgba(36,39,46,0.64)' }}>
           {isEnabled ? '켜짐' : '꺼짐'}
         </span>
         <div
@@ -173,7 +173,7 @@ export default function PrivatePensionCard() {
       {Header}
 
       {!isEnabled ? (
-        <span style={{ fontSize: 12, color: 'rgba(36,39,46,0.64)', lineHeight: 1.7, display: 'block' }}>
+        <span style={{ fontSize: 14, color: 'rgba(36,39,46,0.64)', lineHeight: 1.7, display: 'block' }}>
           개인연금이 있으면 위 토글을 켜서 입력해요.<br />
           없으면 넘어가도 괜찮아요.
         </span>
@@ -185,7 +185,7 @@ export default function PrivatePensionCard() {
             <button
               onClick={exitDetailMode}
               style={{
-                fontSize: 12, fontWeight: 600, color: 'var(--text-muted)',
+                fontSize: 14, fontWeight: 600, color: 'var(--text-muted)',
                 background: 'none', border: '1px solid var(--border-base)',
                 borderRadius: 6, padding: '3px 10px', cursor: 'pointer',
               }}
@@ -195,7 +195,7 @@ export default function PrivatePensionCard() {
           </div>
 
           {privatePension.products.length === 0 ? (
-            <div style={{ fontSize: 12, color: 'var(--text-faint)', marginBottom: 12 }}>
+            <div style={{ fontSize: 14, color: 'var(--text-faint)', marginBottom: 12 }}>
               아래에서 상품을 추가해 주세요.
             </div>
           ) : (
@@ -211,14 +211,14 @@ export default function PrivatePensionCard() {
             </div>
           )}
 
-          <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 6 }}>상품 추가</div>
+          <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 6 }}>상품 추가</div>
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             {PRODUCT_LABELS.map(label => (
               <button
                 key={label}
                 onClick={() => addProduct(label)}
                 style={{
-                  fontSize: 12, fontWeight: 600, padding: '5px 12px',
+                  fontSize: 14, fontWeight: 600, padding: '5px 12px',
                   border: '1.5px solid var(--border-base)', borderRadius: 20,
                   background: 'var(--surface-card)', color: 'var(--text-base)', cursor: 'pointer',
                 }}
@@ -234,7 +234,7 @@ export default function PrivatePensionCard() {
           <span style={{ fontSize: 16, fontWeight: 700, color: '#24272E', display: 'block', margin: '4px 0 2px' }}>
             월 {fmtKRW(displayValue)}
           </span>
-          <span style={{ fontSize: 12, color: 'rgba(36,39,46,0.64)', display: 'block', marginBottom: 12 }}>
+          <span style={{ fontSize: 14, color: 'rgba(36,39,46,0.64)', display: 'block', marginBottom: 12 }}>
             {privatePension.startAge}세부터 {privatePension.payoutYears}년간 받아요
           </span>
 
@@ -256,7 +256,7 @@ export default function PrivatePensionCard() {
             </TextBtn>
             {showAdvancedRate && (
               <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <div style={{ fontSize: 12, color: 'var(--text-faint)' }}>
+                <div style={{ fontSize: 14, color: 'var(--text-faint)' }}>
                   더 자세히 계산하고 싶을 때만 따로 설정해 주세요.
                 </div>
                 <Row>
@@ -270,7 +270,7 @@ export default function PrivatePensionCard() {
           <button
             onClick={enterDetailMode}
             style={{
-              marginTop: 12, width: '100%', fontSize: 12, fontWeight: 600,
+              marginTop: 12, width: '100%', fontSize: 14, fontWeight: 600,
               color: 'var(--text-strong)', background: 'var(--accent-selected-bg)',
               border: 'none', borderRadius: 8, padding: '9px 14px', cursor: 'pointer',
             }}

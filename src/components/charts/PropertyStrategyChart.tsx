@@ -71,7 +71,7 @@ export default function PropertyStrategyChart({ options }: Props) {
       }}
     >
       {/* 지속가능 생활비 비교 */}
-      <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-base)', marginBottom: 12 }}>
+      <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-base)', marginBottom: 12 }}>
         방법별 최대 월 생활비
       </div>
       <ResponsiveContainer width="100%" height={140}>
@@ -80,21 +80,21 @@ export default function PropertyStrategyChart({ options }: Props) {
           <XAxis
             type="number"
             tickFormatter={(v) => `${v}만`}
-            tick={{ fontSize: 10, fill: 'var(--text-faint)' }}
+            tick={{ fontSize: 14, fill: 'var(--text-faint)' }}
             tickLine={false}
             axisLine={false}
           />
           <YAxis
             type="category"
             dataKey="name"
-            tick={{ fontSize: 11, fill: 'var(--text-base)' }}
+            tick={{ fontSize: 14, fill: 'var(--text-base)' }}
             tickLine={false}
             axisLine={false}
             width={56}
           />
           <Tooltip
             formatter={(v) => [`${Number(v).toLocaleString()}만원`]}
-            contentStyle={{ fontSize: 12, borderRadius: 8 }}
+            contentStyle={{ fontSize: 14, borderRadius: 8 }}
           />
           <Bar
             dataKey="월생활비"
@@ -106,7 +106,7 @@ export default function PropertyStrategyChart({ options }: Props) {
       </ResponsiveContainer>
 
       {/* 순자산 추이 오버레이 */}
-      <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-base)', padding: '16px 12px 10px', marginTop: 8 }}>
+      <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-base)', padding: '16px 12px 10px', marginTop: 8 }}>
         방법별 전체 자산 변화
       </div>
       <ResponsiveContainer width="100%" height={200}>
@@ -115,14 +115,14 @@ export default function PropertyStrategyChart({ options }: Props) {
           <XAxis
             dataKey="age"
             tickFormatter={(v) => `${v}세`}
-            tick={{ fontSize: 10, fill: 'var(--text-faint)' }}
+            tick={{ fontSize: 14, fill: 'var(--text-faint)' }}
             tickLine={false}
             axisLine={false}
             interval="preserveStartEnd"
           />
           <YAxis
             tickFormatter={(v) => v >= 10000 ? `${(v / 10000).toFixed(0)}억` : `${v}`}
-            tick={{ fontSize: 10, fill: 'var(--text-faint)' }}
+            tick={{ fontSize: 14, fill: 'var(--text-faint)' }}
             tickLine={false}
             axisLine={false}
             width={44}
@@ -130,9 +130,9 @@ export default function PropertyStrategyChart({ options }: Props) {
           <Tooltip
             formatter={(v, name) => [`${Number(v).toLocaleString()}만원`, name as string]}
             labelFormatter={(l) => `${l}세`}
-            contentStyle={{ fontSize: 12, borderRadius: 8 }}
+            contentStyle={{ fontSize: 14, borderRadius: 8 }}
           />
-          <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 11, paddingTop: 6 }} />
+          <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 14, paddingTop: 6 }} />
           {options.map((opt) => (
             <Line
               key={opt.strategy}

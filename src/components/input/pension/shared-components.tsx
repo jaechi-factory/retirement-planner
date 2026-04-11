@@ -19,7 +19,7 @@ export function TextBtn({ onClick, children }: { onClick: () => void; children: 
       style={{
         background: 'none',
         border: 'none',
-        fontSize: 12,
+        fontSize: 14,
         color: 'rgba(36,39,46,0.64)',
         cursor: 'pointer',
         padding: 0,
@@ -33,7 +33,7 @@ export function TextBtn({ onClick, children }: { onClick: () => void; children: 
 
 export function ModeLabel({ text }: { text: string }) {
   return (
-    <span style={{ fontSize: 11, fontWeight: 500, color: 'rgba(36,39,46,0.64)' }}>
+    <span style={{ fontSize: 14, fontWeight: 500, color: 'rgba(36,39,46,0.64)' }}>
       {text}
     </span>
   );

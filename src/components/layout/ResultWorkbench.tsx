@@ -30,7 +30,7 @@ function SectionDivider({ label }: { label?: string }) {
       {label && (
         <span
           style={{
-            fontSize: 10,
+            fontSize: 14,
             fontWeight: 600,
             color: 'var(--text-faint)',
             letterSpacing: '0.08em',
@@ -91,7 +91,7 @@ function EmptyStateCard({ title, body, hint }: { title: string; body: string; hi
         <span
           style={{
             marginTop: 8,
-            fontSize: 12,
+            fontSize: 14,
             color: 'var(--text-faint)',
             lineHeight: 1.5,
           }}

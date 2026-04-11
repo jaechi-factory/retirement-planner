@@ -19,7 +19,7 @@ function DetailRow({
         justifyContent: 'space-between',
         gap: 8,
         color: 'var(--ux-text-base)',
-        fontSize: 13,
+        fontSize: 14,
         lineHeight: 1.7,
       }}
     >
@@ -50,7 +50,7 @@ function AssetRow({
           justifyContent: 'space-between',
           gap: 8,
           color: 'var(--ux-text-base)',
-          fontSize: 13,
+          fontSize: 14,
           lineHeight: 1.7,
         }}
       >
@@ -70,7 +70,7 @@ function AssetRow({
         <span style={{ whiteSpace: 'nowrap' }}>{fmtKRW(Math.round(value))}</span>
       </div>
       {note && (
-        <div style={{ fontSize: 11, color: 'var(--ux-text-subtle)', paddingLeft: 11, lineHeight: 1.5, marginBottom: 2 }}>
+        <div style={{ fontSize: 14, color: 'var(--ux-text-subtle)', paddingLeft: 11, lineHeight: 1.5, marginBottom: 2 }}>
           {note}
         </div>
       )}
@@ -82,7 +82,7 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
     <div
       style={{
-        fontSize: 11,
+        fontSize: 14,
         fontWeight: 600,
         color: 'var(--ux-text-subtle)',
         letterSpacing: '0.05em',
@@ -120,7 +120,7 @@ function SummaryCell({
         padding: '8px 12px',
       }}
     >
-      <span style={{ fontSize: 11, color: 'var(--ux-text-subtle)', fontWeight: 500 }}>{label}</span>
+      <span style={{ fontSize: 14, color: 'var(--ux-text-subtle)', fontWeight: 500 }}>{label}</span>
       <span
         style={{
           fontSize: 14,
@@ -165,7 +165,7 @@ export default function AgeInspectorPanel({ data, hasRealEstate, hasSaleProceeds
         borderRadius: 10,
         overflow: 'hidden',
         background: 'var(--ux-surface)',
-        fontSize: 13,
+        fontSize: 14,
       }}
     >
       {/* ── 헤더: 나이 + 이벤트 배지 ── */}
@@ -183,14 +183,14 @@ export default function AgeInspectorPanel({ data, hasRealEstate, hasSaleProceeds
           {data.age}세
         </span>
         {data.isRetirementYear && (
-          <span style={{ fontSize: 12, color: 'var(--ux-text-subtle)', fontWeight: 600 }}>
+          <span style={{ fontSize: 14, color: 'var(--ux-text-subtle)', fontWeight: 600 }}>
             은퇴
           </span>
         )}
         {data.pensionEvents.length > 0 && (
           <span
             style={{
-              fontSize: 12,
+              fontSize: 14,
               color: 'var(--ux-status-positive)',
               fontWeight: 600,
               marginLeft: 'auto',
@@ -236,7 +236,7 @@ export default function AgeInspectorPanel({ data, hasRealEstate, hasSaleProceeds
             <DetailRow label="연금 합계" value={pensionRealTotal} />
           )}
           {(data.monthlySalary > 0 || pensionRealTotal > 0) && (
-            <div style={{ fontSize: 11, color: 'var(--ux-text-subtle)', marginTop: 2, lineHeight: 1.5 }}>
+            <div style={{ fontSize: 14, color: 'var(--ux-text-subtle)', marginTop: 2, lineHeight: 1.5 }}>
               현재 가치 기준으로 보여줘요
             </div>
           )}

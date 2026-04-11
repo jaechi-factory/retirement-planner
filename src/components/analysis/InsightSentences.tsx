@@ -53,7 +53,7 @@ export default function InsightSentences({ result, inputs, verdict }: Props) {
 
     insights.push(
       <div>
-        <p style={{ margin: '0 0 8px', fontSize: 13, color: 'var(--tds-gray-700)', lineHeight: 1.6 }}>
+        <p style={{ margin: '0 0 8px', fontSize: 14, color: 'var(--tds-gray-700)', lineHeight: 1.6 }}>
           매달 남는 <strong>{monthlySurplus.toLocaleString('ko-KR')}만원</strong>은 기존 투자 비중을 유지한다고 가정하고 계산돼요.
         </p>
         <div style={{
@@ -70,7 +70,7 @@ export default function InsightSentences({ result, inputs, verdict }: Props) {
                 alignItems: 'center',
                 padding: '7px 12px',
                 background: i % 2 === 0 ? 'var(--tds-gray-50)' : 'white',
-                fontSize: 12,
+                fontSize: 14,
               }}
             >
               <span style={{ color: 'var(--tds-gray-600)' }}>{item.label}</span>
@@ -130,14 +130,14 @@ export default function InsightSentences({ result, inputs, verdict }: Props) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-      <p style={{ margin: '0 0 8px', fontSize: 13, fontWeight: 600, color: 'var(--tds-gray-700)' }}>
+      <p style={{ margin: '0 0 8px', fontSize: 14, fontWeight: 600, color: 'var(--tds-gray-700)' }}>
         해석
       </p>
       {insights.map((text, i) => (
         <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
           <span style={{ color: 'var(--tds-blue-500)', fontSize: 16, lineHeight: 1.4 }}>·</span>
           {typeof text === 'string' ? (
-            <p style={{ margin: 0, fontSize: 13, color: 'var(--tds-gray-700)', lineHeight: 1.6 }}>
+            <p style={{ margin: 0, fontSize: 14, color: 'var(--tds-gray-700)', lineHeight: 1.6 }}>
               {text}
             </p>
           ) : (

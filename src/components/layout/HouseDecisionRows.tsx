@@ -18,7 +18,7 @@ function MetricCell({
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
       <span
-        style={{ fontSize: 11, color: 'rgba(36,39,46,0.64)', lineHeight: 1.45, display: 'block' }}
+        style={{ fontSize: 14, color: 'rgba(36,39,46,0.64)', lineHeight: 1.45, display: 'block' }}
         className="house-decision-row-metric-label"
       >
         {label}
@@ -104,7 +104,7 @@ export default function HouseDecisionRows({ rows, onSelectStrategy }: HouseDecis
                         background: 'var(--result-surface-soft)',
                         borderRadius: 999,
                         padding: '1px 6px',
-                        fontSize: 12,
+                        fontSize: 14,
                         fontWeight: 600,
                         letterSpacing: '0.01em',
                         display: 'inline-block',
@@ -114,7 +114,7 @@ export default function HouseDecisionRows({ rows, onSelectStrategy }: HouseDecis
                     </span>
                   )}
                   {disabled && (
-                    <span style={{ fontSize: 12, color: 'rgba(36,39,46,0.64)' }}>
+                    <span style={{ fontSize: 14, color: 'rgba(36,39,46,0.64)' }}>
                       계산 불가
                     </span>
                   )}
@@ -162,11 +162,11 @@ export default function HouseDecisionRows({ rows, onSelectStrategy }: HouseDecis
                   gap: 4,
                 }}
               >
-                <span style={{ fontSize: 12, color: 'rgba(36,39,46,0.64)', lineHeight: 1.55, display: 'block' }}>
+                <span style={{ fontSize: 14, color: 'rgba(36,39,46,0.64)', lineHeight: 1.55, display: 'block' }}>
                   마지막에 남는 돈 {row.lastRemainingMoneyText}
                 </span>
                 {row.houseCashSupportText && (
-                  <span style={{ fontSize: 12, color: 'rgba(36,39,46,0.64)', lineHeight: 1.55, display: 'block' }}>
+                  <span style={{ fontSize: 14, color: 'rgba(36,39,46,0.64)', lineHeight: 1.55, display: 'block' }}>
                     {row.houseCashSupportText}
                   </span>
                 )}
@@ -180,7 +180,7 @@ export default function HouseDecisionRows({ rows, onSelectStrategy }: HouseDecis
                   padding: '8px 12px',
                 }}
               >
-                <span style={{ fontSize: 11, color: 'rgba(36,39,46,0.64)', lineHeight: 1.5, display: 'block' }}>
+                <span style={{ fontSize: 14, color: 'rgba(36,39,46,0.64)', lineHeight: 1.5, display: 'block' }}>
                   {row.disabledReason}
                 </span>
               </div>

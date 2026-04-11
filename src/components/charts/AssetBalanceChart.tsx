@@ -166,7 +166,7 @@ function MinimalTooltip({
         border: '1px solid var(--ux-border-strong)',
         borderRadius: 8,
         padding: '8px 12px',
-        fontSize: 13,
+        fontSize: 14,
         width: 160,
         boxShadow: '0 4px 12px rgba(25, 31, 40, 0.10)',
       }}
@@ -204,7 +204,7 @@ function CustomLegend({ hasRealEstate, hasSaleProceeds }: { hasRealEstate: boole
   return (
     <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', justifyContent: 'center', paddingTop: 8 }}>
       {items.map((s) => (
-        <span key={s.key} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 13, color: 'var(--ux-text-base)' }}>
+        <span key={s.key} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 14, color: 'var(--ux-text-base)' }}>
           <span
             style={{
               display: 'inline-block',
@@ -297,7 +297,7 @@ export default function AssetBalanceChart({
       {/* 상태 메시지 */}
       <div
         style={{
-          fontSize: 13,
+          fontSize: 14,
           fontWeight: 600,
           color:
             depletionAge !== null
@@ -388,11 +388,12 @@ export default function AssetBalanceChart({
             )}
           />
 
-          {/* 렌더 순서: 집 자산(배경) → 현금·예금 → 주식·채권 → 집을 판 뒤 굴리는 돈 */}
+          {/* 스택 순서: 아래→위 = 집 → 현금·예금 → 주식·채권 → 매각대금 */}
           {hasRealEstate && (
             <Area
               type="monotone"
               dataKey={SERIES.property.key}
+              stackId="assets"
               stroke={SERIES.property.color}
               strokeWidth={SERIES.property.strokeWidth}
               fill={`url(#${SERIES.property.fillId})`}
@@ -402,6 +403,7 @@ export default function AssetBalanceChart({
           <Area
             type="monotone"
             dataKey={SERIES.cash.key}
+            stackId="assets"
             stroke={SERIES.cash.color}
             strokeWidth={SERIES.cash.strokeWidth}
             fill={`url(#${SERIES.cash.fillId})`}
@@ -409,6 +411,7 @@ export default function AssetBalanceChart({
           <Area
             type="monotone"
             dataKey={SERIES.financial.key}
+            stackId="assets"
             stroke={SERIES.financial.color}
             strokeWidth={SERIES.financial.strokeWidth}
             fill={`url(#${SERIES.financial.fillId})`}
@@ -417,6 +420,7 @@ export default function AssetBalanceChart({
             <Area
               type="monotone"
               dataKey={SERIES.sale.key}
+              stackId="assets"
               stroke={SERIES.sale.color}
               strokeWidth={SERIES.sale.strokeWidth}
               fill={`url(#${SERIES.sale.fillId})`}
@@ -427,7 +431,7 @@ export default function AssetBalanceChart({
       </ResponsiveContainer>
 
       {/* 하단 메타 */}
-      <div style={{ fontSize: 12, color: 'var(--ux-text-subtle)', marginTop: 6, lineHeight: 1.8, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+      <div style={{ fontSize: 14, color: 'var(--ux-text-subtle)', marginTop: 6, lineHeight: 1.8, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
         {hasRealEstate && <span>선택 전략: {strategyLabel}</span>}
         <span>목표 생활비: {targetMonthly}만원</span>
         <span>실제 가능 생활비: {Math.round(sustainableMonthly)}만원</span>

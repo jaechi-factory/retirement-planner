@@ -81,7 +81,7 @@ export default function FundingPathSection({ fundingTimeline, lifeExpectancy, re
                   whiteSpace: 'nowrap',
                 }}
               >
-                <span style={{ fontSize: 11, color: 'rgba(36,39,46,0.64)' }}>
+                <span style={{ fontSize: 14, color: 'rgba(36,39,46,0.64)' }}>
                   {stageFrom}세
                 </span>
               </div>
@@ -89,7 +89,7 @@ export default function FundingPathSection({ fundingTimeline, lifeExpectancy, re
           })}
           {/* 마지막 나이 */}
           <div style={{ position: 'absolute', right: 0, lineHeight: 1.3 }}>
-            <span style={{ fontSize: 11, color: 'rgba(36,39,46,0.64)' }}>
+            <span style={{ fontSize: 14, color: 'rgba(36,39,46,0.64)' }}>
               {lifeExpectancy}세
             </span>
           </div>
@@ -130,7 +130,7 @@ export default function FundingPathSection({ fundingTimeline, lifeExpectancy, re
               {widthPct > 8 && (
                 <span
                   style={{
-                    fontSize: 11,
+                    fontSize: 14,
                     fontWeight: 500,
                     color: cfg.color,
                     whiteSpace: 'nowrap',
@@ -182,10 +182,10 @@ export default function FundingPathSection({ fundingTimeline, lifeExpectancy, re
                   display: 'inline-block',
                 }}
               />
-              <span style={{ fontSize: 11, fontWeight: 500, color: cfg.color }}>
+              <span style={{ fontSize: 14, fontWeight: 500, color: cfg.color }}>
                 {cfg.label}
               </span>
-              <span style={{ fontSize: 11, color: 'rgba(36,39,46,0.64)' }}>
+              <span style={{ fontSize: 14, color: 'rgba(36,39,46,0.64)' }}>
                 {stageFrom}~{stageTo}세
               </span>
             </div>

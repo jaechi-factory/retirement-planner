@@ -87,7 +87,7 @@ export default function VehicleSection() {
                         padding: '7px 14px', boxSizing: 'border-box',
                         background: selected ? '#333d4b' : 'rgba(112,115,124,0.08)',
                         color: selected ? '#ffffff' : 'rgba(46,47,51,0.88)',
-                        fontSize: 13, fontWeight: selected ? 600 : 400,
+                        fontSize: 14, fontWeight: selected ? 600 : 400,
                         cursor: 'pointer', fontFamily: 'Pretendard, sans-serif',
                         letterSpacing: '0.2522px', whiteSpace: 'nowrap',
                         transition: 'background 0.15s, color 0.15s',

@@ -74,7 +74,7 @@ export default function PillToggle({
                     boxSizing: 'border-box',
                     background: selected ? '#333d4b' : 'rgba(112,115,124,0.08)',
                     color: selected ? '#ffffff' : 'rgba(46,47,51,0.88)',
-                    fontSize: 13,
+                    fontSize: 14,
                     fontWeight: selected ? 600 : 400,
                     cursor: 'pointer',
                     fontFamily: 'Pretendard, sans-serif',

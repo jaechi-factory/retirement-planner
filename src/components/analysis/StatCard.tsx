@@ -15,7 +15,7 @@ export default function StatCard({ label, value, sub, valueColor }: Props) {
         padding: '14px 16px',
       }}
     >
-      <p style={{ margin: '0 0 4px', fontSize: 12, color: 'var(--text-muted)' }}>
+      <p style={{ margin: '0 0 4px', fontSize: 14, color: 'var(--text-muted)' }}>
         {label}
       </p>
       <p
@@ -29,7 +29,7 @@ export default function StatCard({ label, value, sub, valueColor }: Props) {
         {value}
       </p>
       {sub && (
-        <p style={{ margin: '2px 0 0', fontSize: 12, color: 'var(--text-faint)' }}>
+        <p style={{ margin: '2px 0 0', fontSize: 14, color: 'var(--text-faint)' }}>
           {sub}
         </p>
       )}

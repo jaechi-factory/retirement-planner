@@ -39,10 +39,10 @@ function CustomTooltip({ active, payload, label }: any) {
       borderRadius: 10,
       boxShadow: '0 2px 16px rgba(0,0,0,0.13)',
       padding: '12px 14px',
-      fontSize: 12,
+      fontSize: 14,
       minWidth: 200,
     }}>
-      <div style={{ fontWeight: 700, color: 'var(--tds-gray-800)', marginBottom: 6, fontSize: 13 }}>
+      <div style={{ fontWeight: 700, color: 'var(--tds-gray-800)', marginBottom: 6, fontSize: 14 }}>
         {label}세 자산 현황
       </div>
 
@@ -121,7 +121,7 @@ function EventBadge({ label, value, color }: { label: string; value: string; col
     <div style={{
       display: 'flex', alignItems: 'center', gap: 4,
       background: 'var(--tds-gray-50)', borderRadius: 6,
-      padding: '3px 8px', fontSize: 12,
+      padding: '3px 8px', fontSize: 14,
     }}>
       <span style={{ fontWeight: 700, color }}>{label}</span>
       <span style={{ color: 'var(--tds-gray-600)' }}>{value}</span>
@@ -170,10 +170,10 @@ export default function AssetProjectionChart({
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-              <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--tds-gray-700)' }}>금융자산 추이</span>
-              <span style={{ fontSize: 12, color: 'var(--tds-gray-400)' }}>목표 생활비 기준</span>
+              <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--tds-gray-700)' }}>금융자산 추이</span>
+              <span style={{ fontSize: 14, color: 'var(--tds-gray-400)' }}>목표 생활비 기준</span>
             </div>
-            <div style={{ fontSize: 12, color: 'var(--tds-gray-400)', marginTop: 3, lineHeight: 1.5 }}>
+            <div style={{ fontSize: 14, color: 'var(--tds-gray-400)', marginTop: 3, lineHeight: 1.5 }}>
               소득·연금·생활비·대출 반영 후 남는 금융자산 잔고예요
             </div>
           </div>
@@ -187,7 +187,7 @@ export default function AssetProjectionChart({
               borderRadius: 20,
               border: `1px solid ${showNet ? 'var(--tds-gray-400)' : 'var(--tds-gray-200)'}`,
               background: showNet ? 'var(--tds-gray-100)' : 'transparent',
-              fontSize: 11,
+              fontSize: 14,
               fontWeight: 600,
               color: showNet ? 'var(--tds-gray-700)' : 'var(--tds-gray-400)',
               cursor: 'pointer',
@@ -202,12 +202,12 @@ export default function AssetProjectionChart({
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8, flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
             <div style={{ width: 14, height: 2, background: '#3B82F6', borderRadius: 1 }} />
-            <span style={{ fontSize: 11, color: 'var(--tds-gray-500)' }}>금융자산</span>
+            <span style={{ fontSize: 14, color: 'var(--tds-gray-500)' }}>금융자산</span>
           </div>
           {showNet && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
               <div style={{ width: 14, height: 2, background: '#9CA3AF', borderRadius: 1, borderTop: '1px dashed #9CA3AF' }} />
-              <span style={{ fontSize: 11, color: 'var(--tds-gray-500)' }}>순자산 (부동산 포함)</span>
+              <span style={{ fontSize: 14, color: 'var(--tds-gray-500)' }}>순자산 (부동산 포함)</span>
             </div>
           )}
           {financialDepletionAge !== null && (
@@ -224,13 +224,13 @@ export default function AssetProjectionChart({
           <CartesianGrid strokeDasharray="3 3" stroke="var(--tds-gray-100)" />
           <XAxis
             dataKey="age"
-            tick={{ fontSize: 12, fill: 'var(--tds-gray-500)' }}
+            tick={{ fontSize: 14, fill: 'var(--tds-gray-500)' }}
             tickLine={false}
             axisLine={false}
-            label={{ value: '나이', position: 'insideBottomRight', offset: -4, fontSize: 12 }}
+            label={{ value: '나이', position: 'insideBottomRight', offset: -4, fontSize: 14 }}
           />
           <YAxis
-            tick={{ fontSize: 12, fill: 'var(--tds-gray-500)' }}
+            tick={{ fontSize: 14, fill: 'var(--tds-gray-500)' }}
             tickLine={false}
             axisLine={false}
             tickFormatter={(v) => `${v.toFixed(0)}억`}
@@ -246,7 +246,7 @@ export default function AssetProjectionChart({
             x={retirementAge}
             stroke="var(--tds-blue-400)"
             strokeDasharray="4 3"
-            label={{ value: '은퇴', position: 'top', fontSize: 11, fill: 'var(--tds-blue-500)' }}
+            label={{ value: '은퇴', position: 'top', fontSize: 14, fill: 'var(--tds-blue-500)' }}
           />
 
           {pensionEvents.map((ev) => (
@@ -256,7 +256,7 @@ export default function AssetProjectionChart({
               stroke={ev.color}
               strokeDasharray="3 3"
               strokeOpacity={0.7}
-              label={{ value: ev.label, position: 'top', fontSize: 10, fill: ev.color }}
+              label={{ value: ev.label, position: 'top', fontSize: 14, fill: ev.color }}
             />
           ))}
 
@@ -265,7 +265,7 @@ export default function AssetProjectionChart({
               x={netDepletionAge}
               stroke="#EF4444"
               strokeWidth={2}
-              label={{ value: '소진', position: 'top', fontSize: 11, fill: '#EF4444' }}
+              label={{ value: '소진', position: 'top', fontSize: 14, fill: '#EF4444' }}
             />
           )}
 
@@ -297,7 +297,7 @@ export default function AssetProjectionChart({
       </ResponsiveContainer>
 
       {(yMin < 0 || financialDepletionAge !== null) && (
-        <div style={{ fontSize: 12, color: '#EF4444', marginTop: 4, textAlign: 'right' }}>
+        <div style={{ fontSize: 14, color: '#EF4444', marginTop: 4, textAlign: 'right' }}>
           ⚠ 파란 선이 0 아래: 금융자산이 부족한 시기예요
         </div>
       )}

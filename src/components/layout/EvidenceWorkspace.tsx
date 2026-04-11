@@ -85,7 +85,7 @@ export default function EvidenceWorkspace({
             <p
               style={{
                 margin: 0,
-                fontSize: 14,
+                fontSize: 16,
                 fontWeight: 700,
                 color: '#3182f6',
                 fontFamily: 'Pretendard, sans-serif',
@@ -98,7 +98,7 @@ export default function EvidenceWorkspace({
               <p
                 style={{
                   margin: 0,
-                  fontSize: 14,
+                  fontSize: 16,
                   fontWeight: 400,
                   color: '#4e5968',
                   fontFamily: 'Pretendard, sans-serif',
@@ -140,7 +140,7 @@ export default function EvidenceWorkspace({
             }}
           >
             <span
-              style={{ fontSize: 12, fontWeight: 700, color: 'var(--result-text-body-color)' }}
+              style={{ fontSize: 14, fontWeight: 700, color: 'var(--result-text-body-color)' }}
             >
               계산 가정 보기
             </span>
@@ -162,7 +162,7 @@ export default function EvidenceWorkspace({
 
             <span
               style={{
-                fontSize: 12,
+                fontSize: 14,
                 fontWeight: 700,
                 color: 'var(--result-text-body-color)',
                 display: 'block',
@@ -183,7 +183,7 @@ export default function EvidenceWorkspace({
                   }}
                 >
                   <span aria-hidden style={{ fontWeight: 700, flexShrink: 0 }}>•</span>
-                  <span style={{ fontSize: 12, color: 'var(--result-text-body-color)' }}>
+                  <span style={{ fontSize: 14, color: 'var(--result-text-body-color)' }}>
                     {assumption.label}: {assumption.value}
                   </span>
                 </li>

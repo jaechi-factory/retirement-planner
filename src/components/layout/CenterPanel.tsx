@@ -34,7 +34,7 @@ export default function CenterPanel() {
               <p style={{ color: 'var(--tds-gray-700)', fontSize: 15, fontWeight: 600, marginBottom: 8 }}>
                 정보를 입력해주세요
               </p>
-              <p style={{ color: 'var(--tds-gray-400)', fontSize: 13, lineHeight: 1.6 }}>
+              <p style={{ color: 'var(--tds-gray-400)', fontSize: 14, lineHeight: 1.6 }}>
                 왼쪽 패널에서 현재 나이, 은퇴 나이,<br />
                 목표 생활비를 입력하면<br />
                 결과가 나타나요.
@@ -84,12 +84,12 @@ export default function CenterPanel() {
       >
         {/* 상단: 라벨 + 상태 뱃지 */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-          <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--tds-gray-500)', letterSpacing: 0.3 }}>
+          <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--tds-gray-500)', letterSpacing: 0.3 }}>
             평생 가능한 월생활비
           </span>
           {verdict && (
             <span style={{
-              fontSize: 11,
+              fontSize: 14,
               fontWeight: 700,
               padding: '4px 10px',
               borderRadius: 100,
@@ -113,7 +113,7 @@ export default function CenterPanel() {
           }}>
             월 {result.possibleMonthly.toLocaleString('ko-KR')}만원
           </div>
-          <div style={{ fontSize: 12, color: 'var(--tds-gray-400)', marginTop: 5 }}>
+          <div style={{ fontSize: 14, color: 'var(--tds-gray-400)', marginTop: 5 }}>
             금융자산 기준 · 연금 포함 · 은퇴 후 {inputs.goal.lifeExpectancy}세까지 {retirementYears}년간
           </div>
         </div>
@@ -128,11 +128,11 @@ export default function CenterPanel() {
           background: isOk ? 'var(--tds-blue-50)' : 'var(--tds-orange-50)',
           marginBottom: warningText ? 8 : 0,
         }}>
-          <span style={{ fontSize: 12, color: 'var(--tds-gray-500)' }}>
+          <span style={{ fontSize: 14, color: 'var(--tds-gray-500)' }}>
             목표 월 {inputs.goal.targetMonthly.toLocaleString('ko-KR')}만원 대비
           </span>
           {gap === 0 ? (
-            <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--tds-blue-500)' }}>딱 맞아요</span>
+            <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--tds-blue-500)' }}>딱 맞아요</span>
           ) : (
             <span style={{
               fontSize: 14,
@@ -154,9 +154,9 @@ export default function CenterPanel() {
             borderRadius: 8,
             background: result.depletionAge !== null ? 'var(--tds-red-50)' : 'var(--tds-orange-50)',
           }}>
-            <span style={{ fontSize: 13, lineHeight: 1.2, flexShrink: 0 }}>⚠️</span>
+            <span style={{ fontSize: 14, lineHeight: 1.2, flexShrink: 0 }}>⚠️</span>
             <span style={{
-              fontSize: 12,
+              fontSize: 14,
               color: result.depletionAge !== null ? 'var(--tds-red-600, #B91C1C)' : 'var(--tds-orange-600, #B45309)',
               lineHeight: 1.5,
             }}>
@@ -180,13 +180,13 @@ export default function CenterPanel() {
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                fontSize: 13,
+                fontSize: 14,
                 fontWeight: 600,
                 color: advancedHousingEnabled ? 'var(--tds-blue-600)' : 'var(--tds-gray-600)',
               }}
             >
               <span>보유 부동산 활용 전략 보기</span>
-              <span style={{ fontSize: 11 }}>{advancedHousingEnabled ? '▲ 접기' : '▼'}</span>
+              <span style={{ fontSize: 14 }}>{advancedHousingEnabled ? '▲ 접기' : '▼'}</span>
             </button>
 
             {advancedHousingEnabled && result.housingScenarios && (() => {
@@ -215,7 +215,7 @@ export default function CenterPanel() {
                   <div style={{
                     background: 'var(--tds-gray-50)',
                     padding: '8px 12px',
-                    fontSize: 12,
+                    fontSize: 14,
                     fontWeight: 700,
                     color: 'var(--tds-gray-500)',
                   }}>
@@ -246,7 +246,7 @@ export default function CenterPanel() {
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                             <span style={{
-                              fontSize: 12,
+                              fontSize: 14,
                               color: 'var(--tds-gray-700)',
                               fontWeight: isRecommended ? 700 : 400,
                             }}>
@@ -254,7 +254,7 @@ export default function CenterPanel() {
                             </span>
                             {isRecommended && (
                               <span style={{
-                                fontSize: 10,
+                                fontSize: 14,
                                 background: 'var(--tds-blue-500)',
                                 color: 'white',
                                 borderRadius: 4,
@@ -274,7 +274,7 @@ export default function CenterPanel() {
                             </div>
                             {scenarioGap !== 0 && (
                               <div style={{
-                                fontSize: 11,
+                                fontSize: 14,
                                 color: scenarioGap >= 0 ? 'var(--tds-blue-400)' : 'var(--tds-red-400)',
                               }}>
                                 목표와 차이 {scenarioGap >= 0 ? '+' : ''}{scenarioGap.toLocaleString('ko-KR')}만
@@ -285,7 +285,7 @@ export default function CenterPanel() {
                         {annuityNote && (
                           <div style={{
                             marginTop: 4,
-                            fontSize: 11,
+                            fontSize: 14,
                             color: 'var(--tds-gray-400)',
                             display: 'flex',
                             alignItems: 'center',
@@ -300,7 +300,7 @@ export default function CenterPanel() {
                   })}
                   <div style={{
                     padding: '8px 12px',
-                    fontSize: 11,
+                    fontSize: 14,
                     color: 'var(--tds-gray-400)',
                     borderTop: '1px solid var(--tds-gray-50)',
                   }}>
@@ -332,10 +332,10 @@ export default function CenterPanel() {
               gap: 8,
             }}>
               <div>
-                <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--tds-gray-600)' }}>
+                <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--tds-gray-600)' }}>
                   바로 쓸 수 있는 자산
                 </span>
-                <p style={{ fontSize: 11, color: 'var(--tds-gray-400)', margin: '3px 0 0', lineHeight: 1.4 }}>
+                <p style={{ fontSize: 14, color: 'var(--tds-gray-400)', margin: '3px 0 0', lineHeight: 1.4 }}>
                   {isLow
                     ? '자산 대부분이 부동산이에요'
                     : isMid
@@ -350,7 +350,7 @@ export default function CenterPanel() {
                 whiteSpace: 'nowrap',
               }}>
                 {liquidAsset.toLocaleString('ko-KR')}만원
-                <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--tds-gray-400)', marginLeft: 4 }}>
+                <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--tds-gray-400)', marginLeft: 4 }}>
                   ({liquidPct}%)
                 </span>
               </span>

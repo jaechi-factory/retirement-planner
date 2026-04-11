@@ -99,7 +99,7 @@ export default function WhyThisResultSection({ summary, inputs, hasRealEstate }:
       <div style={{ marginBottom: 14 }}>
         <span
           style={{
-            fontSize: 10,
+            fontSize: 14,
             fontWeight: 700,
             color: 'var(--text-faint)',
             letterSpacing: '0.1em',
@@ -138,7 +138,7 @@ export default function WhyThisResultSection({ summary, inputs, hasRealEstate }:
                 color: 'var(--result-text-strong-color)',
                 display: 'block',
                 lineHeight: 1.4,
-                fontSize: 13,
+                fontSize: 14,
                 fontWeight: 700,
               }}
             >
@@ -149,7 +149,7 @@ export default function WhyThisResultSection({ summary, inputs, hasRealEstate }:
                 color: 'var(--result-text-body-color)',
                 display: 'block',
                 lineHeight: 1.65,
-                fontSize: 12,
+                fontSize: 14,
               }}
             >
               {card.body}

@@ -131,7 +131,7 @@ function RepaymentSelect({
 
       {/* 설명 텍스트 */}
       {descriptions[value] && (
-        <p style={{ margin: 0, fontSize: 13, color: '#4e5968', lineHeight: 1.6 }}>
+        <p style={{ margin: 0, fontSize: 14, color: '#4e5968', lineHeight: 1.6 }}>
           {descriptions[value]}
         </p>
       )}
@@ -207,7 +207,7 @@ function LoanRow({ debtKey }: { debtKey: DebtKey }) {
             style={{
               background: 'var(--surface-card-inner)',
               padding: '8px 12px',
-              fontSize: 12,
+              fontSize: 14,
               fontWeight: 700,
               color: 'var(--text-muted)',
             }}
@@ -229,7 +229,7 @@ function LoanRow({ debtKey }: { debtKey: DebtKey }) {
                 borderRadius: 8,
               }}
             >
-              <div style={{ fontSize: 11, color: 'var(--text-faint)', marginBottom: 4 }}>
+              <div style={{ fontSize: 14, color: 'var(--text-faint)', marginBottom: 4 }}>
                 첫 달 상환액
               </div>
               <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-base)' }}>
@@ -243,7 +243,7 @@ function LoanRow({ debtKey }: { debtKey: DebtKey }) {
                 borderRadius: 8,
               }}
             >
-              <div style={{ fontSize: 11, color: 'var(--text-faint)', marginBottom: 4 }}>
+              <div style={{ fontSize: 14, color: 'var(--text-faint)', marginBottom: 4 }}>
                 첫해 상환액
               </div>
               <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-base)' }}>
@@ -252,13 +252,13 @@ function LoanRow({ debtKey }: { debtKey: DebtKey }) {
             </div>
           </div>
           <div style={{ padding: '2px 12px 10px', display: 'flex', gap: 14 }}>
-            <span style={{ fontSize: 11, color: 'var(--text-faint)' }}>
+            <span style={{ fontSize: 14, color: 'var(--text-faint)' }}>
               총이자{' '}
               <span style={{ fontWeight: 600, color: 'var(--text-muted)' }}>
                 −{Math.round(summary.totalInterest).toLocaleString('ko-KR')}만원
               </span>
             </span>
-            <span style={{ fontSize: 11, color: 'var(--text-faint)' }}>
+            <span style={{ fontSize: 14, color: 'var(--text-faint)' }}>
               최대 월 상환액{' '}
               <span style={{ fontWeight: 600, color: 'var(--text-muted)' }}>
                 −{Math.round(summary.maxMonthPayment).toLocaleString('ko-KR')}만원

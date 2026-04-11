@@ -12,7 +12,7 @@ export const toggleBtnStyle = (active: boolean): React.CSSProperties => ({
   borderRadius: 20,
   border: 'none',
   cursor: 'pointer',
-  fontSize: 12,
+  fontSize: 14,
   fontWeight: 600,
   background: active ? 'var(--tds-gray-900)' : 'var(--tds-gray-100)',
   color: active ? 'var(--tds-white)' : 'var(--tds-gray-500)',

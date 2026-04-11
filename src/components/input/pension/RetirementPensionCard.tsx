@@ -12,7 +12,7 @@ function Chip({ active, onClick, children }: { active: boolean; onClick: () => v
     <button
       onClick={onClick}
       style={{
-        fontSize: 12,
+        fontSize: 14,
         fontWeight: active ? 700 : 500,
         padding: '4px 12px',
         borderRadius: 16,
@@ -55,7 +55,7 @@ export default function RetirementPensionCard() {
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 8 }}>
         <div>
           <span style={{ fontSize: 14, fontWeight: 700, color: '#24272E' }}>퇴직연금</span>
-          <span style={{ fontSize: 12, color: 'rgba(36,39,46,0.64)', marginTop: 2, display: 'block' }}>회사에서 쌓인 퇴직연금 예상 월액이에요</span>
+          <span style={{ fontSize: 14, color: 'rgba(36,39,46,0.64)', marginTop: 2, display: 'block' }}>회사에서 쌓인 퇴직연금 예상 월액이에요</span>
         </div>
         <ModeLabel text={isAuto ? '간편 계산' : '직접 입력'} />
       </div>
@@ -63,7 +63,7 @@ export default function RetirementPensionCard() {
       <span style={{ fontSize: 16, fontWeight: 700, color: '#24272E', display: 'block', margin: '4px 0 2px' }}>
         월 {fmtKRW(displayValue)}
       </span>
-      <span style={{ fontSize: 12, color: 'rgba(36,39,46,0.64)', display: 'block' }}>
+      <span style={{ fontSize: 14, color: 'rgba(36,39,46,0.64)', display: 'block' }}>
         {startAge}세부터 {retirementPension.payoutYears}년간 받아요
         {!hasBalance && isAuto && ' · 적립금 입력 시 더 정확해져요'}
       </span>

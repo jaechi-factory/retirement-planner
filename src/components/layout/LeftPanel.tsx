@@ -24,7 +24,7 @@ export default function LeftPanel() {
         <button
           onClick={resetAll}
           style={{
-            fontSize: 12,
+            fontSize: 14,
             fontWeight: 600,
             color: 'white',
             background: 'var(--text-muted)',

@@ -35,14 +35,14 @@ function PropertyEventCard({ data, isSell }: {
           borderRadius: 8,
           padding: '12px 14px',
           marginTop: 10,
-          fontSize: 13,
+          fontSize: 14,
           color: 'var(--text-base)',
           lineHeight: 1.7,
         }}
       >
         집은 유지하고, 집 담보대출로 부족한 생활비를 채워요.
         {lifeExpectancy > 0 && (
-          <div style={{ fontSize: 12, color: 'var(--text-faint)', marginTop: 6 }}>
+          <div style={{ fontSize: 14, color: 'var(--text-faint)', marginTop: 6 }}>
             이 방식이면 {lifeExpectancy}세까지 이어질 수 있어요.
           </div>
         )}
@@ -58,7 +58,7 @@ function PropertyEventCard({ data, isSell }: {
         borderRadius: 8,
         padding: '12px 14px',
         marginTop: 10,
-        fontSize: 13,
+        fontSize: 14,
       }}
     >
       <div style={{ color: 'var(--text-base)', marginBottom: 10, lineHeight: 1.6 }}>
@@ -97,7 +97,7 @@ function PropertyEventCard({ data, isSell }: {
       {netProceeds > 0 && (
         <div
           style={{
-            fontSize: 12,
+            fontSize: 14,
             color: 'var(--text-faint)',
             marginTop: 10,
             lineHeight: 1.6,
@@ -286,7 +286,7 @@ export default function LifetimeTimeline({
     >
       <div
         style={{
-          fontSize: 13,
+          fontSize: 14,
           fontWeight: 700,
           color: 'var(--text-base)',
           marginBottom: 20,
@@ -332,7 +332,7 @@ export default function LifetimeTimeline({
                 <div
                   style={{
                     padding: '10px 0',
-                    fontSize: 12,
+                    fontSize: 14,
                     color: 'var(--text-faint)',
                     lineHeight: 1.5,
                   }}
@@ -412,7 +412,7 @@ export default function LifetimeTimeline({
                 </div>
                 <div
                   style={{
-                    fontSize: 13,
+                    fontSize: 14,
                     color: 'var(--text-base)',
                     lineHeight: 1.6,
                   }}
@@ -427,7 +427,7 @@ export default function LifetimeTimeline({
                       background: 'var(--status-adjust-bg)',
                       border: '1px solid rgba(203, 132, 114, 0.3)',
                       borderRadius: 8,
-                      fontSize: 12,
+                      fontSize: 14,
                       color: 'var(--status-adjust-text)',
                       lineHeight: 1.6,
                     }}
