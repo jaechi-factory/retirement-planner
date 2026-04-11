@@ -57,9 +57,15 @@ function buildPropertyOption(
     debtSchedules,
   );
 
+  // 차트·이벤트는 사용자가 정한 목표 생활비 기준으로 시뮬레이션한다.
+  // targetMonthly가 없으면(0) sustainableMonthly를 대신 쓴다.
+  const chartMonthly = inputs.goal.targetMonthly > 0
+    ? inputs.goal.targetMonthly
+    : sustainableMonthly;
+
   const snapshots = simulateMonthlyV2(
     inputs,
-    sustainableMonthly, // B6 fix: chart must use same value as headline, not targetMonthly
+    chartMonthly,
     strategy,
     fundingPolicy,
     liquidationPolicy,
