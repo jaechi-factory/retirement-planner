@@ -32,7 +32,7 @@ export default function SectionCard({ title, subtitle, children, itemGap = 24 }:
           width: '100%',
           display: 'flex',
           flexDirection: 'column',
-          gap: 28,
+          gap: 24,
         }}
       >
         {/* 섹션 헤더 (타이틀 + 서브타이틀) */}

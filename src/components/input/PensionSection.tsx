@@ -133,7 +133,7 @@ export default function PensionSection() {
     <SectionCard
       title="연금"
       subtitle="IRP, 연금저축펀드, 연금보험 정보를 입력해 주세요."
-      itemGap={12}
+      itemGap={24}
     >
       {PENSION_PRODUCTS.map(({ id, label }) => (
         <PensionRow key={id} productId={id} label={label} />

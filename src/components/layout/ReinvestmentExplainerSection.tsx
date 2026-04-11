@@ -60,8 +60,8 @@ export default function ReinvestmentExplainerSection({ inputs, annualNetSavings 
             lineHeight: 1.5,
           }}
         >
-          <p style={{ margin: 0 }}>일할 때, 매월 월급에서 남은 돈을 투자 자산의</p>
-          <p style={{ margin: 0 }}>기존 비율대로 계속 투자한다고 가정하고, 계산한 결과예요</p>
+          <p style={{ margin: 0 }}>일할 때, 매월 월급에서 남은 돈을 투자 자산의 기존 비율대로</p>
+          <p style={{ margin: 0 }}>계속 투자한다고 가정하고, 계산한 결과예요</p>
         </div>
         <p
           style={{
