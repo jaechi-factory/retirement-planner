@@ -6,10 +6,10 @@ import RateInput from './shared/RateInput';
 import SectionCard from './shared/SectionCard';
 import {
   MORTGAGE_REPAYMENT_TYPES,
-  MORTGAGE_REPAYMENT_FRIENDLY_LABELS,
+  MORTGAGE_REPAYMENT_LABELS,
   MORTGAGE_REPAYMENT_DESCRIPTIONS,
   OTHER_REPAYMENT_TYPES,
-  OTHER_REPAYMENT_FRIENDLY_LABELS,
+  OTHER_REPAYMENT_LABELS,
   OTHER_REPAYMENT_DESCRIPTIONS,
 } from '../../utils/constants';
 import { buildMonthlyDebtSchedule, summarizeDebtSchedule } from '../../engine/debtSchedule';
@@ -19,19 +19,19 @@ type DebtKey = 'mortgage' | 'creditLoan';
 const DEBT_CONFIG: Record<DebtKey, {
   label: string;
   types: readonly string[];
-  friendlyLabels: Record<string, string>;
+  termLabels: Record<string, string>;
   descriptions: Record<string, string>;
 }> = {
   mortgage: {
     label: '주택담보대출',
     types: MORTGAGE_REPAYMENT_TYPES,
-    friendlyLabels: MORTGAGE_REPAYMENT_FRIENDLY_LABELS,
+    termLabels: MORTGAGE_REPAYMENT_LABELS,
     descriptions: MORTGAGE_REPAYMENT_DESCRIPTIONS,
   },
   creditLoan: {
     label: '신용대출',
     types: OTHER_REPAYMENT_TYPES,
-    friendlyLabels: OTHER_REPAYMENT_FRIENDLY_LABELS,
+    termLabels: OTHER_REPAYMENT_LABELS,
     descriptions: OTHER_REPAYMENT_DESCRIPTIONS,
   },
 };
@@ -83,13 +83,13 @@ function RepaymentSelect({
   value,
   onChange,
   types,
-  friendlyLabels,
+  termLabels,
   descriptions,
 }: {
   value: RepaymentType;
   onChange: (t: RepaymentType) => void;
   types: readonly string[];
-  friendlyLabels: Record<string, string>;
+  termLabels: Record<string, string>;
   descriptions: Record<string, string>;
 }) {
   const [open, setOpen] = useState(false);
@@ -111,8 +111,8 @@ function RepaymentSelect({
           background: '#ffffff',
         }}
       >
-        <span style={{ fontSize: 15, fontWeight: 500, color: 'var(--fig-label-color)' }}>
-          {friendlyLabels[value]}
+        <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--fig-label-color)' }}>
+          {termLabels[value]}
         </span>
         <svg
           width="24"
@@ -163,7 +163,7 @@ function RepaymentSelect({
                 color: 'var(--fig-label-color)',
               }}
             >
-              {friendlyLabels[type]}
+              {termLabels[type]}
             </div>
           ))}
         </div>
@@ -229,7 +229,7 @@ function LoanRow({ debtKey }: { debtKey: DebtKey }) {
               value={debt.repaymentType}
               onChange={(t) => setDebt(debtKey, { repaymentType: t })}
               types={config.types}
-              friendlyLabels={config.friendlyLabels}
+              termLabels={config.termLabels}
               descriptions={config.descriptions}
             />
 

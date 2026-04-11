@@ -85,7 +85,7 @@ export default function CurrentStatusSection() {
             <div style={{
               fontSize: 12, color: 'var(--text-faint)', lineHeight: 1.5,
               padding: '6px 8px',
-              background: monthlySurplus > 0 ? 'var(--status-stable-bg)' : 'var(--status-adjust-bg)',
+              background: monthlySurplus > 0 ? '#EBF4ED' : '#F6F0E2',
               borderRadius: 6,
             }}>
               {monthlySurplus > 0
