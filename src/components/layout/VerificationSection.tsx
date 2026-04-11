@@ -126,7 +126,6 @@ export default function VerificationSection({
         <AssetBalanceChart
           rows={chartRows}
           retirementAge={retirementAge}
-          targetMonthly={inputs.goal.targetMonthly}
           inputs={inputs}
         />
       </div>

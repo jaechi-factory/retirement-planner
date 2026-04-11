@@ -107,7 +107,6 @@ export default function EvidenceWorkspace({
             <AssetBalanceChart
               rows={chartRows}
               retirementAge={retirementAge}
-              targetMonthly={inputs.goal.targetMonthly}
               inputs={inputs}
             />
           </div>

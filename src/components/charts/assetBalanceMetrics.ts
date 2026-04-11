@@ -27,6 +27,7 @@ export interface AgeSnapshotData {
   financialInvestable: number;
   propertyValue: number;
   saleProceedsEnd: number;
+  monthlySaleProceedsReturn: number;
   totalAssets: number;
   // events
   pensionEvents: Array<{ name: string; monthly: number }>;
@@ -172,6 +173,9 @@ export function getAgeSnapshot(params: {
     financialInvestable: row.financialInvestableEnd,
     propertyValue: row.propertyValueEnd,
     saleProceedsEnd: row.propertySaleProceedsBucketEnd,
+    monthlySaleProceedsReturn: row.propertySaleProceedsBucketEnd > 0
+      ? Math.round(row.propertySaleProceedsBucketEnd * (Math.pow(1.04, 1 / 12) - 1))
+      : 0,
     totalAssets,
     pensionEvents: pensionStartMap.get(age) ?? [],
   };

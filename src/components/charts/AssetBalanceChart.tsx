@@ -44,7 +44,6 @@ const LEGEND_ORDER = [
 interface Props {
   rows: YearlyAggregateV2[];
   retirementAge: number;
-  targetMonthly: number;
   inputs: PlannerInputs;
 }
 
@@ -226,7 +225,6 @@ function CustomLegend({ hasRealEstate, hasFinancial, hasSaleProceeds }: { hasRea
 export default function AssetBalanceChart({
   rows,
   retirementAge,
-  targetMonthly,
   inputs,
 }: Props) {
   const [selectedAge, setSelectedAge] = useState<number>(retirementAge);
@@ -269,18 +267,6 @@ export default function AssetBalanceChart({
     shortfall: row.totalShortfall,
   }));
 
-  const depletionRow = rows.find((row) => row.totalShortfall > 0);
-  const depletionAge = depletionRow?.ageYear ?? null;
-  const lastRow = rows[rows.length - 1];
-
-  const isSaleProceedsDependent =
-    depletionAge === null && hasSaleProceeds && lastRow !== undefined && lastRow.propertySaleProceedsBucketEnd > 0;
-  const isSecuredLoanDependent =
-    depletionAge === null && !isSaleProceedsDependent && lastRow !== undefined && lastRow.securedLoanBalanceEnd > 0;
-  const isPensionDependent =
-    depletionAge === null && !isSaleProceedsDependent && !isSecuredLoanDependent &&
-    lastRow !== undefined && lastRow.financialInvestableEnd < 100 && lastRow.totalPension > 0;
-
   const handleMouseMove = (state: { activeLabel?: string | number }) => {
     if (state.activeLabel !== undefined) {
       setSelectedAge(state.activeLabel as number);
@@ -303,31 +289,6 @@ export default function AssetBalanceChart({
 
   return (
     <div style={{ marginBottom: 12 }}>
-      {/* 상태 메시지 */}
-      <div
-        style={{
-          fontSize: 14,
-          fontWeight: 600,
-          color:
-            depletionAge !== null
-              ? 'var(--ux-status-negative)'
-              : isPensionDependent
-              ? 'var(--ux-status-warning)'
-              : 'var(--ux-status-positive)',
-          marginBottom: 10,
-        }}
-      >
-        {depletionAge !== null
-          ? `목표 생활비(월 ${targetMonthly}만원) 기준, ${depletionAge}세에 자금이 바닥나요`
-          : isSaleProceedsDependent
-          ? '집을 팔아 쓴 뒤에도 기대수명까지 버틸 수 있어요'
-          : isSecuredLoanDependent
-          ? '집 담보대출을 활용해 기대수명까지 버틸 수 있어요'
-          : isPensionDependent
-          ? '연금 중심으로 기대수명까지 버틸 수 있어요'
-          : '기대수명까지 금융자산을 유지해요'}
-      </div>
-
       <ResponsiveContainer width="100%" height={228}>
         <AreaChart
           data={data}

@@ -252,6 +252,9 @@ export default function AgeInspectorPanel({ data, hasRealEstate, hasSaleProceeds
           {data.monthlyPrivatePensionRealTodayValue > 0 && (
             <DetailRow label="개인연금" value={data.monthlyPrivatePensionRealTodayValue} />
           )}
+          {data.monthlySaleProceedsReturn > 0 && (
+            <DetailRow label="매각대금 운용수익" value={data.monthlySaleProceedsReturn} />
+          )}
 
           <div style={{ marginTop: 12 }}>
             <SectionTitle>지출 구성</SectionTitle>

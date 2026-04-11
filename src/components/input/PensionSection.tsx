@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { usePlannerStore } from '../../store/usePlannerStore';
 import NumberInput from './shared/NumberInput';
 import RateInput from './shared/RateInput';
@@ -40,6 +40,7 @@ function PensionRow({ productId, label }: { productId: string; label: string }) 
 
   const hasData = product.currentBalance > 0 || product.monthlyContribution > 0;
   const [hasProduct, setHasProduct] = useState(hasData);
+  const cachedRef = useRef<PrivatePensionProduct | null>(null);
 
   const saveProducts = (newProducts: PrivatePensionProduct[]) => {
     const anyEnabled = newProducts.some(
@@ -64,7 +65,8 @@ function PensionRow({ productId, label }: { productId: string; label: string }) 
   const handleToggle = (v: boolean) => {
     setHasProduct(v);
     if (!v) {
-      // 제거
+      // 현재 값을 캐시에 저장 후 목록에서 제거
+      cachedRef.current = { ...product };
       const others = privatePension.products.filter((p) => p.id !== productId);
       const anyEnabled = others.some(
         (p) => p.currentBalance > 0 || p.monthlyContribution > 0,
@@ -77,10 +79,10 @@ function PensionRow({ productId, label }: { productId: string; label: string }) 
         },
       });
     } else {
-      // 기본값으로 추가
-      const fresh = makeDefaultProduct(productId, label);
+      // 캐시된 값이 있으면 복원, 없으면 기본값
+      const restored = cachedRef.current ?? makeDefaultProduct(productId, label);
       const others = privatePension.products.filter((p) => p.id !== productId);
-      saveProducts([...others, fresh]);
+      saveProducts([...others, restored]);
     }
   };
 

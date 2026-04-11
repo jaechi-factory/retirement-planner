@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { usePlannerStore, defaultVehicle } from '../../store/usePlannerStore';
 import NumberInput from './shared/NumberInput';
 import RateInput from './shared/RateInput';
@@ -18,20 +18,32 @@ export default function VehicleSection() {
 
   const hasVehicle = vehicle.ownershipType !== 'none';
   const [hasInstallment, setHasInstallment] = useState(vehicle.loanBalance > 0);
+  const cachedVehicleRef = useRef<typeof vehicle | null>(null);
+  const cachedInstallmentRef = useRef<{ loanBalance: number; loanRate: number; loanMonths: number } | null>(null);
 
   const handleVehicleToggle = (v: boolean) => {
     if (!v) {
-      setVehicle({ ownershipType: 'none', loanBalance: 0, loanRate: 0, loanMonths: 0 });
-      setHasInstallment(false);
+      cachedVehicleRef.current = { ...vehicle };
+      setVehicle({ ownershipType: 'none' });
     } else {
-      setVehicle({ ownershipType: 'owned' });
+      if (cachedVehicleRef.current) {
+        setVehicle({ ...cachedVehicleRef.current, ownershipType: 'owned' });
+      } else {
+        setVehicle({ ownershipType: 'owned' });
+      }
     }
   };
 
   const handleInstallmentToggle = (v: boolean) => {
     setHasInstallment(v);
     if (!v) {
-      setVehicle({ loanBalance: 0, loanRate: 0, loanMonths: 0 });
+      cachedInstallmentRef.current = {
+        loanBalance: vehicle.loanBalance,
+        loanRate: vehicle.loanRate,
+        loanMonths: vehicle.loanMonths,
+      };
+    } else if (cachedInstallmentRef.current) {
+      setVehicle(cachedInstallmentRef.current);
     }
   };
 

@@ -15,12 +15,7 @@ export default function ChildrenSection() {
         value={children.hasChildren}
         falseLabel="없어요"
         trueLabel="있어요"
-        onChange={(v) =>
-          setChildren(v
-            ? { hasChildren: true }
-            : { hasChildren: false, count: 0, monthlyPerChild: 0 }
-          )
-        }
+        onChange={(v) => setChildren({ hasChildren: v })}
       />
 
       {/* 자녀 있음 → 별도 흰색 카드에 확장 필드 */}
