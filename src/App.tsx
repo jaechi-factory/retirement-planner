@@ -16,8 +16,8 @@ export default function App() {
       {/* 헤더 */}
       <div
         style={{
-          paddingTop: 51,
-          paddingBottom: 38,
+          paddingTop: 80,
+          paddingBottom: 48,
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
