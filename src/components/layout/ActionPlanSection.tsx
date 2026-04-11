@@ -1,84 +1,118 @@
-import { getTotalMonthlyPensionTodayValue } from '../../engine/pensionEstimation';
-import type { CalculationResultV2, PropertyOptionResult } from '../../types/calculationV2';
-import type { PlannerInputs } from '../../types/inputs';
-import { fmtKRW } from '../../utils/format';
+import type { CounterfactualResult, SlottedRecommendation, SlotType } from '../../engine/counterfactualEngine';
+import { getSlotLabel, generateHeadline, generateDetail, generateDeltaBadges } from '../../engine/counterfactualCopy';
 
 interface ActionPlanSectionProps {
-  summary: CalculationResultV2['summary'];
-  inputs: PlannerInputs;
-  hasRealEstate: boolean;
-  propertyOptions: PropertyOptionResult[];
+  counterfactual: CounterfactualResult | null;
 }
 
-interface ActionItem {
-  id: string;
-  text: string;
-  detail?: string;
-}
+const SLOT_BORDER_COLORS: Record<SlotType, string> = {
+  best: 'var(--palette-ink)',
+  practical: 'var(--palette-muted, rgba(36,39,46,0.35))',
+  big_move: 'var(--palette-yellow)',
+};
 
-function buildActionItems(
-  summary: CalculationResultV2['summary'],
-  inputs: PlannerInputs,
-  hasRealEstate: boolean,
-): ActionItem[] {
-  const { targetMonthly, lifeExpectancy, retirementAge, inflationRate } = inputs.goal;
-  const { currentAge, annualIncome } = inputs.status;
-  const items: ActionItem[] = [];
+const SLOT_LABEL_COLORS: Record<SlotType, string> = {
+  best: 'var(--palette-ink)',
+  practical: 'rgba(36,39,46,0.55)',
+  big_move: 'var(--palette-yellow-dark, #b8860b)',
+};
 
-  const pensionMonthly = getTotalMonthlyPensionTodayValue(
-    inputs.pension,
-    currentAge,
-    retirementAge,
-    annualIncome,
-    inflationRate,
-    inputs.goal.retirementStartMonth ?? 0,
+function SlotCard({ rec, baselineSustainable }: { rec: SlottedRecommendation; baselineSustainable: number }) {
+  const { slot, metrics } = rec;
+  const headline = generateHeadline(metrics);
+  const detail = generateDetail(metrics, baselineSustainable);
+  const badges = generateDeltaBadges(metrics);
+
+  return (
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 8,
+        padding: '18px 20px',
+        borderRadius: 14,
+        background: 'var(--surface-card)',
+        boxShadow: 'var(--shadow-card)',
+        border: '1px solid rgba(36,39,46,0.06)',
+        borderLeft: `4px solid ${SLOT_BORDER_COLORS[slot]}`,
+      }}
+    >
+      {/* 슬롯 라벨 */}
+      <span
+        style={{
+          fontSize: 11,
+          fontWeight: 700,
+          color: SLOT_LABEL_COLORS[slot],
+          letterSpacing: '0.05em',
+          textTransform: 'uppercase',
+        }}
+      >
+        {getSlotLabel(slot)}
+      </span>
+
+      {/* Headline */}
+      <span
+        style={{
+          color: 'var(--result-text-strong-color)',
+          display: 'block',
+          lineHeight: 1.45,
+          fontSize: 14,
+          fontWeight: 700,
+        }}
+      >
+        {headline}
+      </span>
+
+      {/* Detail */}
+      {detail && (
+        <span
+          style={{
+            display: 'block',
+            lineHeight: 1.6,
+            fontSize: 13,
+            color: 'rgba(36,39,46,0.58)',
+          }}
+        >
+          {detail}
+        </span>
+      )}
+
+      {/* Delta Badges */}
+      {badges.length > 0 && (
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 2 }}>
+          {badges.map((badge) => (
+            <span
+              key={badge.text}
+              style={{
+                fontSize: 12,
+                fontWeight: 600,
+                padding: '3px 10px',
+                borderRadius: 20,
+                background: badge.type === 'positive'
+                  ? 'rgba(34, 139, 34, 0.08)'
+                  : 'rgba(36,39,46,0.05)',
+                color: badge.type === 'positive'
+                  ? 'rgb(34, 120, 34)'
+                  : 'rgba(36,39,46,0.5)',
+              }}
+            >
+              {badge.text}
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
   );
-
-  // 1. 생활비 부족 시 (최우선)
-  if (summary.targetGap < 0) {
-    const shortfall = Math.abs(summary.targetGap);
-    items.push({
-      id: 'expense-gap',
-      text: `목표 생활비를 월 ${fmtKRW(shortfall)} 낮춰서 다시 계산해보세요`,
-      detail: `현재 자산으로는 월 ${fmtKRW(summary.sustainableMonthly)}이 가능해요. 목표(월 ${fmtKRW(targetMonthly)})를 조금 조정해보세요.`,
-    });
-  }
-
-  // 2. 집 개입 시점 (집이 있는 경우)
-  if (hasRealEstate && summary.propertyInterventionAge !== null) {
-    items.push({
-      id: 'house-strategy',
-      text: `${summary.propertyInterventionAge}세 전후 집을 팔거나 담보대출 받는 경우를 비교해보세요`,
-      detail: `위 "집을 팔거나 대출받는 선택" 섹션에서 전략별 차이를 확인할 수 있어요.`,
-    });
-  }
-
-  // 3. 은퇴 나이 조정 제안 (자금 부족 & 충분한 여유 있을 때)
-  if (summary.failureAge !== null && summary.failureAge < lifeExpectancy - 5) {
-    items.push({
-      id: 'retire-age',
-      text: '은퇴 나이를 2년 늦추면 어떻게 달라지는지 확인해보세요',
-      detail: `은퇴를 ${retirementAge + 2}세로 늦추면 근로소득 기간이 늘어나 자금 여유가 생길 수 있어요.`,
-    });
-  }
-
-  // 4. 연금 미입력 (낮은 우선순위지만 중요)
-  if (pensionMonthly === 0) {
-    items.push({
-      id: 'pension-empty',
-      text: '국민연금·퇴직연금·개인연금 정보를 입력하면 더 정확해요',
-      detail: '연금은 은퇴 후 가장 안정적인 수입원이에요. 왼쪽 연금 섹션에서 입력해보세요.',
-    });
-  }
-
-  // 최대 3개
-  return items.slice(0, 3);
 }
 
-export default function ActionPlanSection({ summary, inputs, hasRealEstate, propertyOptions: _propertyOptions }: ActionPlanSectionProps) {
-  const items = buildActionItems(summary, inputs, hasRealEstate);
+export default function ActionPlanSection({ counterfactual }: ActionPlanSectionProps) {
+  const slots = counterfactual?.slots ?? [];
+  const baselineSustainable = counterfactual?.baseline.sustainableMonthly ?? 0;
 
-  if (items.length === 0) {
+  // 빈 상태: best와 practical 모두 없을 때
+  const hasBestOrPractical = slots.some((s) => s.slot === 'best' || s.slot === 'practical');
+
+  if (!counterfactual || !hasBestOrPractical) {
     return (
       <section>
         <div style={{ marginBottom: 14 }}>
@@ -122,64 +156,12 @@ export default function ActionPlanSection({ summary, inputs, hasRealEstate, prop
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        {items.map((item, idx) => (
-          <div
-            key={item.id}
-            style={{
-              display: 'flex',
-              alignItems: 'flex-start',
-              gap: 16,
-              padding: '18px 20px',
-              borderRadius: 14,
-              background: 'var(--surface-card)',
-              boxShadow: 'var(--shadow-card)',
-              border: '1px solid rgba(36,39,46,0.06)',
-              borderLeft: '4px solid var(--palette-ink)',
-            }}
-          >
-            {/* 번호 필 */}
-            <span
-              style={{
-                width: 26,
-                height: 26,
-                borderRadius: '50%',
-                background: 'var(--palette-ink)',
-                color: 'var(--palette-card)',
-                fontSize: 14,
-                fontWeight: 800,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
-                marginTop: 1,
-              }}
-            >
-              {idx + 1}
-            </span>
-
-            {/* 내용 */}
-            <div style={{ flex: 1 }}>
-              <span
-                style={{
-                  color: 'var(--result-text-strong-color)',
-                  display: 'block',
-                  lineHeight: 1.45,
-                  marginBottom: item.detail ? 5 : 0,
-                  fontSize: 14,
-                  fontWeight: 700,
-                }}
-              >
-                {item.text}
-              </span>
-              {item.detail && (
-                <span
-                  style={{ display: 'block', lineHeight: 1.6, fontSize: 14, color: 'rgba(36,39,46,0.64)' }}
-                >
-                  {item.detail}
-                </span>
-              )}
-            </div>
-          </div>
+        {slots.map((rec) => (
+          <SlotCard
+            key={rec.slot}
+            rec={rec}
+            baselineSustainable={baselineSustainable}
+          />
         ))}
       </div>
     </section>

@@ -10,7 +10,6 @@ import ResultHeroSection from './ResultHeroSection';
 import ReinvestmentExplainerSection from './ReinvestmentExplainerSection';
 import EvidenceWorkspace from './EvidenceWorkspace';
 import ActionPlanSection from './ActionPlanSection';
-import VehicleComparisonCard from '../result/VehicleComparisonCard';
 
 // ── 섹션 구분선 ────────────────────────────────────────────
 function SectionDivider({ label }: { label?: string }) {
@@ -104,7 +103,7 @@ export default function ResultWorkbench() {
   const resultV2 = usePlannerStore((state) => state.resultV2);
   const result = usePlannerStore((state) => state.result);
   const inputs = usePlannerStore((state) => state.inputs);
-  const vehicleComparison = usePlannerStore((state) => state.vehicleComparison);
+  const counterfactual = usePlannerStore((state) => state.counterfactual);
   const recommendationMode = usePlannerStore((state) => state.recommendationMode);
   const setRecommendationMode = usePlannerStore((state) => state.setRecommendationMode);
 
@@ -250,20 +249,10 @@ export default function ResultWorkbench() {
       <SectionDivider />
 
 
-      {/* 5. 자동차 영향 (차량 입력 시에만) */}
-      {vehicleComparison && vehicleComparison.hasVehicle && (
-        <>
-          <VehicleComparisonCard comparison={vehicleComparison} />
-          <SectionDivider />
-        </>
-      )}
 
       {/* 6. 지금 해야 할 일 */}
       <ActionPlanSection
-        summary={summary}
-        inputs={inputs}
-        hasRealEstate={hasRealEstate}
-        propertyOptions={propertyOptions}
+        counterfactual={counterfactual}
       />
 
     </div>

@@ -17,6 +17,7 @@ import { calcTotalAsset, calcTotalDebt, calcWeightedReturn, precomputeDebtSchedu
 import { judgeVerdict } from '../engine/verdictEngine';
 import { getTotalMonthlyPensionTodayValue, getPensionMonthlyAtRetirementStart, getNPSStartAgeByBirthYear } from '../engine/pensionEstimation';
 import { runCalculationV2 } from '../engine/calculatorV2';
+import { runCounterfactualAnalysis, type CounterfactualResult } from '../engine/counterfactualEngine';
 import { getPlannerPolicy } from '../policy/policyTable';
 
 const defaultPension: PensionInputs = {
@@ -358,6 +359,7 @@ interface PlannerStore {
   liquidationPolicy: LiquidationPolicy;
   recommendationMode: RecommendationModeV2;
   vehicleComparison: VehicleComparisonResult | null;
+  counterfactual: CounterfactualResult | null;
   setGoal: (partial: Partial<PlannerInputs['goal']>) => void;
   setStatus: (partial: Partial<PlannerInputs['status']>) => void;
   setAsset: (key: keyof AssetAllocation, partial: Partial<AssetAllocation[keyof AssetAllocation]>) => void;
@@ -376,7 +378,7 @@ const computeState = (
   fundingPolicy: FundingPolicy = DEFAULT_FUNDING_POLICY,
   liquidationPolicy: LiquidationPolicy = DEFAULT_LIQUIDATION_POLICY,
   recommendationMode: RecommendationModeV2 = 'max_sustainable',
-): Pick<PlannerStore, 'inputs' | 'result' | 'verdict' | 'resultV2' | 'vehicleComparison'> => {
+): Pick<PlannerStore, 'inputs' | 'result' | 'verdict' | 'resultV2' | 'vehicleComparison' | 'counterfactual'> => {
   const { goal, status } = inputs;
   const debtSchedules = precomputeDebtSchedules(inputs.debts);
   const totalAsset = calcTotalAsset(inputs.assets);
@@ -397,14 +399,14 @@ const computeState = (
   });
 
   const requiredMissing = status.currentAge <= 0 || goal.retirementAge <= 0 || goal.lifeExpectancy <= 0 || goal.targetMonthly <= 0;
-  if (requiredMissing) return { inputs, result: emptyResult(null), verdict: null, resultV2: null, vehicleComparison: null };
+  if (requiredMissing) return { inputs, result: emptyResult(null), verdict: null, resultV2: null, vehicleComparison: null, counterfactual: null };
 
   if (goal.retirementAge <= status.currentAge || goal.lifeExpectancy <= goal.retirementAge) {
-    return { inputs, result: emptyResult('은퇴 나이는 현재 나이보다, 기대수명은 은퇴 나이보다 커야 해요.'), verdict: null, resultV2: null, vehicleComparison: null };
+    return { inputs, result: emptyResult('은퇴 나이는 현재 나이보다, 기대수명은 은퇴 나이보다 커야 해요.'), verdict: null, resultV2: null, vehicleComparison: null, counterfactual: null };
   }
 
   const resultV2 = runCalculationV2(inputs, fundingPolicy, liquidationPolicy, debtSchedules, recommendationMode);
-  if (!resultV2) return { inputs, result: emptyResult(null), verdict: null, resultV2: null, vehicleComparison: null };
+  if (!resultV2) return { inputs, result: emptyResult(null), verdict: null, resultV2: null, vehicleComparison: null, counterfactual: null };
 
   const result = buildCompatResult(inputs, resultV2, debtSchedules);
   const verdict = judgeVerdict(goal.targetMonthly, result.possibleMonthly);
@@ -446,7 +448,12 @@ const computeState = (
     }
   }
 
-  return { inputs, result, verdict, resultV2, vehicleComparison };
+  // 반사실 시뮬레이션 실행
+  const counterfactual = resultV2
+    ? runCounterfactualAnalysis(inputs, resultV2.propertyOptions, fundingPolicy, liquidationPolicy, debtSchedules)
+    : null;
+
+  return { inputs, result, verdict, resultV2, vehicleComparison, counterfactual };
 };
 
 export const usePlannerStore = create<PlannerStore>((set, get) => ({
