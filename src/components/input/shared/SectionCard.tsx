@@ -35,7 +35,7 @@ export default function SectionCard({
       {/* 카드 내 콘텐츠 폭 504px 고정 */}
       <div
         style={{
-          width: 504,
+          width: 510,
           display: 'flex',
           flexDirection: 'column',
           gap: 40,

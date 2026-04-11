@@ -8,7 +8,6 @@ import ChildrenSection from '../input/ChildrenSection';
 import PensionSection from '../input/PensionSection';
 import VehicleSection from '../input/VehicleSection';
 
-// 섹션 순서 고정
 const SECTION_ORDER = [
   'retirementGoal',
   'currentStatus',
@@ -26,30 +25,49 @@ interface Props {
   onAllDone: () => void;
 }
 
+function SectionComponent({
+  sectionId,
+  onComplete,
+  isLast,
+}: {
+  sectionId: SectionId;
+  onComplete?: () => void;
+  isLast?: boolean;
+}) {
+  switch (sectionId) {
+    case 'retirementGoal':
+      return <RetirementGoalSection onComplete={onComplete} />;
+    case 'currentStatus':
+      return <CurrentStatusSection onComplete={onComplete} />;
+    case 'asset':
+      return <AssetSection onComplete={onComplete} />;
+    case 'debt':
+      return <DebtSection onComplete={onComplete} />;
+    case 'vehicle':
+      return <VehicleSection onComplete={onComplete} />;
+    case 'children':
+      return <ChildrenSection onComplete={onComplete} />;
+    case 'pension':
+      return <PensionSection onComplete={onComplete} isLast={isLast} />;
+  }
+}
+
 export default function InputWorkbench({ allDone, onAllDone }: Props) {
   const resetAll = usePlannerStore((s) => s.resetAll);
 
-  // UI 전용 상태 — store와 완전 분리
+  // visibleSections: [active(index 0), ...completed(oldest last)]
+  // 새 섹션이 생기면 앞에 추가 → 활성 섹션이 항상 맨 위
   const [visibleSections, setVisibleSections] = useState<SectionId[]>(['retirementGoal']);
-  const [completedSections, setCompletedSections] = useState<SectionId[]>([]);
   const [confirmReset, setConfirmReset] = useState(false);
 
   function handleComplete(sectionId: SectionId) {
-    // 이미 완료된 섹션이면 무시
-    if (completedSections.includes(sectionId)) return;
-
-    const newCompleted = [...completedSections, sectionId];
-    setCompletedSections(newCompleted);
-
-    // 다음 섹션 인덱스 계산
     const currentIdx = SECTION_ORDER.indexOf(sectionId);
     const nextIdx = currentIdx + 1;
 
     if (nextIdx < SECTION_ORDER.length) {
       const nextSection = SECTION_ORDER[nextIdx];
-      if (!visibleSections.includes(nextSection)) {
-        setVisibleSections((prev) => [...prev, nextSection]);
-      }
+      // 새 섹션을 맨 앞에 추가 (활성 섹션 = index 0)
+      setVisibleSections((prev) => [nextSection, ...prev]);
     } else {
       // 마지막 섹션 완료 → 2컬럼 전환
       onAllDone();
@@ -60,7 +78,6 @@ export default function InputWorkbench({ allDone, onAllDone }: Props) {
     if (confirmReset) {
       resetAll();
       setVisibleSections(['retirementGoal']);
-      setCompletedSections([]);
       setConfirmReset(false);
     } else {
       setConfirmReset(true);
@@ -68,7 +85,7 @@ export default function InputWorkbench({ allDone, onAllDone }: Props) {
     }
   }
 
-  // 2컬럼 완료 상태: 좁은 폭으로 표시
+  // 2컬럼 완료 상태
   if (allDone) {
     return (
       <div
@@ -87,7 +104,6 @@ export default function InputWorkbench({ allDone, onAllDone }: Props) {
           gap: 40,
         }}
       >
-        {/* 완료 후: 입력 섹션들을 작은 버전으로 모두 표시 */}
         <RetirementGoalSection />
         <CurrentStatusSection />
         <AssetSection />
@@ -99,7 +115,11 @@ export default function InputWorkbench({ allDone, onAllDone }: Props) {
     );
   }
 
-  // 입력 단계: 단일 컬럼, 중앙 정렬
+  // 활성 섹션: visibleSections[0] (맨 위)
+  // 완료 섹션: visibleSections.slice(1) (아래로 쌓임)
+  const activeSectionId = visibleSections[0];
+  const completedSectionIds = visibleSections.slice(1);
+
   return (
     <div
       style={{
@@ -111,133 +131,94 @@ export default function InputWorkbench({ allDone, onAllDone }: Props) {
         boxSizing: 'border-box',
       }}
     >
-      {/* max-width 1400px 컨테이너 */}
+      {/* 타이틀 영역 */}
       <div
         style={{
-          width: '100%',
-          maxWidth: 1400,
+          paddingTop: 64,
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          boxSizing: 'border-box',
+          gap: 20,
+          textAlign: 'center',
+          width: '100%',
         }}
       >
-        {/* 타이틀 영역 */}
-        <div
+        <h1
           style={{
-            paddingTop: 80,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: 20,
-            textAlign: 'center',
-            width: '100%',
+            margin: 0,
+            fontSize: 44,
+            fontWeight: 500,
+            color: 'var(--fig-title-color)',
+            fontFamily: 'Pretendard, sans-serif',
+            lineHeight: 1.5,
           }}
         >
-          <h1
-            style={{
-              margin: 0,
-              fontSize: 58,
-              fontWeight: 500,
-              color: 'var(--fig-title-color)',
-              fontFamily: 'Pretendard, sans-serif',
-              lineHeight: 1.5,
-            }}
-          >
-            나는 은퇴하면 한달에<br />얼마를 쓸 수 있을까?
-          </h1>
-          <p
-            style={{
-              margin: 0,
-              fontSize: 24,
-              fontWeight: 500,
-              color: 'var(--fig-subtitle-color)',
-              fontFamily: 'Pretendard, sans-serif',
-              lineHeight: 1.5,
-            }}
-          >
-            내 정보를 입력하면, 은퇴 후 생활비를 예상해 볼 수 있어요.
-          </p>
-        </div>
-
-        {/* 타이틀 ↔ 첫 카드 간격 60px */}
-        <div style={{ height: 60 }} />
-
-        {/* 섹션 카드 누적 영역 */}
-        <div
+          나는 은퇴하면 한달에<br />얼마를 쓸 수 있을까?
+        </h1>
+        <p
           style={{
-            width: '100%',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 40,
-            paddingBottom: 120,
+            margin: 0,
+            fontSize: 24,
+            fontWeight: 500,
+            color: 'var(--fig-subtitle-color)',
+            fontFamily: 'Pretendard, sans-serif',
+            lineHeight: 1.5,
           }}
         >
-          {visibleSections.includes('retirementGoal') && (
-            <RetirementGoalSection
-              onComplete={() => handleComplete('retirementGoal')}
-            />
-          )}
-          {visibleSections.includes('currentStatus') && (
-            <CurrentStatusSection
-              onComplete={() => handleComplete('currentStatus')}
-            />
-          )}
-          {visibleSections.includes('asset') && (
-            <AssetSection
-              onComplete={() => handleComplete('asset')}
-            />
-          )}
-          {visibleSections.includes('debt') && (
-            <DebtSection
-              onComplete={() => handleComplete('debt')}
-            />
-          )}
-          {visibleSections.includes('vehicle') && (
-            <VehicleSection
-              onComplete={() => handleComplete('vehicle')}
-            />
-          )}
-          {visibleSections.includes('children') && (
-            <ChildrenSection
-              onComplete={() => handleComplete('children')}
-            />
-          )}
-          {visibleSections.includes('pension') && (
-            <PensionSection
-              onComplete={() => handleComplete('pension')}
-              isLast={true}
-            />
-          )}
+          내 정보를 입력하면, 은퇴 후 생활비를 예상해 볼 수 있어요.
+        </p>
+      </div>
+
+      {/* 타이틀 ↔ 첫 카드 간격 48px */}
+      <div style={{ height: 48 }} />
+
+      {/* 섹션 카드 영역: 활성 카드(위) + 완료된 카드(아래) */}
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: 40,
+          paddingBottom: 200,
+          width: '100%',
+        }}
+      >
+        {/* 활성 섹션 — 버튼 있음 */}
+        <div style={{ width: 1044 }}>
+          <SectionComponent
+            sectionId={activeSectionId}
+            onComplete={() => handleComplete(activeSectionId)}
+            isLast={activeSectionId === 'pension'}
+          />
         </div>
 
-        {/* 초기화 버튼 */}
-        <div
+        {/* 완료된 섹션들 — 버튼 없음 */}
+        {completedSectionIds.map((sectionId) => (
+          <div key={sectionId} style={{ width: 1044 }}>
+            <SectionComponent sectionId={sectionId} />
+          </div>
+        ))}
+      </div>
+
+      {/* 초기화 버튼 */}
+      <div style={{ position: 'fixed', top: 20, right: 24, zIndex: 100 }}>
+        <button
+          onClick={handleResetClick}
           style={{
-            position: 'fixed',
-            top: 20,
-            right: 24,
-            zIndex: 100,
+            fontSize: 11,
+            fontWeight: 600,
+            color: confirmReset ? '#FFFDFE' : 'var(--text-muted)',
+            background: confirmReset ? '#C0392B' : 'rgba(36,39,46,0.12)',
+            border: 'none',
+            borderRadius: 8,
+            padding: '6px 12px',
+            cursor: 'pointer',
+            transition: 'all 0.15s ease',
+            letterSpacing: '0.01em',
           }}
         >
-          <button
-            onClick={handleResetClick}
-            style={{
-              fontSize: 11,
-              fontWeight: 600,
-              color: confirmReset ? '#FFFDFE' : 'var(--text-muted)',
-              background: confirmReset ? '#C0392B' : 'rgba(36,39,46,0.12)',
-              border: 'none',
-              borderRadius: 8,
-              padding: '6px 12px',
-              cursor: 'pointer',
-              transition: 'all 0.15s ease',
-              letterSpacing: '0.01em',
-            }}
-          >
-            {confirmReset ? '정말 초기화?' : '초기화'}
-          </button>
-        </div>
+          {confirmReset ? '정말 초기화?' : '초기화'}
+        </button>
       </div>
     </div>
   );

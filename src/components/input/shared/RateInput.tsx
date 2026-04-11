@@ -122,7 +122,7 @@ export default function RateInput({ label, value, onChange, hint }: Props) {
       {hint && (
         <span
           style={{
-            fontSize: 14,
+            fontSize: 18,
             fontWeight: 400,
             color: 'var(--fig-hint-color)',
             lineHeight: 1.5,
