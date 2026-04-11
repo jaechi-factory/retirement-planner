@@ -51,7 +51,9 @@ function EmptyStateCard({ title, body, hint }: { title: string; body: string; hi
       style={{
         borderRadius: 20,
         border: '1px solid rgba(36,39,46,0.08)',
-        background: 'var(--surface-card)',
+        background: 'var(--fig-card-bg)',
+        backdropFilter: 'blur(32px)',
+        WebkitBackdropFilter: 'blur(32px)',
         boxShadow: 'var(--shadow-card)',
         padding: '64px 32px',
         display: 'flex',
@@ -139,9 +141,11 @@ export default function ResultWorkbench() {
     flex: 1,
     minWidth: 0,
     padding: '38px 40px 80px',
-    background: '#fdfcf7',
+    background: 'var(--fig-card-bg)',
+    backdropFilter: 'blur(32px)',
+    WebkitBackdropFilter: 'blur(32px)',
     borderRadius: 32,
-    boxShadow: '8px 8px 16px 16px rgba(158,135,71,0.06)',
+    boxShadow: 'var(--shadow-card)',
     boxSizing: 'border-box' as const,
   };
 

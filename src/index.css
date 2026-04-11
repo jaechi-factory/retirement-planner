@@ -54,7 +54,7 @@
   --accent-marker:       #FF6600;
 
   /* ── Shadow ─────────────────────────────────────────────────── */
-  --shadow-card:      none;
+  --shadow-card:      8px 8px 16px 16px rgba(158,135,71,0.06);
   --shadow-card-sm:   none;
   --shadow-card-md:   none;
 
