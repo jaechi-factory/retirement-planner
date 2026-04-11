@@ -87,7 +87,7 @@ export default function ReinvestmentExplainerSection({ inputs, annualNetSavings,
         {/* 왼쪽: 월 남는 돈 */}
         <div
           style={{
-            background: '#f2f4f6',
+            background: monthlySurplus < 0 ? '#FFEEEE' : '#f2f4f6',
             borderRadius: 20,
             padding: 16,
             display: 'flex',
@@ -164,7 +164,7 @@ export default function ReinvestmentExplainerSection({ inputs, annualNetSavings,
           <div style={{ paddingTop: 8 }}>
             {monthlySurplus <= 0 ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: '#F04452', fontFamily: 'Pretendard, sans-serif', lineHeight: 1.5 }}>
+                <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: '#191f28', fontFamily: 'Pretendard, sans-serif', lineHeight: 1.5 }}>
                   [주의]
                 </p>
                 <p style={{ margin: 0, fontSize: 14, color: '#191f28', fontFamily: 'Pretendard, sans-serif', lineHeight: 1.6 }}>
