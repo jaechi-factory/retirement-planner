@@ -6,6 +6,8 @@ import type {
   CalculationResultV2,
 } from '../../types/calculationV2';
 import type { PlannerInputs } from '../../types/inputs';
+import type { KeyDecisionEvent } from '../../engine/timelineBuilder';
+import { CompactLifetimeTimeline } from '../result/v3/LifetimeTimeline';
 
 interface EvidenceWorkspaceProps {
   hasRealEstate: boolean;
@@ -15,6 +17,7 @@ interface EvidenceWorkspaceProps {
   inputs: PlannerInputs;
   summary: CalculationResultV2['summary'];
   assumptions: AssumptionItem[];
+  timelineEvents: KeyDecisionEvent[];
 }
 
 export default function EvidenceWorkspace({
@@ -25,10 +28,11 @@ export default function EvidenceWorkspace({
   inputs,
   summary,
   assumptions,
+  timelineEvents,
 }: EvidenceWorkspaceProps) {
   return (
     <section style={{ marginBottom: 40 }}>
-      {/* 메인 카드 */}
+      {/* 피그마 Frame 16: 타임라인 + 차트 통합 카드 */}
       <div
         style={{
           borderRadius: 32,
@@ -38,49 +42,44 @@ export default function EvidenceWorkspace({
           marginBottom: 'var(--result-space-2)',
           display: 'flex',
           flexDirection: 'column',
+          alignItems: 'center',
           gap: 24,
+          alignSelf: 'stretch',
         }}
       >
-        {/* 헤더: 타이틀 + 설명 */}
+        {/* ── 카드 타이틀 ── */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%' }}>
+          <p style={{ margin: 0, fontSize: 20, fontWeight: 700, color: '#191f28', fontFamily: 'Pretendard, sans-serif', lineHeight: 1.5 }}>
+            자산의 흐름을 그래프로 보여드릴게요
+          </p>
+          <p style={{ margin: 0, fontSize: 16, fontWeight: 400, color: '#4e5968', fontFamily: 'Pretendard, sans-serif', lineHeight: 1.5 }}>
+            먼저 현금으로 생활하고, 현금이 부족해지면 주식 같은 현금성 자산을 팔아 생활해요. 그래도 부족하면 경우에 따라 집을 담보로 대출하거나 판매해야 할 수 있어요.
+          </p>
+        </div>
+
+        {/* ── 타임라인 섹션 ── */}
         <div
           style={{
+            background: '#E8F3FF',
+            borderRadius: 20,
+            padding: 16,
             display: 'flex',
-            alignItems: 'flex-start',
-            justifyContent: 'space-between',
-            gap: 'var(--result-space-3)',
+            flexDirection: 'column',
+            gap: 6,
+            width: '100%',
           }}
         >
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <p
-              style={{
-                margin: 0,
-                fontSize: 20,
-                fontWeight: 700,
-                color: '#191f28',
-                fontFamily: 'Pretendard, sans-serif',
-                lineHeight: 1.5,
-              }}
-            >
-              자산의 흐름을 그래프로 보여드릴게요
-            </p>
-            <p
-              style={{
-                margin: 0,
-                fontSize: 16,
-                fontWeight: 400,
-                color: '#4e5968',
-                fontFamily: 'Pretendard, sans-serif',
-                lineHeight: 1.5,
-              }}
-            >
-              먼저 현금으로 생활하고, 현금이 부족해지면 주식 같은 투자 자산을 팔아 생활해요. 그래도 부족하면 경우에 따라 집을 담보로 대출하거나 판매해야 할 수 있어요.
-            </p>
+          <p style={{ margin: 0, fontSize: 16, fontWeight: 700, color: '#191f28', fontFamily: 'Pretendard, sans-serif', lineHeight: 1.5 }}>
+            내 나이의 흐름에 따라, 중요한 부분을 요약해 봤어요
+          </p>
+          <div style={{ background: '#d9d9d9', height: 1, width: '100%' }} />
+          <div style={{ paddingTop: 8 }}>
+            <CompactLifetimeTimeline events={timelineEvents} />
           </div>
         </div>
 
-        {/* 차트 */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {/* 타이틀 + 설명 그룹 */}
+        {/* ── 차트 섹션 ── */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, width: '100%' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             <p
               style={{

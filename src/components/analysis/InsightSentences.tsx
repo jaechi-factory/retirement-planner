@@ -11,7 +11,7 @@ interface Props {
 
 const ASSET_LABELS: Record<string, string> = {
   cash: '현금',
-  deposit: '예금·적금',
+  deposit: '예금, 적금',
   stock_kr: '국내 주식',
   stock_us: '해외 주식',
   bond: '채권',

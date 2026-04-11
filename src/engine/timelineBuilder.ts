@@ -52,6 +52,7 @@ export type KeyDecisionEventKind =
   | 'pension_private_start'
   | 'pension_private_end'
   | 'financial_peak'
+  | 'net_cashflow_negative_start'
   | 'financial_exhaustion_start'
   | 'financial_depletion'
   | 'property_intervention_start'
@@ -291,6 +292,8 @@ function eventPriority(kind: KeyDecisionEventKind): number {
       return 70;
     case 'financial_peak':
       return 75;
+    case 'net_cashflow_negative_start':
+      return 77;
     case 'financial_exhaustion_start':
       return 80;
     case 'financial_depletion':
@@ -384,7 +387,7 @@ export function extractKeyDecisionEvents(
     });
   }
 
-  // 금융자산 최고점
+  // 금융자산 최고점 (은퇴 전 포함)
   if (aggregates.length > 0) {
     let peakAmount = -Infinity;
     let peakAge = -1;
@@ -395,11 +398,38 @@ export function extractKeyDecisionEvents(
         peakAge = row.ageYear;
       }
     }
-    if (peakAge >= retirementAge && peakAge <= lifeExpectancy) {
+    // 첫 해·마지막 해가 아닌 실질적인 정점만 표시
+    const firstAge = aggregates[0]?.ageYear ?? -1;
+    const lastAge = aggregates[aggregates.length - 1]?.ageYear ?? -1;
+    if (peakAge > firstAge && peakAge < lastAge) {
       add({
         kind: 'financial_peak',
         age: peakAge,
         text: `${peakAge}세 금융자산이 최고점이에요`,
+        note: peakAge < retirementAge
+          ? '이 해 이후 은퇴하면 자산이 줄어들기 시작해요.'
+          : undefined,
+      });
+    }
+  }
+
+  // 순현금흐름 적자 전환 시점 (수입+연금 < 지출+상환)
+  if (aggregates.length > 0) {
+    let foundNegativeAge: number | null = null;
+    for (const row of aggregates) {
+      const annualInflow = row.totalIncome + row.totalPension;
+      const annualOutflow = row.totalExpense + row.totalDebtService + row.totalChildExpense + row.totalRentalCost;
+      if (annualInflow < annualOutflow && foundNegativeAge === null) {
+        foundNegativeAge = row.ageYear;
+        break;
+      }
+    }
+    if (foundNegativeAge !== null) {
+      add({
+        kind: 'net_cashflow_negative_start',
+        age: foundNegativeAge,
+        text: `${foundNegativeAge}세부터 수입보다 지출이 많아져요`,
+        note: '이때부터 모아둔 자산으로 부족분을 메워야 해요.',
       });
     }
   }
@@ -436,10 +466,14 @@ export function extractKeyDecisionEvents(
   }
 
   if (summary.failureAge !== null) {
+    const targetText = inputs.goal.targetMonthly > 0
+      ? `목표 생활비(월 ${inputs.goal.targetMonthly.toLocaleString()}만원) 기준, `
+      : '';
     add({
       kind: 'lifestyle_shortfall_start',
       age: summary.failureAge,
-      text: `${summary.failureAge}세 생활비가 부족해지기 시작해요`,
+      text: `${summary.failureAge}세 ${targetText}자금이 바닥나요`,
+      note: '이 나이부터 생활비를 충당할 자산이 남아있지 않아요.',
     });
   }
 

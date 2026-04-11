@@ -194,9 +194,10 @@ function MinimalTooltip({
 
 // ── 커스텀 범례 (표시 순서 독립 제어) ─────────────────────────────────────────
 
-function CustomLegend({ hasRealEstate, hasSaleProceeds }: { hasRealEstate: boolean; hasSaleProceeds: boolean }) {
+function CustomLegend({ hasRealEstate, hasFinancial, hasSaleProceeds }: { hasRealEstate: boolean; hasFinancial: boolean; hasSaleProceeds: boolean }) {
   const items = LEGEND_ORDER.filter((s) => {
     if (s.key === SERIES.property.key) return hasRealEstate;
+    if (s.key === SERIES.financial.key) return hasFinancial;
     if (s.key === SERIES.sale.key) return hasSaleProceeds;
     return true;
   });
@@ -247,6 +248,7 @@ export default function AssetBalanceChart({
   } = buildPensionByAgeMaps(rows, inputs, retirementAge);
 
   const hasRealEstate = inputs.assets.realEstate.amount > 0;
+  const hasFinancial = rows.some((row) => row.financialInvestableEnd > 0);
   const hasSaleProceeds = hasRealEstate && rows.some((row) => row.propertySaleProceedsBucketEnd > 0);
 
   const cashflow = buildCashflowByAgeMaps(rows);
@@ -309,7 +311,7 @@ export default function AssetBalanceChart({
         }}
       >
         {depletionAge !== null
-          ? `${depletionAge}세부터 생활비가 부족해요`
+          ? `목표 생활비(월 ${targetMonthly}만원) 기준, ${depletionAge}세에 자금이 바닥나요`
           : isSaleProceedsDependent
           ? '집을 팔아 쓴 뒤에도 기대수명까지 버틸 수 있어요'
           : isSecuredLoanDependent
@@ -346,10 +348,12 @@ export default function AssetBalanceChart({
               <stop offset="95%" stopColor={SERIES.cash.color} stopOpacity={0.02} />
             </linearGradient>
             {/* 주식·채권: 파랑 */}
-            <linearGradient id="finGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%"  stopColor={SERIES.financial.color} stopOpacity={0.18} />
-              <stop offset="95%" stopColor={SERIES.financial.color} stopOpacity={0.02} />
-            </linearGradient>
+            {hasFinancial && (
+              <linearGradient id="finGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%"  stopColor={SERIES.financial.color} stopOpacity={0.18} />
+                <stop offset="95%" stopColor={SERIES.financial.color} stopOpacity={0.02} />
+              </linearGradient>
+            )}
           </defs>
 
           <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.05)" />
@@ -384,7 +388,7 @@ export default function AssetBalanceChart({
           />
           <Legend
             content={() => (
-              <CustomLegend hasRealEstate={hasRealEstate} hasSaleProceeds={hasSaleProceeds} />
+              <CustomLegend hasRealEstate={hasRealEstate} hasFinancial={hasFinancial} hasSaleProceeds={hasSaleProceeds} />
             )}
           />
 
@@ -408,14 +412,16 @@ export default function AssetBalanceChart({
             strokeWidth={SERIES.cash.strokeWidth}
             fill={`url(#${SERIES.cash.fillId})`}
           />
-          <Area
-            type="monotone"
-            dataKey={SERIES.financial.key}
-            stackId="assets"
-            stroke={SERIES.financial.color}
-            strokeWidth={SERIES.financial.strokeWidth}
-            fill={`url(#${SERIES.financial.fillId})`}
-          />
+          {hasFinancial && (
+            <Area
+              type="monotone"
+              dataKey={SERIES.financial.key}
+              stackId="assets"
+              stroke={SERIES.financial.color}
+              strokeWidth={SERIES.financial.strokeWidth}
+              fill={`url(#${SERIES.financial.fillId})`}
+            />
+          )}
           {hasSaleProceeds && (
             <Area
               type="monotone"

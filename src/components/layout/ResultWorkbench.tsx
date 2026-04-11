@@ -13,7 +13,6 @@ import EvidenceWorkspace from './EvidenceWorkspace';
 import ActionPlanSection from './ActionPlanSection';
 import VehicleComparisonCard from '../result/VehicleComparisonCard';
 import HouseStrategyComparisonSection from './HouseStrategyComparisonSection';
-import { CompactLifetimeTimeline } from '../result/v3/LifetimeTimeline';
 
 // ── 섹션 구분선 ────────────────────────────────────────────
 function SectionDivider({ label }: { label?: string }) {
@@ -238,56 +237,7 @@ export default function ResultWorkbench() {
         }
       />
 
-      {/* 3. 나이별 주요 이벤트 */}
-      <div
-        style={{
-          background: '#ffffff',
-          borderRadius: 32,
-          padding: '28px 32px',
-          boxShadow: '0px 2px 8px 4px rgba(121,158,195,0.08)',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 24,
-        }}
-      >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <p style={{ margin: 0, fontSize: 20, fontWeight: 700, color: '#191f28', fontFamily: 'Pretendard, sans-serif', lineHeight: 1.5 }}>
-            내 나이의 흐름에 따라, 중요한 부분을 요약해 봤어요
-          </p>
-          <p style={{ margin: 0, fontSize: 16, fontWeight: 400, color: '#4e5968', fontFamily: 'Pretendard, sans-serif', lineHeight: 1.5 }}>
-            금전적으로 어떤 이벤트가 발생하는지 체크해 보세요.
-          </p>
-        </div>
-        <div
-          style={{
-            background: '#E8F3FF',
-            borderRadius: 20,
-            padding: 16,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 6,
-          }}
-        >
-          <p style={{ margin: 0, fontSize: 16, fontWeight: 700, color: '#191f28', fontFamily: 'Pretendard, sans-serif', lineHeight: 1.5 }}>
-            나이별 주요 이벤트
-          </p>
-          <div style={{ background: '#d9d9d9', height: 1, width: '100%' }} />
-          <div style={{ paddingTop: 8 }}>
-            <CompactLifetimeTimeline
-              events={extractKeyDecisionEvents(
-                chartRows,
-                summary,
-                propertyOptions,
-                inputs,
-                timelineStrategyMode,
-                selectedPropertyStrategy,
-              )}
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* 자금 흐름 + 차트 (FundingPath 통합) */}
+      {/* 3. 타임라인 + 차트 통합 카드 */}
       <EvidenceWorkspace
         hasRealEstate={hasRealEstate}
         chartRows={chartRows}
@@ -296,6 +246,14 @@ export default function ResultWorkbench() {
         inputs={inputs}
         summary={summary}
         assumptions={assumptions}
+        timelineEvents={extractKeyDecisionEvents(
+          chartRows,
+          summary,
+          propertyOptions,
+          inputs,
+          timelineStrategyMode,
+          selectedPropertyStrategy,
+        )}
       />
 
       <SectionDivider />

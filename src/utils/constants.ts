@@ -13,11 +13,11 @@ export const DEFAULT_ASSET_RETURNS = {
 
 export const ASSET_LABELS: Record<string, string> = {
   cash: '현금',
-  deposit: '예금·적금',
+  deposit: '예금, 적금',
   stock_kr: '국내 주식',
   stock_us: '해외 주식',
   bond: '채권',
-  crypto: '가상자산',
+  crypto: '암호화폐',
   realEstate: '부동산',
 };
 
