@@ -1,11 +1,12 @@
 interface Props {
   title: string;
   children: React.ReactNode;
+  itemGap?: number;
 }
 
 import React from 'react';
 
-export default function SectionCard({ title, children }: Props) {
+export default function SectionCard({ title, children, itemGap = 24 }: Props) {
   return (
     <div
       style={{
@@ -16,22 +17,21 @@ export default function SectionCard({ title, children }: Props) {
         border: '1px solid rgba(255,255,255,0.55)',
         width: '100%',
         paddingTop: 40,
-        paddingRight: 32,
+        paddingRight: 24,
         paddingBottom: 40,
-        paddingLeft: 32,
+        paddingLeft: 24,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         boxSizing: 'border-box',
       }}
     >
-      {/* 카드 내 콘텐츠 폭 510px 고정 */}
       <div
         style={{
           width: '100%',
           display: 'flex',
           flexDirection: 'column',
-          gap: 28,
+          gap: 24,
         }}
       >
         {/* 섹션 타이틀 */}
@@ -53,7 +53,7 @@ export default function SectionCard({ title, children }: Props) {
           style={{
             display: 'flex',
             flexDirection: 'column',
-            gap: 24,
+            gap: itemGap,
           }}
         >
           {children}

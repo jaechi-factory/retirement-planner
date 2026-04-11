@@ -24,13 +24,13 @@ const DEBT_CONFIG: Record<DebtKey, {
   descriptions: Record<string, string>;
 }> = {
   mortgage: {
-    label: '주택담보대출',
+    label: '주택 담보 대출',
     types: MORTGAGE_REPAYMENT_TYPES,
     termLabels: MORTGAGE_REPAYMENT_LABELS,
     descriptions: MORTGAGE_REPAYMENT_DESCRIPTIONS,
   },
   creditLoan: {
-    label: '신용대출',
+    label: '신용 대출',
     types: OTHER_REPAYMENT_TYPES,
     termLabels: OTHER_REPAYMENT_LABELS,
     descriptions: OTHER_REPAYMENT_DESCRIPTIONS,
@@ -139,12 +139,11 @@ function RepaymentSelect({
   );
 }
 
-/** 대출 행 카드 */
+/** 대출 행 카드 — PillToggle children 패턴으로 펼쳐짐 */
 function LoanRow({ debtKey }: { debtKey: DebtKey }) {
   const { inputs, setDebt } = usePlannerStore();
   const config = DEBT_CONFIG[debtKey];
   const debt = inputs.debts[debtKey];
-  // 새로고침 후 store 복원 시 대출 정보가 있으면 '있어요' 상태로 표시
   const [hasLoan, setHasLoan] = useState(debt.balance > 0);
 
   const schedule =
@@ -155,140 +154,128 @@ function LoanRow({ debtKey }: { debtKey: DebtKey }) {
 
   const handleToggle = (v: boolean) => {
     setHasLoan(v);
-    // 없어요로 바꾸면 잔액 초기화 (계산에서 제외)
     if (!v) {
       setDebt(debtKey, { balance: 0, repaymentYears: 0 });
     }
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      {/* 상위: 대출 여부 pill */}
-      <PillToggle
-        label={config.label}
-        value={hasLoan}
-        onChange={handleToggle}
-        falseLabel="없어요"
-        trueLabel="있어요"
+    <PillToggle
+      label={config.label}
+      value={hasLoan}
+      onChange={handleToggle}
+      falseLabel="없어요"
+      trueLabel="있어요"
+    >
+      {/* 대출 상세 입력 필드 */}
+      <RepaymentSelect
+        value={debt.repaymentType}
+        onChange={(t) => setDebt(debtKey, { repaymentType: t })}
+        types={config.types}
+        termLabels={config.termLabels}
+        descriptions={config.descriptions}
       />
 
-      {/* 하위: 있어요 선택 시 표시 */}
-      {hasLoan && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <NumberInput
+        label="금액"
+        value={debt.balance}
+        onChange={(v) => setDebt(debtKey, { balance: v })}
+      />
+      <RateInput
+        label="이자(연)"
+        value={debt.interestRate}
+        onChange={(v) => setDebt(debtKey, { interestRate: v })}
+      />
+      <NumberInput
+        label="갚는 기간"
+        value={debt.repaymentYears}
+        onChange={(v) => setDebt(debtKey, { repaymentYears: v })}
+        unit="년"
+        max={50}
+      />
 
-          {/* 상환방식 셀렉트 */}
-            <RepaymentSelect
-              value={debt.repaymentType}
-              onChange={(t) => setDebt(debtKey, { repaymentType: t })}
-              types={config.types}
-              termLabels={config.termLabels}
-              descriptions={config.descriptions}
-            />
-
-            <NumberInput
-              label="금액"
-              value={debt.balance}
-              onChange={(v) => setDebt(debtKey, { balance: v })}
-            />
-            <RateInput
-              label="이자(연)"
-              value={debt.interestRate}
-              onChange={(v) => setDebt(debtKey, { interestRate: v })}
-            />
-            <NumberInput
-              label="갚는 기간"
-              value={debt.repaymentYears}
-              onChange={(v) => setDebt(debtKey, { repaymentYears: v })}
-              unit="년"
-              max={50}
-            />
-
-            {/* 상환 미리보기 */}
-            {debt.balance > 0 && debt.repaymentYears > 0 && summary.firstMonthPayment > 0 && (
-              <div
-                style={{
-                  borderRadius: 10,
-                  background: 'var(--surface-card-soft)',
-                  overflow: 'hidden',
-                }}
-              >
-                <div
-                  style={{
-                    background: 'var(--surface-card-inner)',
-                    padding: '8px 12px',
-                    fontSize: 12,
-                    fontWeight: 700,
-                    color: 'var(--text-muted)',
-                  }}
-                >
-                  상환 미리보기
-                </div>
-                <div
-                  style={{
-                    padding: '10px 12px 6px',
-                    display: 'grid',
-                    gridTemplateColumns: '1fr 1fr',
-                    gap: 8,
-                  }}
-                >
-                  <div
-                    style={{
-                      padding: '8px 10px',
-                      background: 'var(--surface-card-inner)',
-                      borderRadius: 8,
-                    }}
-                  >
-                    <div style={{ fontSize: 11, color: 'var(--text-faint)', marginBottom: 4 }}>
-                      첫 달 상환액
-                    </div>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-base)' }}>
-                      −{Math.round(summary.firstMonthPayment).toLocaleString('ko-KR')}만원
-                    </div>
-                  </div>
-                  <div
-                    style={{
-                      padding: '8px 10px',
-                      background: 'var(--surface-card-inner)',
-                      borderRadius: 8,
-                    }}
-                  >
-                    <div style={{ fontSize: 11, color: 'var(--text-faint)', marginBottom: 4 }}>
-                      첫해 상환액
-                    </div>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-base)' }}>
-                      −{Math.round(summary.firstYearAnnualPayment).toLocaleString('ko-KR')}만원
-                    </div>
-                  </div>
-                </div>
-                <div style={{ padding: '2px 12px 10px', display: 'flex', gap: 14 }}>
-                  <span style={{ fontSize: 11, color: 'var(--text-faint)' }}>
-                    총이자{' '}
-                    <span style={{ fontWeight: 600, color: 'var(--text-muted)' }}>
-                      −{Math.round(summary.totalInterest).toLocaleString('ko-KR')}만원
-                    </span>
-                  </span>
-                  <span style={{ fontSize: 11, color: 'var(--text-faint)' }}>
-                    최대 월 상환액{' '}
-                    <span style={{ fontWeight: 600, color: 'var(--text-muted)' }}>
-                      −{Math.round(summary.maxMonthPayment).toLocaleString('ko-KR')}만원
-                    </span>
-                  </span>
-                </div>
+      {/* 상환 미리보기 */}
+      {debt.balance > 0 && debt.repaymentYears > 0 && summary.firstMonthPayment > 0 && (
+        <div
+          style={{
+            borderRadius: 10,
+            background: 'var(--surface-card-soft)',
+            overflow: 'hidden',
+          }}
+        >
+          <div
+            style={{
+              background: 'var(--surface-card-inner)',
+              padding: '8px 12px',
+              fontSize: 12,
+              fontWeight: 700,
+              color: 'var(--text-muted)',
+            }}
+          >
+            상환 미리보기
+          </div>
+          <div
+            style={{
+              padding: '10px 12px 6px',
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: 8,
+            }}
+          >
+            <div
+              style={{
+                padding: '8px 10px',
+                background: 'var(--surface-card-inner)',
+                borderRadius: 8,
+              }}
+            >
+              <div style={{ fontSize: 11, color: 'var(--text-faint)', marginBottom: 4 }}>
+                첫 달 상환액
               </div>
-            )}
+              <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-base)' }}>
+                −{Math.round(summary.firstMonthPayment).toLocaleString('ko-KR')}만원
+              </div>
+            </div>
+            <div
+              style={{
+                padding: '8px 10px',
+                background: 'var(--surface-card-inner)',
+                borderRadius: 8,
+              }}
+            >
+              <div style={{ fontSize: 11, color: 'var(--text-faint)', marginBottom: 4 }}>
+                첫해 상환액
+              </div>
+              <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-base)' }}>
+                −{Math.round(summary.firstYearAnnualPayment).toLocaleString('ko-KR')}만원
+              </div>
+            </div>
+          </div>
+          <div style={{ padding: '2px 12px 10px', display: 'flex', gap: 14 }}>
+            <span style={{ fontSize: 11, color: 'var(--text-faint)' }}>
+              총이자{' '}
+              <span style={{ fontWeight: 600, color: 'var(--text-muted)' }}>
+                −{Math.round(summary.totalInterest).toLocaleString('ko-KR')}만원
+              </span>
+            </span>
+            <span style={{ fontSize: 11, color: 'var(--text-faint)' }}>
+              최대 월 상환액{' '}
+              <span style={{ fontWeight: 600, color: 'var(--text-muted)' }}>
+                −{Math.round(summary.maxMonthPayment).toLocaleString('ko-KR')}만원
+              </span>
+            </span>
+          </div>
         </div>
       )}
-    </div>
+    </PillToggle>
   );
 }
 
 export default function DebtSection() {
   return (
-    <SectionCard title="받은 대출이 있나요?">
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-        <LoanRow debtKey="creditLoan" />
-        <LoanRow debtKey="mortgage" />
-      </div>
+    <SectionCard title="받은 대출이 있나요?" itemGap={12}>
+      <LoanRow debtKey="creditLoan" />
+      <LoanRow debtKey="mortgage" />
     </SectionCard>
   );
 }

@@ -8,11 +8,13 @@ export default function ChildrenSection() {
   const { children } = inputs;
 
   return (
-    <SectionCard title="아이가 있나요?">
-      {/* 상위: 자녀 여부 */}
+    <SectionCard title="아이가 있나요?" itemGap={12}>
+      {/* 자녀 여부 pill 카드 */}
       <PillToggle
         label="자녀 여부"
         value={children.hasChildren}
+        falseLabel="없어요"
+        trueLabel="있어요"
         onChange={(v) =>
           setChildren(v
             ? { hasChildren: true }
@@ -21,9 +23,18 @@ export default function ChildrenSection() {
         }
       />
 
-      {/* 하위: 자녀 있음일 때만 표시 */}
+      {/* 자녀 있음 → 별도 흰색 카드에 확장 필드 */}
       {children.hasChildren && (
-        <>
+        <div
+          style={{
+            background: '#ffffff',
+            borderRadius: 16,
+            padding: '12px 16px 24px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 24,
+          }}
+        >
           <NumberInput
             label="자녀 수"
             value={children.count}
@@ -46,7 +57,7 @@ export default function ChildrenSection() {
             max={100}
             hint="이 나이 이후에는 자녀에게 드는 돈이 없는 것으로 계산해요."
           />
-        </>
+        </div>
       )}
     </SectionCard>
   );
