@@ -23,6 +23,7 @@ export default function SectionCard({
       style={{
         background: 'var(--fig-card-bg)',
         borderRadius: 'var(--fig-card-radius)',
+        boxShadow: 'var(--shadow-card)',
         width: '100%',
         paddingTop: 48,
         paddingBottom: 48,
