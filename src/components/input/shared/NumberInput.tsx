@@ -138,7 +138,7 @@ export default function NumberInput({
       {hint && (
         <span
           style={{
-            fontSize: 18,
+            fontSize: 14,
             fontWeight: 400,
             color: 'var(--fig-hint-color)',
             lineHeight: 1.5,
