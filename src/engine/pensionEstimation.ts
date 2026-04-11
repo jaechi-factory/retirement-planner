@@ -290,7 +290,7 @@ export function estimateRetirementPension(
     annualNetIncome,
     resolvePayrollReverseContext(undefined, getPolicyEffectiveYear()),
   );
-  const monthlyContrib = grossFromNet.grossMonthly * RETIREMENT_CONTRIBUTION_RATE / 12;
+  const monthlyContrib = grossFromNet.grossMonthly * RETIREMENT_CONTRIBUTION_RATE;
   const balanceAtRetirement = futureValueByMonths(
     p.currentBalance,
     monthlyContrib,

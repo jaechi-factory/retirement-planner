@@ -160,12 +160,6 @@ export default function AgeInspectorPanel({ data, hasRealEstate, hasSaleProceeds
     data.monthlyNet >= 0 ? 'var(--ux-status-positive)' : 'var(--ux-status-negative)';
   const netPrefix = data.monthlyNet >= 0 ? '+' : '-';
 
-  // 연금 합계 — 오늘 가치 기준
-  const pensionRealTotal =
-    data.monthlyPublicPensionRealTodayValue +
-    data.monthlyRetirementPensionRealTodayValue +
-    data.monthlyPrivatePensionRealTodayValue;
-
   // 금융자산 = 주식·채권 + 집을 판 뒤 굴리는 돈
   const financialTotal = data.financialInvestable + data.saleProceedsEnd;
 
@@ -244,10 +238,16 @@ export default function AgeInspectorPanel({ data, hasRealEstate, hasSaleProceeds
           {data.monthlySalary > 0 && (
             <DetailRow label="근로소득" value={data.monthlySalary} />
           )}
-          {pensionRealTotal > 0 && (
-            <DetailRow label="연금 합계" value={pensionRealTotal} />
+          {data.monthlyPublicPensionRealTodayValue > 0 && (
+            <DetailRow label="국민연금" value={data.monthlyPublicPensionRealTodayValue} />
           )}
-          {(data.monthlySalary > 0 || pensionRealTotal > 0) && (
+          {data.monthlyRetirementPensionRealTodayValue > 0 && (
+            <DetailRow label="퇴직연금" value={data.monthlyRetirementPensionRealTodayValue} />
+          )}
+          {data.monthlyPrivatePensionRealTodayValue > 0 && (
+            <DetailRow label="개인연금" value={data.monthlyPrivatePensionRealTodayValue} />
+          )}
+          {(data.monthlySalary > 0 || data.monthlyPublicPensionRealTodayValue > 0 || data.monthlyRetirementPensionRealTodayValue > 0 || data.monthlyPrivatePensionRealTodayValue > 0) && (
             <div style={{ fontSize: 14, color: 'var(--ux-text-subtle)', marginTop: 2, lineHeight: 1.5 }}>
               현재 가치 기준으로 보여줘요
             </div>
