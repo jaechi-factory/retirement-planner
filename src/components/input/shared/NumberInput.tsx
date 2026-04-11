@@ -68,12 +68,12 @@ export default function NumberInput({
       {/* 라벨 */}
       <label
         style={{
-          fontSize: 20,
+          fontSize: 16,
           fontWeight: 600,
           color: 'var(--fig-label-color)',
           letterSpacing: '0.12px',
           lineHeight: 1,
-          marginBottom: 16,
+          marginBottom: 13,
           display: 'block',
           whiteSpace: 'nowrap',
         }}
@@ -84,14 +84,14 @@ export default function NumberInput({
       {/* Input 컨테이너 */}
       <div
         style={{
-          height: 68,
-          borderRadius: 20,
+          height: 54,
+          borderRadius: 16,
           border: `2px solid ${borderColor}`,
           background: '#ffffff',
           boxShadow: focused ? 'var(--fig-input-shadow-focus)' : 'none',
           display: 'flex',
           alignItems: 'center',
-          padding: '14px 18px',
+          padding: '11px 14px',
           gap: 8,
           transition: 'border-color 0.15s, box-shadow 0.15s',
           boxSizing: 'border-box',
@@ -110,7 +110,7 @@ export default function NumberInput({
             border: 'none',
             outline: 'none',
             background: 'transparent',
-            fontSize: 20,
+            fontSize: 16,
             fontWeight,
             color: textColor,
             fontFamily: 'Pretendard, sans-serif',
@@ -121,13 +121,13 @@ export default function NumberInput({
         />
         <span
           style={{
-            fontSize: 20,
+            fontSize: 16,
             fontWeight: 600,
             color: isEmpty ? 'var(--fig-placeholder-color)' : 'var(--fig-label-color)',
             fontFamily: 'Pretendard, sans-serif',
             letterSpacing: '0.0798px',
             flexShrink: 0,
-            lineHeight: '21px',
+            lineHeight: '17px',
           }}
         >
           {unit}

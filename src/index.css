@@ -129,7 +129,7 @@
   /* ── Figma UI Renewal Tokens ─────────────────────────────────── */
   --fig-page-bg: linear-gradient(to right, #e4e5e7 0%, #e7e5de 61.943%, #f2e7bd 100%);
   --fig-card-bg: #fdfcf7;
-  --fig-card-radius: 40px;
+  --fig-card-radius: 32px;
 
   --fig-input-border-empty:  #b0b8c1;
   --fig-input-border-filled: #191f28;
@@ -140,8 +140,8 @@
   --fig-btn-disabled-text: rgba(55,56,60,0.28);
   --fig-btn-active-bg:     #ef5c31;
   --fig-btn-active-text:   #ffffff;
-  --fig-btn-radius:        12px;
-  --fig-btn-height:        68px;
+  --fig-btn-radius:        10px;
+  --fig-btn-height:        54px;
 
   --fig-title-color:    #191f28;
   --fig-subtitle-color: #333d4b;

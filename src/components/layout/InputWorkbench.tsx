@@ -134,11 +134,11 @@ export default function InputWorkbench({ allDone, onAllDone }: Props) {
       {/* 타이틀 영역 */}
       <div
         style={{
-          paddingTop: 64,
+          paddingTop: 51,
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          gap: 20,
+          gap: 16,
           textAlign: 'center',
           width: '100%',
         }}
@@ -146,7 +146,7 @@ export default function InputWorkbench({ allDone, onAllDone }: Props) {
         <h1
           style={{
             margin: 0,
-            fontSize: 44,
+            fontSize: 35,
             fontWeight: 500,
             color: 'var(--fig-title-color)',
             fontFamily: 'Pretendard, sans-serif',
@@ -158,7 +158,7 @@ export default function InputWorkbench({ allDone, onAllDone }: Props) {
         <p
           style={{
             margin: 0,
-            fontSize: 24,
+            fontSize: 19,
             fontWeight: 500,
             color: 'var(--fig-subtitle-color)',
             fontFamily: 'Pretendard, sans-serif',
@@ -169,8 +169,8 @@ export default function InputWorkbench({ allDone, onAllDone }: Props) {
         </p>
       </div>
 
-      {/* 타이틀 ↔ 첫 카드 간격 48px */}
-      <div style={{ height: 48 }} />
+      {/* 타이틀 ↔ 첫 카드 간격 38px */}
+      <div style={{ height: 38 }} />
 
       {/* 섹션 카드 영역: 활성 카드(위) + 완료된 카드(아래) */}
       <div
@@ -178,13 +178,13 @@ export default function InputWorkbench({ allDone, onAllDone }: Props) {
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          gap: 40,
-          paddingBottom: 200,
+          gap: 32,
+          paddingBottom: 160,
           width: '100%',
         }}
       >
         {/* 활성 섹션 — 버튼 있음 */}
-        <div style={{ width: 1044 }}>
+        <div style={{ width: 835 }}>
           <SectionComponent
             sectionId={activeSectionId}
             onComplete={() => handleComplete(activeSectionId)}
@@ -194,7 +194,7 @@ export default function InputWorkbench({ allDone, onAllDone }: Props) {
 
         {/* 완료된 섹션들 — 버튼 없음 */}
         {completedSectionIds.map((sectionId) => (
-          <div key={sectionId} style={{ width: 1044 }}>
+          <div key={sectionId} style={{ width: 835 }}>
             <SectionComponent sectionId={sectionId} />
           </div>
         ))}
