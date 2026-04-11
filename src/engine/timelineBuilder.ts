@@ -55,6 +55,7 @@ export type KeyDecisionEventKind =
   | 'net_cashflow_negative_start'
   | 'financial_exhaustion_start'
   | 'financial_depletion'
+  | 'total_asset_zero'
   | 'property_intervention_start'
   | 'lifestyle_shortfall_start'
   | 'child_expense_end';
@@ -298,6 +299,8 @@ function eventPriority(kind: KeyDecisionEventKind): number {
       return 80;
     case 'financial_depletion':
       return 85;
+    case 'total_asset_zero':
+      return 87;
     case 'property_intervention_start':
       return 90;
     case 'lifestyle_shortfall_start':
@@ -450,6 +453,26 @@ export function extractKeyDecisionEvents(
       age: summary.financialExhaustionAge,
       text: `${summary.financialExhaustionAge}세 금융자산이 바닥나요`,
     });
+  }
+
+  // 모든 자산이 0에 수렴하는 시점
+  if (aggregates.length > 0) {
+    let totalAssetZeroAge: number | null = null;
+    for (const row of aggregates) {
+      const total = row.cashLikeEnd + row.financialInvestableEnd + row.propertyValueEnd + row.propertySaleProceedsBucketEnd;
+      if (total <= 0) {
+        totalAssetZeroAge = row.ageYear;
+        break;
+      }
+    }
+    if (totalAssetZeroAge !== null) {
+      add({
+        kind: 'total_asset_zero',
+        age: totalAssetZeroAge,
+        text: `${totalAssetZeroAge}세에 모든 자산이 바닥나요`,
+        note: '현금, 금융자산, 부동산까지 모두 소진돼요.',
+      });
+    }
   }
 
   const propertyEvent = timelineEvents.find(
