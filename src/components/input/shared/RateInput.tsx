@@ -57,7 +57,7 @@ export default function RateInput({ label, value, onChange, hint }: Props) {
           color: 'var(--fig-label-color)',
           letterSpacing: '0.12px',
           lineHeight: 1,
-          marginBottom: 13,
+          marginBottom: 16,
           display: 'block',
           whiteSpace: 'nowrap',
         }}
@@ -75,7 +75,7 @@ export default function RateInput({ label, value, onChange, hint }: Props) {
           boxShadow: focused ? 'var(--fig-input-shadow-focus)' : 'none',
           display: 'flex',
           alignItems: 'center',
-          padding: '11px 14px',
+          padding: '13px 16px',
           gap: 8,
           transition: 'border-color 0.15s, box-shadow 0.15s',
           boxSizing: 'border-box',

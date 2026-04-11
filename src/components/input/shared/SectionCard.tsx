@@ -24,18 +24,18 @@ export default function SectionCard({
         background: 'var(--fig-card-bg)',
         borderRadius: 'var(--fig-card-radius)',
         width: '100%',
-        paddingTop: 38,
-        paddingBottom: 38,
+        paddingTop: 48,
+        paddingBottom: 48,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         boxSizing: 'border-box',
       }}
     >
-      {/* 카드 내 콘텐츠 폭 504px 고정 */}
+      {/* 카드 내 콘텐츠 폭 510px 고정 */}
       <div
         style={{
-          width: 408,
+          width: 510,
           display: 'flex',
           flexDirection: 'column',
           gap: 32,
@@ -77,7 +77,7 @@ export default function SectionCard({
               border: 'none',
               background: canComplete ? 'var(--fig-btn-active-bg)' : 'var(--fig-btn-disabled-bg)',
               color: canComplete ? 'var(--fig-btn-active-text)' : 'var(--fig-btn-disabled-text)',
-              fontSize: canComplete ? 16 : 13,
+              fontSize: 20,
               fontWeight: 700,
               fontFamily: 'Pretendard, sans-serif',
               cursor: canComplete ? 'pointer' : 'not-allowed',

@@ -158,7 +158,7 @@ export default function InputWorkbench({ allDone, onAllDone }: Props) {
         <p
           style={{
             margin: 0,
-            fontSize: 19,
+            fontSize: 20,
             fontWeight: 500,
             color: 'var(--fig-subtitle-color)',
             fontFamily: 'Pretendard, sans-serif',
@@ -184,7 +184,7 @@ export default function InputWorkbench({ allDone, onAllDone }: Props) {
         }}
       >
         {/* 활성 섹션 — 버튼 있음 */}
-        <div style={{ width: 835 }}>
+        <div style={{ width: 866 }}>
           <SectionComponent
             sectionId={activeSectionId}
             onComplete={() => handleComplete(activeSectionId)}
@@ -194,7 +194,7 @@ export default function InputWorkbench({ allDone, onAllDone }: Props) {
 
         {/* 완료된 섹션들 — 버튼 없음 */}
         {completedSectionIds.map((sectionId) => (
-          <div key={sectionId} style={{ width: 835 }}>
+          <div key={sectionId} style={{ width: 866 }}>
             <SectionComponent sectionId={sectionId} />
           </div>
         ))}
