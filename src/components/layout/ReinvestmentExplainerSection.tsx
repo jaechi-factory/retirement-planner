@@ -94,7 +94,7 @@ export default function ReinvestmentExplainerSection({ inputs, annualNetSavings,
                 lineHeight: 1.5,
               }}
             >
-              현재 수입으로는 생활비와 차량비, 대출 상환을 감당하기 어려워요.
+              {`달마다 ${Math.abs(monthlySurplus).toLocaleString('ko-KR')}만원이 부족해요. 지출을 줄여주세요.`}
             </p>
             <p
               style={{
@@ -106,7 +106,7 @@ export default function ReinvestmentExplainerSection({ inputs, annualNetSavings,
                 lineHeight: 1.5,
               }}
             >
-              {`매월 ${Math.abs(monthlySurplus).toLocaleString('ko-KR')}만원이 부족해요. 지출을 줄여주세요.`}
+              현재 수입으로는 생활비와 차량비, 대출 상환을 감당하기 어려워요.
             </p>
           </>
         ) : (

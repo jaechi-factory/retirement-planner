@@ -305,7 +305,7 @@ function buildWarnings(
         : '생활비와 대출 상환';
       warnings.push({
         severity: 'warning',
-        message: `현재 수입으로는 ${fixedCostLabel}을 감당하기 어려워요. 월 ${Math.round(Math.abs(annualNetSavings) / 12).toLocaleString()}만원이 부족해요.`,
+        message: `달마다 ${Math.round(Math.abs(annualNetSavings) / 12).toLocaleString()}만원이 부족해요. 현재 수입으로는 ${fixedCostLabel}을 감당하기 어려워요.`,
       });
     }
   }

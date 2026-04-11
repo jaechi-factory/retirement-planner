@@ -131,14 +131,32 @@ function getEventStyle(type: EventType): { dotColor: string; headerColor: string
 
 function getKeyEventStyle(kind: KeyDecisionEventKind): { dotColor: string; textColor: string } {
   switch (kind) {
+    // 긍정적 변곡점
     case 'financial_peak':
       return { dotColor: '#3D9970', textColor: 'var(--result-text-body-color)' };
+    case 'pension_public_start':
+    case 'pension_retirement_start':
+    case 'pension_private_start':
+      return { dotColor: '#3182f6', textColor: 'var(--result-text-body-color)' };
+    // 주의 변곡점
+    case 'retirement_start':
+      return { dotColor: '#f59f00', textColor: 'var(--result-text-body-color)' };
+    case 'pension_retirement_end':
+    case 'pension_private_end':
+    case 'child_expense_end':
+      return { dotColor: '#868e96', textColor: 'var(--result-text-body-color)' };
+    case 'net_cashflow_negative_start':
     case 'financial_exhaustion_start':
+      return { dotColor: '#e67700', textColor: 'var(--result-text-body-color)' };
+    // 부동산 개입
+    case 'property_intervention_start':
+      return { dotColor: 'var(--result-accent-strong)', textColor: 'var(--result-text-body-color)' };
+    // 크리티컬
     case 'financial_depletion':
     case 'lifestyle_shortfall_start':
       return { dotColor: 'var(--ux-status-negative)', textColor: 'var(--result-text-body-color)' };
-    case 'property_intervention_start':
-      return { dotColor: 'var(--result-accent-strong)', textColor: 'var(--result-text-body-color)' };
+    case 'total_asset_zero':
+      return { dotColor: '#c92a2a', textColor: 'var(--result-text-body-color)' };
     default:
       return { dotColor: 'var(--result-text-meta-color)', textColor: 'var(--result-text-body-color)' };
   }
