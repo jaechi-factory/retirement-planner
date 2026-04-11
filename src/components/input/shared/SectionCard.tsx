@@ -22,6 +22,8 @@ export default function SectionCard({
     <div
       style={{
         background: 'var(--fig-card-bg)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
         borderRadius: 'var(--fig-card-radius)',
         boxShadow: 'var(--shadow-card)',
         width: '100%',
