@@ -40,12 +40,8 @@ export default function ResultHeroSection({ summary, inputs }: ResultHeroSection
         ? '목표 금액보다 더 많은 돈을 쓸 수 있어요.'
         : '목표 금액에 근접하게 쓸 수 있어요.';
   } else {
-    if (summary.failureAge !== null) {
-      subtitleText = `${summary.failureAge}세에 자산이 바닥날 수 있어요.`;
-    } else {
-      subtitleText = `매월 ${shortfall.toLocaleString('ko-KR')}만원이 부족해요. 목표 생활비를 달성하려면 개선이 필요해요.`;
-      subtitleColor = '#F57800';
-    }
+    subtitleText = `매월 ${shortfall.toLocaleString('ko-KR')}만원이 부족해요. 목표 생활비를 달성하려면 개선이 필요해요.`;
+    subtitleColor = '#F57800';
   }
 
   return (
