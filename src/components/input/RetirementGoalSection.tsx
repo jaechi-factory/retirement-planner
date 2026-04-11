@@ -32,7 +32,7 @@ export default function RetirementGoalSection() {
         unit="만원"
       />
       <RateInput
-        label="물가 상승율을 얼마로 잡을까요?"
+        label="물가 상승률을 얼마로 잡을까요?"
         value={goal.inflationRate}
         onChange={(v) => setGoal({ inflationRate: v })}
         hint="평균적으로 매년 3.5%정도 올라요"

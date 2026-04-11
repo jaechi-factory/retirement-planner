@@ -36,7 +36,7 @@ export default function AssetSection() {
           </div>
           <div style={{ flex: '110 0 0', minWidth: 0 }}>
             <RateInput
-              label="예상 수익율(연)"
+              label="예상 수익률(연)"
               value={inputs.assets[key].expectedReturn}
               onChange={(v) => setAsset(key, { expectedReturn: v })}
             />

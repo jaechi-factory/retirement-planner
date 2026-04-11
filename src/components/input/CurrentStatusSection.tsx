@@ -54,7 +54,7 @@ export default function CurrentStatusSection() {
           overflow: 'hidden',
         }}>
           <div style={{
-            background: '#FAF8F4',
+            background: 'var(--surface-card-inner)',
             padding: '8px 12px',
             fontSize: 12,
             fontWeight: 700,
@@ -72,7 +72,7 @@ export default function CurrentStatusSection() {
             {monthlyChild > 0 && (
               <Row label="월 자녀 지출" value={monthlyChild} sign="−" color="var(--text-muted)" />
             )}
-            <div style={{ height: 1, background: '#E6E0D8', margin: '2px 0' }} />
+            <div style={{ height: 1, background: 'var(--border-soft)', margin: '2px 0' }} />
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-base)' }}>매달 남는 돈</span>
               <span style={{
@@ -85,7 +85,7 @@ export default function CurrentStatusSection() {
             <div style={{
               fontSize: 12, color: 'var(--text-faint)', lineHeight: 1.5,
               padding: '6px 8px',
-              background: monthlySurplus > 0 ? '#EBF4ED' : '#F6F0E2',
+              background: monthlySurplus > 0 ? 'var(--status-stable-bg)' : 'var(--status-adjust-bg)',
               borderRadius: 6,
             }}>
               {monthlySurplus > 0

@@ -101,7 +101,7 @@ function RepaymentSelect({
         onClick={() => setOpen((o) => !o)}
         style={{
           height: 54,
-          border: '2px solid #191f28',
+          border: '2px solid var(--fig-input-border-filled)',
           borderRadius: 16,
           display: 'flex',
           alignItems: 'center',
@@ -111,7 +111,7 @@ function RepaymentSelect({
           background: '#ffffff',
         }}
       >
-        <span style={{ fontSize: 15, fontWeight: 500, color: '#191f28' }}>
+        <span style={{ fontSize: 15, fontWeight: 500, color: 'var(--fig-label-color)' }}>
           {friendlyLabels[value]}
         </span>
         <svg
@@ -127,7 +127,7 @@ function RepaymentSelect({
         >
           <path
             d="M6 9L12 15L18 9"
-            stroke="#191f28"
+            stroke="var(--fig-label-color)"
             strokeWidth="2"
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -156,11 +156,11 @@ function RepaymentSelect({
               style={{
                 padding: '12px 16px',
                 cursor: 'pointer',
-                background: value === type ? 'rgba(248,205,51,0.12)' : '#ffffff',
+                background: value === type ? 'var(--accent-selected-bg)' : '#ffffff',
                 borderBottom: i < types.length - 1 ? '1px solid rgba(36,39,46,0.06)' : 'none',
                 fontSize: 14,
                 fontWeight: value === type ? 600 : 400,
-                color: '#191f28',
+                color: 'var(--fig-label-color)',
               }}
             >
               {friendlyLabels[type]}
