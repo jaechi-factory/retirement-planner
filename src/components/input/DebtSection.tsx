@@ -132,7 +132,7 @@ export default function DebtSection() {
   const rows: DebtKey[] = ['mortgage', 'creditLoan', 'otherLoan'];
 
   return (
-    <SectionCard title="부채가 있나요?">
+    <SectionCard title="받은 대출이 있나요?">
       <HasDebtToggle value={hasDebt} onChange={setHasDebt} />
 
       {hasDebt && (
