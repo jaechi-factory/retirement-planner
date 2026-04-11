@@ -488,6 +488,7 @@ export function getPensionMonthlyBreakdownForMonthIndex(
   annualNetIncome: number,
   retirementAge: number,
   retirementStartMonth = 0,
+  currentAgeMonth = 0,
 ): PensionBreakdownAtAge {
   const inflationFactor = monthInflationFactor(monthIndex, inflationRate);
 
@@ -501,7 +502,7 @@ export function getPensionMonthlyBreakdownForMonthIndex(
   const publicStartMonthIndex = getMonthIndexForAge(
     currentAge,
     pension.publicPension.startAge,
-    0,
+    currentAgeMonth,
     pension.publicPension.startMonth ?? 0,
   );
   const publicStartTodayValue = resolvePublicMonthlyTodayValue(pension, annualNetIncome, currentAge, retirementAge);
@@ -514,7 +515,7 @@ export function getPensionMonthlyBreakdownForMonthIndex(
   const retirementStartMonthIndex = getMonthIndexForAge(
     currentAge,
     retirementPension.startAge,
-    0,
+    currentAgeMonth,
     retirementPension.startMonth ?? 0,
   );
   if (retirementPension.enabled && isWithinPayoutWindow(monthIndex, retirementStartMonthIndex, retirementPension.payoutYears)) {
@@ -539,7 +540,7 @@ export function getPensionMonthlyBreakdownForMonthIndex(
       const privateStartMonthIndex = getMonthIndexForAge(
         currentAge,
         privatePension.startAge,
-        0,
+        currentAgeMonth,
         privatePension.startMonth ?? 0,
       );
       if (isWithinPayoutWindow(monthIndex, privateStartMonthIndex, privatePension.payoutYears)) {
@@ -548,7 +549,7 @@ export function getPensionMonthlyBreakdownForMonthIndex(
       }
     } else if (privatePension.detailMode && privatePension.products.length > 0) {
       for (const product of privatePension.products) {
-        const productStartMonthIndex = getMonthIndexForAge(currentAge, product.startAge, 0, product.startMonth ?? 0);
+        const productStartMonthIndex = getMonthIndexForAge(currentAge, product.startAge, currentAgeMonth, product.startMonth ?? 0);
         if (!isWithinPayoutWindow(monthIndex, productStartMonthIndex, product.payoutYears)) continue;
         const balance = futureValueByMonths(
           product.currentBalance,
@@ -564,11 +565,11 @@ export function getPensionMonthlyBreakdownForMonthIndex(
       const privateStartMonthIndex = getMonthIndexForAge(
         currentAge,
         privatePension.startAge,
-        0,
+        currentAgeMonth,
         privatePension.startMonth ?? 0,
       );
       if (isWithinPayoutWindow(monthIndex, privateStartMonthIndex, privatePension.payoutYears)) {
-        privateMonthlyNominal = estimatePrivatePension(privatePension, currentAge);
+        privateMonthlyNominal = estimatePrivatePension(privatePension, currentAge, currentAgeMonth);
         privateMonthlyRealTodayValue = privateMonthlyNominal / inflationFactor;
       }
     }

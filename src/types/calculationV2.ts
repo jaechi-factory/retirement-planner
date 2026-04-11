@@ -31,6 +31,7 @@ export interface MonthlySnapshotV2 {
   debtServiceThisMonth: number;          // 부채상환 (만원)
   childExpenseThisMonth: number;         // 자녀지출 (만원)
   rentalCostThisMonth: number;           // 매각 후 임대비 (만원, sell 전략)
+  vehicleCostThisMonth: number;          // 자동차 비용 (만원, 생활비에 포함된 값)
   eventFlags: SnapshotEventFlags;
   // 개별 버킷 잔고 — 매도 순서 검증용 (테스트/디버그)
   cashEnd: number;

@@ -19,6 +19,7 @@ const baseData: AgeSnapshotData = {
   monthlyRent: 0,
   monthlyDebtService: 0,
   monthlyChildExpense: 0,
+  monthlyVehicleCost: 0,
   monthlyOutflow: 220,
   monthlyNet: -40,
   cashLike: 1000,
@@ -30,13 +31,15 @@ const baseData: AgeSnapshotData = {
 };
 
 describe('AgeInspectorPanel', () => {
-  it('생활비는 선택한 나이 기준 명목금액으로 표시되어야 한다', () => {
+  it('수입·지출·자산 구성이 올바르게 표시되어야 한다', () => {
     const html = renderToStaticMarkup(
       <AgeInspectorPanel data={baseData} hasRealEstate={false} hasSaleProceeds={false} />,
     );
 
-    expect(html).toContain('지출은 선택한 나이 기준 명목금액이에요');
-    expect(html).toContain('생활비 (명목)');
-    expect(html).not.toContain('생활비 (오늘 가치)');
+    expect(html).toContain('수입 구성');
+    expect(html).toContain('지출 구성');
+    expect(html).toContain('자산 구성');
+    expect(html).toContain('현재 가치 기준으로 보여줘요');
+    expect(html).toContain('생활비');
   });
 });

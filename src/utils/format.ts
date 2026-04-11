@@ -44,7 +44,12 @@ export function fmtKRWAxis(value: number): string {
     if (cheon > 0) return `${sign}${eok}억${cheon}천`;
     return `${sign}${eok}억`;
   }
-  return sign + abs.toLocaleString('ko-KR') + '만';
+  // 1,000만 이상은 "N천"으로 축약 (좁은 Y축에서 잘리지 않도록)
+  if (abs >= 1000) {
+    const cheon = Math.round(abs / 1000);
+    return `${sign}${cheon}천`;
+  }
+  return `${sign}${abs.toLocaleString('ko-KR')}만`;
 }
 
 /** 월 생활비 표시용: "300만원" */

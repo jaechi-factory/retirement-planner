@@ -1,33 +1,22 @@
 import AssetBalanceChart from '../charts/AssetBalanceChart';
-import PropertyAssetChart from '../charts/PropertyAssetChart';
 import type {
-  AssumptionItem,
   YearlyAggregateV2,
-  CalculationResultV2,
 } from '../../types/calculationV2';
 import type { PlannerInputs } from '../../types/inputs';
 import type { KeyDecisionEvent } from '../../engine/timelineBuilder';
 import { CompactLifetimeTimeline } from '../result/v3/LifetimeTimeline';
 
 interface EvidenceWorkspaceProps {
-  hasRealEstate: boolean;
   chartRows: YearlyAggregateV2[];
   retirementAge: number;
-  strategyLabel: string;
   inputs: PlannerInputs;
-  summary: CalculationResultV2['summary'];
-  assumptions: AssumptionItem[];
   timelineEvents: KeyDecisionEvent[];
 }
 
 export default function EvidenceWorkspace({
-  hasRealEstate,
   chartRows,
   retirementAge,
-  strategyLabel,
   inputs,
-  summary,
-  assumptions,
   timelineEvents,
 }: EvidenceWorkspaceProps) {
   return (
@@ -119,78 +108,12 @@ export default function EvidenceWorkspace({
               rows={chartRows}
               retirementAge={retirementAge}
               targetMonthly={inputs.goal.targetMonthly}
-              strategyLabel={strategyLabel}
-              sustainableMonthly={summary.sustainableMonthly}
               inputs={inputs}
             />
           </div>
         </div>
       </div>
 
-      {/* 계산 가정 (collapsible) */}
-
-      {assumptions.length > 0 && (
-        <details style={{ marginTop: 0 }}>
-          <summary
-            style={{
-              cursor: 'pointer',
-              userSelect: 'none',
-              padding: '6px 2px',
-            }}
-          >
-            <span
-              style={{ fontSize: 14, fontWeight: 700, color: 'var(--result-text-body-color)' }}
-            >
-              계산 가정 보기
-            </span>
-          </summary>
-
-          <div
-            style={{
-              marginTop: 'var(--result-space-2)',
-              borderRadius: 20,
-              background: 'var(--surface-card)',
-              padding: '12px',
-            }}
-          >
-            {hasRealEstate && (
-              <div style={{ marginBottom: 'var(--result-space-3)' }}>
-                <PropertyAssetChart rows={chartRows} retirementAge={retirementAge} />
-              </div>
-            )}
-
-            <span
-              style={{
-                fontSize: 14,
-                fontWeight: 700,
-                color: 'var(--result-text-body-color)',
-                display: 'block',
-                marginBottom: 'var(--result-space-2)',
-              }}
-            >
-              주요 가정
-            </span>
-            <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 6 }}>
-              {assumptions.map((assumption, index) => (
-                <li
-                  key={`${assumption.label}-${index}`}
-                  style={{
-                    lineHeight: 1.6,
-                    display: 'flex',
-                    alignItems: 'flex-start',
-                    gap: 'var(--result-space-2)',
-                  }}
-                >
-                  <span aria-hidden style={{ fontWeight: 700, flexShrink: 0 }}>•</span>
-                  <span style={{ fontSize: 14, color: 'var(--result-text-body-color)' }}>
-                    {assumption.label}: {assumption.value}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </details>
-      )}
     </section>
   );
 }

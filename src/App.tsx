@@ -44,7 +44,7 @@ export default function App() {
       <div
         style={{
           paddingTop: 80,
-          paddingBottom: 40,
+          paddingBottom: showReset ? 16 : 40,
           paddingLeft: 24,
           display: 'flex',
           flexDirection: 'column',
@@ -111,7 +111,7 @@ export default function App() {
           gap: 16,
           width: 1100,
           alignItems: 'flex-start',
-          paddingBottom: 120,
+          paddingBottom: 0,
           boxSizing: 'border-box',
         }}
       >

@@ -392,7 +392,7 @@ export function extractKeyDecisionEvents(
     let peakAmount = -Infinity;
     let peakAge = -1;
     for (const row of aggregates) {
-      const total = row.cashLikeEnd + row.financialInvestableEnd;
+      const total = row.cashLikeEnd + row.financialInvestableEnd + row.propertySaleProceedsBucketEnd;
       if (total > peakAmount) {
         peakAmount = total;
         peakAge = row.ageYear;
@@ -498,15 +498,17 @@ export function buildGroupedRows(
 ): GroupedRow[] {
   const groups: GroupedRow[] = [];
   let groupStart: number | null = null;
-  let groupExpenses: number[] = [];
+  let groupRows: YearlyAggregateV2[] = [];
 
   for (let i = 0; i < aggregates.length; i++) {
     const row = aggregates[i];
     if (row.ageYear < retirementAge) continue;
 
     if (eventAges.has(row.ageYear)) {
-      if (groupStart !== null && groupExpenses.length > 1) {
-        const avgMonthly = groupExpenses.reduce((a, b) => a + b, 0) / groupExpenses.length / 12;
+      if (groupStart !== null && groupRows.length > 1) {
+        const totalExpense = groupRows.reduce((s, r) => s + r.totalExpense, 0);
+        const totalMonths = groupRows.reduce((s, r) => s + r.months.length, 0);
+        const avgMonthly = totalMonths > 0 ? totalExpense / totalMonths : 0;
         groups.push({
           fromAge: groupStart,
           toAge: aggregates[i - 1].ageYear,
@@ -514,20 +516,22 @@ export function buildGroupedRows(
         });
       }
       groupStart = null;
-      groupExpenses = [];
+      groupRows = [];
     } else {
       if (groupStart === null) {
         groupStart = row.ageYear;
-        groupExpenses = [row.totalExpense];
+        groupRows = [row];
       } else {
-        groupExpenses.push(row.totalExpense);
+        groupRows.push(row);
       }
     }
   }
 
-  if (groupStart !== null && groupExpenses.length > 1) {
+  if (groupStart !== null && groupRows.length > 1) {
     const lastRow = aggregates[aggregates.length - 1];
-    const avgMonthly = groupExpenses.reduce((a, b) => a + b, 0) / groupExpenses.length / 12;
+    const totalExpense = groupRows.reduce((s, r) => s + r.totalExpense, 0);
+    const totalMonths = groupRows.reduce((s, r) => s + r.months.length, 0);
+    const avgMonthly = totalMonths > 0 ? totalExpense / totalMonths : 0;
     groups.push({
       fromAge: groupStart,
       toAge: lastRow.ageYear,

@@ -24,6 +24,7 @@ function createMonth(partial: Partial<MonthlySnapshotV2> = {}): MonthlySnapshotV
     debtServiceThisMonth: 0,
     childExpenseThisMonth: 0,
     rentalCostThisMonth: 0,
+    vehicleCostThisMonth: 0,
     eventFlags: {},
     cashEnd: 0,
     depositEnd: 0,

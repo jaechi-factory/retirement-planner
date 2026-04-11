@@ -35,7 +35,7 @@ export default function CurrentStatusSection() {
         value={status.annualExpense > 0 ? Math.round(status.annualExpense / 12) : 0}
         onChange={(v) => setStatus({ annualExpense: v * 12 })}
         unit="만원"
-        hint="주거비, 자동차 관련 비용은 제외해주세요."
+        hint="주거비를 포함한 생활비 전부를 입력해주세요. 자동차 관련 비용은 제외해주세요."
       />
 
     </SectionCard>

@@ -127,8 +127,6 @@ export default function VerificationSection({
           rows={chartRows}
           retirementAge={retirementAge}
           targetMonthly={inputs.goal.targetMonthly}
-          strategyLabel={strategyLabel}
-          sustainableMonthly={summary.sustainableMonthly}
           inputs={inputs}
         />
       </div>

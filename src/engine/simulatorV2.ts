@@ -358,6 +358,7 @@ export function simulateMonthlyV2(
         annualIncome,
         retirementAge,
         retirementStartMonth,
+        currentAgeMonth,
       ).totalNominal;
 
       // ── 3. 지출 계산 ──────────────────────────────────────────────────
@@ -612,6 +613,7 @@ export function simulateMonthlyV2(
         debtServiceThisMonth,
         childExpenseThisMonth,
         rentalCostThisMonth,
+        vehicleCostThisMonth,
         eventFlags,
         // 개별 버킷 잔고 — 매도 순서 검증용
         cashEnd:    buckets.cash,

@@ -23,7 +23,19 @@ function DetailRow({
         lineHeight: 1.7,
       }}
     >
-      <span>{label}</span>
+      <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+        <span
+          style={{
+            width: 6,
+            height: 6,
+            borderRadius: '50%',
+            background: 'var(--ux-text-subtle)',
+            flexShrink: 0,
+            display: 'inline-block',
+          }}
+        />
+        {label}
+      </span>
       <span style={{ whiteSpace: 'nowrap' }}>
         {unit} {fmtKRW(Math.round(value))}
       </span>
@@ -84,7 +96,7 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
       style={{
         fontSize: 14,
         fontWeight: 600,
-        color: 'var(--ux-text-subtle)',
+        color: '#191f28',
         letterSpacing: '0.05em',
         textTransform: 'uppercase',
         marginBottom: 4,
@@ -244,7 +256,10 @@ export default function AgeInspectorPanel({ data, hasRealEstate, hasSaleProceeds
           <div style={{ marginTop: 12 }}>
             <SectionTitle>지출 구성</SectionTitle>
             {data.monthlyLivingExpense > 0 && (
-              <DetailRow label="생활비" value={data.monthlyLivingExpense} />
+              <DetailRow label="생활비" value={data.monthlyVehicleCost > 0 ? data.monthlyLivingExpense - data.monthlyVehicleCost : data.monthlyLivingExpense} />
+            )}
+            {data.monthlyVehicleCost > 0 && (
+              <DetailRow label="자동차 비용" value={data.monthlyVehicleCost} />
             )}
             {data.monthlyDebtService > 0 && (
               <DetailRow label="부채상환" value={data.monthlyDebtService} />
@@ -253,7 +268,12 @@ export default function AgeInspectorPanel({ data, hasRealEstate, hasSaleProceeds
               <DetailRow label="자녀비" value={data.monthlyChildExpense} />
             )}
             {data.monthlyRent > 0 && (
-              <DetailRow label="주거비" value={data.monthlyRent} />
+              <>
+                <DetailRow label="주거비" value={data.monthlyRent} />
+                <div style={{ fontSize: 12, color: 'var(--ux-text-subtle)', marginTop: 0, lineHeight: 1.4, paddingLeft: 11 }}>
+                  집 판매 후, 주거비 월세로 계산
+                </div>
+              </>
             )}
           </div>
         </div>
@@ -265,14 +285,14 @@ export default function AgeInspectorPanel({ data, hasRealEstate, hasSaleProceeds
             <AssetRow
               label="집 가치"
               value={data.propertyValue}
-              dotColor="var(--ux-text-subtle)"
+              dotColor="#e5a04b"
             />
           )}
           {financialTotal > 0 && (
             <AssetRow
               label="금융자산"
               value={financialTotal}
-              dotColor="var(--ux-text-base)"
+              dotColor="#1b64da"
               note={hasSaleProceeds && data.saleProceedsEnd > 0 ? '주식·채권 · 집을 판 뒤 굴리는 돈 합산' : undefined}
             />
           )}
@@ -280,7 +300,7 @@ export default function AgeInspectorPanel({ data, hasRealEstate, hasSaleProceeds
             <AssetRow
               label="현금·예금"
               value={data.cashLike}
-              dotColor="var(--ux-accent)"
+              dotColor="#00c471"
             />
           )}
         </div>

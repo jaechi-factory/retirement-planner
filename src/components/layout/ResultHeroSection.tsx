@@ -21,7 +21,7 @@ export default function ResultHeroSection({ summary, inputs }: ResultHeroSection
   const isPositive = caseType === 'positive';
 
   // 배지 텍스트
-  const badgeText = isPositive ? '미래가 긍정적이에요' : '미래가 부정적이에요';
+  const badgeText = isPositive ? '미래가 긍정적이에요' : '미래에 쓸 돈이 부족해요';
   const badgeColor = isPositive ? '#2272eb' : '#f04452';
 
   // 본문 2줄
@@ -37,7 +37,7 @@ export default function ResultHeroSection({ summary, inputs }: ResultHeroSection
   if (isPositive) {
     subtitleText = '목표 금액보다 더 많은 돈을 쓸 수 있어요.';
   } else {
-    subtitleText = `매월 ${shortfall.toLocaleString('ko-KR')}만원이 부족해요. 목표 생활비를 달성하려면 개선이 필요해요.`;
+    subtitleText = `목표 생활비보다 매월 ${shortfall.toLocaleString('ko-KR')}만원이 부족해요. 목표를 달성하려면 현재 생활에서 개선이 필요해요.`;
     subtitleColor = '#F57800';
   }
 

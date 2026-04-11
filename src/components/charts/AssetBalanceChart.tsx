@@ -27,10 +27,10 @@ import AgeInspectorPanel from './AgeInspectorPanel';
 // ── 시각 계층 상수 ────────────────────────────────────────────────────────────
 
 const SERIES = {
-  property:  { key: '집 자산',               color: '#c2cfe0', strokeWidth: 1,   dash: undefined,  fillId: 'propGrad'  },
+  property:  { key: '집 자산',               color: '#e5a04b', strokeWidth: 1.8, dash: undefined,  fillId: 'propGrad'  },
   cash:      { key: '현금·예금',              color: '#00c471', strokeWidth: 1.8, dash: undefined,  fillId: 'cashGrad'  },
   financial: { key: '주식·채권',              color: '#1b64da', strokeWidth: 2.4, dash: undefined,  fillId: 'finGrad'   },
-  sale:      { key: '집을 판 뒤 굴리는 돈',   color: '#f57800', strokeWidth: 1.8, dash: '5 3',      fillId: 'saleGrad'  },
+  sale:      { key: '집을 판 뒤 굴리는 돈',   color: '#8b5cf6', strokeWidth: 1.8, dash: '5 3',      fillId: 'saleGrad'  },
 } as const;
 
 // 범례 표시 순서 (렌더 순서와 독립적)
@@ -45,8 +45,6 @@ interface Props {
   rows: YearlyAggregateV2[];
   retirementAge: number;
   targetMonthly: number;
-  strategyLabel: string;
-  sustainableMonthly: number;
   inputs: PlannerInputs;
 }
 
@@ -229,8 +227,6 @@ export default function AssetBalanceChart({
   rows,
   retirementAge,
   targetMonthly,
-  strategyLabel,
-  sustainableMonthly,
   inputs,
 }: Props) {
   const [selectedAge, setSelectedAge] = useState<number>(retirementAge);
@@ -252,6 +248,17 @@ export default function AssetBalanceChart({
   const hasSaleProceeds = hasRealEstate && rows.some((row) => row.propertySaleProceedsBucketEnd > 0);
 
   const cashflow = buildCashflowByAgeMaps(rows);
+
+  // Y축 최대값: 전체 자산 최대값 + 5억(50000만원)
+  const yMax = (() => {
+    let peak = 0;
+    for (const row of rows) {
+      const total = row.cashLikeEnd + row.financialInvestableEnd
+        + row.propertyValueEnd + row.propertySaleProceedsBucketEnd;
+      if (total > peak) peak = total;
+    }
+    return peak + 50000;
+  })();
 
   const data = rows.map((row) => ({
     age: row.ageYear,
@@ -331,8 +338,8 @@ export default function AssetBalanceChart({
             {/* 집 자산: 매우 연하게 */}
             {hasRealEstate && (
               <linearGradient id="propGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%"  stopColor={SERIES.property.color} stopOpacity={0.07} />
-                <stop offset="95%" stopColor={SERIES.property.color} stopOpacity={0.01} />
+                <stop offset="5%"  stopColor={SERIES.property.color} stopOpacity={0.18} />
+                <stop offset="95%" stopColor={SERIES.property.color} stopOpacity={0.03} />
               </linearGradient>
             )}
             {/* 집을 판 뒤 굴리는 돈: 주황 */}
@@ -363,7 +370,18 @@ export default function AssetBalanceChart({
             tick={{ fontSize: 14, fill: 'var(--ux-text-subtle)' }}
             tickLine={false}
             axisLine={false}
-            interval="preserveStartEnd"
+            ticks={(() => {
+              if (rows.length === 0) return [];
+              const first = rows[0].ageYear;
+              const last = rows[rows.length - 1].ageYear;
+              const result: number[] = [];
+              const firstTick = Math.ceil(first / 10) * 10;
+              for (let t = firstTick; t <= last; t += 10) {
+                result.push(t);
+              }
+              if (result.length === 0 || result[result.length - 1] !== last) result.push(last);
+              return result;
+            })()}
           />
           <YAxis
             tickFormatter={fmtKRWAxis}
@@ -371,6 +389,7 @@ export default function AssetBalanceChart({
             tickLine={false}
             axisLine={false}
             width={44}
+            domain={[0, yMax]}
           />
 
           <Tooltip
@@ -392,18 +411,18 @@ export default function AssetBalanceChart({
             )}
           />
 
-          {/* 스택 순서: 아래→위 = 집 → 현금·예금 → 주식·채권 → 매각대금 */}
+          {/* 집 자산: 점선 라인만 (유동자산과 겹치지 않게) */}
           {hasRealEstate && (
             <Area
               type="monotone"
               dataKey={SERIES.property.key}
-              stackId="assets"
               stroke={SERIES.property.color}
               strokeWidth={SERIES.property.strokeWidth}
-              fill={`url(#${SERIES.property.fillId})`}
-              strokeOpacity={0.5}
+              strokeDasharray="6 4"
+              fill="none"
             />
           )}
+          {/* 유동자산 스택: 현금·예금 → 주식·채권 → 매각대금 */}
           <Area
             type="monotone"
             dataKey={SERIES.cash.key}
@@ -422,26 +441,20 @@ export default function AssetBalanceChart({
               fill={`url(#${SERIES.financial.fillId})`}
             />
           )}
+          {/* 매각대금: 별도 영역 (스택 미포함 — 매각 전에는 0이므로 겹침 방지) */}
           {hasSaleProceeds && (
             <Area
               type="monotone"
               dataKey={SERIES.sale.key}
-              stackId="assets"
               stroke={SERIES.sale.color}
               strokeWidth={SERIES.sale.strokeWidth}
-              fill={`url(#${SERIES.sale.fillId})`}
               strokeDasharray={SERIES.sale.dash}
+              fill="none"
             />
           )}
         </AreaChart>
       </ResponsiveContainer>
 
-      {/* 하단 메타 */}
-      <div style={{ fontSize: 14, color: 'var(--ux-text-subtle)', marginTop: 6, lineHeight: 1.8, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-        {hasRealEstate && <span>선택 전략: {strategyLabel}</span>}
-        <span>목표 생활비: {targetMonthly}만원</span>
-        <span>실제 가능 생활비: {Math.round(sustainableMonthly)}만원</span>
-      </div>
 
       {inspectorData && (
         <AgeInspectorPanel

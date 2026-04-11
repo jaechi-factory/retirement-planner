@@ -18,6 +18,7 @@ export interface AgeSnapshotData {
   monthlyRent: number;
   monthlyDebtService: number;
   monthlyChildExpense: number;
+  monthlyVehicleCost: number;
   monthlyOutflow: number;
   // net
   monthlyNet: number;
@@ -38,6 +39,7 @@ export interface CashflowByAgeMaps {
   monthlyRentByAge: Map<number, number>;
   monthlyDebtServiceByAge: Map<number, number>;
   monthlyChildExpenseByAge: Map<number, number>;
+  monthlyVehicleCostByAge: Map<number, number>;
   monthlyIncomeByAge: Map<number, number>;
   monthlyOutflowByAge: Map<number, number>;
   monthlyNetByAge: Map<number, number>;
@@ -62,6 +64,7 @@ export function buildCashflowByAgeMaps(rows: YearlyAggregateV2[]): CashflowByAge
   const monthlyRentByAge = buildAgeMap(rows, (row) => row.rentalCostThisMonth);
   const monthlyDebtServiceByAge = buildAgeMap(rows, (row) => row.debtServiceThisMonth);
   const monthlyChildExpenseByAge = buildAgeMap(rows, (row) => row.childExpenseThisMonth);
+  const monthlyVehicleCostByAge = buildAgeMap(rows, (row) => row.vehicleCostThisMonth);
 
   const monthlyIncomeByAge = new Map<number, number>(
     rows.map((row) => [
@@ -94,6 +97,7 @@ export function buildCashflowByAgeMaps(rows: YearlyAggregateV2[]): CashflowByAge
     monthlyRentByAge,
     monthlyDebtServiceByAge,
     monthlyChildExpenseByAge,
+    monthlyVehicleCostByAge,
     monthlyIncomeByAge,
     monthlyOutflowByAge,
     monthlyNetByAge,
@@ -136,6 +140,7 @@ export function getAgeSnapshot(params: {
   const monthlyRent = cashflow.monthlyRentByAge.get(age) ?? 0;
   const monthlyDebtService = cashflow.monthlyDebtServiceByAge.get(age) ?? 0;
   const monthlyChildExpense = cashflow.monthlyChildExpenseByAge.get(age) ?? 0;
+  const monthlyVehicleCost = cashflow.monthlyVehicleCostByAge.get(age) ?? 0;
   const monthlyOutflow = cashflow.monthlyOutflowByAge.get(age) ?? 0;
   const monthlyNet = cashflow.monthlyNetByAge.get(age) ?? 0;
   const totalAssets =
@@ -160,6 +165,7 @@ export function getAgeSnapshot(params: {
     monthlyRent,
     monthlyDebtService,
     monthlyChildExpense,
+    monthlyVehicleCost,
     monthlyOutflow,
     monthlyNet,
     cashLike: row.cashLikeEnd,

@@ -16,7 +16,8 @@ export default function InputWorkbench() {
     if (!ref.current) return;
     const top = ref.current.getBoundingClientRect().top;
     const zoom = parseFloat(getComputedStyle(document.documentElement).zoom) || 1;
-    setMaxH(`${(window.innerHeight - Math.max(0, top)) / zoom}px`);
+    const viewportCss = window.innerHeight / zoom;
+    setMaxH(`${viewportCss - Math.max(0, top)}px`);
   }, []);
 
   useEffect(() => {

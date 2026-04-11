@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { usePlannerStore } from '../../store/usePlannerStore';
 import { calcFinancialTotalAsset } from '../../engine/assetWeighting';
 import { getVehicleMonthlyCost } from '../../engine/vehicleSchedule';
-import { PROPERTY_STRATEGY_LABELS } from '../../engine/propertyStrategiesV2';
 import { extractKeyDecisionEvents } from '../../engine/timelineBuilder';
 import type { PropertyOptionResult } from '../../types/calculationV2';
 import type { HouseDecisionStrategy } from './houseDecisionVM';
@@ -12,7 +11,6 @@ import ReinvestmentExplainerSection from './ReinvestmentExplainerSection';
 import EvidenceWorkspace from './EvidenceWorkspace';
 import ActionPlanSection from './ActionPlanSection';
 import VehicleComparisonCard from '../result/VehicleComparisonCard';
-import HouseStrategyComparisonSection from './HouseStrategyComparisonSection';
 
 // ── 섹션 구분선 ────────────────────────────────────────────
 function SectionDivider({ label }: { label?: string }) {
@@ -188,7 +186,7 @@ export default function ResultWorkbench() {
     );
   }
 
-  const { summary, propertyOptions, detailYearlyAggregates, assumptions } = resultV2;
+  const { summary, propertyOptions, detailYearlyAggregates } = resultV2;
 
   const recommended =
     propertyOptions.find((option) => option.isRecommended)
@@ -206,12 +204,7 @@ export default function ResultWorkbench() {
     : detailYearlyAggregates;
 
   const chartStrategy: PropertyOptionResult['strategy'] = verificationOption?.strategy ?? recommended?.strategy ?? selectedStrategy;
-  const chartLabel = hasRealEstate
-    ? (PROPERTY_STRATEGY_LABELS[chartStrategy] ?? chartStrategy)
-    : '집 없음(금융자산 기준)';
-
   const selectedPropertyStrategy = hasRealEstate ? chartStrategy : null;
-  const hasSelectableHouseRows = hasRealEstate && propertyOptions.some((option) => option.yearlyAggregates.length > 0);
 
   return (
     <div style={panelStyle}>
@@ -239,13 +232,9 @@ export default function ResultWorkbench() {
 
       {/* 3. 타임라인 + 차트 통합 카드 */}
       <EvidenceWorkspace
-        hasRealEstate={hasRealEstate}
         chartRows={chartRows}
         retirementAge={inputs.goal.retirementAge}
-        strategyLabel={chartLabel}
         inputs={inputs}
-        summary={summary}
-        assumptions={assumptions}
         timelineEvents={extractKeyDecisionEvents(
           chartRows,
           summary,
@@ -258,19 +247,6 @@ export default function ResultWorkbench() {
 
       <SectionDivider />
 
-      {/* 4. 집 전략 비교 (집 있을 때만) */}
-      {hasSelectableHouseRows && (
-        <>
-          <HouseStrategyComparisonSection
-            hasRealEstate={hasRealEstate}
-            propertyOptions={propertyOptions}
-            selectedStrategy={selectedStrategy}
-            lifeExpectancy={inputs.goal.lifeExpectancy}
-            onSelectStrategy={setSelectedStrategy}
-          />
-          <SectionDivider />
-        </>
-      )}
 
       {/* 5. 자동차 영향 (차량 입력 시에만) */}
       {vehicleComparison && vehicleComparison.hasVehicle && (
