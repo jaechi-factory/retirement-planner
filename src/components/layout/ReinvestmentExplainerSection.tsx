@@ -121,7 +121,7 @@ export default function ReinvestmentExplainerSection({ inputs, annualNetSavings,
                 lineHeight: 1.5,
               }}
             >
-              월급에서 남은 돈은 기존 투자 비율대로 계속 투자한다고 가정했어요
+              월급 리포트
             </p>
             <p
               style={{
@@ -222,7 +222,7 @@ export default function ReinvestmentExplainerSection({ inputs, annualNetSavings,
                 lineHeight: 1.5,
               }}
             >
-              남은 돈을 이 비중대로 투자해요
+              이 비중대로 투자된다고 가정해요
             </p>
             <Divider />
             <div style={{ paddingTop: 8 }}>
