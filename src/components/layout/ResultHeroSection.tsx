@@ -31,8 +31,8 @@ export default function ResultHeroSection({ summary, inputs, displaySustainableM
   const badgeColor = isPositive ? '#2272eb' : '#f04452';
 
   // 본문 2줄
-  const mainLine1 = `${lifeExpectancy}세까지 매월`;
-  const mainLine2 = `${monthly.toLocaleString('ko-KR')}만원을 쓸 수 있어요`;
+  const mainLine1 = `${lifeExpectancy}세까지 월 ${monthly.toLocaleString('ko-KR')}만원 수준의`;
+  const mainLine2 = `생활을 유지할 수 있어요`;
 
   // 서브타이틀
   const shortfall = target > 0 ? target - monthly : 0;
@@ -41,7 +41,7 @@ export default function ResultHeroSection({ summary, inputs, displaySustainableM
   let subtitleColor = '#4e5968';
 
   if (isPositive) {
-    subtitleText = '목표 금액보다 더 많은 돈을 쓸 수 있어요.';
+    subtitleText = '목표한 생활비보다 더 여유 있는 결과예요';
   } else {
     subtitleText = `목표 생활비보다 매월 ${shortfall.toLocaleString('ko-KR')}만원이 부족해요. 목표를 달성하려면 현재 생활에서 개선이 필요해요.`;
     subtitleColor = '#F57800';
