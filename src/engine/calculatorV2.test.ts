@@ -370,8 +370,9 @@ describe('[V] 차량 입력이 sustainableMonthly에 반영되어야 함', () =>
 // ── B4: External caller currentAgeMonth passthrough ──────────────────────────
 
 describe('B4: calculatorV2 currentAgeMonth passthrough', () => {
-  it('runCalculationV2 produces different pension warnings for currentAgeMonth=0 vs currentAgeMonth=6', () => {
-    // Use a scenario with auto pension so that currentAgeMonth affects the pension calculation
+  it('currentAgeMonth=0 vs currentAgeMonth=6 produce numerically different sustainableMonthly', () => {
+    // Use auto retirement pension with significant balance so the
+    // 6-month difference in accumulation produces a measurable output difference.
     const inputsMonth0 = {
       ...makeInputs(6000),
       status: { ...makeInputs(6000).status, currentAgeMonth: 0 },
@@ -384,20 +385,35 @@ describe('B4: calculatorV2 currentAgeMonth passthrough', () => {
     const result0 = runScenario(inputsMonth0, 'keep_priority');
     const result6 = runScenario(inputsMonth6, 'keep_priority');
 
-    // Both should succeed
-    expect(result0).toBeDefined();
-    expect(result6).toBeDefined();
-
-    // The pension-dependent values should differ because currentAgeMonth
-    // changes accumulation months for retirement pension.
-    // sustainableMonthly may or may not differ (depends on binary search granularity),
-    // but the pension amounts in warnings should reflect different currentAgeMonth.
-    // At minimum, the results should not crash and produce valid outputs.
+    // Both must succeed and produce positive values
     expect(result0.summary.sustainableMonthly).toBeGreaterThan(0);
     expect(result6.summary.sustainableMonthly).toBeGreaterThan(0);
+
+    // CRITICAL: The outputs MUST differ. currentAgeMonth=6 means 6 fewer months
+    // of retirement pension accumulation, which reduces the pension and therefore
+    // the sustainable monthly. If they are equal, currentAgeMonth is being ignored.
+    expect(result0.summary.sustainableMonthly).not.toBe(result6.summary.sustainableMonthly);
   });
 
-  it('runCalculationV2 passes currentAgeMonth to getTotalMonthlyPensionTodayValue in warnings', () => {
+  it('currentAgeMonth=0 produces higher sustainableMonthly than currentAgeMonth=6', () => {
+    // More accumulation months (month=0) should lead to higher sustainable monthly
+    const inputsMonth0 = {
+      ...makeInputs(6000),
+      status: { ...makeInputs(6000).status, currentAgeMonth: 0 },
+    };
+    const inputsMonth6 = {
+      ...makeInputs(6000),
+      status: { ...makeInputs(6000).status, currentAgeMonth: 6 },
+    };
+
+    const result0 = runScenario(inputsMonth0, 'keep_priority');
+    const result6 = runScenario(inputsMonth6, 'keep_priority');
+
+    // month=0 has 6 more months of accumulation -> higher pension -> higher sustainableMonthly
+    expect(result0.summary.sustainableMonthly).toBeGreaterThan(result6.summary.sustainableMonthly);
+  });
+
+  it('pension warning is absent for valid auto pension with currentAgeMonth=6', () => {
     // Verify that getTotalMonthlyPensionTodayValue is called with currentAgeMonth
     // by checking that pension=0 warning does NOT appear for a case with valid pension
     const inputsWithPension = {
@@ -407,11 +423,25 @@ describe('B4: calculatorV2 currentAgeMonth passthrough', () => {
 
     const result = runScenario(inputsWithPension, 'keep_priority');
     // With annualIncome=6000, auto pension should produce non-zero pension
-    // So the "pension == 0" info warning should NOT appear
     const pensionZeroWarning = result.warnings.find(
       (w) => w.message.includes('연금 수령액이 0이에요'),
     );
     expect(pensionZeroWarning).toBeUndefined();
+  });
+
+  it('currentAgeMonth=undefined defaults gracefully (no crash, no NaN)', () => {
+    const inputsNoMonth = {
+      ...makeInputs(6000),
+      status: { ...makeInputs(6000).status },
+    };
+    // Ensure currentAgeMonth is not explicitly set (uses ?? 0 fallback)
+    delete (inputsNoMonth.status as Record<string, unknown>).currentAgeMonth;
+
+    const result = runScenario(inputsNoMonth, 'keep_priority');
+
+    expect(result.summary.sustainableMonthly).toBeGreaterThan(0);
+    expect(Number.isNaN(result.summary.sustainableMonthly)).toBe(false);
+    expect(Number.isFinite(result.summary.sustainableMonthly)).toBe(true);
   });
 });
 

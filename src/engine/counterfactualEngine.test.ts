@@ -178,3 +178,52 @@ describe('A1: vehicle cost double-counting fix', () => {
     });
   });
 });
+
+// ── A1-Edge: Empty and single-snapshot deficit extraction ──────────────────────
+
+describe('A1-Edge: extractDeficitStartAge edge cases', () => {
+  it('returns null for empty snapshots array', () => {
+    expect(extractDeficitStartAge([])).toBeNull();
+  });
+
+  it('returns null for single snapshot where income > expense', () => {
+    const snapshots: MonthlySnapshotV2[] = [
+      makeSnapshot({
+        ageYear: 70,
+        incomeThisMonth: 200,
+        pensionThisMonth: 100,
+        // totalIncome = 300, totalExpense = 250
+        expenseThisMonth: 250,
+        debtServiceThisMonth: 0,
+        childExpenseThisMonth: 0,
+        rentalCostThisMonth: 0,
+      }),
+    ];
+
+    expect(extractDeficitStartAge(snapshots)).toBeNull();
+  });
+
+  it('returns correct age for single snapshot where income < expense', () => {
+    const snapshots: MonthlySnapshotV2[] = [
+      makeSnapshot({
+        ageYear: 72,
+        incomeThisMonth: 50,
+        pensionThisMonth: 30,
+        // totalIncome = 80, totalExpense = 100 + 20 + 10 + 5 = 135
+        expenseThisMonth: 100,
+        debtServiceThisMonth: 20,
+        childExpenseThisMonth: 10,
+        rentalCostThisMonth: 5,
+      }),
+    ];
+
+    // 80 < 135 -> deficit at age 72
+    expect(extractDeficitStartAge(snapshots)).toBe(72);
+  });
+});
+
+describe('A1-Edge: extractTotalLateLifeShortfall edge cases', () => {
+  it('returns 0 for empty snapshots array', () => {
+    expect(extractTotalLateLifeShortfall([])).toBe(0);
+  });
+});

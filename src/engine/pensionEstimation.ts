@@ -20,6 +20,13 @@ const NPS_PRE_2026_REPLACEMENT_RATE = pensionPolicy.npsPreReformReplacementRate;
 const NPS_POST_2026_REPLACEMENT_RATE = pensionPolicy.npsPostReformReplacementRate;
 const NPS_REFORM_YEAR = pensionPolicy.npsReformYear;
 const RETIREMENT_CONTRIBUTION_RATE = 1 / 12;
+
+/** Clamp currentAgeMonth to valid range [0, 11]. Handles NaN, undefined, null, negative, and >11. */
+export function clampMonth(m: number | undefined | null): number {
+  if (m === undefined || m === null || !Number.isFinite(m)) return 0;
+  return Math.max(0, Math.min(11, Math.floor(m)));
+}
+
 const publicEstimateCache = new Map<string, PublicPensionEstimateDetails>();
 const retirementNominalCache = new Map<string, number>();
 const retirementStartTodayCache = new Map<string, number>();
@@ -156,7 +163,7 @@ export function getPublicPensionEstimateDetails(
 
   const redistributedMonthly =
     0.5 * replacement.replacementRate * (NPS_AVERAGE_MONTHLY_INCOME + pensionableMonthly);
-  const todayValueMonthly = Math.min(redistributedMonthly, pensionableMonthly);
+  const todayValueMonthly = redistributedMonthly;
 
   const result = {
     todayValueMonthly,
@@ -209,7 +216,7 @@ export function computeNPSReplacement(
   const rawPre = Math.max(Math.min(NPS_REFORM_YEAR, contributionEndYear) - careerStartYear, 0);
   const rawPost = Math.max(contributionEndYear - Math.max(NPS_REFORM_YEAR, careerStartYear), 0);
   const rawTotal = rawPre + rawPost;
-  const contributionYears = Math.min(rawTotal, 40);
+  const contributionYears = Math.max(0, Math.min(rawTotal, 40));
 
   if (rawTotal < 10) {
     return {
@@ -280,12 +287,14 @@ export function estimateRetirementPension(
   currentAge: number,
   retirementAge: number,
   retirementStartMonth = 0,
+  currentAgeMonth = 0,
 ): number {
-  const cacheKey = JSON.stringify([p, annualNetIncome, currentAge, retirementAge, retirementStartMonth]);
+  currentAgeMonth = clampMonth(currentAgeMonth);
+  const cacheKey = JSON.stringify([p, annualNetIncome, currentAge, retirementAge, retirementStartMonth, currentAgeMonth]);
   const cached = retirementNominalCache.get(cacheKey);
   if (cached !== undefined) return cached;
-  const retirementMonthIndex = Math.max(0, getMonthIndexForAge(currentAge, retirementAge, 0, retirementStartMonth));
-  const startMonthIndex = Math.max(0, getMonthIndexForAge(currentAge, p.startAge, 0, p.startMonth ?? 0));
+  const retirementMonthIndex = Math.max(0, getMonthIndexForAge(currentAge, retirementAge, currentAgeMonth, retirementStartMonth));
+  const startMonthIndex = Math.max(0, getMonthIndexForAge(currentAge, p.startAge, currentAgeMonth, p.startMonth ?? 0));
   const grossFromNet = estimateGrossAnnualFromNetAnnual(
     annualNetIncome,
     resolvePayrollReverseContext(undefined, getPolicyEffectiveYear()),
@@ -313,6 +322,7 @@ export function estimatePrivatePension(
   currentAge: number,
   currentAgeMonth = 0,
 ): number {
+  currentAgeMonth = clampMonth(currentAgeMonth);
   const cacheKey = JSON.stringify([p, currentAge, currentAgeMonth]);
   const cached = privateNominalCache.get(cacheKey);
   if (cached !== undefined) return cached;
@@ -349,8 +359,9 @@ function resolveRetirementMonthlyNominal(
   currentAge: number,
   retirementAge: number,
   retirementStartMonth = 0,
+  currentAgeMonth = 0,
 ): number {
-  const cacheKey = JSON.stringify([pension.retirementPension, annualNetIncome, currentAge, retirementAge, retirementStartMonth]);
+  const cacheKey = JSON.stringify([pension.retirementPension, annualNetIncome, currentAge, retirementAge, retirementStartMonth, currentAgeMonth]);
   const cached = retirementNominalCache.get(cacheKey);
   if (cached !== undefined) return cached;
   const retirementPension = pension.retirementPension;
@@ -358,7 +369,7 @@ function resolveRetirementMonthlyNominal(
   if (retirementPension.mode === 'manual' && retirementPension.manualMonthlyTodayValue > 0) {
     return retirementPension.manualMonthlyTodayValue;
   }
-  const result = estimateRetirementPension(retirementPension, annualNetIncome, currentAge, retirementAge, retirementStartMonth);
+  const result = estimateRetirementPension(retirementPension, annualNetIncome, currentAge, retirementAge, retirementStartMonth, currentAgeMonth);
   retirementNominalCache.set(cacheKey, result);
   return result;
 }
@@ -370,6 +381,7 @@ function resolveRetirementMonthlyStartTodayValue(
   retirementAge: number,
   inflationRate: number,
   retirementStartMonth = 0,
+  currentAgeMonth = 0,
 ): number {
   const cacheKey = JSON.stringify([
     pension.retirementPension,
@@ -378,6 +390,7 @@ function resolveRetirementMonthlyStartTodayValue(
     retirementAge,
     inflationRate,
     retirementStartMonth,
+    currentAgeMonth,
   ]);
   const cached = retirementStartTodayCache.get(cacheKey);
   if (cached !== undefined) return cached;
@@ -392,8 +405,9 @@ function resolveRetirementMonthlyStartTodayValue(
     currentAge,
     retirementAge,
     retirementStartMonth,
+    currentAgeMonth,
   );
-  const startMonthIndex = getMonthIndexForAge(currentAge, retirementPension.startAge, 0, retirementPension.startMonth ?? 0);
+  const startMonthIndex = getMonthIndexForAge(currentAge, retirementPension.startAge, currentAgeMonth, retirementPension.startMonth ?? 0);
   const result = nominalMonthly / monthInflationFactor(startMonthIndex, inflationRate);
   retirementStartTodayCache.set(cacheKey, result);
   return result;
@@ -404,6 +418,7 @@ export function estimatePrivatePensionProducts(
   currentAge: number,
   currentAgeMonth = 0,
 ): number {
+  currentAgeMonth = clampMonth(currentAgeMonth);
   return products.reduce((sum, product) => {
     const monthsToStart = Math.max(0, getMonthIndexForAge(currentAge, product.startAge, currentAgeMonth, product.startMonth ?? 0));
     const balance = futureValueByMonths(product.currentBalance, product.monthlyContribution || 0, product.accumulationReturnRate, monthsToStart);
@@ -490,6 +505,7 @@ export function getPensionMonthlyBreakdownForMonthIndex(
   retirementStartMonth = 0,
   currentAgeMonth = 0,
 ): PensionBreakdownAtAge {
+  currentAgeMonth = clampMonth(currentAgeMonth);
   const inflationFactor = monthInflationFactor(monthIndex, inflationRate);
 
   let publicMonthlyNominal = 0;
@@ -529,6 +545,7 @@ export function getPensionMonthlyBreakdownForMonthIndex(
         currentAge,
         retirementAge,
         retirementStartMonth,
+        currentAgeMonth,
       );
       retirementMonthlyRealTodayValue = retirementMonthlyNominal / inflationFactor;
     }
@@ -596,8 +613,10 @@ export function getPensionBreakdownAtAge(
   annualNetIncome: number,
   retirementAge: number,
   retirementStartMonth = 0,
+  currentAgeMonth = 0,
 ): PensionBreakdownAtAge {
-  const monthIndex = getMonthIndexForAge(currentAge, targetAge, 0, 0);
+  currentAgeMonth = clampMonth(currentAgeMonth);
+  const monthIndex = getMonthIndexForAge(currentAge, targetAge, currentAgeMonth, 0);
   return getPensionMonthlyBreakdownForMonthIndex(
     pension,
     currentAge,
@@ -606,6 +625,7 @@ export function getPensionBreakdownAtAge(
     annualNetIncome,
     retirementAge,
     retirementStartMonth,
+    currentAgeMonth,
   );
 }
 
@@ -617,7 +637,9 @@ export function getTotalMonthlyPensionTodayValue(
   annualNetIncome: number,
   inflationRate: number,
   retirementStartMonth = 0,
+  currentAgeMonth = 0,
 ): number {
+  currentAgeMonth = clampMonth(currentAgeMonth);
   return (
     resolvePublicMonthlyTodayValue(pension, annualNetIncome, currentAge, retirementAge) +
     resolveRetirementMonthlyStartTodayValue(
@@ -627,6 +649,7 @@ export function getTotalMonthlyPensionTodayValue(
       retirementAge,
       inflationRate,
       retirementStartMonth,
+      currentAgeMonth,
     ) +
     resolvePrivateMonthlyStartTodayValue(pension, currentAge, inflationRate)
   );
@@ -640,7 +663,9 @@ export function getPensionBreakdown(
   annualNetIncome: number,
   inflationRate: number,
   retirementStartMonth = 0,
+  currentAgeMonth = 0,
 ): { publicMonthly: number; retirementMonthly: number; privateMonthly: number } {
+  currentAgeMonth = clampMonth(currentAgeMonth);
   return {
     publicMonthly: resolvePublicMonthlyTodayValue(pension, annualNetIncome, currentAge, retirementAge),
     retirementMonthly: resolveRetirementMonthlyStartTodayValue(
@@ -650,6 +675,7 @@ export function getPensionBreakdown(
       retirementAge,
       inflationRate,
       retirementStartMonth,
+      currentAgeMonth,
     ),
     privateMonthly: resolvePrivateMonthlyStartTodayValue(pension, currentAge, inflationRate),
   };
@@ -663,8 +689,10 @@ export function getPensionMonthlyAtRetirementStart(
   annualNetIncome: number,
   inflationRate: number,
   retirementStartMonth = 0,
+  currentAgeMonth = 0,
 ): number {
-  const monthIndex = getMonthIndexForAge(currentAge, retirementAge, 0, retirementStartMonth);
+  currentAgeMonth = clampMonth(currentAgeMonth);
+  const monthIndex = getMonthIndexForAge(currentAge, retirementAge, currentAgeMonth, retirementStartMonth);
   return getPensionMonthlyBreakdownForMonthIndex(
     pension,
     currentAge,
@@ -673,6 +701,7 @@ export function getPensionMonthlyAtRetirementStart(
     annualNetIncome,
     retirementAge,
     retirementStartMonth,
+    currentAgeMonth,
   ).totalRealTodayValue;
 }
 

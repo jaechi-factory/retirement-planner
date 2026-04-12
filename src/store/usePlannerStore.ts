@@ -193,10 +193,10 @@ function buildCompatResult(
   const requiredMonthlyAtRetirement = goal.targetMonthly * Math.pow(1 + goal.inflationRate / 100, yearsToRetirement);
 
   const totalMonthlyPensionTodayValue = getTotalMonthlyPensionTodayValue(
-    pension, status.currentAge, goal.retirementAge, status.annualIncome, goal.inflationRate, goal.retirementStartMonth ?? 0,
+    pension, status.currentAge, goal.retirementAge, status.annualIncome, goal.inflationRate, goal.retirementStartMonth ?? 0, status.currentAgeMonth ?? 0,
   );
   const monthlyPensionAtRetirementStart = getPensionMonthlyAtRetirementStart(
-    pension, status.currentAge, goal.retirementAge, status.annualIncome, goal.inflationRate, goal.retirementStartMonth ?? 0,
+    pension, status.currentAge, goal.retirementAge, status.annualIncome, goal.inflationRate, goal.retirementStartMonth ?? 0, status.currentAgeMonth ?? 0,
   );
   const pensionCoverageRate = goal.targetMonthly > 0 ? totalMonthlyPensionTodayValue / goal.targetMonthly : 0;
 

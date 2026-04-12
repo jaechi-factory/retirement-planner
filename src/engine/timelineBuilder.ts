@@ -87,6 +87,7 @@ export function extractEvents(
     inputs.status.annualIncome,
     inputs.goal.inflationRate,
     inputs.goal.retirementStartMonth ?? 0,
+    inputs.status.currentAgeMonth ?? 0,
   );
 
   // 1. 은퇴 + 연금 공백기 경고

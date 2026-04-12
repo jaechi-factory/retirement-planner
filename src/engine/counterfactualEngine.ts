@@ -86,7 +86,8 @@ export interface CounterfactualResult {
 export function extractDeficitStartAge(snapshots: MonthlySnapshotV2[]): number | null {
   for (const s of snapshots) {
     const totalIncome = s.incomeThisMonth + s.pensionThisMonth;
-    const totalExpense = s.expenseThisMonth + s.debtServiceThisMonth + s.childExpenseThisMonth + s.rentalCostThisMonth + s.vehicleCostThisMonth;
+    // expenseThisMonth already includes vehicleCostThisMonth (added in simulatorV2)
+    const totalExpense = s.expenseThisMonth + s.debtServiceThisMonth + s.childExpenseThisMonth + s.rentalCostThisMonth;
     if (totalIncome < totalExpense) {
       return s.ageYear;
     }
