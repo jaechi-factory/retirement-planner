@@ -41,7 +41,7 @@ export default function ResultHeroSection({ summary, inputs, displaySustainableM
   let subtitleColor = '#4e5968';
 
   if (isPositive) {
-    subtitleText = '목표한 생활비보다 더 여유 있는 결과예요. 아래 추천을 따르면 더 늘릴 수 있어요.';
+    subtitleText = '목표한 생활비보다 더 여유 있는 결과예요';
   } else {
     subtitleText = `목표 생활비보다 매월 ${shortfall.toLocaleString('ko-KR')}만원이 부족해요. 목표를 달성하려면 현재 생활에서 개선이 필요해요.`;
     subtitleColor = '#F57800';
