@@ -69,7 +69,7 @@ export default function NumberInput({
       <label
         style={{
           fontSize: 16,
-          fontWeight: 600,
+          fontWeight: 500,
           color: 'var(--fig-label-color)',
           letterSpacing: '0.12px',
           lineHeight: 1,
