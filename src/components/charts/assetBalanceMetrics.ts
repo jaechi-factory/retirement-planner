@@ -38,6 +38,14 @@ export interface AgeSnapshotData {
     stock_us: number;
     crypto: number;
   };
+  assetBalancesEnd: {
+    cash: number;
+    deposit: number;
+    bond: number;
+    stock_kr: number;
+    stock_us: number;
+    crypto: number;
+  };
   totalAssets: number;
   // events
   pensionEvents: Array<{ name: string; monthly: number }>;
@@ -220,6 +228,14 @@ export function getAgeSnapshot(params: {
       : 0,
     monthlyAssetIncomeRealTodayValue,
     monthlyAssetIncomeBreakdown,
+    assetBalancesEnd: {
+      cash: row.months[row.months.length - 1]?.cashEnd ?? 0,
+      deposit: row.months[row.months.length - 1]?.depositEnd ?? 0,
+      bond: row.months[row.months.length - 1]?.bondEnd ?? 0,
+      stock_kr: row.months[row.months.length - 1]?.stockKrEnd ?? 0,
+      stock_us: row.months[row.months.length - 1]?.stockUsEnd ?? 0,
+      crypto: row.months[row.months.length - 1]?.cryptoEnd ?? 0,
+    },
     totalAssets,
     pensionEvents: pensionStartMap.get(age) ?? [],
   };

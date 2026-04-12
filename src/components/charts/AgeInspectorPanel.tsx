@@ -180,7 +180,6 @@ export default function AgeInspectorPanel({ data, hasRealEstate, hasSaleProceeds
   const netPrefix = data.monthlyNet >= 0 ? '+' : '-';
 
   // 금융자산 = 주식·채권 + 집을 판 뒤 굴리는 돈
-  const financialTotal = data.financialInvestable + data.saleProceedsEnd;
 
   return (
     <div
@@ -338,19 +337,26 @@ export default function AgeInspectorPanel({ data, hasRealEstate, hasSaleProceeds
               dotColor="#e5a04b"
             />
           )}
-          {financialTotal > 0 && (
-            <AssetRow
-              label="금융자산"
-              value={financialTotal}
-              dotColor="#1b64da"
-            />
+          {data.assetBalancesEnd.cash > 0 && (
+            <AssetRow label="현금" value={data.assetBalancesEnd.cash} dotColor="#00c471" />
           )}
-          {data.cashLike > 0 && (
-            <AssetRow
-              label="현금·예금"
-              value={data.cashLike}
-              dotColor="#00c471"
-            />
+          {data.assetBalancesEnd.deposit > 0 && (
+            <AssetRow label="예금·적금" value={data.assetBalancesEnd.deposit} dotColor="#1b64da" />
+          )}
+          {data.assetBalancesEnd.stock_kr > 0 && (
+            <AssetRow label="국내 주식" value={data.assetBalancesEnd.stock_kr} dotColor="#3182f6" />
+          )}
+          {data.assetBalancesEnd.stock_us > 0 && (
+            <AssetRow label="해외 주식" value={data.assetBalancesEnd.stock_us} dotColor="#6366f1" />
+          )}
+          {data.assetBalancesEnd.bond > 0 && (
+            <AssetRow label="채권" value={data.assetBalancesEnd.bond} dotColor="#8b5cf6" />
+          )}
+          {data.assetBalancesEnd.crypto > 0 && (
+            <AssetRow label="암호화폐" value={data.assetBalancesEnd.crypto} dotColor="#f59e0b" />
+          )}
+          {hasSaleProceeds && data.saleProceedsEnd > 0 && (
+            <AssetRow label="매각대금 운용" value={data.saleProceedsEnd} dotColor="#f97316" />
           )}
         </div>
       </div>
