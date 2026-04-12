@@ -143,6 +143,22 @@ export default function ResultWorkbench() {
     );
   }
 
+  if (
+    inputs.goal.retirementAge > 0 &&
+    inputs.goal.lifeExpectancy > 0 &&
+    inputs.goal.lifeExpectancy <= inputs.goal.retirementAge
+  ) {
+    return (
+      <div style={panelStyle}>
+        <EmptyStateCard
+          title="기대 수명을 다시 확인해 주세요"
+          body={`기대 수명(${inputs.goal.lifeExpectancy}세)이 은퇴 나이(${inputs.goal.retirementAge}세)보다 작거나 같아요. 기대 수명은 몇 살까지 살 예정인지(예: 90세) 입력해 주세요.`}
+          hint="은퇴 나이보다 큰 값이어야 은퇴 후 생활비를 계산할 수 있어요."
+        />
+      </div>
+    );
+  }
+
   if (!resultV2 || !result.isValid) {
     return (
       <div style={panelStyle}>

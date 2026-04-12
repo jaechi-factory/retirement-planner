@@ -129,7 +129,7 @@ export default function EvidenceWorkspace({
                   lineHeight: 1.5,
                 }}
               >
-                {`목표 생활비 월 ${inputs.goal.targetMonthly}만원은 오늘 기준이에요. 같은 생활 수준을 유지하려면 ${inputs.goal.retirementAge}세에는 월 ${Math.round(inputs.goal.targetMonthly * Math.pow(1 + (inputs.goal.inflationRate ?? 2) / 100, inputs.goal.retirementAge - inputs.status.currentAge))}만원이 필요하고, 이후에도 물가상승률만큼 늘어나요. 투자 자산도 수익이 쌓이면서 커질 수 있어요.`}
+                {`월 ${inputs.goal.targetMonthly}만원(${new Date().getFullYear()}년 기준)의 생활 수준을 유지하려면, ${inputs.goal.retirementAge}세(은퇴시점)에는 월 ${Math.round(inputs.goal.targetMonthly * Math.pow(1 + (inputs.goal.inflationRate ?? 2) / 100, inputs.goal.retirementAge - inputs.status.currentAge))}만원이 필요해요. 이후에는 물가와 투자 수익이 함께 반영돼, 생활비와 자산이 모두 커질 수 있어요.`}
               </p>
             )}
           </div>
