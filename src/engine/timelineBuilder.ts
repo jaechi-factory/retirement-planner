@@ -418,6 +418,12 @@ export function extractKeyDecisionEvents(
   }
 
   // 순현금흐름 적자 전환 시점 (수입+연금 < 지출+상환)
+  // 지출 구성요소는 counterfactualEngine.ts의 extractDeficitStartAge와 동일합니다:
+  //   inflow  = income + pension
+  //   outflow = expense + debtService + childExpense + rentalCost
+  // 차이점: 이 함수는 연도 집계(YearlyAggregateV2)를, extractDeficitStartAge는
+  // 월별 snapshot(MonthlySnapshotV2)을 사용합니다.
+  // expense(totalExpense / expenseThisMonth)에는 vehicleCost가 이미 포함되어 있습니다.
   if (aggregates.length > 0) {
     let foundNegativeAge: number | null = null;
     for (const row of aggregates) {

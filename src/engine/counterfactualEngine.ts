@@ -82,11 +82,24 @@ export interface CounterfactualResult {
 
 // ── 유틸리티 ──────────────────────────────────────────────────────
 
-/** 월별 snapshot에서 incomeThisMonth < expenseThisMonth 최초 시점의 나이 */
+/**
+ * 월별 snapshot에서 총수입(근로+연금) < 총지출인 최초 시점의 나이를 반환합니다.
+ *
+ * 지출 구성:
+ *   totalExpense = expenseThisMonth + debtServiceThisMonth + childExpenseThisMonth + rentalCostThisMonth
+ *
+ * 주의: `expenseThisMonth`는 simulatorV2.ts(line 378 부근)에서 `vehicleCostThisMonth`를
+ * 이미 합산한 값입니다. 따라서 여기서 `vehicleCostThisMonth`를 별도로 더하면 이중 계산이
+ * 됩니다. A1 fix로 이중 계산을 제거했습니다.
+ *
+ * 이 함수의 지출 구성요소는 timelineBuilder.ts의 `net_cashflow_negative_start` 감지 로직
+ * (extractKeyDecisionEvents 내부)과 동일합니다. 단, timelineBuilder는 연도 집계
+ * (YearlyAggregateV2)를 사용하고 이 함수는 월별 snapshot을 사용합니다.
+ */
 export function extractDeficitStartAge(snapshots: MonthlySnapshotV2[]): number | null {
   for (const s of snapshots) {
     const totalIncome = s.incomeThisMonth + s.pensionThisMonth;
-    // expenseThisMonth already includes vehicleCostThisMonth (added in simulatorV2)
+    // expenseThisMonth already includes vehicleCostThisMonth (added in simulatorV2.ts:378)
     const totalExpense = s.expenseThisMonth + s.debtServiceThisMonth + s.childExpenseThisMonth + s.rentalCostThisMonth;
     if (totalIncome < totalExpense) {
       return s.ageYear;
@@ -95,7 +108,14 @@ export function extractDeficitStartAge(snapshots: MonthlySnapshotV2[]): number |
   return null;
 }
 
-/** 월별 snapshot에서 shortfall > 0인 달의 합산 */
+/**
+ * 월별 snapshot에서 shortfall > 0인 달의 shortfallThisMonth를 합산합니다.
+ *
+ * shortfallThisMonth는 simulatorV2에서 모든 지출(expenseThisMonth 포함)을
+ * 차감한 뒤 자산으로 충당하지 못한 부족분입니다. expenseThisMonth에
+ * vehicleCostThisMonth가 이미 포함되어 있으므로 별도 차량 비용 가산 없이
+ * shortfallThisMonth만 합산하면 됩니다.
+ */
 export function extractTotalLateLifeShortfall(snapshots: MonthlySnapshotV2[]): number {
   let total = 0;
   for (const s of snapshots) {

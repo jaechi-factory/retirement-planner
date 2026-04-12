@@ -426,12 +426,21 @@ export function estimatePrivatePensionProducts(
   }, 0);
 }
 
+/**
+ * 개인연금 수령 시작 시점 월액의 오늘 가치 환산.
+ *
+ * currentAgeMonth를 반영해 정확한 월 인덱스를 계산합니다.
+ * 이전에는 currentAgeMonth를 받지 않아 항상 0으로 가정했으나,
+ * A2 fix 이후 전체 call chain과 일관되게 전달합니다.
+ */
 function resolvePrivateMonthlyStartTodayValue(
   pension: PensionInputs,
   currentAge: number,
   inflationRate: number,
+  currentAgeMonth = 0,
 ): number {
-  const cacheKey = JSON.stringify([pension.privatePension, currentAge, inflationRate]);
+  currentAgeMonth = clampMonth(currentAgeMonth);
+  const cacheKey = JSON.stringify([pension.privatePension, currentAge, inflationRate, currentAgeMonth]);
   const cached = privateStartTodayCache.get(cacheKey);
   if (cached !== undefined) return cached;
   const privatePension = pension.privatePension;
@@ -441,7 +450,7 @@ function resolvePrivateMonthlyStartTodayValue(
   }
   if (privatePension.detailMode && privatePension.products.length > 0) {
     const result = privatePension.products.reduce((sum, product) => {
-      const startMonthIndex = getMonthIndexForAge(currentAge, product.startAge, 0, product.startMonth ?? 0);
+      const startMonthIndex = getMonthIndexForAge(currentAge, product.startAge, currentAgeMonth, product.startMonth ?? 0);
       const monthsToStart = Math.max(0, startMonthIndex);
       const balance = futureValueByMonths(product.currentBalance, product.monthlyContribution || 0, product.accumulationReturnRate, monthsToStart);
       const nominalMonthly = Math.round(annuitize(balance, product.payoutReturnRate, product.payoutYears));
@@ -450,8 +459,8 @@ function resolvePrivateMonthlyStartTodayValue(
     privateStartTodayCache.set(cacheKey, result);
     return result;
   }
-  const nominalMonthly = estimatePrivatePension(privatePension, currentAge);
-  const startMonthIndex = getMonthIndexForAge(currentAge, privatePension.startAge, 0, privatePension.startMonth ?? 0);
+  const nominalMonthly = estimatePrivatePension(privatePension, currentAge, currentAgeMonth);
+  const startMonthIndex = getMonthIndexForAge(currentAge, privatePension.startAge, currentAgeMonth, privatePension.startMonth ?? 0);
   const result = nominalMonthly / monthInflationFactor(startMonthIndex, inflationRate);
   privateStartTodayCache.set(cacheKey, result);
   return result;
@@ -651,7 +660,7 @@ export function getTotalMonthlyPensionTodayValue(
       retirementStartMonth,
       currentAgeMonth,
     ) +
-    resolvePrivateMonthlyStartTodayValue(pension, currentAge, inflationRate)
+    resolvePrivateMonthlyStartTodayValue(pension, currentAge, inflationRate, currentAgeMonth)
   );
 }
 
@@ -677,7 +686,7 @@ export function getPensionBreakdown(
       retirementStartMonth,
       currentAgeMonth,
     ),
-    privateMonthly: resolvePrivateMonthlyStartTodayValue(pension, currentAge, inflationRate),
+    privateMonthly: resolvePrivateMonthlyStartTodayValue(pension, currentAge, inflationRate, currentAgeMonth),
   };
 }
 
