@@ -162,8 +162,13 @@ export function generateDetail(m: ComparisonMetrics, baselineSustainable: number
       break;
   }
 
-  // 돈이 부족해지는 시점 변화
-  if (m.deficitStartAgeDelta !== null && m.deficitStartAgeDelta > 0 && m.deficitStartAgeDelta !== Infinity) {
+  // 돈이 부족해지는 시점 변화 (baseline이 이미 끝까지 버티면 생략)
+  if (
+    !m.baselineSurvives
+    && m.deficitStartAgeDelta !== null
+    && m.deficitStartAgeDelta > 0
+    && m.deficitStartAgeDelta !== Infinity
+  ) {
     parts.push(`돈이 부족해지는 시점도 ${Math.round(m.deficitStartAgeDelta)}년 늦춰져요`);
   }
 
@@ -185,8 +190,8 @@ export function generateDeltaBadges(m: ComparisonMetrics): DeltaBadge[] {
     badges.push({ text: `매달 +${fmtKRW(m.sustainableMonthlyDelta)}`, type: 'positive' });
   }
 
-  // 돈이 부족해지는 시점 변화
-  if (m.deficitStartAgeDelta !== null && m.deficitStartAgeDelta > 0) {
+  // 돈이 부족해지는 시점 변화 (baseline이 이미 끝까지 버티면 생략)
+  if (!m.baselineSurvives && m.deficitStartAgeDelta !== null && m.deficitStartAgeDelta > 0) {
     if (m.deficitStartAgeDelta === Infinity) {
       badges.push({ text: '돈 부족 걱정 없음', type: 'positive' });
     } else {
