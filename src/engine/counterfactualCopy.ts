@@ -29,7 +29,7 @@ export function generateHeadline(m: ComparisonMetrics, targetMonthly: number): s
     ? Math.round(m.newFailureAge - failureAgeDelta)
     : null;
   const newFailAge = m.newFailureAge !== null ? Math.round(m.newFailureAge) : null;
-  const budget = targetMonthly > 0 ? `월 ${fmtKRW(targetMonthly)} 기준, ` : '';
+  void targetMonthly;
 
   // 고갈 방지가 최우선
   const preventsFailure = !m.baselineSurvives && m.counterfactualSurvives;
