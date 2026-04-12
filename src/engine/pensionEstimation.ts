@@ -413,17 +413,24 @@ function resolveRetirementMonthlyStartTodayValue(
   return result;
 }
 
+const privateProductsCache = new Map<string, number>();
+
 export function estimatePrivatePensionProducts(
   products: PrivatePensionProduct[],
   currentAge: number,
   currentAgeMonth = 0,
 ): number {
   currentAgeMonth = clampMonth(currentAgeMonth);
-  return products.reduce((sum, product) => {
+  const cacheKey = JSON.stringify([products, currentAge, currentAgeMonth]);
+  const cached = privateProductsCache.get(cacheKey);
+  if (cached !== undefined) return cached;
+  const result = products.reduce((sum, product) => {
     const monthsToStart = Math.max(0, getMonthIndexForAge(currentAge, product.startAge, currentAgeMonth, product.startMonth ?? 0));
     const balance = futureValueByMonths(product.currentBalance, product.monthlyContribution || 0, product.accumulationReturnRate, monthsToStart);
     return sum + Math.round(annuitize(balance, product.payoutReturnRate, product.payoutYears));
   }, 0);
+  privateProductsCache.set(cacheKey, result);
+  return result;
 }
 
 /**

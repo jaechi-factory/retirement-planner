@@ -8,8 +8,6 @@
 import { getPlannerPolicy } from '../policy/policyTable';
 import type { RetirementPensionInput, PublicPensionInput } from '../types/pension';
 import {
-  annuitize,
-  estimatePublicPensionTodayValue,
   estimateRetirementPension,
   futureValueMonthly,
   getPublicPensionEstimateDetails,
@@ -125,4 +123,3 @@ export function getRetirementPensionMeta(
   };
 }
 
-export { estimatePublicPensionTodayValue, estimateRetirementPension, annuitize };
