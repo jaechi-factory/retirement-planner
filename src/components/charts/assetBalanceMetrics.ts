@@ -1,4 +1,5 @@
 import type { MonthlySnapshotV2, YearlyAggregateV2 } from '../../types/calculationV2';
+import type { AssetAllocation } from '../../types/inputs';
 
 export interface AgeSnapshotData {
   age: number;
@@ -28,6 +29,7 @@ export interface AgeSnapshotData {
   propertyValue: number;
   saleProceedsEnd: number;
   monthlySaleProceedsReturn: number;
+  monthlyAssetIncomeRealTodayValue: number;
   totalAssets: number;
   // events
   pensionEvents: Array<{ name: string; monthly: number }>;
@@ -117,16 +119,45 @@ export function getAgeSnapshot(params: {
   monthlyPrivatePensionByAge: Map<number, number>;
   monthlyPrivatePensionRealByAge: Map<number, number>;
   pensionStartMap: Map<number, Array<{ name: string; monthly: number }>>;
+  assets: AssetAllocation;
+  inflationRate: number;
+  currentAge: number;
 }): AgeSnapshotData | null {
   const {
     age, retirementAge, rows, cashflow,
     monthlyPublicPensionByAge, monthlyPublicPensionRealByAge,
     monthlyRetirementPensionByAge, monthlyRetirementPensionRealByAge,
     monthlyPrivatePensionByAge, monthlyPrivatePensionRealByAge,
-    pensionStartMap,
+    pensionStartMap, assets, inflationRate, currentAge,
   } = params;
   const row = rows.find((r) => r.ageYear === age);
   if (!row) return null;
+
+  // 자산 소득 (투자수익): 버킷별 잔고 × 월이율, 월평균 → 현재가치 환산
+  const monthlyRate = (annualPct: number) => Math.pow(1 + annualPct / 100, 1 / 12) - 1;
+  const mrCash = monthlyRate(assets.cash.expectedReturn);
+  const mrDeposit = monthlyRate(assets.deposit.expectedReturn);
+  const mrBond = monthlyRate(assets.bond.expectedReturn);
+  const mrStockKr = monthlyRate(assets.stock_kr.expectedReturn);
+  const mrStockUs = monthlyRate(assets.stock_us.expectedReturn);
+  const mrCrypto = monthlyRate(assets.crypto.expectedReturn);
+  const monthCount = row.months.length || 1;
+  const monthlyAssetIncomeNominal =
+    row.months.reduce((sum, m) =>
+      sum +
+      m.cashEnd * mrCash +
+      m.depositEnd * mrDeposit +
+      m.bondEnd * mrBond +
+      m.stockKrEnd * mrStockKr +
+      m.stockUsEnd * mrStockUs +
+      m.cryptoEnd * mrCrypto,
+      0,
+    ) / monthCount;
+  const yearsFromCurrent = Math.max(0, age - currentAge);
+  const inflationDivisor = Math.pow(1 + inflationRate / 100, yearsFromCurrent);
+  const monthlyAssetIncomeRealTodayValue = inflationDivisor > 0
+    ? monthlyAssetIncomeNominal / inflationDivisor
+    : monthlyAssetIncomeNominal;
 
   const monthlySalary = cashflow.monthlySalaryByAge.get(age) ?? 0;
   const monthlyPension = cashflow.monthlyPensionByAge.get(age) ?? 0;
@@ -176,6 +207,7 @@ export function getAgeSnapshot(params: {
     monthlySaleProceedsReturn: row.propertySaleProceedsBucketEnd > 0
       ? Math.round(row.propertySaleProceedsBucketEnd * (Math.pow(1.04, 1 / 12) - 1))
       : 0,
+    monthlyAssetIncomeRealTodayValue,
     totalAssets,
     pensionEvents: pensionStartMap.get(age) ?? [],
   };

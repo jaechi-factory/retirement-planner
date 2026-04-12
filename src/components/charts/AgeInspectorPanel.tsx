@@ -235,7 +235,7 @@ export default function AgeInspectorPanel({ data, hasRealEstate, hasSaleProceeds
         <div style={{ padding: '10px 32px', borderRight: '1px solid var(--ux-border)' }}>
 
           <SectionTitle>수입 구성</SectionTitle>
-          {(data.monthlySalary > 0 || data.monthlyPublicPensionRealTodayValue > 0 || data.monthlyRetirementPensionRealTodayValue > 0 || data.monthlyPrivatePensionRealTodayValue > 0) && (
+          {(data.monthlySalary > 0 || data.monthlyPublicPensionRealTodayValue > 0 || data.monthlyRetirementPensionRealTodayValue > 0 || data.monthlyPrivatePensionRealTodayValue > 0 || data.monthlyAssetIncomeRealTodayValue > 0) && (
             <div style={{ fontSize: 13, color: 'var(--ux-text-subtle)', marginBottom: 4, lineHeight: 1.4 }}>
               현재 가치 기준으로 보여줘요
             </div>
@@ -251,6 +251,9 @@ export default function AgeInspectorPanel({ data, hasRealEstate, hasSaleProceeds
           )}
           {data.monthlyPrivatePensionRealTodayValue > 0 && (
             <DetailRow label="개인연금" value={data.monthlyPrivatePensionRealTodayValue} />
+          )}
+          {data.monthlyAssetIncomeRealTodayValue > 0 && (
+            <DetailRow label="자산 소득" value={data.monthlyAssetIncomeRealTodayValue} />
           )}
           {data.monthlySaleProceedsReturn > 0 && (
             <DetailRow label="매각대금 운용수익" value={data.monthlySaleProceedsReturn} />

@@ -51,6 +51,9 @@ export default function EvidenceWorkspace({
     monthlyPrivatePensionByAge,
     monthlyPrivatePensionRealByAge,
     pensionStartMap,
+    assets: inputs.assets,
+    inflationRate: inputs.goal.inflationRate ?? 0,
+    currentAge: inputs.status.currentAge,
   });
 
   const cardPadding = '0 32px';

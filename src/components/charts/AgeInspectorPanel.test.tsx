@@ -27,6 +27,7 @@ const baseData: AgeSnapshotData = {
   propertyValue: 0,
   saleProceedsEnd: 0,
   monthlySaleProceedsReturn: 0,
+  monthlyAssetIncomeRealTodayValue: 0,
   totalAssets: 1500,
   pensionEvents: [],
 };
