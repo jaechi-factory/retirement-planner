@@ -88,7 +88,119 @@ function makePropertyOptions(): PropertyOptionResult[] {
   ];
 }
 
-describe('timelineBuilder — 매각 이벤트 데이터 정합성', () => {
+// ── B4: timelineBuilder currentAgeMonth passthrough ──────────────────────────
+
+describe('B4: timelineBuilder currentAgeMonth passthrough', () => {
+  it('extractEvents passes currentAgeMonth to getPensionBreakdown, affecting pension event descriptions', () => {
+    // We use manual pension to get predictable values.
+    // The key test is that currentAgeMonth is passed through to getPensionBreakdown,
+    // which in turn passes it to resolveRetirementMonthlyStartTodayValue.
+    // With auto pension and different currentAgeMonth, the retirement pension
+    // today-value should differ, causing different event descriptions.
+    const baseInputs: PlannerInputs = {
+      goal: {
+        retirementAge: 60,
+        lifeExpectancy: 90,
+        targetMonthly: 300,
+        inflationRate: 2.5,
+      },
+      status: {
+        currentAge: 40,
+        currentAgeMonth: 6,
+        annualIncome: 6000,
+        incomeGrowthRate: 2,
+        annualExpense: 3000,
+      },
+      assets: {
+        cash:       { amount: 5000, expectedReturn: 2 },
+        deposit:    { amount: 5000, expectedReturn: 3 },
+        stock_kr:   { amount: 5000, expectedReturn: 6 },
+        stock_us:   { amount: 5000, expectedReturn: 8 },
+        bond:       { amount: 2000, expectedReturn: 3.5 },
+        crypto:     { amount: 0, expectedReturn: 0 },
+        realEstate: { amount: 50000, expectedReturn: 2 },
+      },
+      debts: {
+        mortgage:   { balance: 0, interestRate: 0, repaymentType: 'equal_payment', repaymentYears: 0 },
+        creditLoan: { balance: 0, interestRate: 0, repaymentType: 'equal_payment', repaymentYears: 0 },
+        otherLoan:  { balance: 0, interestRate: 0, repaymentType: 'equal_payment', repaymentYears: 0 },
+      },
+      children: {
+        hasChildren: false,
+        count: 0,
+        monthlyPerChild: 0,
+        independenceAge: 0,
+      },
+      pension: {
+        publicPension: {
+          enabled: false,
+          mode: 'auto',
+          startAge: 65,
+          manualMonthlyTodayValue: 0,
+          workStartAge: 26,
+        },
+        retirementPension: {
+          enabled: true,
+          mode: 'auto',
+          startAge: 62,
+          startMonth: 0,
+          payoutYears: 20,
+          currentBalance: 30000,
+          accumulationReturnRate: 3.5,
+          payoutReturnRate: 2.0,
+          manualMonthlyTodayValue: 0,
+        },
+        privatePension: {
+          enabled: false,
+          mode: 'auto',
+          startAge: 65,
+          payoutYears: 20,
+          currentBalance: 0,
+          monthlyContribution: 0,
+          expectedReturnRate: 3.5,
+          accumulationReturnRate: 3.5,
+          payoutReturnRate: 3.5,
+          manualMonthlyTodayValue: 0,
+          detailMode: false,
+          products: [],
+        },
+      },
+    };
+
+    // Extract events with currentAgeMonth=6
+    const events6 = extractEvents(
+      [makeYear(60), makeYear(65), makeYear(90)],
+      makeSummary({ financialExhaustionAge: null, propertyInterventionAge: null, failureAge: null }),
+      makePropertyOptions(),
+      baseInputs,
+    );
+
+    // Extract events with currentAgeMonth=0
+    const inputsMonth0 = {
+      ...baseInputs,
+      status: { ...baseInputs.status, currentAgeMonth: 0 },
+    };
+    const events0 = extractEvents(
+      [makeYear(60), makeYear(65), makeYear(90)],
+      makeSummary({ financialExhaustionAge: null, propertyInterventionAge: null, failureAge: null }),
+      makePropertyOptions(),
+      inputsMonth0,
+    );
+
+    // Both should produce retirement pension events
+    const retEvent6 = events6.find((e) => e.type === 'pension_retirement');
+    const retEvent0 = events0.find((e) => e.type === 'pension_retirement');
+    expect(retEvent6).toBeDefined();
+    expect(retEvent0).toBeDefined();
+
+    // The pension amount in the description should differ because
+    // currentAgeMonth=6 means 6 fewer accumulation months
+    // (both use auto mode with non-zero currentBalance)
+    expect(retEvent6!.description).not.toBe(retEvent0!.description);
+  });
+});
+
+describe('timelineBuilder -- \uB9E4\uAC01 \uC774\uBCA4\uD2B8 \uB370\uC774\uD130 \uC815\uD569\uC131', () => {
   it('sell 전략 이벤트는 연말값이 아니라 실제 매각 월 기준 금액을 보여야 함', () => {
     const inputs: PlannerInputs = {
       goal: {

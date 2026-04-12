@@ -7,11 +7,14 @@ import {
   estimatePrivatePension,
   estimatePublicPensionTodayValue,
   estimateRetirementPension,
+  getPensionBreakdown,
   getPensionBreakdownAtAge,
   getPensionMonthlyAtRetirementStart,
   getPensionMonthlyBreakdownForMonthIndex,
+  getPublicPensionEstimateDetails,
   getPublicPensionNominalMonthlyAtAge,
   getPublicPensionRealMonthlyAtAge,
+  getTotalMonthlyPensionTodayValue,
 } from './pensionEstimation';
 
 function makePublicPension(overrides: Partial<PublicPensionInput> = {}): PublicPensionInput {
@@ -237,5 +240,149 @@ describe('E. 기본 auto/manual 경로 회귀', () => {
     );
 
     expect(monthly).toBeGreaterThan(0);
+  });
+});
+
+// ── A2: currentAgeMonth propagation tests ─────────────────────────────────────
+
+describe('A2: currentAgeMonth propagation', () => {
+  const retirementPensionInput = {
+    enabled: true,
+    mode: 'auto' as const,
+    startAge: 60,
+    startMonth: 0,
+    payoutYears: 20,
+    currentBalance: 30000,
+    accumulationReturnRate: 3.5,
+    payoutReturnRate: 2,
+    manualMonthlyTodayValue: 0,
+  };
+
+  describe('estimateRetirementPension produces different results for different currentAgeMonth', () => {
+    it('currentAgeMonth=0 returns 392', () => {
+      const result = estimateRetirementPension(retirementPensionInput, 6000, 40, 60, 0, 0);
+      expect(result).toBe(392);
+    });
+
+    it('currentAgeMonth=6 returns 383', () => {
+      const result = estimateRetirementPension(retirementPensionInput, 6000, 40, 60, 0, 6);
+      expect(result).toBe(383);
+    });
+
+    it('currentAgeMonth=11 returns 377', () => {
+      const result = estimateRetirementPension(retirementPensionInput, 6000, 40, 60, 0, 11);
+      expect(result).toBe(377);
+    });
+
+    it('higher currentAgeMonth means fewer accumulation months and lower pension', () => {
+      const r0 = estimateRetirementPension(retirementPensionInput, 6000, 40, 60, 0, 0);
+      const r6 = estimateRetirementPension(retirementPensionInput, 6000, 40, 60, 0, 6);
+      const r11 = estimateRetirementPension(retirementPensionInput, 6000, 40, 60, 0, 11);
+
+      expect(r0).toBeGreaterThan(r6);
+      expect(r6).toBeGreaterThan(r11);
+    });
+  });
+
+  describe('getTotalMonthlyPensionTodayValue passes currentAgeMonth through the chain', () => {
+    const pension = makePensionInputs({
+      retirementPension: retirementPensionInput,
+    });
+
+    it('currentAgeMonth=0 returns ~396.006', () => {
+      const result = getTotalMonthlyPensionTodayValue(pension, 40, 60, 6000, 3.5, 0, 0);
+      expect(result).toBeCloseTo(396.006, 2);
+    });
+
+    it('currentAgeMonth=6 returns ~394.822', () => {
+      const result = getTotalMonthlyPensionTodayValue(pension, 40, 60, 6000, 3.5, 0, 6);
+      expect(result).toBeCloseTo(394.822, 2);
+    });
+
+    it('currentAgeMonth=11 returns ~394.537', () => {
+      const result = getTotalMonthlyPensionTodayValue(pension, 40, 60, 6000, 3.5, 0, 11);
+      expect(result).toBeCloseTo(394.537, 2);
+    });
+
+    it('different currentAgeMonth values produce different totals', () => {
+      const t0 = getTotalMonthlyPensionTodayValue(pension, 40, 60, 6000, 3.5, 0, 0);
+      const t6 = getTotalMonthlyPensionTodayValue(pension, 40, 60, 6000, 3.5, 0, 6);
+      const t11 = getTotalMonthlyPensionTodayValue(pension, 40, 60, 6000, 3.5, 0, 11);
+
+      expect(t0).not.toEqual(t6);
+      expect(t6).not.toEqual(t11);
+      expect(t0).toBeGreaterThan(t6);
+      expect(t6).toBeGreaterThan(t11);
+    });
+  });
+
+  describe('getPensionBreakdown passes currentAgeMonth through the chain', () => {
+    const pension = makePensionInputs({
+      retirementPension: retirementPensionInput,
+    });
+
+    it('retirementMonthly changes with different currentAgeMonth', () => {
+      const b0 = getPensionBreakdown(pension, 40, 60, 6000, 3.5, 0, 0);
+      const b6 = getPensionBreakdown(pension, 40, 60, 6000, 3.5, 0, 6);
+
+      expect(b0.retirementMonthly).toBeCloseTo(197.006, 2);
+      expect(b6.retirementMonthly).toBeCloseTo(195.822, 2);
+      expect(b0.retirementMonthly).toBeGreaterThan(b6.retirementMonthly);
+    });
+  });
+});
+
+// ── B3: NPS cap removal verification ──────────────────────────────────────────
+
+describe('B3: NPS pension cap removal', () => {
+  it('high-income case: output equals redistributedMonthly, NOT capped at pensionableMonthly', () => {
+    // pensionableMonthlyOverride=50 is low enough that:
+    // redistributedMonthly = 0.5 * 0.43 * (319.3511 + 50) = 79.41 > 50
+    // Old bug: Math.min(79.41, 50) = 50 (capped)
+    // Fixed: 79.41 (uncapped)
+    const details = getPublicPensionEstimateDetails(
+      makePublicPension({ pensionableMonthlyOverride: 50, workStartAge: 20 }),
+      0, // annualNetIncome (not used when override is set)
+      20, // currentAge
+      65, // retirementAge
+    );
+
+    // Expected: 0.5 * 0.43 * (319.3511 + 50) = 79.41048650
+    expect(details.todayValueMonthly).toBeCloseTo(79.4105, 3);
+    // Must NOT equal pensionableMonthly (which would mean capping)
+    expect(details.todayValueMonthly).not.toBe(details.pensionableMonthly);
+    // redistributedMonthly exceeds pensionableMonthly
+    expect(details.todayValueMonthly).toBeGreaterThan(details.pensionableMonthly);
+  });
+
+  it('low-income case: no regression when redistributedMonthly < pensionableMonthly', () => {
+    // pensionableMonthlyOverride=200: redistributedMonthly = 0.5 * 0.43 * (319.3511 + 200) = 111.66
+    // 111.66 < 200, so the old Math.min(111.66, 200) = 111.66 -- same either way
+    const details = getPublicPensionEstimateDetails(
+      makePublicPension({ pensionableMonthlyOverride: 200, workStartAge: 20 }),
+      0,
+      20,
+      65,
+    );
+
+    // Expected: 0.5 * 0.43 * (319.3511 + 200) = 111.66048650
+    expect(details.todayValueMonthly).toBeCloseTo(111.6605, 3);
+    expect(details.todayValueMonthly).toBeLessThan(details.pensionableMonthly);
+  });
+
+  it('standard case with high income override: redistributedMonthly formula verified', () => {
+    // pensionableMonthlyOverride=637 (NPS_MAX_MONTHLY) with 40 years
+    // redistributedMonthly = 0.5 * 0.43 * (319.3511 + 637) = 205.625...
+    const details = getPublicPensionEstimateDetails(
+      makePublicPension({ pensionableMonthlyOverride: 637, workStartAge: 20 }),
+      0,
+      20,
+      65,
+    );
+
+    const expectedReplacementRate = 0.43; // all post-2026 for birthYear=2006
+    const expectedRedistributed = 0.5 * expectedReplacementRate * (319.3511 + 637);
+    expect(details.todayValueMonthly).toBeCloseTo(expectedRedistributed, 3);
+    expect(details.replacementRate).toBeCloseTo(expectedReplacementRate, 6);
   });
 });
