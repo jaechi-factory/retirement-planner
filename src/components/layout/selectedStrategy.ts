@@ -12,8 +12,8 @@ export function pickDefaultSelectedStrategy(
   const selectable = propertyOptions.filter(isSelectable);
   if (selectable.length === 0) return null;
 
-  const sellOption = selectable.find((option) => option.strategy === 'sell');
-  if (sellOption) return 'sell';
+  const keepOption = selectable.find((option) => option.strategy === 'keep');
+  if (keepOption) return 'keep';
 
   const recommendedOption = selectable.find((option) => option.isRecommended);
   if (recommendedOption) return recommendedOption.strategy;

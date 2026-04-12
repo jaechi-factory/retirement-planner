@@ -336,8 +336,7 @@ function computeBaseline(
   liquidationPolicy: LiquidationPolicy,
   debtSchedules: DebtSchedules,
 ): BaselineResult {
-  // 부동산이 있으면 매각 전략을 baseline 원칙으로 사용
-  const strategy = inputs.assets.realEstate.amount > 0 ? ('sell' as const) : ('keep' as const);
+  const strategy = 'keep' as const;
   const sustainableMonthly = findMaxSustainableMonthlyV2(
     inputs, strategy, fundingPolicy, liquidationPolicy, debtSchedules,
   );
@@ -366,8 +365,7 @@ function simulateStrategy(
   fundingPolicy: FundingPolicy,
   liquidationPolicy: LiquidationPolicy,
 ): { sustainableMonthly: number; failureAge: number | null; deficitStartAge: number | null; totalLateLifeShortfall: number; survives: boolean } {
-  // 부동산이 있으면 매각 전략을 baseline 원칙으로 사용
-  const strategy = patchedInputs.assets.realEstate.amount > 0 ? ('sell' as const) : ('keep' as const);
+  const strategy = 'keep' as const;
   const patchedDebtSchedules = precomputeDebtSchedules(patchedInputs.debts);
 
   const sustainableMonthly = findMaxSustainableMonthlyV2(
