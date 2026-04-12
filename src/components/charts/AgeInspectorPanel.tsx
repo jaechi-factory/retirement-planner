@@ -43,6 +43,25 @@ function DetailRow({
   );
 }
 
+function SubDetailRow({ label, value }: { label: string; value: number }) {
+  return (
+    <div
+      style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        gap: 8,
+        color: 'var(--ux-text-subtle)',
+        fontSize: 13,
+        lineHeight: 1.6,
+        paddingLeft: 16,
+      }}
+    >
+      <span>{label}</span>
+      <span style={{ whiteSpace: 'nowrap' }}>월 {fmtKRW(Math.round(value))}</span>
+    </div>
+  );
+}
+
 function AssetRow({
   label,
   value,
@@ -253,7 +272,27 @@ export default function AgeInspectorPanel({ data, hasRealEstate, hasSaleProceeds
             <DetailRow label="개인연금" value={data.monthlyPrivatePensionRealTodayValue} />
           )}
           {data.monthlyAssetIncomeRealTodayValue > 0 && (
-            <DetailRow label="자산 소득" value={data.monthlyAssetIncomeRealTodayValue} />
+            <>
+              <DetailRow label="자산 소득" value={data.monthlyAssetIncomeRealTodayValue} />
+              {data.monthlyAssetIncomeBreakdown.cash > 0 && (
+                <SubDetailRow label="현금" value={data.monthlyAssetIncomeBreakdown.cash} />
+              )}
+              {data.monthlyAssetIncomeBreakdown.deposit > 0 && (
+                <SubDetailRow label="예금·적금" value={data.monthlyAssetIncomeBreakdown.deposit} />
+              )}
+              {data.monthlyAssetIncomeBreakdown.stock_kr > 0 && (
+                <SubDetailRow label="국내 주식" value={data.monthlyAssetIncomeBreakdown.stock_kr} />
+              )}
+              {data.monthlyAssetIncomeBreakdown.stock_us > 0 && (
+                <SubDetailRow label="해외 주식" value={data.monthlyAssetIncomeBreakdown.stock_us} />
+              )}
+              {data.monthlyAssetIncomeBreakdown.bond > 0 && (
+                <SubDetailRow label="채권" value={data.monthlyAssetIncomeBreakdown.bond} />
+              )}
+              {data.monthlyAssetIncomeBreakdown.crypto > 0 && (
+                <SubDetailRow label="암호화폐" value={data.monthlyAssetIncomeBreakdown.crypto} />
+              )}
+            </>
           )}
           {data.monthlySaleProceedsReturn > 0 && (
             <DetailRow label="매각대금 운용수익" value={data.monthlySaleProceedsReturn} />

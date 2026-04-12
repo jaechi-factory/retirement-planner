@@ -161,26 +161,27 @@ function MinimalTooltip({
         borderRadius: 8,
         padding: '8px 12px',
         fontSize: 14,
-        width: 160,
+        minWidth: 160,
+        whiteSpace: 'nowrap',
         boxShadow: '0 4px 12px rgba(25, 31, 40, 0.10)',
       }}
     >
-      <div style={{ fontWeight: 700, marginBottom: 6, color: 'var(--ux-text-strong)' }}>{label}세</div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, color: 'var(--ux-text-base)', marginBottom: 2 }}>
-        <span>수입</span>
-        <span>월 {fmtKRW(Math.round(monthlyIncome))}</span>
+      <div style={{ fontWeight: 700, marginBottom: 6, color: 'var(--ux-text-strong)', whiteSpace: 'nowrap' }}>{label}세</div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, color: 'var(--ux-text-base)', marginBottom: 2, whiteSpace: 'nowrap' }}>
+        <span style={{ whiteSpace: 'nowrap' }}>수입</span>
+        <span style={{ whiteSpace: 'nowrap' }}>월 {fmtKRW(Math.round(monthlyIncome))}</span>
       </div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, color: 'var(--ux-text-base)', marginBottom: 2 }}>
-        <span>지출</span>
-        <span>월 {fmtKRW(Math.round(monthlyOutflow))}</span>
+      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, color: 'var(--ux-text-base)', marginBottom: 2, whiteSpace: 'nowrap' }}>
+        <span style={{ whiteSpace: 'nowrap' }}>지출</span>
+        <span style={{ whiteSpace: 'nowrap' }}>월 {fmtKRW(Math.round(monthlyOutflow))}</span>
       </div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, color: netColor, fontWeight: 700, marginBottom: 2 }}>
-        <span>잔액</span>
-        <span>{monthlyNet >= 0 ? '+' : '-'}{fmtKRW(Math.round(Math.abs(monthlyNet)))}</span>
+      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, color: netColor, fontWeight: 700, marginBottom: 2, whiteSpace: 'nowrap' }}>
+        <span style={{ whiteSpace: 'nowrap' }}>잔액</span>
+        <span style={{ whiteSpace: 'nowrap' }}>{monthlyNet >= 0 ? '+' : '-'}{fmtKRW(Math.round(Math.abs(monthlyNet)))}</span>
       </div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, color: 'var(--ux-text-base)', paddingTop: 4, borderTop: '1px solid var(--ux-border)', marginTop: 2 }}>
-        <span>총 자산</span>
-        <span style={{ fontWeight: 600 }}>{fmtKRW(Math.round(totalAssets))}</span>
+      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, color: 'var(--ux-text-base)', paddingTop: 4, borderTop: '1px solid var(--ux-border)', marginTop: 2, whiteSpace: 'nowrap' }}>
+        <span style={{ whiteSpace: 'nowrap' }}>총 자산</span>
+        <span style={{ fontWeight: 600, whiteSpace: 'nowrap' }}>{fmtKRW(Math.round(totalAssets))}</span>
       </div>
     </div>
   );

@@ -30,6 +30,14 @@ export interface AgeSnapshotData {
   saleProceedsEnd: number;
   monthlySaleProceedsReturn: number;
   monthlyAssetIncomeRealTodayValue: number;
+  monthlyAssetIncomeBreakdown: {
+    cash: number;
+    deposit: number;
+    bond: number;
+    stock_kr: number;
+    stock_us: number;
+    crypto: number;
+  };
   totalAssets: number;
   // events
   pensionEvents: Array<{ name: string; monthly: number }>;
@@ -142,22 +150,25 @@ export function getAgeSnapshot(params: {
   const mrStockUs = monthlyRate(assets.stock_us.expectedReturn);
   const mrCrypto = monthlyRate(assets.crypto.expectedReturn);
   const monthCount = row.months.length || 1;
-  const monthlyAssetIncomeNominal =
-    row.months.reduce((sum, m) =>
-      sum +
-      m.cashEnd * mrCash +
-      m.depositEnd * mrDeposit +
-      m.bondEnd * mrBond +
-      m.stockKrEnd * mrStockKr +
-      m.stockUsEnd * mrStockUs +
-      m.cryptoEnd * mrCrypto,
-      0,
-    ) / monthCount;
+  const sumCash = row.months.reduce((s, m) => s + m.cashEnd * mrCash, 0) / monthCount;
+  const sumDeposit = row.months.reduce((s, m) => s + m.depositEnd * mrDeposit, 0) / monthCount;
+  const sumBond = row.months.reduce((s, m) => s + m.bondEnd * mrBond, 0) / monthCount;
+  const sumStockKr = row.months.reduce((s, m) => s + m.stockKrEnd * mrStockKr, 0) / monthCount;
+  const sumStockUs = row.months.reduce((s, m) => s + m.stockUsEnd * mrStockUs, 0) / monthCount;
+  const sumCrypto = row.months.reduce((s, m) => s + m.cryptoEnd * mrCrypto, 0) / monthCount;
+  const monthlyAssetIncomeNominal = sumCash + sumDeposit + sumBond + sumStockKr + sumStockUs + sumCrypto;
   const yearsFromCurrent = Math.max(0, age - currentAge);
   const inflationDivisor = Math.pow(1 + inflationRate / 100, yearsFromCurrent);
-  const monthlyAssetIncomeRealTodayValue = inflationDivisor > 0
-    ? monthlyAssetIncomeNominal / inflationDivisor
-    : monthlyAssetIncomeNominal;
+  const deflate = (v: number) => inflationDivisor > 0 ? v / inflationDivisor : v;
+  const monthlyAssetIncomeRealTodayValue = deflate(monthlyAssetIncomeNominal);
+  const monthlyAssetIncomeBreakdown = {
+    cash: deflate(sumCash),
+    deposit: deflate(sumDeposit),
+    bond: deflate(sumBond),
+    stock_kr: deflate(sumStockKr),
+    stock_us: deflate(sumStockUs),
+    crypto: deflate(sumCrypto),
+  };
 
   const monthlySalary = cashflow.monthlySalaryByAge.get(age) ?? 0;
   const monthlyPension = cashflow.monthlyPensionByAge.get(age) ?? 0;
@@ -208,6 +219,7 @@ export function getAgeSnapshot(params: {
       ? Math.round(row.propertySaleProceedsBucketEnd * (Math.pow(1.04, 1 / 12) - 1))
       : 0,
     monthlyAssetIncomeRealTodayValue,
+    monthlyAssetIncomeBreakdown,
     totalAssets,
     pensionEvents: pensionStartMap.get(age) ?? [],
   };

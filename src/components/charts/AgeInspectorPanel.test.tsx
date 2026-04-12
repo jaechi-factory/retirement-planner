@@ -28,6 +28,7 @@ const baseData: AgeSnapshotData = {
   saleProceedsEnd: 0,
   monthlySaleProceedsReturn: 0,
   monthlyAssetIncomeRealTodayValue: 0,
+  monthlyAssetIncomeBreakdown: { cash: 0, deposit: 0, bond: 0, stock_kr: 0, stock_us: 0, crypto: 0 },
   totalAssets: 1500,
   pensionEvents: [],
 };
