@@ -2,10 +2,10 @@ export const DEFAULT_INFLATION_RATE = 3.5;
 export const DEFAULT_INCOME_GROWTH_RATE = 2.0;
 
 export const DEFAULT_ASSET_RETURNS = {
-  cash: 2.0,
+  cash: 0.2,
   deposit: 3.5,
-  stock_kr: 7.0,
-  stock_us: 8.0,
+  stock_kr: 4.0,
+  stock_us: 6.0,
   bond: 4.0,
   crypto: 15.0,
   realEstate: 3.0,
