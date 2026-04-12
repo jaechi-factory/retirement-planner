@@ -325,11 +325,6 @@ export default function AgeInspectorPanel({ data, hasRealEstate, hasSaleProceeds
         {/* 오른쪽: 자산 구성 */}
         <div style={{ padding: '10px 32px' }}>
           <SectionTitle>자산 구성</SectionTitle>
-          {data.monthlyNet < 0 && (
-            <div style={{ fontSize: 13, color: 'var(--ux-text-subtle)', marginBottom: 4, lineHeight: 1.4 }}>
-              생활비가 부족한 해는 현금 → 예금 → 채권 → 국내주식 → 해외주식 → 암호화폐 순으로 사용돼요. 사용되지 않은 자산은 수익률만큼 계속 불어나요.
-            </div>
-          )}
           {hasSaleProceeds && data.saleProceedsEnd > 0 && (
             <div style={{ fontSize: 13, color: 'var(--ux-text-subtle)', marginBottom: 4, lineHeight: 1.4 }}>
               주식·채권 · 집을 판 뒤 굴리는 돈 합산
@@ -362,6 +357,11 @@ export default function AgeInspectorPanel({ data, hasRealEstate, hasSaleProceeds
           )}
           {hasSaleProceeds && data.saleProceedsEnd > 0 && (
             <AssetRow label="매각대금 운용" value={data.saleProceedsEnd} dotColor="#f97316" />
+          )}
+          {data.monthlyNet < 0 && (
+            <div style={{ fontSize: 13, color: 'var(--ux-text-subtle)', marginTop: 12, lineHeight: 1.4 }}>
+              생활비가 부족한 해는 현금 → 예금 → 채권 → 국내주식 → 해외주식 → 암호화폐 순으로 사용돼요. 사용되지 않은 자산은 수익률만큼 계속 불어나요.
+            </div>
           )}
         </div>
       </div>
