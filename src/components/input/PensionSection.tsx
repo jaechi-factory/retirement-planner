@@ -147,8 +147,14 @@ function PensionRow({ productId, label }: { productId: string; label: string }) 
 export default function PensionSection() {
   return (
     <SectionCard
-      title="연금"
-      subtitle="IRP, 연금저축펀드, 연금보험 정보를 입력해 주세요."
+      title="연금이 있나요?"
+      subtitle={
+        <>
+          국민연금과, 퇴직연금은 자동으로 계산해 드려요.
+          <br />
+          IRP, 연금저축펀드, 연금보험 정보를 입력해 주세요.
+        </>
+      }
       itemGap={24}
     >
       {PENSION_PRODUCTS.map(({ id, label }) => (

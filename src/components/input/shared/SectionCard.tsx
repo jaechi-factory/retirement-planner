@@ -1,6 +1,6 @@
 interface Props {
   title: string;
-  subtitle?: string;
+  subtitle?: React.ReactNode;
   children: React.ReactNode;
   itemGap?: number;
 }
