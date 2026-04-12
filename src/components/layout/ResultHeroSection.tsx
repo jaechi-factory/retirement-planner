@@ -31,8 +31,8 @@ export default function ResultHeroSection({ summary, inputs, displaySustainableM
   const badgeColor = isPositive ? '#2272eb' : '#f04452';
 
   // 본문 2줄
-  const mainLine1 = `${lifeExpectancy}세까지 월 ${monthly.toLocaleString('ko-KR')}만원 수준의`;
-  const mainLine2 = `생활을 유지할 수 있어요`;
+  const mainLine1 = `${lifeExpectancy}세까지 월 ${monthly.toLocaleString('ko-KR')}만원의`;
+  const mainLine2 = `생활 수준을 유지할 수 있어요`;
 
   // 서브타이틀
   const shortfall = target > 0 ? target - monthly : 0;
